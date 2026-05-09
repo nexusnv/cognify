@@ -92,6 +92,7 @@ cognify/
     codemods/
   docs/superpowers/
     specs/
+      2026-05-09-cognify-greenfield-saas-runbook-design.md
     plans/
   AGENTS.md
   DEVELOPER_GUIDELINE.md
@@ -107,10 +108,13 @@ Rationale: this gives Cognify a clean monorepo without pretending every future c
 ### 4.1 Repository Baseline
 
 1. Initialize Git and create the base docs/spec path.
-2. Create `package.json`, `pnpm-workspace.yaml`, and `turbo.json`.
-3. Pin Node via `.nvmrc` or `.tool-versions`.
-4. Add root `.editorconfig`, `.gitignore`, `.prettierrc`, and root TypeScript/ESLint config only after the frontend package exists.
-5. Create `apps/web`, `apps/api`, `packages/ui`, `packages/api-client`, `packages/config`, and docs skeleton.
+2. Configure the GitHub remote as `github.com/nexusnv/cognify`.
+3. Use `main` as the base branch.
+4. Protect `main` with pull-request-only changes, required review, and required CI checks before merge.
+5. Create `package.json`, `pnpm-workspace.yaml`, and `turbo.json`.
+6. Pin Node via `.nvmrc` or `.tool-versions`.
+7. Add root `.editorconfig`, `.gitignore`, `.prettierrc`, and root TypeScript/ESLint config only after the frontend package exists.
+8. Create `apps/web`, `apps/api`, `packages/ui`, `packages/api-client`, `packages/config`, and docs skeleton.
 
 ### 4.2 Frontend Scaffold
 
@@ -118,6 +122,12 @@ Preferred scaffold:
 
 ```bash
 pnpm create next-app apps/web --ts --tailwind --eslint --app --src-dir false
+```
+
+Then initialize shadcn:
+
+```bash
+pnpm dlx shadcn@latest init --monorepo --template next
 ```
 
 Then install:
@@ -130,7 +140,16 @@ pnpm --filter web add @tanstack/react-table @tanstack/react-virtual
 pnpm --filter web add -D vitest @testing-library/react @testing-library/user-event jsdom msw @playwright/test axe-core
 ```
 
-Initialize shadcn from `apps/web`, but configure generated reusable primitives to land in `packages/ui` only when the repo is ready for package imports. During the earliest scaffold phase, it is acceptable to generate into `apps/web/components/ui` first, then promote stable primitives into `packages/ui`.
+Initialize shadcn from `apps/web`, but keep reusable primitives separated from application components from the beginning. The preferred setup is:
+
+```txt
+packages/ui/src/components/        # shadcn primitives and reusable UI wrappers
+packages/ui/src/lib/               # cn(), token utilities, primitive helpers
+apps/web/components/               # Cognify app shell and app-specific composition
+apps/web/features/*/components/    # feature-owned procurement UI
+```
+
+This reduces developer confusion and prevents generated primitives from overwriting application components. If the shadcn monorepo workflow creates local app primitives first, the implementation plan must immediately normalize aliases and move primitives into `packages/ui` before feature work begins.
 
 ### 4.3 Backend Scaffold
 
@@ -193,6 +212,22 @@ The first implementation plan should configure packages in this order:
 | Laravel Model States | domain `States/` folders | explicit state classes for requisition, quotation, approval, and award flows |
 | Pest or PHPUnit | `apps/api/phpunit.xml`, `tests/Pest.php` if Pest | test bootstrap, database isolation, tenant helpers |
 
+### 4.6 First-Party Nexus Composer Packages
+
+Cognify should consider the following first-party Nexus packages as preferred package candidates when their responsibilities are needed. They must remain stateless, framework-agnostic where designed that way, and interface/contract driven. Domain meaning, persistence, authorization, and UI representation stay in Cognify.
+
+| Package | Use in Cognify | Boundary rule |
+| --- | --- | --- |
+| `azaharizaman/nexus-metric-engine` | Primitive calculation engine for KPI and formula evaluation. | The package evaluates prepared scalar/time-series inputs only. Cognify owns data fetching, persistence, reporting, and domain meaning. |
+| `azaharizaman/nexus-sequencing` | Atomic reference-code generation for requisitions, RFQs, awards, imports, and audit exports. | The package owns sequence mechanics. Cognify owns pattern policy, tenant rules, and display semantics. |
+| `azaharizaman/nexus-uom` | Unit-of-measure value objects, conversions, packaging hierarchy, and quantity arithmetic. | The package owns measurement math. Cognify owns procurement catalog meaning, validation policy, and source document interpretation. |
+| `azaharizaman/nexus-telemetry` | Health checks, metrics, SLO tracking, alert evaluation, and retention primitives. | The package owns telemetry mechanics. Cognify owns operational dashboards, alert routing policy, and customer-facing status language. |
+| `azaharizaman/nexus-sanction` | Sanctions screening and PEP detection for vendor governance and compliance workflows. | The package owns screening algorithms/list adapters. Cognify owns workflow timing, review decisions, audit trails, and override authority. |
+| `azaharizaman/nexus-connector` | Standardized resilient gateway for external API communication. | The package owns connector mechanics. Cognify owns provider configuration, business retries, audit context, and error disclosure. |
+| `azaharizaman/nexus-idempotency` | Idempotency keys for mutation safety. | The package owns request deduplication mechanics. Cognify owns endpoint policy, retry UX, and audit messaging. |
+
+These packages should be added only when the implementation slice needs them. Each addition must include a package owner, adapter location, config location, smoke test, and a boundary note proving Cognify has not pushed application-specific business logic into the package.
+
 Configuration rule: every external package must have one documented owner, one config file location, and at least one smoke verification command before it is considered installed.
 
 ## 5. Frontend Architecture
@@ -224,6 +259,39 @@ apps/web/app/
 ```
 
 The auth layout is minimal and centered. The dashboard layout owns the full navigation shell, sticky header, footer, command palette, notification entry point, and optional right panel. The workspace layout collapses global navigation and introduces an entity-specific contextual sidebar.
+
+### 5.1.1 Root Layout and Global Providers
+
+Cognify should have a thin root layout for concerns that are genuinely global across auth, dashboard, and workspace routes:
+
+```txt
+apps/web/app/layout.tsx
+apps/web/components/providers/
+  app-providers.tsx
+  query-provider.tsx
+  theme-provider.tsx
+  analytics-provider.tsx
+  accessibility-provider.tsx
+  error-reporting-provider.tsx
+```
+
+The root layout should own:
+
+- HTML shell, metadata, font loading, and theme bootstrapping.
+- TanStack Query provider.
+- global toast host.
+- error reporting provider.
+- accessibility defaults such as skip links, focus restoration conventions, reduced-motion support, and live-region host.
+- analytics/user-tracking provider with privacy-aware consent gates.
+
+The root layout should not own:
+
+- dashboard navigation.
+- workspace sidebars.
+- command palette commands that require authenticated user context.
+- right-panel content that only exists inside authenticated product routes.
+
+Dashboard and workspace layouts should own the command palette host and right-panel host after authentication context is available. Auth routes should opt out of product navigation and right-panel behavior by construction, not by fragile per-page conditionals.
 
 ### 5.2 Feature Organization
 
@@ -582,9 +650,46 @@ After this spec is approved, the first implementation plan should be split into 
 7. Testing and CI baseline.
 8. Local development runbook and verification commands.
 
-## 12. Open Decisions
+## 12. Local Development Services and Tools
+
+Cognify should ship a local development environment that uses Docker for backing services and local CLIs/MCPs for agent-assisted workflows.
+
+Required development services:
+
+| Service | Local endpoint | Purpose |
+| --- | --- | --- |
+| PostgreSQL | `localhost:5433`, user `postgres`, password `secret` | primary development and test database |
+| Redis | `localhost:6379` | queues, cache, rate limits, Horizon |
+| MinIO S3 | `localhost:9000`, access key `minioadmin`, secret key `minioadmin` | local object storage for quotations, OCR source files, evidence artifacts, and exports |
+
+Default local database names:
+
+- `cognify_dev`
+- `cognify_test`
+
+Default local bucket:
+
+- `cognify-dev`
+
+AI provider configuration:
+
+- Use OpenRouter as the default local AI provider when credentials are present.
+- Provide an echo/fake provider for development and tests so the product remains usable without live AI credentials.
+- Keep the provider interface config-driven so Azure OpenAI, Anthropic, or another provider can be swapped without changing domain code.
+- Never rely on silent provider failover for procurement decisions. Manual continuity and visible degraded-state UX are required.
+
+Required local tools:
+
+- GitHub MCP for repository and PR workflows when available.
+- shadcn MCP for component lookup and registry work when available.
+- Playwright for browser E2E and screenshot verification.
+- `gh` CLI for GitHub operations that are not covered by MCP tools.
+
+The setup implementation should provide `infrastructure/docker/docker-compose.yml` or equivalent, plus a `DEVELOPER_GUIDELINE.md` section that lists exact startup, migration, seed, queue, test, and teardown commands.
+
+## 13. Open Decisions
 
 - Choose Pest vs PHPUnit as the backend test default. Recommendation: Pest for new greenfield Cognify if the team accepts it; PHPUnit if compatibility and familiarity matter more.
 - Choose tenancy package timing. Recommendation: do not install `stancl/tenancy` until Phase 2 unless tenant database isolation is immediately required.
 - Choose initial AI provider. Recommendation: provider-neutral interface first, one configured provider at runtime, no silent failover, manual continuity always available.
-- Choose whether `packages/ui` is used from day one or after initial shadcn stabilization. Recommendation: start in `apps/web`, promote stable primitives into `packages/ui` after import/build plumbing is verified.
+- `packages/ui` timing is no longer open. Cognify should separate shadcn primitives into `packages/ui` from the beginning, with `apps/web` reserved for shell and application composition.
