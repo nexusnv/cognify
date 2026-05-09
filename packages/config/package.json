@@ -1,0 +1,21 @@
+{
+  "name": "@cognify/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/next.json": "./tsconfig/next.json",
+    "./tailwind/tailwind-preset": "./tailwind/tailwind-preset.ts"
+  },
+  "scripts": {
+    "build": "echo \"@cognify/config build: config only\"",
+    "lint": "echo \"@cognify/config lint: config only\"",
+    "test": "echo \"@cognify/config test: config only\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.9.3"
+  }
+}

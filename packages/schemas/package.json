@@ -1,0 +1,20 @@
+{
+  "name": "@cognify/schemas",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "echo \"@cognify/schemas lint: no package-local lint yet\"",
+    "test": "echo \"@cognify/schemas test: no package-local tests yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

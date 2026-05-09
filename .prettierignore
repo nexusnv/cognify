@@ -1,0 +1,10 @@
+atomy-q DNA.md
+docs/superpowers/specs/*.md
+node_modules
+vendor
+.next
+dist
+build
+coverage
+apps/api/storage
+apps/api/bootstrap/cache

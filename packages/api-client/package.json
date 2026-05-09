@@ -1,0 +1,20 @@
+{
+  "name": "@cognify/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check:contract": "test -f ../../apps/api/storage/openapi/openapi.json",
+    "generate": "orval --config ./orval.config.ts",
+    "lint": "echo \"@cognify/api-client lint: no package-local lint yet\"",
+    "test": "echo \"@cognify/api-client test: no package-local tests yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "orval": "^7.17.0",
+    "typescript": "^5.9.3"
+  }
+}

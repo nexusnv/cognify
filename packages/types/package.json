@@ -1,0 +1,17 @@
+{
+  "name": "@cognify/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "echo \"@cognify/types lint: no package-local lint yet\"",
+    "test": "echo \"@cognify/types test: no package-local tests yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
