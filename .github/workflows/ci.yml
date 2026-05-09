@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo, pdo_sqlite, pdo_pgsql, redis
+          coverage: none
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install API dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+        working-directory: apps/api
+
+      - name: Validate Docker Compose
+        run: docker compose -f infrastructure/docker/docker-compose.yml config
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test frontend packages
+        run: pnpm test
+
+      - name: Test API
+        run: php artisan test
+        working-directory: apps/api
+
+      - name: Build
+        run: pnpm build

@@ -1,2 +1,38 @@
 /.superpowers
+/.worktrees
 
+# Node / frontend
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# Laravel / PHP
+vendor/
+bootstrap/cache/*.php
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+storage/app/private/*
+storage/app/public/*
+storage/app/livewire-tmp/*
+storage/debugbar/*
+.phpunit.result.cache
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
