@@ -6,7 +6,7 @@
 
 ## Status
 
-Proposed for implementation.
+Approved for implementation.
 
 ## Feature
 

@@ -19,3 +19,7 @@ Cognify is in initial scaffold implementation. The current goal is to establish 
 ## Proposed Next Feature
 
 - `docs/superpowers/specs/2026-05-10-requisition-draft-submission-design.md`
+
+## Active Feature Implementation Plan
+
+- `docs/superpowers/plans/2026-05-10-requisition-draft-submission-implementation.md`
