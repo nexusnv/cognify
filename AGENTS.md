@@ -23,7 +23,7 @@ Cognify is a multi-tenant enterprise procurement SaaS. It is a greenfield codeba
 - Keep Laravel business domains in `apps/api/Domains/*`.
 - Keep Laravel cross-cutting infrastructure in `apps/api/app/*`.
 - Do not import mock fixtures directly into UI components. Use hooks backed by MSW or generated clients.
-- Do not put application-specific business meaning into Nexus packages.
+- Do not put application-specific business meaning into shared packages.
 
 ## Common Commands
 
@@ -44,5 +44,6 @@ Before claiming work is complete, run the narrow checks for the files touched an
 
 - Agent workflow: `docs/agentic/AGENTIC_CODING_GUIDELINES.md`
 - Developer workflow: `DEVELOPER_GUIDELINE.md`
+- Feature development runbook: `docs/05-runbooks/feature-development.md`
 - Engineering standards: `docs/04-engineering/standards/`
 - Local services: `docs/05-runbooks/local-development.md`

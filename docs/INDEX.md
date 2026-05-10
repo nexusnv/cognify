@@ -23,6 +23,7 @@
 ## Runbooks
 
 - `05-runbooks/local-development.md`
+- `05-runbooks/feature-development.md`
 
 ## Architecture
 

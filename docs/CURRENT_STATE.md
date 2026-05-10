@@ -15,3 +15,7 @@ Cognify is in initial scaffold implementation. The current goal is to establish 
 ## Active Implementation Plan
 
 - `docs/superpowers/plans/2026-05-09-cognify-greenfield-saas-scaffold.md`
+
+## Proposed Next Feature
+
+- `docs/superpowers/specs/2026-05-10-requisition-draft-submission-design.md`

@@ -44,6 +44,8 @@ pnpm --filter @cognify/web exec playwright install
 
 ## Development Commands
 
+Before starting a new feature, follow `docs/05-runbooks/feature-development.md`.
+
 ```bash
 pnpm dev
 pnpm --filter @cognify/web dev
