@@ -1,45 +1,793 @@
 {
-    "openapi": "3.1.0",
-    "info": {
-        "title": "Cognify API",
-        "version": "0.1.0"
-    },
-    "paths": {
-        "/api/health": {
-            "get": {
-                "operationId": "getHealth",
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "API is healthy",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HealthResponse"
-                                }
-                            }
-                        }
-                    }
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cognify API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
+              }
             }
+          }
         }
+      }
     },
-    "components": {
-        "schemas": {
-            "HealthResponse": {
-                "type": "object",
-                "required": ["status", "service"],
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "const": "ok"
-                    },
-                    "service": {
-                        "type": "string",
-                        "const": "cognify-api"
-                    }
-                }
+    "/api/requisitions": {
+      "get": {
+        "operationId": "listRequisitions",
+        "summary": "List tenant-visible requisitions",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RequisitionStatus"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "neededByFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "neededByTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant-visible requisitions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
+      },
+      "post": {
+        "operationId": "createRequisition",
+        "summary": "Create a draft requisition",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequisitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft requisition created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}": {
+      "get": {
+        "operationId": "getRequisition",
+        "summary": "Read requisition detail",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requisition detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateRequisition",
+        "summary": "Update a draft requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequisitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Draft requisition updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/submit": {
+      "post": {
+        "operationId": "submitRequisition",
+        "summary": "Submit a draft requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft requisition submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitRequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/activity": {
+      "get": {
+        "operationId": "listRequisitionActivity",
+        "summary": "Read requisition activity timeline",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requisition activity timeline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RequisitionActivityEvent"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "RequisitionId": {
+        "name": "requisitionId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "Unauthenticated": {
+        "description": "Unauthenticated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized or wrong tenant",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "InvalidState": {
+        "description": "Invalid state transition",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "Validation failure",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "service"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          },
+          "service": {
+            "type": "string",
+            "const": "cognify-api"
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "required": ["message", "code"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "ValidationError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          {
+            "type": "object",
+            "required": ["errors"],
+            "properties": {
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "UserSummary": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": ["string", "null"],
+            "format": "email"
+          }
+        }
+      },
+      "RequisitionStatus": {
+        "type": "string",
+        "enum": ["draft", "submitted", "pending_approval"]
+      },
+      "RequisitionPermissions": {
+        "type": "object",
+        "required": ["canUpdate", "canSubmit", "canViewActivity"],
+        "properties": {
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canViewActivity": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RequisitionLineItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "quantity",
+          "unit",
+          "estimatedUnitPrice",
+          "currency",
+          "estimatedLineTotal"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unit": {
+            "type": "string"
+          },
+          "estimatedUnitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "estimatedLineTotal": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "Requisition": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "tenantId",
+          "title",
+          "status",
+          "businessJustification",
+          "neededByDate",
+          "department",
+          "projectId",
+          "costCenter",
+          "deliveryLocation",
+          "currency",
+          "estimatedTotal",
+          "requester",
+          "lineItems",
+          "createdAt",
+          "updatedAt",
+          "submittedAt",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RequisitionStatus"
+          },
+          "businessJustification": {
+            "type": ["string", "null"]
+          },
+          "neededByDate": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "department": {
+            "type": ["string", "null"]
+          },
+          "projectId": {
+            "type": ["string", "null"]
+          },
+          "costCenter": {
+            "type": ["string", "null"]
+          },
+          "deliveryLocation": {
+            "type": ["string", "null"]
+          },
+          "currency": {
+            "type": ["string", "null"],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "estimatedTotal": {
+            "type": "number",
+            "minimum": 0
+          },
+          "requester": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequisitionLineItem"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submittedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/RequisitionPermissions"
+          }
+        }
+      },
+      "RequisitionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Requisition"
+          }
+        }
+      },
+      "RequisitionListResponse": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Requisition"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": ["currentPage", "perPage", "total", "lastPage"],
+            "properties": {
+              "currentPage": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "perPage": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "lastPage": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      },
+      "RequisitionActivityEvent": {
+        "type": "object",
+        "required": ["id", "type", "message", "actor", "occurredAt", "metadata"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["requisition.created", "requisition.updated", "requisition.submitted"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "CreateRequisitionLineItemRequest": {
+        "type": "object",
+        "required": ["name", "quantity", "unit", "estimatedUnitPrice", "currency"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unit": {
+            "type": "string"
+          },
+          "estimatedUnitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          }
+        }
+      },
+      "UpdateRequisitionLineItemRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CreateRequisitionLineItemRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CreateRequisitionRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "businessJustification": {
+            "type": ["string", "null"]
+          },
+          "neededByDate": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "department": {
+            "type": ["string", "null"]
+          },
+          "projectId": {
+            "type": ["string", "null"]
+          },
+          "costCenter": {
+            "type": ["string", "null"]
+          },
+          "deliveryLocation": {
+            "type": ["string", "null"]
+          },
+          "currency": {
+            "type": ["string", "null"],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateRequisitionLineItemRequest"
+            }
+          }
+        }
+      },
+      "UpdateRequisitionRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "businessJustification": {
+            "type": ["string", "null"]
+          },
+          "neededByDate": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "department": {
+            "type": ["string", "null"]
+          },
+          "projectId": {
+            "type": ["string", "null"]
+          },
+          "costCenter": {
+            "type": ["string", "null"]
+          },
+          "deliveryLocation": {
+            "type": ["string", "null"]
+          },
+          "currency": {
+            "type": ["string", "null"],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateRequisitionLineItemRequest"
+            }
+          }
+        }
+      },
+      "SubmitRequisitionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Requisition"
+          }
+        }
+      }
+    }
+  }
 }
