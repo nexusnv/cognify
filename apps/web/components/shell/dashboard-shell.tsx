@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { CommandPaletteHost } from "./command-palette-host";
 import { RightPanelHost } from "./right-panel-host";
 
@@ -8,15 +7,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r bg-card px-4 py-5 md:block">
         <div className="text-lg font-semibold">Cognify</div>
         <nav className="mt-8 flex flex-col gap-2 text-sm text-muted-foreground">
-          <Link className="rounded-md px-2 py-2 text-foreground" href="/dashboard">
-            Dashboard
-          </Link>
-          <Link className="rounded-md px-2 py-2" href="/requisitions">
-            Requisitions
-          </Link>
-          <span className="px-2 py-2">Vendors</span>
-          <span className="px-2 py-2">Approvals</span>
-          <span className="px-2 py-2">Reporting</span>
+          <span>Dashboard</span>
+          <span>Requisitions</span>
+          <span>Vendors</span>
+          <span>Approvals</span>
+          <span>Reporting</span>
         </nav>
       </aside>
       <div className="md:pl-64">
