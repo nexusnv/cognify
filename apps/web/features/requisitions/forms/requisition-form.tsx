@@ -28,7 +28,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     costCenter: initialRequisition?.costCenter ?? "",
     deliveryLocation: initialRequisition?.deliveryLocation ?? "",
     currency: initialRequisition?.currency ?? "MYR",
-    lineItems: initialRequisition?.lineItems.length ? initialRequisition.lineItems : [{ ...emptyLineItem }],
+    lineItems: initialRequisition?.lineItems.length
+      ? initialRequisition.lineItems
+      : [{ ...emptyLineItem }],
   });
   const [requisitionId, setRequisitionId] = useState(initialRequisition?.id);
   const [status, setStatus] = useState(initialRequisition?.status ?? "draft");
@@ -47,7 +49,11 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  function updateLineItem(index: number, field: keyof RequisitionFormValues["lineItems"][number], value: string) {
+  function updateLineItem(
+    index: number,
+    field: keyof RequisitionFormValues["lineItems"][number],
+    value: string,
+  ) {
     setSaveState("unsaved");
     setValues((current) => ({
       ...current,
@@ -55,7 +61,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
         itemIndex === index
           ? {
               ...item,
-              [field]: field === "quantity" || field === "estimatedUnitPrice" ? Number(value) : value,
+              [field]:
+                field === "quantity" || field === "estimatedUnitPrice" ? Number(value) : value,
             }
           : item,
       ),
@@ -98,16 +105,21 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
   }
 
   async function handleConfirmSubmit() {
-    const requisition = requisitionId ? undefined : await handleSaveDraft();
-    const id = requisitionId ?? requisition?.id;
-    if (!id) return;
+    try {
+      const requisition = requisitionId ? undefined : await handleSaveDraft();
+      const id = requisitionId ?? requisition?.id;
+      if (!id) return;
 
-    const response = await submitDraft.mutateAsync(id);
-    setStatus(response.data.status);
-    setRequisitionId(response.data.id);
-    setConfirmOpen(false);
-    setSubmittedNotice(true);
-    toast.success("Requisition submitted");
+      const response = await submitDraft.mutateAsync(id);
+      setStatus(response.data.status);
+      setRequisitionId(response.data.id);
+      setConfirmOpen(false);
+      setSubmittedNotice(true);
+      toast.success("Requisition submitted");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to submit requisition";
+      toast.error(message);
+    }
   }
 
   function focusFirstInvalidField() {
@@ -122,11 +134,15 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
       <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">New requisition</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Create a draft, review the checklist, then submit for review.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create a draft, review the checklist, then submit for review.
+          </p>
           <p className="mt-2 text-sm" aria-live="polite">
             {submittedNotice ? "Requisition submitted" : saveStateLabel(saveState)}
           </p>
-          <p className="mt-1 text-sm font-medium">{status === "submitted" ? "Submitted" : "Draft"}</p>
+          <p className="mt-1 text-sm font-medium">
+            {status === "submitted" ? "Submitted" : "Draft"}
+          </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
@@ -149,7 +165,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
       </div>
 
       {errorSummary.length > 0 ? (
-        <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+        <div
+          role="alert"
+          className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+        >
           <p className="font-medium">Complete the highlighted fields before submitting.</p>
         </div>
       ) : null}
@@ -194,7 +213,12 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               <button
                 type="button"
                 className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium"
-                onClick={() => setValues((current) => ({ ...current, lineItems: [...current.lineItems, { ...emptyLineItem }] }))}
+                onClick={() =>
+                  setValues((current) => ({
+                    ...current,
+                    lineItems: [...current.lineItems, { ...emptyLineItem }],
+                  }))
+                }
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add item
@@ -240,7 +264,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.estimatedUnitPrice}
                       aria-invalid={Boolean(errors.lineItems)}
-                      onChange={(event) => updateLineItem(index, "estimatedUnitPrice", event.target.value)}
+                      onChange={(event) =>
+                        updateLineItem(index, "estimatedUnitPrice", event.target.value)
+                      }
                     />
                   </Field>
                   <Field label={`Currency ${index + 1}`}>
@@ -272,7 +298,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 </div>
               ))}
             </div>
-            {errors.lineItems?.[0] ? <p className="text-sm text-red-700">{errors.lineItems[0]}</p> : null}
+            {errors.lineItems?.[0] ? (
+              <p className="text-sm text-red-700">{errors.lineItems[0]}</p>
+            ) : null}
           </section>
 
           <section className="space-y-3 rounded-md border p-4">
@@ -321,7 +349,15 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactElement<{ id: string }> }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactElement<{ id: string }>;
+}) {
   const id = children.props.id;
 
   return (

@@ -161,6 +161,31 @@ class RequisitionApiTest extends TestCase
         $response->assertNotFound();
     }
 
+    public function test_multi_tenant_user_must_send_tenant_header(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+        $otherTenant = Tenant::query()->create(['name' => 'Second tenant']);
+        $otherTenant->users()->attach($user->id, ['role' => 'requester']);
+        $this->createDraft($tenant, $user);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/requisitions')
+            ->assertStatus(400)
+            ->assertJsonPath('message', 'X-Tenant-Id header is required for users with multiple tenants.');
+    }
+
+    public function test_requisition_list_clamps_per_page(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+        $this->createDraft($tenant, $user);
+
+        $this->actingAsTenant($tenant, $user)
+            ->getJson('/api/requisitions?perPage=500')
+            ->assertOk()
+            ->assertJsonPath('meta.perPage', 100);
+    }
+
     public function test_buyer_and_approver_can_view_submitted_requisitions(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

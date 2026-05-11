@@ -1,5 +1,6 @@
 <?php
 
+use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,6 +9,16 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::create('requisition_sequences', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
+            $table->unsignedSmallInteger('year');
+            $table->unsignedInteger('last_number')->default(0);
+            $table->timestamps();
+
+            $table->unique(['tenant_id', 'year']);
+        });
+
         Schema::create('requisitions', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
@@ -21,7 +32,8 @@ return new class extends Migration
             $table->string('cost_center')->nullable();
             $table->text('delivery_location')->nullable();
             $table->char('currency', 3)->default('MYR');
-            $table->string('status');
+            $table->enum('status', array_column(RequisitionStatus::cases(), 'value'))
+                ->default(RequisitionStatus::Draft->value);
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
 
@@ -34,5 +46,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('requisitions');
+        Schema::dropIfExists('requisition_sequences');
     }
 };

@@ -9,7 +9,12 @@ export function RequisitionActivityTimeline({ events }: { events: RequisitionAct
   return (
     <ol className="space-y-3">
       {events.map((event) => {
-        const Icon = event.type === "requisition.submitted" ? Send : event.type === "requisition.updated" ? CheckCircle2 : FileClock;
+        const Icon =
+          event.type === "requisition.submitted"
+            ? Send
+            : event.type === "requisition.updated"
+              ? CheckCircle2
+              : FileClock;
 
         return (
           <li key={event.id} className="flex gap-3 rounded-md border p-3">
@@ -19,7 +24,7 @@ export function RequisitionActivityTimeline({ events }: { events: RequisitionAct
             <div>
               <p className="text-sm font-medium">{event.message}</p>
               <p className="text-sm text-muted-foreground">
-                {event.actor.name} · {new Date(event.occurredAt).toLocaleString("en-MY")}
+                {event.actor?.name ?? "System"} · {new Date(event.occurredAt).toLocaleString()}
               </p>
             </div>
           </li>

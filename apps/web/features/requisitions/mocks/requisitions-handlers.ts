@@ -4,7 +4,14 @@ import { requisitionActivityFixtures, requisitionFixtures } from "./requisitions
 import type { Requisition, RequisitionFormValues } from "../types/requisition-view-model";
 
 let requisitions = [...requisitionFixtures];
-const activity = { ...requisitionActivityFixtures };
+let activity = structuredClone(requisitionActivityFixtures);
+let requisitionSequence = requisitionFixtures.length;
+
+export function resetRequisitionMockState() {
+  requisitions = [...requisitionFixtures];
+  activity = structuredClone(requisitionActivityFixtures);
+  requisitionSequence = requisitionFixtures.length;
+}
 
 export const requisitionsHandlers = [
   http.get("/api/requisitions", ({ request }) => {
@@ -34,7 +41,8 @@ export const requisitionsHandlers = [
 
   http.post("/api/requisitions", async ({ request }) => {
     const values = (await request.json()) as RequisitionFormValues;
-    const requisition = buildRequisition(values, `req-${Date.now()}`, "draft");
+    const id = `req-${Date.now()}`;
+    const requisition = buildRequisition(values, id, "draft", nextRequisitionNumber());
 
     requisitions = [requisition, ...requisitions];
     activity[requisition.id] = [
@@ -54,7 +62,10 @@ export const requisitionsHandlers = [
     const requisition = requisitions.find((item) => item.id === params.requisitionId);
 
     if (!requisition) {
-      return HttpResponse.json({ message: "Requisition not found", code: "not_found" }, { status: 404 });
+      return HttpResponse.json(
+        { message: "Requisition not found", code: "not_found" },
+        { status: 404 },
+      );
     }
 
     return HttpResponse.json({ data: requisition });
@@ -65,7 +76,10 @@ export const requisitionsHandlers = [
     const existing = requisitions.find((item) => item.id === params.requisitionId);
 
     if (!existing) {
-      return HttpResponse.json({ message: "Requisition not found", code: "not_found" }, { status: 404 });
+      return HttpResponse.json(
+        { message: "Requisition not found", code: "not_found" },
+        { status: 404 },
+      );
     }
 
     if (existing.status !== "draft") {
@@ -75,7 +89,13 @@ export const requisitionsHandlers = [
       );
     }
 
-    const updated = buildRequisition(values, existing.id, "draft", existing.number);
+    const updated = buildRequisition(
+      values,
+      existing.id,
+      "draft",
+      existing.number,
+      existing.createdAt,
+    );
     requisitions = requisitions.map((item) => (item.id === existing.id ? updated : item));
     activity[updated.id] = [
       ...(activity[updated.id] ?? []),
@@ -95,7 +115,10 @@ export const requisitionsHandlers = [
     const existing = requisitions.find((item) => item.id === params.requisitionId);
 
     if (!existing) {
-      return HttpResponse.json({ message: "Requisition not found", code: "not_found" }, { status: 404 });
+      return HttpResponse.json(
+        { message: "Requisition not found", code: "not_found" },
+        { status: 404 },
+      );
     }
 
     if (existing.status !== "draft") {
@@ -141,7 +164,8 @@ function buildRequisition(
   values: RequisitionFormValues,
   id: string,
   status: Requisition["status"],
-  number = "REQ-2026-000099",
+  number: string,
+  createdAt?: string,
 ): Requisition {
   const totals = calculateEstimatedTotal(values.lineItems);
   const now = new Date().toISOString();
@@ -169,7 +193,7 @@ function buildRequisition(
       id: item.id ?? `line-${id}-${index + 1}`,
       estimatedLineTotal: totals.lineTotals[index],
     })),
-    createdAt: now,
+    createdAt: createdAt ?? now,
     updatedAt: now,
     submittedAt: status === "submitted" ? now : null,
     permissions: {
@@ -178,4 +202,9 @@ function buildRequisition(
       canViewActivity: true,
     },
   };
+}
+
+function nextRequisitionNumber() {
+  requisitionSequence += 1;
+  return `REQ-2026-${String(requisitionSequence).padStart(6, "0")}`;
 }

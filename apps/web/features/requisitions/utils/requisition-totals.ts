@@ -31,7 +31,9 @@ export function buildSubmissionChecklist(values: Partial<RequisitionFormValues>)
     {
       id: "summary",
       label: "Request summary is complete",
-      complete: Boolean(values.title?.trim() && values.businessJustification?.trim() && values.neededByDate),
+      complete: Boolean(
+        values.title?.trim() && values.businessJustification?.trim() && values.neededByDate,
+      ),
     },
     {
       id: "line-items",
@@ -55,8 +57,8 @@ export function buildSubmissionChecklist(values: Partial<RequisitionFormValues>)
   ] satisfies SubmissionChecklistItem[];
 }
 
-export function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-MY", {
+export function formatMoney(amount: number, currency: string, locale = "en-MY") {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 2,

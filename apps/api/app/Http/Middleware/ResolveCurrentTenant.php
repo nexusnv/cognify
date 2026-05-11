@@ -23,7 +23,15 @@ class ResolveCurrentTenant
         abort_unless($user !== null, 401);
 
         $tenantId = $request->header('X-Tenant-Id');
-        $tenant = $tenantId
+        if ($tenantId === null || $tenantId === '') {
+            abort_if(
+                $user->tenants()->count() > 1,
+                400,
+                'X-Tenant-Id header is required for users with multiple tenants.',
+            );
+        }
+
+        $tenant = $tenantId !== null && $tenantId !== ''
             ? Tenant::query()->whereKey($tenantId)->first()
             : $user->tenants()->first();
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Auth\TenantRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -18,7 +19,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('role');
+            $table->enum('role', array_column(TenantRole::cases(), 'value'));
             $table->timestamps();
 
             $table->unique(['tenant_id', 'user_id']);

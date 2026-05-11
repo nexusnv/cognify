@@ -49,7 +49,7 @@ export type RequisitionActivityEvent = {
   id: string;
   type: "requisition.created" | "requisition.updated" | "requisition.submitted";
   message: string;
-  actor: UserSummary;
+  actor: UserSummary | null;
   occurredAt: string;
   metadata?: Record<string, string | number | boolean | null>;
 };

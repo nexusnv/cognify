@@ -48,7 +48,8 @@ class RequisitionController extends Controller
         $query->when($request->query('neededByFrom'), fn ($query, string $date) => $query->whereDate('needed_by_date', '>=', $date));
         $query->when($request->query('neededByTo'), fn ($query, string $date) => $query->whereDate('needed_by_date', '<=', $date));
 
-        $paginator = $query->paginate((int) $request->integer('perPage', 15));
+        $perPage = max(1, min($request->integer('perPage', 15), 100));
+        $paginator = $query->paginate($perPage);
 
         return response()->json([
             'data' => RequisitionResource::collection($paginator->getCollection())->resolve(),

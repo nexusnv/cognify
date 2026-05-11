@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRequisitions } from "../hooks/use-requisitions";
 import { RequisitionsTable } from "../tables/requisitions-table";
 
 export function RequisitionListPage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [status, setStatus] = useState("");
-  const query = useMemo(() => ({ search, status }), [search, status]);
+  const query = useMemo(() => ({ search: debouncedSearch, status }), [debouncedSearch, status]);
   const { data, isLoading, isError, refetch } = useRequisitions(query);
   const requisitions = data?.data ?? [];
   const filtered = Boolean(search || status);
@@ -19,7 +20,9 @@ export function RequisitionListPage() {
       <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Requisitions</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Find drafts, submitted requests, and sourcing handoffs.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Find drafts, submitted requests, and sourcing handoffs.
+          </p>
         </div>
         <Link
           href="/requisitions/new"
@@ -67,22 +70,44 @@ export function RequisitionListPage() {
       {isError ? (
         <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
           <p className="font-medium">Requisitions could not be loaded.</p>
-          <button type="button" className="mt-3 min-h-11 rounded-md border bg-white px-3" onClick={() => refetch()}>
+          <button
+            type="button"
+            className="mt-3 min-h-11 rounded-md border bg-white px-3"
+            onClick={() => refetch()}
+          >
             Retry
           </button>
         </div>
       ) : null}
       {!isLoading && !isError && requisitions.length === 0 ? (
         <div className="rounded-md border p-6">
-          <h2 className="text-base font-semibold">{filtered ? "No requisitions match these filters" : "No requisitions yet"}</h2>
+          <h2 className="text-base font-semibold">
+            {filtered ? "No requisitions match these filters" : "No requisitions yet"}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {filtered ? "Clear filters to see the full work queue." : "Create the first draft requisition for this tenant."}
+            {filtered
+              ? "Clear filters to see the full work queue."
+              : "Create the first draft requisition for this tenant."}
           </p>
         </div>
       ) : null}
-      {!isLoading && !isError && requisitions.length > 0 ? <RequisitionsTable requisitions={requisitions} /> : null}
+      {!isLoading && !isError && requisitions.length > 0 ? (
+        <RequisitionsTable requisitions={requisitions} />
+      ) : null}
     </section>
   );
+}
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedValue(value), delay);
+
+    return () => window.clearTimeout(timeout);
+  }, [delay, value]);
+
+  return debouncedValue;
 }
 
 function TableSkeleton() {

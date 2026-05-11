@@ -14,16 +14,27 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
   const requisition = requisitionQuery.data;
 
   if (requisitionQuery.isLoading) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading requisition workspace</div>;
+    return (
+      <div className="rounded-md border p-4 text-sm text-muted-foreground">
+        Loading requisition workspace
+      </div>
+    );
   }
 
   if (requisitionQuery.isError || !requisition) {
-    return <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Requisition could not be loaded.</div>;
+    return (
+      <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
+        Requisition could not be loaded.
+      </div>
+    );
   }
 
   return (
     <section className="space-y-5">
-      <Link href="/requisitions" className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm">
+      <Link
+        href="/requisitions"
+        className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm"
+      >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to requisitions
       </Link>
@@ -37,7 +48,9 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-muted-foreground">Estimated total</dt>
-              <dd className="font-mono font-semibold tabular-nums">{formatMoney(requisition.estimatedTotal, requisition.currency)}</dd>
+              <dd className="font-mono font-semibold tabular-nums">
+                {formatMoney(requisition.estimatedTotal, requisition.currency)}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Needed by</dt>
@@ -51,19 +64,27 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
         </div>
         <div className="space-y-2 rounded-md border p-3">
           {requisition.permissions.canUpdate ? (
-            <Link href={`/requisitions/${requisition.id}/edit`} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium">
+            <Link
+              href={`/requisitions/${requisition.id}/edit`}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium"
+            >
               <Pencil className="h-4 w-4" aria-hidden="true" />
               Edit draft
             </Link>
           ) : null}
           {requisition.permissions.canSubmit ? (
-            <Link href={`/requisitions/${requisition.id}/edit`} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-foreground px-3 text-sm font-medium text-background">
+            <Link
+              href={`/requisitions/${requisition.id}/edit`}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-foreground px-3 text-sm font-medium text-background"
+            >
               <Send className="h-4 w-4" aria-hidden="true" />
-              Submit
+              Review & Submit
             </Link>
           ) : null}
           {!requisition.permissions.canSubmit && !requisition.permissions.canUpdate ? (
-            <p className="text-sm text-muted-foreground">Requester editing is locked after submission.</p>
+            <p className="text-sm text-muted-foreground">
+              Requester editing is locked after submission.
+            </p>
           ) : null}
         </div>
       </div>
@@ -78,13 +99,19 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
             <h2 className="text-base font-semibold">Line items</h2>
             <div className="mt-3 space-y-2">
               {requisition.lineItems.map((item) => (
-                <div key={item.id ?? item.name} className="grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-[minmax(0,1fr)_7rem_8rem]">
+                <div
+                  key={item.id ?? item.name}
+                  className="grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-[minmax(0,1fr)_7rem_8rem]"
+                >
                   <span className="font-medium">{item.name}</span>
                   <span className="tabular-nums">
                     {item.quantity} {item.unit}
                   </span>
                   <span className="font-mono tabular-nums">
-                    {formatMoney(item.estimatedLineTotal ?? item.quantity * item.estimatedUnitPrice, item.currency)}
+                    {formatMoney(
+                      item.estimatedLineTotal ?? item.quantity * item.estimatedUnitPrice,
+                      item.currency,
+                    )}
                   </span>
                 </div>
               ))}
@@ -112,7 +139,9 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           />
           <section className="rounded-md border p-4">
             <h2 className="text-base font-semibold">Approval readiness</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Approval routing will attach here after the submitted workflow is active.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Approval routing will attach here after the submitted workflow is active.
+            </p>
           </section>
         </div>
       </div>
