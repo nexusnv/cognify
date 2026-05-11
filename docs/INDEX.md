@@ -3,6 +3,7 @@
 ## Product
 
 - `01-product/README.md`
+- `01-product/feature-roadmap.md`
 
 ## Release Management
 
