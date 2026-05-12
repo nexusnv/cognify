@@ -6,5 +6,6 @@ export function useCurrentUser() {
     queryKey: ["identity", "current-user"],
     queryFn: getCurrentUser,
     retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 }

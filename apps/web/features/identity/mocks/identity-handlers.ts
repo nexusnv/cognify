@@ -17,6 +17,7 @@ export const identityHandlers = [
   }),
   http.post("/api/auth/logout", () => {
     authenticated = false;
+    currentIdentity = requesterIdentity;
     return new HttpResponse(null, { status: 204 });
   }),
   http.post("/api/auth/forgot-password", () => new HttpResponse(null, { status: 204 })),
@@ -27,6 +28,10 @@ export const identityHandlers = [
     return HttpResponse.json({ data: currentIdentity });
   }),
   http.patch("/api/me/profile", async ({ request }) => {
+    if (!authenticated) {
+      return HttpResponse.json({ message: "Unauthenticated." }, { status: 401 });
+    }
+
     const body = (await request.json()) as Partial<CurrentUserContext["user"]>;
     currentIdentity = {
       ...currentIdentity,

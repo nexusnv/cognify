@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./endpoints": "./src/generated/endpoints.ts",
+    "./schemas": "./src/generated/schemas/index.ts"
   },
   "scripts": {
     "check:contract": "test -f ../../apps/api/storage/openapi/openapi.json",

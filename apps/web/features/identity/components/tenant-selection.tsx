@@ -3,21 +3,28 @@
 import { useCurrentUser } from "../hooks/use-current-user";
 import { setCurrentTenant } from "../api/identity-api";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 export function TenantSelection() {
   const { data } = useCurrentUser();
   const queryClient = useQueryClient();
+  const [selectingTenantId, setSelectingTenantId] = useState<string | null>(null);
 
   const tenants = data?.data.tenants ?? [];
 
   if (tenants.length <= 1) return null;
 
   const handleSelect = async (tenantId: string) => {
+    if (selectingTenantId) return;
+
+    setSelectingTenantId(tenantId);
     try {
       await setCurrentTenant(tenantId);
       queryClient.invalidateQueries({ queryKey: ["identity", "current-user"] });
     } catch {
       // handled by caller
+    } finally {
+      setSelectingTenantId(null);
     }
   };
 
@@ -34,9 +41,11 @@ export function TenantSelection() {
           <button
             key={tenant.id}
             onClick={() => handleSelect(tenant.id)}
-            className="rounded-md border bg-card px-4 py-3 text-left text-sm font-medium hover:bg-accent"
+            disabled={selectingTenantId !== null}
+            aria-busy={selectingTenantId === tenant.id}
+            className="rounded-md border bg-card px-4 py-3 text-left text-sm font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {tenant.name}
+            {selectingTenantId === tenant.id ? "Selecting..." : tenant.name}
           </button>
         ))}
       </div>

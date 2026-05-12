@@ -7,8 +7,18 @@ import {
   type ProfileFormValues,
 } from "../schemas/profile-schema";
 import { useProfileUpdate } from "../hooks/use-profile-update";
-import type { CurrentUserProfile } from "@cognify/api-client";
+import type { CurrentUserProfile } from "@cognify/api-client/schemas";
 import { useEffect } from "react";
+
+function getProfileFormValues(profile: CurrentUserProfile): ProfileFormValues {
+  return {
+    name: profile.name,
+    avatarUrl: profile.avatarUrl || "",
+    timezone: profile.timezone,
+    locale: profile.locale,
+    theme: profile.theme,
+  };
+}
 
 export function ProfileForm({
   profile,
@@ -24,23 +34,11 @@ export function ProfileForm({
     formState: { errors, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: profile.name,
-      avatarUrl: profile.avatarUrl || "",
-      timezone: profile.timezone,
-      locale: profile.locale,
-      theme: profile.theme,
-    },
+    defaultValues: getProfileFormValues(profile),
   });
 
   useEffect(() => {
-    reset({
-      name: profile.name,
-      avatarUrl: profile.avatarUrl || "",
-      timezone: profile.timezone,
-      locale: profile.locale,
-      theme: profile.theme,
-    });
+    reset(getProfileFormValues(profile));
   }, [profile, reset]);
 
   const onSubmit = async (values: ProfileFormValues) => {

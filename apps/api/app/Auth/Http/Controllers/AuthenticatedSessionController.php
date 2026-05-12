@@ -11,7 +11,7 @@ class AuthenticatedSessionController
 {
     public function store(LoginRequest $request): JsonResponse
     {
-        $authenticated = Auth::attempt(
+        $authenticated = Auth::guard('web')->attempt(
             $request->only('email', 'password'),
             $request->boolean('remember'),
         );

@@ -4,16 +4,16 @@ import {
   logout as logoutEndpoint,
   setCurrentTenant as setCurrentTenantEndpoint,
   updateCurrentUserProfile as updateCurrentUserProfileEndpoint,
-  type CurrentUserResponse,
-  type LoginRequest,
-  type SetCurrentTenantRequest,
-  type UpdateCurrentUserProfileRequest,
-} from "@cognify/api-client";
+} from "@cognify/api-client/endpoints";
+import type {
+  LoginRequest,
+  SetCurrentTenantRequest,
+  UpdateCurrentUserProfileRequest,
+} from "@cognify/api-client/schemas";
 import type { LoginFormValues } from "../schemas/login-schema";
 import type { ProfileFormValues } from "../schemas/profile-schema";
 
 const ACTIVE_TENANT_KEY = "cognify.activeTenantId";
-type SuccessfulResponse<T> = { data: T };
 
 export function getStoredActiveTenantId() {
   if (typeof window === "undefined") return null;
@@ -35,9 +35,8 @@ export async function logout() {
 }
 
 export async function getCurrentUser() {
-  const response = (await getCurrentUserEndpoint(
-    withActiveTenantHeader(),
-  )) as SuccessfulResponse<CurrentUserResponse>;
+  const response = await getCurrentUserEndpoint(withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
   return response.data;
 }
 
@@ -46,18 +45,18 @@ export async function updateCurrentUserProfile(values: ProfileFormValues) {
     ...values,
     avatarUrl: values.avatarUrl || null,
   } satisfies UpdateCurrentUserProfileRequest;
-  const response = (await updateCurrentUserProfileEndpoint(
+  const response = await updateCurrentUserProfileEndpoint(
     request,
     withActiveTenantHeader(),
-  )) as SuccessfulResponse<CurrentUserResponse>;
+  );
+  if (response.status !== 200) throw response.data;
   return response.data;
 }
 
 export async function setCurrentTenant(tenantId: string) {
   const request = { tenantId } satisfies SetCurrentTenantRequest;
-  const response = (await setCurrentTenantEndpoint(
-    request,
-  )) as SuccessfulResponse<CurrentUserResponse>;
+  const response = await setCurrentTenantEndpoint(request);
+  if (response.status !== 200) throw response.data;
   storeActiveTenantId(tenantId);
   return response.data;
 }

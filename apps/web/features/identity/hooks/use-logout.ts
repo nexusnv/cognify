@@ -8,7 +8,6 @@ export function useLogout() {
     mutationKey: ["identity", "logout"],
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["identity", "current-user"] });
       queryClient.clear();
     },
   });

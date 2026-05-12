@@ -18,8 +18,10 @@ Route::get('/health', static function (): JsonResponse {
 });
 
 // Public auth routes
-Route::post('/auth/login', [AuthenticatedSessionController::class, 'store']);
-Route::post('/auth/forgot-password', [AuthenticatedSessionController::class, 'forgotPassword']);
+Route::middleware('throttle:5,1')->group(function (): void {
+    Route::post('/auth/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/auth/forgot-password', [AuthenticatedSessionController::class, 'forgotPassword']);
+});
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function (): void {

@@ -7,7 +7,10 @@
 
 export interface LoginRequest {
   email: string;
-  /** @minLength 8 */
+  /**
+   * @minLength 8
+   * @maxLength 255
+   */
   password: string;
   remember?: boolean;
 }

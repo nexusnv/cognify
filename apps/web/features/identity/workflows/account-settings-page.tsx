@@ -17,9 +17,7 @@ export function AccountSettingsPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-semibold" role="heading" aria-level={1}>
-        Account settings
-      </h1>
+      <h1 className="text-2xl font-semibold">Account settings</h1>
       <div className="mt-6">
         <ProfileForm profile={profile} />
       </div>

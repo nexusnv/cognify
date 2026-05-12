@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class UpdateProfileRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'avatarUrl' => ['nullable', 'url', 'max:2048'],
             'timezone' => ['required', 'timezone', 'max:64'],
-            'locale' => ['required', 'string', 'min:2', 'max:12'],
+            'locale' => ['required', 'string', Rule::in(config('app.supported_locales', ['en']))],
             'theme' => ['required', 'in:light,dark,system'],
         ];
     }
