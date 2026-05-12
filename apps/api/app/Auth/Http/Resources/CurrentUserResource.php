@@ -21,12 +21,13 @@ class CurrentUserResource extends JsonResource
         $currentTenant = app(CurrentTenant::class);
         $resolver = app(TenantPermissionResolver::class);
         $tenant = $currentTenant->get();
+        $user = $request->user();
         $memberships = $this->tenants->map(fn ($tenant) => [
             'id' => (string) $tenant->id,
             'name' => $tenant->name,
             'role' => $tenant->pivot->role,
         ]);
-        $role = $tenant?->pivot?->role;
+        $role = $currentTenant->roleFor($user);
 
         return [
             'user' => [

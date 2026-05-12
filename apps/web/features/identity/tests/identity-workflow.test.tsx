@@ -8,6 +8,8 @@ import { LoginPage } from "../workflows/login-page";
 import { SessionGate } from "../workflows/session-gate";
 import { AccountSettingsPage } from "../workflows/account-settings-page";
 import { resetIdentityMockState } from "../mocks/identity-handlers";
+import { multiTenantIdentity } from "../mocks/identity-fixtures";
+import type { CurrentUserContext } from "../types/identity-view-model";
 
 function renderWithQuery(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -38,32 +40,9 @@ describe("identity workflow", () => {
   });
 
   it("requires tenant selection for a multi-tenant identity", async () => {
-    // Use a mutable store for the multi-tenant identity so the POST handler
+    // Use a mutable store initialized from the fixture so the POST handler
     // can update the active tenant and GET will return the updated state.
-    let identity = {
-      user: {
-        id: "1",
-        name: "Test User",
-        email: "test@example.com",
-        avatarUrl: null,
-        timezone: "Asia/Kuala_Lumpur",
-        locale: "en",
-        theme: "system",
-      },
-      tenants: [
-        { id: "1", name: "Acme Procurement", role: "requester" },
-        { id: "2", name: "Northwind Sourcing", role: "buyer" },
-      ],
-      activeTenant: null as { id: string; name: string } | null,
-      activeRole: null as string | null,
-      permissions: {
-        canCreateRequisition: false,
-        canViewSubmittedRequisitions: false,
-        canUpdateOwnDraftRequisition: false,
-        canSubmitOwnDraftRequisition: false,
-        canAccessAdmin: false,
-      },
-    };
+    let identity: CurrentUserContext = structuredClone(multiTenantIdentity);
 
     server.use(
       http.get("/api/me", () => {
