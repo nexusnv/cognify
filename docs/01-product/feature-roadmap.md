@@ -2,6 +2,7 @@
 
 ## Changelog
 
+- 2026-05-12: Added implementation grouping, ownership mapping, and parallelization guidance.
 - 2026-05-11: Initial comprehensive feature inventory and implementation-priority roadmap.
 
 ## Purpose
@@ -663,6 +664,107 @@ Optimize approval, comment, notification, and quick review workflows for mobile.
 ### Offline Review Packs
 
 Generate offline review packs for restricted environments or executive review. Any offline export should include watermarking, access controls, and audit logging.
+
+## Implementation Grouping Model
+
+The feature list above is a product capability inventory. It should not be interpreted as one development runbook cycle per heading. Cognify should implement the roadmap through grouped vertical slices that follow `docs/05-runbooks/feature-development.md` once per coherent workflow slice.
+
+### Capability Ownership Rules
+
+Each roadmap capability should have one primary frontend feature group and one primary backend domain, even when implementation touches multiple areas. This keeps ownership clear while allowing workflow slices to span the full product.
+
+| Rule | Guidance |
+| --- | --- |
+| Primary web feature group | Choose the `apps/web/features/*` area that owns the user's main workflow surface. |
+| Primary API domain | Choose the `apps/api/Domains/*` area that owns the durable business state transition. |
+| Supporting domains | Use supporting domains for side effects, read models, related records, evidence, metrics, AI, and audit. |
+| Cross-cutting infrastructure | Put tenancy, auth, audit, notifications, observability, and framework integration under `apps/api/app/*`, not inside product domains unless the behavior is domain-specific. |
+| Shared packages | Use `packages/ui`, `packages/types`, and `packages/schemas` only for stable reusable contracts or primitives, not Cognify business workflows. |
+
+### Capability To Code Ownership Map
+
+| Capability area | Primary web group | Primary API domain | Common supporting areas |
+| --- | --- | --- | --- |
+| Requisition lifecycle | `apps/web/features/requisitions` | `apps/api/Domains/Requisition` | `Approval`, `EvidenceVault`, `Metric`, `app/Audit`, `app/Tenancy` |
+| Approval workflow | `apps/web/features/approvals` | `apps/api/Domains/Approval` | `Requisition`, `Metric`, `app/Audit`, future notification infrastructure |
+| Buyer intake and sourcing | `apps/web/features/sourcing` or `apps/web/features/quotations` | `apps/api/Domains/Quotation` | `Requisition`, `Vendor`, `EvidenceVault`, `Approval` |
+| Vendor management | `apps/web/features/vendors` | `apps/api/Domains/Vendor` | `EvidenceVault`, `Metric`, `Ai`, `app/Audit` |
+| Quotation intake and comparison | `apps/web/features/quotations` | `apps/api/Domains/Quotation` | `Vendor`, `EvidenceVault`, `Ai`, `Metric`, `Approval` |
+| Award decision | `apps/web/features/awards` or `apps/web/features/quotations` until awards becomes large enough | `apps/api/Domains/Quotation` initially, later `Award` if split out | `Requisition`, `Approval`, `EvidenceVault`, `Metric`, `app/Audit` |
+| Evidence vault and attachments | `apps/web/features/evidence-vault` | `apps/api/Domains/EvidenceVault` | `Requisition`, `Quotation`, `Vendor`, `Ai`, `app/Audit` |
+| AI extraction, summaries, and risk explanation | `apps/web/features/ai` for shared surfaces, embedded components inside owning workflow features | `apps/api/Domains/Ai` | `EvidenceVault`, `Requisition`, `Quotation`, `Vendor`, `Metric` |
+| Reporting and analytics | `apps/web/features/reporting` | `apps/api/Domains/Reporting` and `apps/api/Domains/Metric` | Read models/events from all workflow domains |
+| Project workspace | `apps/web/features/projects` | `apps/api/Domains/Project` | `Requisition`, `Approval`, `Quotation`, `Metric` |
+| Tenant administration, roles, and settings | `apps/web/features/admin` or `apps/web/features/settings` | `apps/api/app/Auth` and `apps/api/app/Tenancy` | All domains through policies and membership checks |
+| Enterprise integrations | `apps/web/features/integrations` | Integration-specific services under `apps/api/app/*` until a business domain emerges | `Vendor`, `Quotation`, `EvidenceVault`, `Reporting`, `app/Audit` |
+
+Implementation note: do not create all listed web feature groups immediately. Create a group when there is a real route, workflow, hook, mock, or test to place there.
+
+### Runbook Scope
+
+The nine-phase feature-development runbook applies to an implementation slice, not every roadmap heading.
+
+| Planning unit | Purpose | Uses full runbook? | Example |
+| --- | --- | --- | --- |
+| Product capability | Names a possible product behavior. | No. | "Approval SLA tracking" |
+| Epic | Groups related capabilities around a workflow outcome. | Partially, for planning and dependency tracking. | "Approval Baseline" |
+| Implementation slice | A thin, end-to-end workflow increment. | Yes. | "Submitted requisition creates approval task and approver can approve or reject" |
+| Task | A small engineering step inside a slice. | No. | "Add `ApprovalTask` model" |
+
+This keeps the runbook useful without making the roadmap unbuildable. A slice should still be small enough to review, test, and merge safely.
+
+### Recommended Epics And Slices
+
+| Epic | Candidate capabilities to group | First implementation slice | Depends on | Parallelization notes |
+| --- | --- | --- | --- | --- |
+| Requisition Foundation | List/detail hardening, comments, mentions, change requests, cancellation, templates, line item suggestions | Requisition comments and change requests with activity timeline | Existing requisition draft/submission | Mostly sequential until the requisition workspace is stable |
+| Approval Baseline | Routing rules, approval tasks, sequential approvals, approve/reject, request changes, SLA basics, policy preview | Submitted requisition creates approval task; approver can approve, reject, or request changes | Requisition submission and role baseline | Can run in parallel with Vendor Foundation after requisition contracts stabilize |
+| Vendor Foundation | Vendor records, contacts, preferred/restricted status, supplier documents, performance placeholders | Vendor list/detail plus tenant-scoped vendor create/update | Tenant, roles, table/form foundation | Good parallel candidate because it has limited dependency on approvals |
+| Buyer Intake And RFQ | Buyer intake queue, RFQ creation, vendor invitation, procurement calendar dates | Buyer converts submitted requisition into RFQ and invites vendors | Requisition submission, Vendor Foundation for real invitations | Can start with mocked vendors, but real invitation should wait for Vendor Foundation |
+| Quotation Intake | Quotation upload, manual entry, versioning, vendor portal baseline | Buyer uploads or manually records quotation against RFQ | RFQ creation, file attachment baseline | Can parallelize upload/manual-entry UI and backend storage if OpenAPI is agreed first |
+| Quotation Comparison And Award | Normalization, comparison table, scoring matrix, recommendation, award approval, PO handoff | Compare normalized quotation line items and record recommendation rationale | Quotation Intake, Vendor Foundation | Should wait for stable quotation schema |
+| Evidence Vault Baseline | Attachments, classification, preview, annotation, evidence links, audit pack foundation | Attach files to requisitions/quotations and show evidence timeline | File attachment baseline, requisition or quotation records | Can run parallel with Approval Baseline if storage contract is stable |
+| Policy And Governance | Policy rules, exceptions, conflict declarations, preferred vendor controls, required evidence | Enforce minimum quote count and threshold warning for award/requisition | Approval, RFQ, quotation, evidence records | Should follow enough workflow data to avoid speculative rules |
+| AI And OCR Assistance | OCR extraction, review queue, confidence, AI summaries, AI comparison narrative, risk explanation | OCR extraction suggestion from uploaded quotation with human review | Evidence Vault, Quotation Intake, AI provider/fallback | Can split into OCR pipeline and UI review once evidence contracts are stable |
+| Reporting And Metrics | Spend dashboard, cycle time, savings, compliance, executive summary, saved views | Requisition and approval cycle-time dashboard from existing events | Audit/activity events, Approval Baseline | Best after workflows emit consistent events |
+| Enterprise Administration | Org structure, approval matrix admin, policy admin, user provisioning, SSO, SCIM, retention, audit console | Admin-managed approval threshold matrix | Approval Baseline, role/permission model | Some identity work can run separately, but policy admin depends on actual policies |
+| Integrations | ERP export/integration, accounting sync, email intake, webhooks, public API, imports | Approved award export as CSV/JSON | Award decision and vendor master data | External integrations should wait until internal workflow state is stable |
+| Strategic Procurement | Strategic sourcing, multi-round RFQ, scenario modeling, split awards, benchmarking, scorecards | Multi-round RFQ revision workflow | RFQ, quotation comparison, award decision | Later-stage work; can parallelize by subdomain after core sourcing matures |
+
+### Dependency Lanes
+
+Use these lanes to decide whether two implementation slices can safely run in parallel:
+
+| Lane | Examples | Parallelization guidance |
+| --- | --- | --- |
+| Core workflow lane | Requisition, approval, RFQ, quotation, award | Usually sequential because each state transition feeds the next. |
+| Master data lane | Vendors, categories, departments, cost centers, projects | Can often run in parallel once tenancy and permissions are stable. |
+| Evidence and file lane | Attachments, evidence vault, OCR inputs, audit packs | Can run in parallel with core workflow after storage and ownership rules are decided. |
+| Intelligence lane | AI summaries, extraction, risk scoring, recommendations | Should wait for stable source records, but pipeline and UI review can split after contracts are agreed. |
+| Analytics lane | Metrics, reports, dashboards, saved views | Should follow real events and state transitions; early read-only dashboards can run in parallel with mature workflows. |
+| Enterprise/admin lane | SSO, SCIM, policy admin, retention, integrations | Identity/admin work can run separately; workflow-specific admin should wait for the workflow it configures. |
+
+Parallel work is safe when slices have different write surfaces, stable API contracts, and no unresolved ownership conflict. If two slices need to mutate the same OpenAPI resource, database table, or workflow state machine, sequence them or agree the contract first.
+
+### Suggested Epic Sequence
+
+The recommended sequence after the current requisition draft/submission work is:
+
+1. Requisition Foundation.
+2. Approval Baseline.
+3. Vendor Foundation.
+4. Buyer Intake And RFQ.
+5. Quotation Intake.
+6. Quotation Comparison And Award.
+7. Evidence Vault Baseline.
+8. Policy And Governance.
+9. Reporting And Metrics.
+10. AI And OCR Assistance.
+11. Enterprise Administration.
+12. Integrations.
+13. Strategic Procurement.
+
+Vendor Foundation and Evidence Vault Baseline are the earliest good candidates for parallel work, provided their contracts are kept separate from the active approval workflow changes.
 
 ## Cross-Cutting Product Principles
 
