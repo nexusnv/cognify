@@ -5,6 +5,7 @@ import type {
   RequisitionFormValues,
   RequisitionListResponse,
 } from "../types/requisition-view-model";
+import { getStoredActiveTenantId } from "../../identity/api/identity-api";
 
 type RequisitionQuery = {
   search?: string;
@@ -58,12 +59,15 @@ export async function submitRequisition(requisitionId: string) {
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
+  const tenantId = getStoredActiveTenantId();
+  if (tenantId) headers.set("X-Tenant-Id", tenantId);
+
   const response = await fetch(url, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    credentials: "include",
+    headers,
   });
 
   const payload = (await response.json()) as T | ApiValidationError;

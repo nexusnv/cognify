@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { identityHandlers } from "../../features/identity/mocks/identity-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 
 export const handlers = [
@@ -9,4 +10,5 @@ export const handlers = [
     });
   }),
   ...requisitionsHandlers,
+  ...identityHandlers,
 ];
