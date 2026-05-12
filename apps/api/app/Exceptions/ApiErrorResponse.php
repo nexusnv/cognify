@@ -9,8 +9,8 @@ use Illuminate\Support\Str;
 class ApiErrorResponse
 {
     /**
-     * @param array<string, mixed> $details
-     * @param array<string, string|array<int, string>> $headers
+     * @param  array<string, mixed>  $details
+     * @param  array<string, string|array<int, string>>  $headers
      */
     public static function make(
         Request $request,

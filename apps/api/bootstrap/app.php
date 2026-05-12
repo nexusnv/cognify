@@ -112,6 +112,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     $code,
                     $exception->getMessage() ?: 'An error occurred.',
                     $status,
+                    [],
+                    $exception->getHeaders(),
                 );
             }
 
@@ -120,6 +122,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $code,
                 'An unexpected server error occurred.',
                 $status,
+                [],
+                $exception->getHeaders(),
             );
         });
 

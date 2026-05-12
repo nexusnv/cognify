@@ -55,6 +55,16 @@ class ApiErrorContractTest extends TestCase
             ->assertJsonPath('error.code', 'not_found');
     }
 
+    public function test_http_exception_headers_are_preserved(): void
+    {
+        $response = $this->postJson('/api/me');
+
+        $response->assertStatus(405)
+            ->assertJsonStructure(['error' => ['code', 'message', 'details', 'requestId']]);
+
+        $this->assertStringContainsString('GET', (string) $response->headers->get('Allow'));
+    }
+
     public function test_conflict_error_uses_normalized_envelope(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');

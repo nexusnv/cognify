@@ -27,24 +27,6 @@ return new class extends Migration
             $table->index('request_id');
         });
 
-        $driver = DB::connection()->getDriverName();
-
-        if ($driver === 'pgsql') {
-            DB::statement(
-                'UPDATE audit_events SET event_id = gen_random_uuid(), action = event_type WHERE event_id IS NULL',
-            );
-
-            return;
-        }
-
-        if ($driver === 'mysql') {
-            DB::statement(
-                'UPDATE audit_events SET event_id = UUID(), action = event_type WHERE event_id IS NULL',
-            );
-
-            return;
-        }
-
         DB::table('audit_events')
             ->whereNull('event_id')
             ->orderBy('id')

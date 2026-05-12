@@ -92,6 +92,7 @@ export * from "./userSummaryEmail";
 export * from "./validationError";
 export * from "./validationErrorAllOf";
 export * from "./validationErrorAllOfError";
+export * from "./validationErrorAllOfErrorCode";
 export * from "./validationErrorAllOfErrorDetails";
 export * from "./validationErrorAllOfErrorDetailsFields";
 export * from "./validationFailedResponse";

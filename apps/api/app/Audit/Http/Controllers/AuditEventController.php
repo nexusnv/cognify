@@ -8,6 +8,7 @@ use App\Audit\AuditSubject;
 use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class AuditEventController extends Controller
@@ -37,8 +38,8 @@ class AuditEventController extends Controller
         $query->when($validated['actorId'] ?? null, fn ($query, int $actorId) => $query->where('actor_id', $actorId));
         $query->when($validated['subjectType'] ?? null, fn ($query, string $subjectType) => $query->where('subject_type', AuditSubject::classFor($subjectType)));
         $query->when($validated['subjectId'] ?? null, fn ($query, int $subjectId) => $query->where('subject_id', $subjectId));
-        $query->when($validated['occurredFrom'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '>=', $date));
-        $query->when($validated['occurredTo'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '<=', $date));
+        $query->when($validated['occurredFrom'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '>=', Carbon::parse($date)->startOfDay()));
+        $query->when($validated['occurredTo'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '<=', Carbon::parse($date)->endOfDay()));
 
         $perPage = (int) ($validated['perPage'] ?? 25);
         $paginator = $query->paginate($perPage);

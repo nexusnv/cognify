@@ -10,15 +10,33 @@ class AuditSubject
     /**
      * @var array<class-string<Model>, string>
      */
-    private const TYPE_MAP = [
+    protected static array $typeMap = [
         Requisition::class => 'requisition',
     ];
+
+    /**
+     * @param  class-string<Model>  $class
+     */
+    public static function registerType(string $class, string $key): void
+    {
+        static::$typeMap[$class] = $key;
+    }
+
+    /**
+     * @param  array<class-string<Model>, string>  $mapping
+     */
+    public static function loadFromConfig(array $mapping): void
+    {
+        foreach ($mapping as $class => $key) {
+            static::registerType($class, $key);
+        }
+    }
 
     public static function typeFor(Model|string $subject): string
     {
         $class = is_string($subject) ? $subject : $subject::class;
 
-        return self::TYPE_MAP[$class] ?? 'unknown';
+        return static::$typeMap[$class] ?? 'unknown';
     }
 
     /**
@@ -26,7 +44,7 @@ class AuditSubject
      */
     public static function classFor(string $type): ?string
     {
-        $class = array_search($type, self::TYPE_MAP, true);
+        $class = array_search($type, static::$typeMap, true);
 
         return $class === false ? null : $class;
     }

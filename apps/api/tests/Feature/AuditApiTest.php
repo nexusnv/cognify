@@ -125,6 +125,22 @@ class AuditApiTest extends TestCase
             ->assertJsonPath('meta.perPage', 50);
     }
 
+    public function test_audit_feed_date_filters_include_full_day_bounds(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $requisition = $this->requisition($tenant, $admin);
+
+        $this->audit($tenant, $admin, $requisition, 'requisition.previous', '2026-05-11 23:59:59');
+        $this->audit($tenant, $admin, $requisition, 'requisition.same_day', '2026-05-12 23:59:59');
+        $this->audit($tenant, $admin, $requisition, 'requisition.next_day', '2026-05-13 00:00:00');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->getJson('/api/audit/events?occurredFrom=2026-05-12&occurredTo=2026-05-12&perPage=50')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.action', 'requisition.same_day');
+    }
+
     public function test_requester_cannot_query_platform_audit_feed(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -209,8 +225,13 @@ class AuditApiTest extends TestCase
         ]);
     }
 
-    private function audit(Tenant $tenant, User $actor, Requisition $subject, string $action): AuditEvent
-    {
+    private function audit(
+        Tenant $tenant,
+        User $actor,
+        Requisition $subject,
+        string $action,
+        ?string $occurredAt = null,
+    ): AuditEvent {
         return AuditEvent::query()->create([
             'tenant_id' => $tenant->id,
             'actor_id' => $actor->id,
@@ -220,7 +241,7 @@ class AuditApiTest extends TestCase
             'subject_id' => $subject->id,
             'subject_display' => $subject->number,
             'metadata' => ['status' => $subject->status->value],
-            'occurred_at' => now(),
+            'occurred_at' => $occurredAt ?? now(),
         ]);
     }
 }

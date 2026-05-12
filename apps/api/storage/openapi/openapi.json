@@ -636,6 +636,10 @@
               "error": {
                 "type": "object",
                 "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": ["validation_failed"]
+                  },
                   "details": {
                     "type": "object",
                     "required": ["fields"],
