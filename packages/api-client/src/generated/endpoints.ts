@@ -5,17 +5,23 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  AmbiguousTenantResponse,
   CreateRequisitionRequest,
+  CurrentUserResponse,
+  ForgotPasswordRequest,
   HealthResponse,
   InvalidStateResponse,
   ListRequisitionActivity200,
   ListRequisitionsParams,
+  LoginRequest,
   NotFoundResponse,
   RequisitionListResponse,
   RequisitionResponse,
+  SetCurrentTenantRequest,
   SubmitRequisitionResponse,
   UnauthenticatedResponse,
   UnauthorizedResponse,
+  UpdateCurrentUserProfileRequest,
   UpdateRequisitionRequest,
   ValidationFailedResponse,
 } from "./schemas";
@@ -392,4 +398,270 @@ export const listRequisitionActivity = async (
       method: "GET",
     },
   );
+};
+
+/**
+ * @summary Start an authenticated Sanctum session
+ */
+export type loginResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type loginResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type loginResponseSuccess = loginResponse204 & {
+  headers: Headers;
+};
+export type loginResponseError = loginResponse422 & {
+  headers: Headers;
+};
+
+export type loginResponse = loginResponseSuccess | loginResponseError;
+
+export const getLoginUrl = () => {
+  return `/api/auth/login`;
+};
+
+export const login = async (
+  loginRequest: LoginRequest,
+  options?: RequestInit,
+): Promise<loginResponse> => {
+  return cognifyFetch<loginResponse>(getLoginUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(loginRequest),
+  });
+};
+
+/**
+ * @summary End the current authenticated session
+ */
+export type logoutResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type logoutResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type logoutResponseSuccess = logoutResponse204 & {
+  headers: Headers;
+};
+export type logoutResponseError = logoutResponse401 & {
+  headers: Headers;
+};
+
+export type logoutResponse = logoutResponseSuccess | logoutResponseError;
+
+export const getLogoutUrl = () => {
+  return `/api/auth/logout`;
+};
+
+export const logout = async (options?: RequestInit): Promise<logoutResponse> => {
+  return cognifyFetch<logoutResponse>(getLogoutUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Request a password reset email
+ */
+export type requestPasswordResetResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type requestPasswordResetResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type requestPasswordResetResponseSuccess = requestPasswordResetResponse204 & {
+  headers: Headers;
+};
+export type requestPasswordResetResponseError = requestPasswordResetResponse422 & {
+  headers: Headers;
+};
+
+export type requestPasswordResetResponse =
+  | requestPasswordResetResponseSuccess
+  | requestPasswordResetResponseError;
+
+export const getRequestPasswordResetUrl = () => {
+  return `/api/auth/forgot-password`;
+};
+
+export const requestPasswordReset = async (
+  forgotPasswordRequest: ForgotPasswordRequest,
+  options?: RequestInit,
+): Promise<requestPasswordResetResponse> => {
+  return cognifyFetch<requestPasswordResetResponse>(getRequestPasswordResetUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(forgotPasswordRequest),
+  });
+};
+
+/**
+ * @summary Read current user and tenant context
+ */
+export type getCurrentUserResponse200 = {
+  data: CurrentUserResponse;
+  status: 200;
+};
+
+export type getCurrentUserResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type getCurrentUserResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getCurrentUserResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getCurrentUserResponseSuccess = getCurrentUserResponse200 & {
+  headers: Headers;
+};
+export type getCurrentUserResponseError = (
+  | getCurrentUserResponse400
+  | getCurrentUserResponse401
+  | getCurrentUserResponse403
+) & {
+  headers: Headers;
+};
+
+export type getCurrentUserResponse = getCurrentUserResponseSuccess | getCurrentUserResponseError;
+
+export const getGetCurrentUserUrl = () => {
+  return `/api/me`;
+};
+
+export const getCurrentUser = async (options?: RequestInit): Promise<getCurrentUserResponse> => {
+  return cognifyFetch<getCurrentUserResponse>(getGetCurrentUserUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update current user profile preferences
+ */
+export type updateCurrentUserProfileResponse200 = {
+  data: CurrentUserResponse;
+  status: 200;
+};
+
+export type updateCurrentUserProfileResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updateCurrentUserProfileResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateCurrentUserProfileResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateCurrentUserProfileResponseSuccess = updateCurrentUserProfileResponse200 & {
+  headers: Headers;
+};
+export type updateCurrentUserProfileResponseError = (
+  | updateCurrentUserProfileResponse400
+  | updateCurrentUserProfileResponse401
+  | updateCurrentUserProfileResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateCurrentUserProfileResponse =
+  | updateCurrentUserProfileResponseSuccess
+  | updateCurrentUserProfileResponseError;
+
+export const getUpdateCurrentUserProfileUrl = () => {
+  return `/api/me/profile`;
+};
+
+export const updateCurrentUserProfile = async (
+  updateCurrentUserProfileRequest: UpdateCurrentUserProfileRequest,
+  options?: RequestInit,
+): Promise<updateCurrentUserProfileResponse> => {
+  return cognifyFetch<updateCurrentUserProfileResponse>(getUpdateCurrentUserProfileUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCurrentUserProfileRequest),
+  });
+};
+
+/**
+ * @summary Validate selected tenant context
+ */
+export type setCurrentTenantResponse200 = {
+  data: CurrentUserResponse;
+  status: 200;
+};
+
+export type setCurrentTenantResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type setCurrentTenantResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type setCurrentTenantResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type setCurrentTenantResponseSuccess = setCurrentTenantResponse200 & {
+  headers: Headers;
+};
+export type setCurrentTenantResponseError = (
+  | setCurrentTenantResponse401
+  | setCurrentTenantResponse403
+  | setCurrentTenantResponse422
+) & {
+  headers: Headers;
+};
+
+export type setCurrentTenantResponse =
+  | setCurrentTenantResponseSuccess
+  | setCurrentTenantResponseError;
+
+export const getSetCurrentTenantUrl = () => {
+  return `/api/tenants/current`;
+};
+
+export const setCurrentTenant = async (
+  setCurrentTenantRequest: SetCurrentTenantRequest,
+  options?: RequestInit,
+): Promise<setCurrentTenantResponse> => {
+  return cognifyFetch<setCurrentTenantResponse>(getSetCurrentTenantUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setCurrentTenantRequest),
+  });
 };
