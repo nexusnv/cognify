@@ -40,6 +40,14 @@ Cognify is a multi-tenant enterprise procurement SaaS. It is a greenfield codeba
 
 Before claiming work is complete, run the narrow checks for the files touched and the relevant root checks when shared config changes. For API contract changes, regenerate the client and verify both API and web consumers.
 
+## Implementation Plan Loopback
+
+- Turn audit findings into regression tests before editing production code.
+- For Laravel Sanctum/session work, prove the real route middleware stack with successful login/logout tests; do not skip session failures or rely only on `actingAs()`.
+- Tenant-selection endpoints must validate the posted tenant before requiring an existing `X-Tenant-Id` context.
+- Web state such as active tenant IDs must be persisted only after server validation succeeds.
+- When OpenAPI changes, export and consume generated schemas/endpoints through `@cognify/api-client`; do not duplicate contract response types in app code.
+
 ## Deeper Guidance
 
 - Agent workflow: `docs/agentic/AGENTIC_CODING_GUIDELINES.md`

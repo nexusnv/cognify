@@ -2,6 +2,7 @@
 
 ## Changelog
 
+- 2026-05-12: Added implementation loopback checks from tenant auth access foundation audit.
 - 2026-05-09: Initial agentic coding guide.
 
 ## Inspect First
@@ -23,6 +24,18 @@ MSW and mock fixtures are allowed in `apps/web/tests`, `apps/web/features/*/mock
 ## Contract Strategy
 
 OpenAPI is the frontend/backend contract. When API routes or payloads change, update the OpenAPI source and regenerate the Orval client.
+
+Generated client code must be exported and consumed through `@cognify/api-client`. Feature APIs may add thin wrappers for state, credentials, tenant headers, or view-model convenience, but request and response shapes should use generated OpenAPI types so contracts do not drift.
+
+## Implementation Loopback
+
+When implementing from a design spec and plan:
+
+- Convert review/audit findings into failing regression tests before production edits.
+- Verify framework middleware assumptions with real route-stack tests, especially Laravel Sanctum session login/logout; do not mask missing middleware with skipped tests.
+- Keep tenant-selection endpoints outside tenant-context middleware when their purpose is to establish that context.
+- Persist client-side tenant context only after the API validates membership.
+- Compare route middleware, generated clients, and production app imports against the plan before completion, not only test assertions.
 
 ## Verification
 

@@ -88,6 +88,30 @@ class RequisitionApiTest extends TestCase
         ]);
     }
 
+    public function test_requisition_line_items_reject_negative_quantity_and_price(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $this->actingAsTenant($tenant, $user)
+            ->postJson('/api/requisitions', [
+                'title' => 'Invalid line items',
+                'lineItems' => [
+                    [
+                        'name' => 'Credit line',
+                        'quantity' => -1,
+                        'unit' => 'each',
+                        'estimatedUnitPrice' => '-10.00',
+                        'currency' => 'USD',
+                    ],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors([
+                'lineItems.0.quantity',
+                'lineItems.0.estimatedUnitPrice',
+            ]);
+    }
+
     public function test_submitted_requisition_cannot_be_updated(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');

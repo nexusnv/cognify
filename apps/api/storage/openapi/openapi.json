@@ -272,7 +272,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -293,6 +295,169 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Start an authenticated Sanctum session",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Session started"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "summary": "End the current authenticated session",
+        "responses": {
+          "204": {
+            "description": "Session ended"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "operationId": "requestPasswordReset",
+        "summary": "Request a password reset email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Password reset request accepted"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Read current user and tenant context",
+        "responses": {
+          "200": {
+            "description": "Current identity context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/me/profile": {
+      "patch": {
+        "operationId": "updateCurrentUserProfile",
+        "summary": "Update current user profile preferences",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentUserProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/tenants/current": {
+      "post": {
+        "operationId": "setCurrentTenant",
+        "summary": "Validate selected tenant context",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCurrentTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant context validated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
           }
         }
       }
@@ -359,12 +524,25 @@
             }
           }
         }
+      },
+      "AmbiguousTenant": {
+        "description": "Tenant context is required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       }
     },
     "schemas": {
       "HealthResponse": {
         "type": "object",
-        "required": ["status", "service"],
+        "required": [
+          "status",
+          "service"
+        ],
         "properties": {
           "status": {
             "type": "string",
@@ -378,7 +556,10 @@
       },
       "ApiError": {
         "type": "object",
-        "required": ["message", "code"],
+        "required": [
+          "message",
+          "code"
+        ],
         "properties": {
           "message": {
             "type": "string"
@@ -395,7 +576,9 @@
           },
           {
             "type": "object",
-            "required": ["errors"],
+            "required": [
+              "errors"
+            ],
             "properties": {
               "errors": {
                 "type": "object",
@@ -412,7 +595,10 @@
       },
       "UserSummary": {
         "type": "object",
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "properties": {
           "id": {
             "type": "string"
@@ -421,18 +607,29 @@
             "type": "string"
           },
           "email": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "email"
           }
         }
       },
       "RequisitionStatus": {
         "type": "string",
-        "enum": ["draft", "submitted", "pending_approval"]
+        "enum": [
+          "draft",
+          "submitted",
+          "pending_approval"
+        ]
       },
       "RequisitionPermissions": {
         "type": "object",
-        "required": ["canUpdate", "canSubmit", "canViewActivity"],
+        "required": [
+          "canUpdate",
+          "canSubmit",
+          "canViewActivity"
+        ],
         "properties": {
           "canUpdate": {
             "type": "boolean"
@@ -465,7 +662,10 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "quantity": {
             "type": "number",
@@ -529,26 +729,47 @@
             "$ref": "#/components/schemas/RequisitionStatus"
           },
           "businessJustification": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "neededByDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "department": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "projectId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "costCenter": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "deliveryLocation": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "currency": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "minLength": 3,
             "maxLength": 3
           },
@@ -574,7 +795,10 @@
             "format": "date-time"
           },
           "submittedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "permissions": {
@@ -584,7 +808,9 @@
       },
       "RequisitionResponse": {
         "type": "object",
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Requisition"
@@ -593,7 +819,10 @@
       },
       "RequisitionListResponse": {
         "type": "object",
-        "required": ["data", "meta"],
+        "required": [
+          "data",
+          "meta"
+        ],
         "properties": {
           "data": {
             "type": "array",
@@ -603,7 +832,12 @@
           },
           "meta": {
             "type": "object",
-            "required": ["currentPage", "perPage", "total", "lastPage"],
+            "required": [
+              "currentPage",
+              "perPage",
+              "total",
+              "lastPage"
+            ],
             "properties": {
               "currentPage": {
                 "type": "integer",
@@ -627,14 +861,25 @@
       },
       "RequisitionActivityEvent": {
         "type": "object",
-        "required": ["id", "type", "message", "actor", "occurredAt", "metadata"],
+        "required": [
+          "id",
+          "type",
+          "message",
+          "actor",
+          "occurredAt",
+          "metadata"
+        ],
         "properties": {
           "id": {
             "type": "string"
           },
           "type": {
             "type": "string",
-            "enum": ["requisition.created", "requisition.updated", "requisition.submitted"]
+            "enum": [
+              "requisition.created",
+              "requisition.updated",
+              "requisition.submitted"
+            ]
           },
           "message": {
             "type": "string"
@@ -661,13 +906,22 @@
       },
       "CreateRequisitionLineItemRequest": {
         "type": "object",
-        "required": ["name", "quantity", "unit", "estimatedUnitPrice", "currency"],
+        "required": [
+          "name",
+          "quantity",
+          "unit",
+          "estimatedUnitPrice",
+          "currency"
+        ],
         "properties": {
           "name": {
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "quantity": {
             "type": "number",
@@ -704,32 +958,55 @@
       },
       "CreateRequisitionRequest": {
         "type": "object",
-        "required": ["title"],
+        "required": [
+          "title"
+        ],
         "properties": {
           "title": {
             "type": "string"
           },
           "businessJustification": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "neededByDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "department": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "projectId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "costCenter": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "deliveryLocation": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "currency": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "minLength": 3,
             "maxLength": 3
           },
@@ -748,26 +1025,47 @@
             "type": "string"
           },
           "businessJustification": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "neededByDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "department": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "projectId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "costCenter": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "deliveryLocation": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "currency": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "minLength": 3,
             "maxLength": 3
           },
@@ -781,10 +1079,265 @@
       },
       "SubmitRequisitionResponse": {
         "type": "object",
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Requisition"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 255
+          },
+          "remember": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "TenantRole": {
+        "type": "string",
+        "enum": [
+          "requester",
+          "buyer",
+          "approver",
+          "admin"
+        ]
+      },
+      "CurrentUserProfile": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "timezone",
+          "locale",
+          "theme"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "theme": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark",
+              "system"
+            ]
+          }
+        }
+      },
+      "TenantMembershipSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/TenantRole"
+          }
+        }
+      },
+      "ActiveTenantSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "IdentityPermissions": {
+        "type": "object",
+        "required": [
+          "canCreateRequisition",
+          "canViewSubmittedRequisitions",
+          "canUpdateOwnDraftRequisition",
+          "canSubmitOwnDraftRequisition",
+          "canAccessAdmin"
+        ],
+        "properties": {
+          "canCreateRequisition": {
+            "type": "boolean"
+          },
+          "canViewSubmittedRequisitions": {
+            "type": "boolean"
+          },
+          "canUpdateOwnDraftRequisition": {
+            "type": "boolean"
+          },
+          "canSubmitOwnDraftRequisition": {
+            "type": "boolean"
+          },
+          "canAccessAdmin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CurrentUser": {
+        "type": "object",
+        "required": [
+          "user",
+          "tenants",
+          "activeTenant",
+          "activeRole",
+          "permissions"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/CurrentUserProfile"
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantMembershipSummary"
+            }
+          },
+          "activeTenant": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ActiveTenantSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activeRole": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TenantRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/IdentityPermissions"
+          }
+        }
+      },
+      "CurrentUserResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CurrentUser"
+          }
+        }
+      },
+      "UpdateCurrentUserProfileRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "timezone",
+          "locale",
+          "theme"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "locale": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 12
+          },
+          "theme": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark",
+              "system"
+            ]
+          }
+        }
+      },
+      "SetCurrentTenantRequest": {
+        "type": "object",
+        "required": [
+          "tenantId"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string"
           }
         }
       }
