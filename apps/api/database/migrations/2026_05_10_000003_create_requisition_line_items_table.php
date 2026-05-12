@@ -13,9 +13,9 @@ return new class extends Migration
             $table->foreignId('requisition_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->unsignedDecimal('quantity', 14, 4);
+            $table->decimal('quantity', 14, 4);
             $table->string('unit_of_measure');
-            $table->unsignedDecimal('estimated_unit_price', 14, 2);
+            $table->decimal('estimated_unit_price', 14, 2);
             $table->char('currency', 3);
             $table->timestamps();
         });
