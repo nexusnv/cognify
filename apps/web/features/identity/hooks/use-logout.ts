@@ -8,7 +8,12 @@ export function useLogout() {
     mutationKey: ["identity", "logout"],
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.clear();
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const scope = query.queryKey[0];
+          return scope === "identity" || scope === "requisitions" || scope === "requisition";
+        },
+      });
     },
   });
 }

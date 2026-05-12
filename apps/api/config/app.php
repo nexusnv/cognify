@@ -80,7 +80,7 @@ return [
 
     'locale' => env('APP_LOCALE', 'en'),
 
-    'supported_locales' => array_filter(explode(',', env('APP_SUPPORTED_LOCALES', 'en,ms'))),
+    'supported_locales' => array_filter(array_map('trim', explode(',', env('APP_SUPPORTED_LOCALES', 'en,ms')))),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

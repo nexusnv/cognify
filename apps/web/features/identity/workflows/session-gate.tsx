@@ -20,6 +20,24 @@ function SignInRequired() {
   );
 }
 
+function isAuthError(error: unknown): boolean {
+  if (!error || typeof error !== "object" || !("status" in error)) return false;
+
+  const status = (error as { status?: unknown }).status;
+  return status === 401 || status === 403;
+}
+
+function WorkspaceUnavailable() {
+  return (
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+      <h1 className="text-2xl font-semibold">Workspace unavailable.</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        We could not load your workspace. Try again shortly.
+      </p>
+    </div>
+  );
+}
+
 export function SessionGate({ children }: { children: React.ReactNode }) {
   const { data, isLoading, error } = useCurrentUser();
 
@@ -32,7 +50,7 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
   }
 
   if (error) {
-    return <SignInRequired />;
+    return isAuthError(error) ? <SignInRequired /> : <WorkspaceUnavailable />;
   }
 
   const context = data?.data;

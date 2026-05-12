@@ -1,5 +1,13 @@
+import {
+  createRequisition,
+  getRequisition as getRequisitionEndpoint,
+  listRequisitionActivity,
+  listRequisitions as listRequisitionsEndpoint,
+  submitRequisition as submitRequisitionEndpoint,
+  updateRequisition,
+} from "@cognify/api-client/endpoints";
+import type { ListRequisitionsParams } from "@cognify/api-client/schemas";
 import type {
-  ApiValidationError,
   Requisition,
   RequisitionActivityEvent,
   RequisitionFormValues,
@@ -16,65 +24,48 @@ type RequisitionQuery = {
 };
 
 export async function listRequisitions(query: RequisitionQuery = {}) {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) {
-    if (value) params.set(key, value);
-  }
-
-  return fetchJson<RequisitionListResponse>(`/api/requisitions?${params.toString()}`);
+  const response = await listRequisitionsEndpoint(query as ListRequisitionsParams, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data as RequisitionListResponse;
 }
 
 export async function getRequisition(requisitionId: string) {
-  const response = await fetchJson<{ data: Requisition }>(`/api/requisitions/${requisitionId}`);
-
-  return response.data;
+  const response = await getRequisitionEndpoint(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as Requisition;
 }
 
 export async function getRequisitionActivity(requisitionId: string) {
-  return fetchJson<{ data: RequisitionActivityEvent[] }>(`/api/requisitions/${requisitionId}/activity`);
+  const response = await listRequisitionActivity(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data as { data: RequisitionActivityEvent[] };
 }
 
 export async function createRequisitionDraft(values: RequisitionFormValues) {
-  const response = await fetchJson<{ data: Requisition }>("/api/requisitions", {
-    method: "POST",
-    body: JSON.stringify(values),
-  });
-
-  return response.data;
+  const response = await createRequisition(values, withActiveTenantHeader());
+  if (response.status !== 201) throw response.data;
+  return response.data.data as Requisition;
 }
 
 export async function updateRequisitionDraft(requisitionId: string, values: RequisitionFormValues) {
-  const response = await fetchJson<{ data: Requisition }>(`/api/requisitions/${requisitionId}`, {
-    method: "PATCH",
-    body: JSON.stringify(values),
-  });
-
-  return response.data;
+  const response = await updateRequisition(requisitionId, values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as Requisition;
 }
 
 export async function submitRequisition(requisitionId: string) {
-  return fetchJson<{ data: Requisition }>(`/api/requisitions/${requisitionId}/submit`, {
-    method: "POST",
-  });
+  const response = await submitRequisitionEndpoint(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data as { data: Requisition };
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  headers.set("Content-Type", "application/json");
+function withActiveTenantHeader(): RequestInit | undefined {
   const tenantId = getStoredActiveTenantId();
-  if (tenantId) headers.set("X-Tenant-Id", tenantId);
+  if (!tenantId) return undefined;
 
-  const response = await fetch(url, {
-    ...init,
-    credentials: "include",
-    headers,
-  });
-
-  const payload = (await response.json()) as T | ApiValidationError;
-
-  if (!response.ok) {
-    throw payload;
-  }
-
-  return payload as T;
+  return {
+    headers: {
+      "X-Tenant-Id": tenantId,
+    },
+  };
 }

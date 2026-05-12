@@ -4,10 +4,14 @@ import { useCurrentUser } from "../hooks/use-current-user";
 import { ProfileForm } from "../forms/profile-form";
 
 export function AccountSettingsPage() {
-  const { data, isLoading } = useCurrentUser();
+  const { data, isError, isLoading } = useCurrentUser();
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading...</p>;
+  }
+
+  if (isError) {
+    return <p className="text-sm text-red-600">Failed to load profile.</p>;
   }
 
   const profile = data?.data.user;

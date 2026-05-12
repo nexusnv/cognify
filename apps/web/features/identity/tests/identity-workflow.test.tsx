@@ -95,6 +95,35 @@ describe("identity workflow", () => {
     expect(screen.getByDisplayValue("Taylor Buyer")).toBeInTheDocument();
   });
 
+  it("shows an account settings error when profile loading fails", async () => {
+    server.use(
+      http.get("/api/me", () => {
+        return HttpResponse.json({ message: "Service unavailable." }, { status: 503 });
+      }),
+    );
+
+    renderWithQuery(<AccountSettingsPage />);
+
+    expect(await screen.findByText("Failed to load profile.")).toBeInTheDocument();
+  });
+
+  it("does not treat transient session failures as sign-in requirements", async () => {
+    server.use(
+      http.get("/api/me", () => {
+        return HttpResponse.json({ message: "Service unavailable." }, { status: 503 });
+      }),
+    );
+
+    renderWithQuery(
+      <SessionGate>
+        <div>Workspace ready</div>
+      </SessionGate>,
+    );
+
+    expect(await screen.findByText("Workspace unavailable.")).toBeInTheDocument();
+    expect(screen.queryByText("Sign in required")).not.toBeInTheDocument();
+  });
+
   it("does not store active tenant until the API validates membership", async () => {
     server.use(
       http.post("/api/tenants/current", () => {
@@ -103,7 +132,8 @@ describe("identity workflow", () => {
     );
 
     await expect(setCurrentTenant("999")).rejects.toMatchObject({
-      message: "Tenant membership is required.",
+      status: 403,
+      data: { message: "Tenant membership is required." },
     });
 
     expect(getStoredActiveTenantId()).toBeNull();

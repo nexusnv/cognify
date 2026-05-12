@@ -4,6 +4,12 @@ export type ApiClientConfig = {
   getTenantId?: () => string | null | Promise<string | null>;
 };
 
+export type ApiClientError<TData = unknown> = {
+  data: TData;
+  status: number;
+  headers: Headers;
+};
+
 export function createApiClientConfig(config: ApiClientConfig): ApiClientConfig {
   return config;
 }
@@ -35,7 +41,11 @@ export async function cognifyFetch<TResponse>(
   const data = response.status === 204 ? undefined : await response.json();
 
   if (!response.ok) {
-    throw data;
+    throw {
+      data,
+      status: response.status,
+      headers: response.headers,
+    } satisfies ApiClientError;
   }
 
   return {
