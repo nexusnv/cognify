@@ -24,11 +24,11 @@ Route::post('/auth/forgot-password', [AuthenticatedSessionController::class, 'fo
 // Protected routes
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
+    Route::post('/tenants/current', [CurrentTenantController::class, 'store']);
 
     Route::middleware(ResolveCurrentTenant::class)->group(function (): void {
         Route::get('/me', [CurrentUserController::class, 'show']);
         Route::patch('/me/profile', [UserProfileController::class, 'update']);
-        Route::post('/tenants/current', [CurrentTenantController::class, 'store']);
 
         // Existing requisition routes
         Route::get('/requisitions', [RequisitionController::class, 'index']);

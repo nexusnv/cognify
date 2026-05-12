@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, beforeEach } from "vitest";
@@ -10,6 +10,7 @@ import { AccountSettingsPage } from "../workflows/account-settings-page";
 import { resetIdentityMockState } from "../mocks/identity-handlers";
 import { multiTenantIdentity } from "../mocks/identity-fixtures";
 import type { CurrentUserContext } from "../types/identity-view-model";
+import { getStoredActiveTenantId, setCurrentTenant } from "../api/identity-api";
 
 function renderWithQuery(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -37,6 +38,7 @@ describe("identity workflow", () => {
 
   beforeEach(() => {
     resetIdentityMockState();
+    window.localStorage.clear();
   });
 
   it("requires tenant selection for a multi-tenant identity", async () => {
@@ -91,5 +93,19 @@ describe("identity workflow", () => {
 
     expect(await screen.findByText("Profile saved")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Taylor Buyer")).toBeInTheDocument();
+  });
+
+  it("does not store active tenant until the API validates membership", async () => {
+    server.use(
+      http.post("/api/tenants/current", () => {
+        return HttpResponse.json({ message: "Tenant membership is required." }, { status: 403 });
+      }),
+    );
+
+    await expect(setCurrentTenant("999")).rejects.toMatchObject({
+      message: "Tenant membership is required.",
+    });
+
+    expect(getStoredActiveTenantId()).toBeNull();
   });
 });

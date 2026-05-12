@@ -7,7 +7,7 @@ import {
   type ProfileFormValues,
 } from "../schemas/profile-schema";
 import { useProfileUpdate } from "../hooks/use-profile-update";
-import type { CurrentUserProfile } from "../types/identity-view-model";
+import type { CurrentUserProfile } from "@cognify/api-client";
 import { useEffect } from "react";
 
 export function ProfileForm({

@@ -7,6 +7,8 @@ use App\Auth\Permissions\TenantPermissionResolver;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class IdentityApiTest extends TestCase
@@ -58,35 +60,71 @@ class IdentityApiTest extends TestCase
         $response->assertJsonValidationErrors(['email']);
     }
 
-    public function test_logout_returns_204_with_session_middleware(): void
+    public function test_user_can_login_and_read_current_identity_context(): void
     {
         $tenant = Tenant::create(['name' => 'Acme Procurement']);
+        User::factory()->create([
+            'email' => 'test@example.com',
+            'password' => Hash::make('password123'),
+        ])->tenants()->attach($tenant->id, ['role' => TenantRole::Requester->value]);
+
+        $login = $this->withHeader('Origin', 'http://localhost:3000')
+            ->postJson('/api/auth/login', [
+                'email' => 'test@example.com',
+                'password' => 'password123',
+            ]);
+
+        $login->assertNoContent();
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/me')
+            ->assertStatus(200)
+            ->assertJsonPath('data.user.email', 'test@example.com')
+            ->assertJsonPath('data.activeTenant.id', (string) $tenant->id);
+    }
+
+    public function test_logout_ends_session(): void
+    {
+        $tenant = Tenant::create(['name' => 'Acme Procurement']);
+        User::factory()->create([
+            'email' => 'test@example.com',
+            'password' => Hash::make('password123'),
+        ])->tenants()->attach($tenant->id, ['role' => TenantRole::Requester->value]);
+
+        $this->withHeader('Origin', 'http://localhost:3000')
+            ->postJson('/api/auth/login', [
+                'email' => 'test@example.com',
+                'password' => 'password123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:3000')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:3000')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/me')
+            ->assertStatus(401);
+    }
+
+    public function test_multi_tenant_user_can_validate_current_tenant_without_header(): void
+    {
+        $tenant = Tenant::create(['name' => 'Acme Procurement']);
+        $otherTenant = Tenant::create(['name' => 'Northwind Sourcing']);
         $user = User::factory()->create();
         $user->tenants()->attach($tenant->id, ['role' => TenantRole::Requester->value]);
+        $user->tenants()->attach($otherTenant->id, ['role' => TenantRole::Buyer->value]);
 
-        // The logout endpoint calls $request->session() which requires
-        // StartSession middleware. When the stack includes it (e.g. web
-        // context or custom kernel config), actingAs + postJson triggers
-        // the full pipeline and the controller returns 204.
-        // In the default API test environment without StartSession, this
-        // correctly reports the session dependency rather than silently
-        // swallowing it, so the test is skipped when session is absent.
-        $response = $this->actingAs($user)->postJson('/api/auth/logout');
-
-        if ($response->getStatusCode() === 204) {
-            $this->assertTrue(true);
-        } elseif ($response->getStatusCode() === 500) {
-            $this->assertStringContainsString(
-                'Session store not set on request.',
-                $response->exception?->getMessage() ?? '',
-            );
-            $this->markTestSkipped(
-                'API test environment does not include StartSession middleware. ' .
-                'Run with SESSION_DRIVER=file or wire session middleware in bootstrap/app.php.'
-            );
-        } else {
-            $this->fail("Unexpected status: {$response->getStatusCode()}");
-        }
+        $this->actingAs($user)
+            ->postJson('/api/tenants/current', [
+                'tenantId' => (string) $otherTenant->id,
+            ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.activeTenant.id', (string) $otherTenant->id)
+            ->assertJsonPath('data.activeRole', TenantRole::Buyer->value);
     }
 
     public function test_multi_tenant_user_without_tenant_header_receives_ambiguous_tenant_error(): void

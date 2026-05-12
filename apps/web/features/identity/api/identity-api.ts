@@ -1,8 +1,19 @@
-import type { CurrentUserResponse } from "../types/identity-view-model";
+import {
+  getCurrentUser as getCurrentUserEndpoint,
+  login as loginEndpoint,
+  logout as logoutEndpoint,
+  setCurrentTenant as setCurrentTenantEndpoint,
+  updateCurrentUserProfile as updateCurrentUserProfileEndpoint,
+  type CurrentUserResponse,
+  type LoginRequest,
+  type SetCurrentTenantRequest,
+  type UpdateCurrentUserProfileRequest,
+} from "@cognify/api-client";
 import type { LoginFormValues } from "../schemas/login-schema";
 import type { ProfileFormValues } from "../schemas/profile-schema";
 
 const ACTIVE_TENANT_KEY = "cognify.activeTenantId";
+type SuccessfulResponse<T> = { data: T };
 
 export function getStoredActiveTenantId() {
   if (typeof window === "undefined") return null;
@@ -16,52 +27,48 @@ export function storeActiveTenantId(tenantId: string) {
 }
 
 export async function login(values: LoginFormValues) {
-  await fetchJson<void>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify(values),
-  });
+  await loginEndpoint(values satisfies LoginRequest);
 }
 
 export async function logout() {
-  await fetchJson<void>("/api/auth/logout", { method: "POST" });
+  await logoutEndpoint();
 }
 
 export async function getCurrentUser() {
-  return fetchJson<CurrentUserResponse>("/api/me");
+  const response = (await getCurrentUserEndpoint(
+    withActiveTenantHeader(),
+  )) as SuccessfulResponse<CurrentUserResponse>;
+  return response.data;
 }
 
 export async function updateCurrentUserProfile(values: ProfileFormValues) {
-  return fetchJson<CurrentUserResponse>("/api/me/profile", {
-    method: "PATCH",
-    body: JSON.stringify({ ...values, avatarUrl: values.avatarUrl || null }),
-  });
+  const request = {
+    ...values,
+    avatarUrl: values.avatarUrl || null,
+  } satisfies UpdateCurrentUserProfileRequest;
+  const response = (await updateCurrentUserProfileEndpoint(
+    request,
+    withActiveTenantHeader(),
+  )) as SuccessfulResponse<CurrentUserResponse>;
+  return response.data;
 }
 
 export async function setCurrentTenant(tenantId: string) {
+  const request = { tenantId } satisfies SetCurrentTenantRequest;
+  const response = (await setCurrentTenantEndpoint(
+    request,
+  )) as SuccessfulResponse<CurrentUserResponse>;
   storeActiveTenantId(tenantId);
-  return fetchJson<CurrentUserResponse>("/api/tenants/current", {
-    method: "POST",
-    body: JSON.stringify({ tenantId }),
-  });
+  return response.data;
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  headers.set("Content-Type", "application/json");
+function withActiveTenantHeader(): RequestInit | undefined {
   const tenantId = getStoredActiveTenantId();
-  if (tenantId) headers.set("X-Tenant-Id", tenantId);
+  if (!tenantId) return undefined;
 
-  const response = await fetch(url, {
-    ...init,
-    credentials: "include",
-    headers,
-  });
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  const payload = (await response.json()) as T;
-  if (!response.ok) throw payload;
-  return payload;
+  return {
+    headers: {
+      "X-Tenant-Id": tenantId,
+    },
+  };
 }

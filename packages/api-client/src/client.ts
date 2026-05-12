@@ -32,9 +32,15 @@ export async function cognifyFetch<TResponse>(
     headers,
   });
 
+  const data = response.status === 204 ? undefined : await response.json();
+
   if (!response.ok) {
-    throw new Error(`Cognify API request failed with status ${response.status}`);
+    throw data;
   }
 
-  return response.json() as Promise<TResponse>;
+  return {
+    data,
+    status: response.status,
+    headers: response.headers,
+  } as TResponse;
 }
