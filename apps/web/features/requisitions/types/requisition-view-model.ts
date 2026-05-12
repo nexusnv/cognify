@@ -45,15 +45,6 @@ export type Requisition = {
   permissions: RequisitionPermissions;
 };
 
-export type RequisitionActivityEvent = {
-  id: string;
-  type: "requisition.created" | "requisition.updated" | "requisition.submitted";
-  message: string;
-  actor: UserSummary | null;
-  occurredAt: string;
-  metadata?: Record<string, string | number | boolean | null>;
-};
-
 export type RequisitionListResponse = {
   data: Requisition[];
   meta: {

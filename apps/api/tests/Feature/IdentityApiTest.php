@@ -139,7 +139,8 @@ class IdentityApiTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/me');
 
         $response->assertStatus(400);
-        $response->assertJsonPath('message', 'X-Tenant-Id header is required for users with multiple tenants.');
+        $response->assertJsonPath('error.code', 'ambiguous_tenant');
+        $response->assertJsonPath('error.message', 'X-Tenant-Id header is required for users with multiple tenants.');
     }
 
     public function test_current_tenant_rejects_non_member_tenant(): void
@@ -155,7 +156,8 @@ class IdentityApiTest extends TestCase
             ->getJson('/api/me');
 
         $response->assertStatus(403);
-        $response->assertJsonPath('message', 'Tenant membership is required.');
+        $response->assertJsonPath('error.code', 'forbidden');
+        $response->assertJsonPath('error.message', 'Tenant membership is required.');
     }
 
     public function test_post_tenants_current_rejects_non_member_tenant(): void
@@ -172,7 +174,8 @@ class IdentityApiTest extends TestCase
             ]);
 
         $response->assertStatus(403);
-        $response->assertJsonPath('message', 'Tenant membership is required.');
+        $response->assertJsonPath('error.code', 'forbidden');
+        $response->assertJsonPath('error.message', 'Tenant membership is required.');
     }
 
     public function test_profile_update_validates_and_persists_preferences(): void
@@ -317,6 +320,12 @@ class IdentityApiTest extends TestCase
             ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['name', 'timezone', 'locale', 'theme']);
+        $response->assertJsonPath('error.code', 'validation_failed');
+        $response->assertJsonPath('error.details.fields', [
+            'name' => ['The name field is required.'],
+            'timezone' => ['The timezone field must be a valid timezone.'],
+            'locale' => ['The locale field is required.'],
+            'theme' => ['The selected theme is invalid.'],
+        ]);
     }
 }

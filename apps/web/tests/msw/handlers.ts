@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { auditHandlers } from "../../features/audit/mocks/audit-handlers";
 import { identityHandlers } from "../../features/identity/mocks/identity-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 
@@ -11,4 +12,5 @@ export const handlers = [
   }),
   ...requisitionsHandlers,
   ...identityHandlers,
+  ...auditHandlers,
 ];

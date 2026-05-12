@@ -4,8 +4,8 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequisitionActivityEvent } from "./requisitionActivityEvent";
+import type { AuditEvent } from "./auditEvent";
 
 export type ListRequisitionActivity200 = {
-  data: RequisitionActivityEvent[];
+  data: AuditEvent[];
 };

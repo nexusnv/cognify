@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Audit\AuditEvent;
+use App\Audit\Policies\AuditEventPolicy;
 use App\Tenancy\CurrentTenant;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Policies\RequisitionPolicy;
@@ -24,5 +26,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Requisition::class, RequisitionPolicy::class);
+        Gate::policy(AuditEvent::class, AuditEventPolicy::class);
     }
 }

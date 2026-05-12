@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Tenancy\AmbiguousTenantException;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Closure;
@@ -24,11 +25,9 @@ class ResolveCurrentTenant
 
         $tenantId = $request->header('X-Tenant-Id');
         if ($tenantId === null || $tenantId === '') {
-            abort_if(
-                $user->tenants()->count() > 1,
-                400,
-                'X-Tenant-Id header is required for users with multiple tenants.',
-            );
+            if ($user->tenants()->count() > 1) {
+                throw new AmbiguousTenantException('X-Tenant-Id header is required for users with multiple tenants.');
+            }
         }
 
         $tenant = $tenantId !== null && $tenantId !== ''

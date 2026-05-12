@@ -5,9 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Requisition } from "./requisition";
-import type { RequisitionListResponseMeta } from "./requisitionListResponseMeta";
+import type { PaginationMeta } from "./paginationMeta";
 
 export interface RequisitionListResponse {
   data: Requisition[];
-  meta: RequisitionListResponseMeta;
+  meta: PaginationMeta;
 }

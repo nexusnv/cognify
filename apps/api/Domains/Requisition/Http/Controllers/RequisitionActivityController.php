@@ -3,9 +3,9 @@
 namespace Domains\Requisition\Http\Controllers;
 
 use App\Audit\AuditEvent;
+use App\Audit\AuditEventResource;
 use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
-use Domains\Requisition\Http\Resources\RequisitionActivityResource;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
 
@@ -27,6 +27,6 @@ class RequisitionActivityController extends Controller
             ->oldest('occurred_at')
             ->get();
 
-        return RequisitionActivityResource::collection($events);
+        return AuditEventResource::collection($events);
     }
 }

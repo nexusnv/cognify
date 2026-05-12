@@ -5,4 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequisitionActivityEventMetadata = { [key: string]: unknown };
+export type ValidationErrorAllOfErrorDetailsFields = { [key: string]: string[] };

@@ -2,6 +2,7 @@
 
 namespace Domains\Requisition\Actions;
 
+use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
@@ -26,6 +27,19 @@ class UpdateRequisitionDraft
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $data): Requisition {
+            $before = [
+                'title' => $requisition->title,
+                'businessJustification' => $requisition->business_justification,
+                'neededByDate' => $requisition->needed_by_date?->toDateString(),
+                'department' => $requisition->department,
+                'projectId' => $requisition->project_id,
+                'costCenter' => $requisition->cost_center,
+                'deliveryLocation' => $requisition->delivery_location,
+                'currency' => $requisition->currency,
+                'status' => $requisition->status->value,
+                'lineItemCount' => $requisition->lineItems()->count(),
+            ];
+
             $requisition->fill([
                 'title' => $data['title'] ?? $requisition->title,
                 'business_justification' => array_key_exists('businessJustification', $data)
@@ -60,9 +74,31 @@ class UpdateRequisitionDraft
                 }
             }
 
-            $this->auditRecorder->record($tenant, $actor, 'requisition.updated', $requisition, [
-                'status' => $requisition->status->value,
-            ]);
+            $afterLineItemCount = array_key_exists('lineItems', $data)
+                ? count($data['lineItems'])
+                : $before['lineItemCount'];
+
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $tenant,
+                actor: $actor,
+                action: 'requisition.updated',
+                subject: $requisition,
+                metadata: [],
+                before: $before,
+                after: [
+                    'title' => $requisition->title,
+                    'businessJustification' => $requisition->business_justification,
+                    'neededByDate' => $requisition->needed_by_date?->toDateString(),
+                    'department' => $requisition->department,
+                    'projectId' => $requisition->project_id,
+                    'costCenter' => $requisition->cost_center,
+                    'deliveryLocation' => $requisition->delivery_location,
+                    'currency' => $requisition->currency,
+                    'status' => $requisition->status->value,
+                    'lineItemCount' => $afterLineItemCount,
+                ],
+                subjectDisplay: $requisition->number,
+            ));
 
             return $requisition->refresh()->load(['requester', 'lineItems']);
         });

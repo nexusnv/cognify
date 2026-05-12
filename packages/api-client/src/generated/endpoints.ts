@@ -6,11 +6,14 @@
  */
 import type {
   AmbiguousTenantResponse,
+  AuditEventListResponse,
   CreateRequisitionRequest,
   CurrentUserResponse,
+  ForbiddenResponse,
   ForgotPasswordRequest,
   HealthResponse,
   InvalidStateResponse,
+  ListAuditEventsParams,
   ListRequisitionActivity200,
   ListRequisitionsParams,
   LoginRequest,
@@ -663,5 +666,73 @@ export const setCurrentTenant = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(setCurrentTenantRequest),
+  });
+};
+
+/**
+ * @summary List tenant audit events
+ */
+export type listAuditEventsResponse200 = {
+  data: AuditEventListResponse;
+  status: 200;
+};
+
+export type listAuditEventsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listAuditEventsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listAuditEventsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listAuditEventsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type listAuditEventsResponseSuccess = listAuditEventsResponse200 & {
+  headers: Headers;
+};
+export type listAuditEventsResponseError = (
+  | listAuditEventsResponse400
+  | listAuditEventsResponse401
+  | listAuditEventsResponse403
+  | listAuditEventsResponse422
+) & {
+  headers: Headers;
+};
+
+export type listAuditEventsResponse = listAuditEventsResponseSuccess | listAuditEventsResponseError;
+
+export const getListAuditEventsUrl = (params?: ListAuditEventsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/audit/events?${stringifiedParams}`
+    : `/api/audit/events`;
+};
+
+export const listAuditEvents = async (
+  params?: ListAuditEventsParams,
+  options?: RequestInit,
+): Promise<listAuditEventsResponse> => {
+  return cognifyFetch<listAuditEventsResponse>(getListAuditEventsUrl(params), {
+    ...options,
+    method: "GET",
   });
 };

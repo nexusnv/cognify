@@ -6,6 +6,7 @@ use App\Auth\Http\Controllers\AuthenticatedSessionController;
 use App\Auth\Http\Controllers\CurrentTenantController;
 use App\Auth\Http\Controllers\CurrentUserController;
 use App\Auth\Http\Controllers\UserProfileController;
+use App\Audit\Http\Controllers\AuditEventController;
 use App\Http\Middleware\ResolveCurrentTenant;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
@@ -39,5 +40,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::patch('/requisitions/{requisition}', [RequisitionController::class, 'update']);
         Route::post('/requisitions/{requisition}/submit', [RequisitionController::class, 'submit']);
         Route::get('/requisitions/{requisition}/activity', [RequisitionActivityController::class, 'index']);
+        Route::get('/audit/events', [AuditEventController::class, 'index'])->middleware('throttle:60,1');
     });
 });
