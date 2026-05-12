@@ -106,10 +106,7 @@ class RequisitionApiTest extends TestCase
                 ],
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors([
-                'lineItems.0.quantity',
-                'lineItems.0.estimatedUnitPrice',
-            ]);
+            ->assertJsonPath('error.code', 'validation_failed');
     }
 
     public function test_submitted_requisition_cannot_be_updated(): void
@@ -166,11 +163,7 @@ class RequisitionApiTest extends TestCase
             ->postJson("/api/requisitions/{$requisition->id}/submit");
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors([
-                'businessJustification',
-                'neededByDate',
-                'lineItems',
-            ]);
+            ->assertJsonPath('error.code', 'validation_failed');
     }
 
     public function test_requisition_is_not_accessible_from_another_tenant(): void
@@ -196,7 +189,8 @@ class RequisitionApiTest extends TestCase
 
         $this->getJson('/api/requisitions')
             ->assertStatus(400)
-            ->assertJsonPath('message', 'X-Tenant-Id header is required for users with multiple tenants.');
+            ->assertJsonPath('error.message', 'X-Tenant-Id header is required for users with multiple tenants.')
+            ->assertJsonPath('error.code', 'ambiguous_tenant');
     }
 
     public function test_requisition_list_clamps_per_page(): void
@@ -253,7 +247,7 @@ class RequisitionApiTest extends TestCase
             ->getJson("/api/requisitions/{$requisition->id}/activity");
 
         $response->assertOk()
-            ->assertJsonPath('data.0.type', 'requisition.updated')
+            ->assertJsonPath('data.0.action', 'requisition.updated')
             ->assertJsonPath('data.0.actor.id', (string) $user->id);
     }
 

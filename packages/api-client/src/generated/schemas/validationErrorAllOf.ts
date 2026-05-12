@@ -4,8 +4,8 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { ValidationErrorAllOfErrors } from "./validationErrorAllOfErrors";
+import type { ValidationErrorAllOfError } from "./validationErrorAllOfError";
 
 export type ValidationErrorAllOf = {
-  errors: ValidationErrorAllOfErrors;
+  error?: ValidationErrorAllOfError;
 };

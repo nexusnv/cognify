@@ -279,7 +279,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/RequisitionActivityEvent"
+                        "$ref": "#/components/schemas/AuditEvent"
                       }
                     }
                   }
@@ -461,6 +461,36 @@
           }
         }
       }
+    },
+    "/api/audit/events": {
+      "get": {
+        "operationId": "listAuditEvents",
+        "summary": "List tenant audit events",
+        "parameters": [
+          { "name": "action", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "actorId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "subjectType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["requisition"] } },
+          { "name": "subjectId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "occurredFrom", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "occurredTo", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "page", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "default": 1 } },
+          { "name": "perPage", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant audit event feed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditEventListResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
     }
   },
   "components": {
@@ -534,6 +564,16 @@
             }
           }
         }
+      },
+      "Forbidden": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -556,36 +596,58 @@
       },
       "ApiError": {
         "type": "object",
-        "required": [
-          "message",
-          "code"
-        ],
+        "required": ["error"],
         "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
+          "error": {
+            "type": "object",
+            "required": ["code", "message", "details", "requestId"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "validation_failed",
+                  "unauthenticated",
+                  "forbidden",
+                  "not_found",
+                  "conflict",
+                  "ambiguous_tenant",
+                  "too_many_requests",
+                  "server_error"
+                ]
+              },
+              "message": { "type": "string" },
+              "details": { "type": "object", "additionalProperties": true },
+              "requestId": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "null" }
+                ]
+              }
+            }
           }
         }
       },
       "ValidationError": {
         "allOf": [
-          {
-            "$ref": "#/components/schemas/ApiError"
-          },
+          { "$ref": "#/components/schemas/ApiError" },
           {
             "type": "object",
-            "required": [
-              "errors"
-            ],
             "properties": {
-              "errors": {
+              "error": {
                 "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
+                "properties": {
+                  "details": {
+                    "type": "object",
+                    "required": ["fields"],
+                    "properties": {
+                      "fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -830,78 +892,7 @@
               "$ref": "#/components/schemas/Requisition"
             }
           },
-          "meta": {
-            "type": "object",
-            "required": [
-              "currentPage",
-              "perPage",
-              "total",
-              "lastPage"
-            ],
-            "properties": {
-              "currentPage": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "perPage": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "total": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "lastPage": {
-                "type": "integer",
-                "minimum": 1
-              }
-            }
-          }
-        }
-      },
-      "RequisitionActivityEvent": {
-        "type": "object",
-        "required": [
-          "id",
-          "type",
-          "message",
-          "actor",
-          "occurredAt",
-          "metadata"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "requisition.created",
-              "requisition.updated",
-              "requisition.submitted"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "actor": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/UserSummary"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": true
-          }
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
         }
       },
       "CreateRequisitionLineItemRequest": {
@@ -1339,6 +1330,77 @@
           "tenantId": {
             "type": "string"
           }
+        }
+      },
+      "AuditEventListResponse": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AuditEvent" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "AuditEvent": {
+        "type": "object",
+        "required": ["id", "action", "message", "actor", "subject", "metadata", "before", "after", "occurredAt", "requestId"],
+        "properties": {
+          "id": { "type": "string" },
+          "action": { "type": "string" },
+          "message": { "type": "string" },
+          "actor": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/UserSummary" },
+              { "type": "null" }
+            ]
+          },
+          "subject": { "$ref": "#/components/schemas/AuditSubject" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "before": {
+            "oneOf": [
+              { "type": "object", "additionalProperties": true },
+              { "type": "null" }
+            ]
+          },
+          "after": {
+            "oneOf": [
+              { "type": "object", "additionalProperties": true },
+              { "type": "null" }
+            ]
+          },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "requestId": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "AuditSubject": {
+        "type": "object",
+        "required": ["type", "id", "display"],
+        "properties": {
+          "type": { "type": "string", "enum": ["requisition"] },
+          "id": { "type": "string" },
+          "display": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": ["currentPage", "perPage", "total", "lastPage"],
+        "properties": {
+          "currentPage": { "type": "integer", "minimum": 1 },
+          "perPage": { "type": "integer", "minimum": 1 },
+          "total": { "type": "integer", "minimum": 0 },
+          "lastPage": { "type": "integer", "minimum": 1 }
         }
       }
     }

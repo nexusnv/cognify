@@ -4,8 +4,8 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { ApiErrorError } from "./apiErrorError";
 
 export interface ApiError {
-  message: string;
-  code: string;
+  error: ApiErrorError;
 }

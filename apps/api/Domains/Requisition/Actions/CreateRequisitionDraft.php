@@ -2,6 +2,7 @@
 
 namespace Domains\Requisition\Actions;
 
+use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
@@ -41,9 +42,19 @@ class CreateRequisitionDraft
 
             $this->replaceLineItems($requisition, $data['lineItems'] ?? []);
 
-            $this->auditRecorder->record($tenant, $actor, 'requisition.created', $requisition, [
-                'status' => RequisitionStatus::Draft->value,
-            ]);
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $tenant,
+                actor: $actor,
+                action: 'requisition.created',
+                subject: $requisition,
+                metadata: [],
+                after: [
+                    'status' => RequisitionStatus::Draft->value,
+                    'title' => $requisition->title,
+                    'lineItemCount' => count($data['lineItems'] ?? []),
+                ],
+                subjectDisplay: $requisition->number,
+            ));
 
             return $requisition->load(['requester', 'lineItems']);
         });

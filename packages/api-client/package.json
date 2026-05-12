@@ -9,7 +9,7 @@
     "./schemas": "./src/generated/schemas/index.ts"
   },
   "scripts": {
-    "check:contract": "test -f ../../apps/api/storage/openapi/openapi.json",
+    "check:contract": "node ../../tooling/scripts/check-api-contract.mjs",
     "generate": "orval --config ./orval.config.ts",
     "lint": "echo \"@cognify/api-client lint: no package-local lint yet\"",
     "test": "echo \"@cognify/api-client test: no package-local tests yet\"",

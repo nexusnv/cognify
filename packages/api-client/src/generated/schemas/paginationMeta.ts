@@ -5,7 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequisitionListResponseMeta = {
+export interface PaginationMeta {
   /** @minimum 1 */
   currentPage: number;
   /** @minimum 1 */
@@ -14,4 +14,4 @@ export type RequisitionListResponseMeta = {
   total: number;
   /** @minimum 1 */
   lastPage: number;
-};
+}

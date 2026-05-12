@@ -2,6 +2,7 @@
 
 namespace Domains\Requisition\Actions;
 
+use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
@@ -32,9 +33,19 @@ class SubmitRequisition
                 'submitted_at' => now(),
             ])->save();
 
-            $this->auditRecorder->record($tenant, $actor, 'requisition.submitted', $requisition, [
-                'status' => RequisitionStatus::Submitted->value,
-            ]);
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $tenant,
+                actor: $actor,
+                action: 'requisition.submitted',
+                subject: $requisition,
+                metadata: [],
+                before: ['status' => RequisitionStatus::Draft->value],
+                after: [
+                    'status' => RequisitionStatus::Submitted->value,
+                    'submittedAt' => $requisition->submitted_at?->toISOString(),
+                ],
+                subjectDisplay: $requisition->number,
+            ));
 
             return $requisition->refresh()->load(['requester', 'lineItems']);
         });

@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import type { AuditEvent } from "@cognify/api-client/schemas";
 import { calculateEstimatedTotal } from "../utils/requisition-totals";
 import { requisitionActivityFixtures, requisitionFixtures } from "./requisitions-fixtures";
 import type { Requisition, RequisitionFormValues } from "../types/requisition-view-model";
@@ -6,11 +7,13 @@ import type { Requisition, RequisitionFormValues } from "../types/requisition-vi
 let requisitions = [...requisitionFixtures];
 let activity = structuredClone(requisitionActivityFixtures);
 let requisitionSequence = requisitionFixtures.length;
+let activitySequence = 0;
 
 export function resetRequisitionMockState() {
   requisitions = [...requisitionFixtures];
   activity = structuredClone(requisitionActivityFixtures);
   requisitionSequence = requisitionFixtures.length;
+  activitySequence = 0;
 }
 
 export const requisitionsHandlers = [
@@ -46,13 +49,7 @@ export const requisitionsHandlers = [
 
     requisitions = [requisition, ...requisitions];
     activity[requisition.id] = [
-      {
-        id: `activity-${Date.now()}`,
-        type: "requisition.created",
-        message: "Draft created",
-        actor: requisition.requester,
-        occurredAt: requisition.createdAt,
-      },
+      buildActivityEvent("requisition.created", "Draft created", requisition, requisition.createdAt),
     ];
 
     return HttpResponse.json({ data: requisition }, { status: 201 });
@@ -99,13 +96,7 @@ export const requisitionsHandlers = [
     requisitions = requisitions.map((item) => (item.id === existing.id ? updated : item));
     activity[updated.id] = [
       ...(activity[updated.id] ?? []),
-      {
-        id: `activity-${Date.now()}`,
-        type: "requisition.updated",
-        message: "Draft updated",
-        actor: updated.requester,
-        occurredAt: updated.updatedAt,
-      },
+      buildActivityEvent("requisition.updated", "Draft updated", updated, updated.updatedAt, existing, updated),
     ];
 
     return HttpResponse.json({ data: updated });
@@ -143,13 +134,14 @@ export const requisitionsHandlers = [
     requisitions = requisitions.map((item) => (item.id === existing.id ? submitted : item));
     activity[submitted.id] = [
       ...(activity[submitted.id] ?? []),
-      {
-        id: `activity-${Date.now()}`,
-        type: "requisition.submitted",
-        message: "Submitted for review",
-        actor: submitted.requester,
-        occurredAt: submittedAt,
-      },
+      buildActivityEvent(
+        "requisition.submitted",
+        "Submitted for review",
+        submitted,
+        submittedAt,
+        existing,
+        submitted,
+      ),
     ];
 
     return HttpResponse.json({ data: submitted });
@@ -207,4 +199,32 @@ function buildRequisition(
 function nextRequisitionNumber() {
   requisitionSequence += 1;
   return `REQ-2026-${String(requisitionSequence).padStart(6, "0")}`;
+}
+
+function buildActivityEvent(
+  action: string,
+  message: string,
+  requisition: Requisition,
+  occurredAt: string,
+  before: Requisition | null = null,
+  after: Requisition | null = null,
+): AuditEvent {
+  return {
+    id: `activity-${Date.now()}-${++activitySequence}`,
+    action,
+    message,
+    actor: requisition.requester,
+    subject: {
+      type: "requisition",
+      id: requisition.id,
+      display: requisition.number,
+    },
+    metadata: {
+      status: requisition.status,
+    },
+    before,
+    after,
+    occurredAt,
+    requestId: null,
+  };
 }

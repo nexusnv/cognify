@@ -6,10 +6,9 @@ import {
   submitRequisition as submitRequisitionEndpoint,
   updateRequisition,
 } from "@cognify/api-client/endpoints";
-import type { ListRequisitionsParams } from "@cognify/api-client/schemas";
+import type { ListRequisitionActivity200, ListRequisitionsParams } from "@cognify/api-client/schemas";
 import type {
   Requisition,
-  RequisitionActivityEvent,
   RequisitionFormValues,
   RequisitionListResponse,
 } from "../types/requisition-view-model";
@@ -38,7 +37,7 @@ export async function getRequisition(requisitionId: string) {
 export async function getRequisitionActivity(requisitionId: string) {
   const response = await listRequisitionActivity(requisitionId, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
-  return response.data as { data: RequisitionActivityEvent[] };
+  return response.data satisfies ListRequisitionActivity200;
 }
 
 export async function createRequisitionDraft(values: RequisitionFormValues) {

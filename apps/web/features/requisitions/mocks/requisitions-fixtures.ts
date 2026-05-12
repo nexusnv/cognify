@@ -1,4 +1,5 @@
-import type { Requisition, RequisitionActivityEvent } from "../types/requisition-view-model";
+import type { AuditEvent } from "@cognify/api-client/schemas";
+import type { Requisition } from "../types/requisition-view-model";
 
 const actor = {
   id: "user-1",
@@ -77,37 +78,57 @@ export const requisitionFixtures: Requisition[] = [
   },
 ];
 
-export const requisitionActivityFixtures: Record<string, RequisitionActivityEvent[]> = {
+export const requisitionActivityFixtures: Record<string, AuditEvent[]> = {
   "req-1": [
     {
       id: "activity-1",
-      type: "requisition.created",
+      action: "requisition.created",
       message: "Draft created",
       actor,
+      subject: { type: "requisition", id: "req-1", display: "REQ-2026-000001" },
+      metadata: {},
+      before: { title: "Field laptop replacement", estimatedTotal: 7000 },
+      after: { title: "Field laptop refresh", estimatedTotal: 7200 },
       occurredAt: "2026-05-09T03:30:00.000Z",
+      requestId: null,
     },
     {
       id: "activity-2",
-      type: "requisition.updated",
+      action: "requisition.updated",
       message: "Draft updated",
       actor,
+      subject: { type: "requisition", id: "req-1", display: "REQ-2026-000001" },
+      metadata: {},
+      before: null,
+      after: null,
       occurredAt: "2026-05-10T08:10:00.000Z",
+      requestId: null,
     },
   ],
   "req-2": [
     {
       id: "activity-3",
-      type: "requisition.created",
+      action: "requisition.created",
       message: "Draft created",
       actor,
+      subject: { type: "requisition", id: "req-2", display: "REQ-2026-000002" },
+      metadata: {},
+      before: null,
+      after: null,
       occurredAt: "2026-05-08T02:00:00.000Z",
+      requestId: null,
     },
     {
       id: "activity-4",
-      type: "requisition.submitted",
+      action: "requisition.submitted",
       message: "Submitted for review",
       actor,
+      subject: { type: "requisition", id: "req-2", display: "REQ-2026-000002" },
+      metadata: {},
+      before: null,
+      after: null,
       occurredAt: "2026-05-09T06:45:00.000Z",
+      requestId: null,
     },
   ],
 };
