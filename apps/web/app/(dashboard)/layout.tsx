@@ -1,5 +1,10 @@
-import { DashboardShell } from "@/components/shell/dashboard-shell";
+import { AppShell } from "@/components/shell/app-shell";
+import { SessionGate } from "@/features/identity/workflows/session-gate";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <SessionGate>
+      <AppShell>{children}</AppShell>
+    </SessionGate>
+  );
 }
