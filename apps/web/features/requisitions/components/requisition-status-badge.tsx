@@ -1,34 +1,35 @@
 import { CheckCircle2, CircleDot, Clock3 } from "lucide-react";
+import { StatusBadge } from "@/components/workflow/status-badge";
+import type { WorkflowStateConfig } from "@/components/workflow/workflow-state";
 import type { RequisitionStatus } from "../types/requisition-view-model";
 
-const statusConfig = {
+const requisitionStatusConfig = {
   draft: {
     label: "Draft",
-    className: "border-amber-300 bg-amber-50 text-amber-900",
+    description: "The requester can still edit and submit this requisition.",
+    tone: "draft",
     icon: CircleDot,
   },
   submitted: {
     label: "Submitted",
-    className: "border-emerald-300 bg-emerald-50 text-emerald-900",
+    description: "The requisition has been submitted for procurement review.",
+    tone: "success",
     icon: CheckCircle2,
   },
   pending_approval: {
     label: "Pending approval",
-    className: "border-blue-300 bg-blue-50 text-blue-900",
+    description: "The requisition is waiting for an approval decision.",
+    tone: "info",
     icon: Clock3,
   },
-} satisfies Record<RequisitionStatus, { label: string; className: string; icon: typeof CircleDot }>;
+} satisfies WorkflowStateConfig<RequisitionStatus>;
 
-export function RequisitionStatusBadge({ status }: { status: RequisitionStatus }) {
-  const config = statusConfig[status];
-  const Icon = config.icon;
-
-  return (
-    <span
-      className={`inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium ${config.className}`}
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-      {config.label}
-    </span>
-  );
+export function RequisitionStatusBadge({
+  status,
+  size,
+}: {
+  status: RequisitionStatus;
+  size?: "default" | "compact";
+}) {
+  return <StatusBadge status={status} config={requisitionStatusConfig} size={size} />;
 }

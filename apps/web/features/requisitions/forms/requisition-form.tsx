@@ -3,6 +3,13 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
+import { FormField } from "@/components/forms/form-field";
+import {
+  flattenZodFieldErrors,
+  focusFirstInvalidField,
+  withFieldIds,
+} from "@/components/forms/validation-errors";
 import { SubmitRequisitionDialog } from "../components/submit-requisition-dialog";
 import { SubmissionChecklist } from "../components/submission-checklist";
 import { useSaveRequisitionDraft } from "../hooks/use-save-requisition-draft";
@@ -17,6 +24,14 @@ const emptyLineItem = {
   unit: "each",
   estimatedUnitPrice: 0,
   currency: "MYR",
+};
+
+const requisitionFieldIds: Record<string, string> = {
+  title: "title",
+  businessJustification: "business-justification",
+  neededByDate: "needed-by",
+  currency: "currency",
+  lineItems: "line-items",
 };
 
 export function RequisitionForm({ initialRequisition }: { initialRequisition?: Requisition }) {
@@ -42,7 +57,11 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
   const saveDraft = useSaveRequisitionDraft();
   const submitDraft = useSubmitRequisition();
 
-  const errorSummary = useMemo(() => Object.values(errors).flat(), [errors]);
+  const errorSummary = useMemo(
+    () => withFieldIds(flattenZodFieldErrors(errors), requisitionFieldIds),
+    [errors],
+  );
+  const lineItemsErrorId = errors.lineItems?.[0] ? "line-items-error" : undefined;
 
   function updateValue(field: keyof RequisitionFormValues, value: string) {
     setSaveState("unsaved");
@@ -72,7 +91,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
   async function handleSaveDraft() {
     if (!values.title.trim()) {
       setErrors({ title: ["Title is required."] });
-      focusFirstInvalidField();
+      window.setTimeout(() => focusFirstInvalidField(formRef.current ?? document), 0);
       return undefined;
     }
 
@@ -96,7 +115,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
-      focusFirstInvalidField();
+      window.setTimeout(() => focusFirstInvalidField(formRef.current ?? document), 0);
       return;
     }
 
@@ -120,13 +139,6 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
       const message = error instanceof Error ? error.message : "Unable to submit requisition";
       toast.error(message);
     }
-  }
-
-  function focusFirstInvalidField() {
-    window.setTimeout(() => {
-      const firstInvalid = formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']");
-      firstInvalid?.focus();
-    }, 0);
   }
 
   return (
@@ -164,20 +176,16 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
         </div>
       </div>
 
-      {errorSummary.length > 0 ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
-        >
-          <p className="font-medium">Complete the highlighted fields before submitting.</p>
-        </div>
-      ) : null}
+      <FormErrorSummary
+        title="Complete the highlighted fields before submitting."
+        errors={errorSummary}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-5">
           <section className="space-y-3 rounded-md border p-4">
             <h2 className="text-base font-semibold">Request summary</h2>
-            <Field label="Title" error={errors.title?.[0]}>
+            <FormField htmlFor="title" label="Title" error={errors.title?.[0]} required>
               <input
                 id="title"
                 className="min-h-11 w-full rounded-md border px-3 text-base"
@@ -185,8 +193,13 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 aria-invalid={Boolean(errors.title)}
                 onChange={(event) => updateValue("title", event.target.value)}
               />
-            </Field>
-            <Field label="Needed by" error={errors.neededByDate?.[0]}>
+            </FormField>
+            <FormField
+              htmlFor="needed-by"
+              label="Needed by"
+              error={errors.neededByDate?.[0]}
+              required
+            >
               <input
                 id="needed-by"
                 type="date"
@@ -195,8 +208,13 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 aria-invalid={Boolean(errors.neededByDate)}
                 onChange={(event) => updateValue("neededByDate", event.target.value)}
               />
-            </Field>
-            <Field label="Business justification" error={errors.businessJustification?.[0]}>
+            </FormField>
+            <FormField
+              htmlFor="business-justification"
+              label="Business justification"
+              error={errors.businessJustification?.[0]}
+              required
+            >
               <textarea
                 id="business-justification"
                 className="min-h-28 w-full rounded-md border px-3 py-2 text-base"
@@ -204,10 +222,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 aria-invalid={Boolean(errors.businessJustification)}
                 onChange={(event) => updateValue("businessJustification", event.target.value)}
               />
-            </Field>
+            </FormField>
           </section>
 
-          <section className="space-y-3 rounded-md border p-4">
+          <section id="line-items" className="space-y-3 rounded-md border p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-semibold">Line items</h2>
               <button
@@ -227,16 +245,17 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             <div className="space-y-4">
               {values.lineItems.map((item, index) => (
                 <div key={index} className="grid gap-3 rounded-md border p-3 md:grid-cols-2">
-                  <Field label={`Item name ${index + 1}`}>
+                  <FormField htmlFor={`item-name-${index}`} label={`Item name ${index + 1}`}>
                     <input
                       id={`item-name-${index}`}
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.name}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) => updateLineItem(index, "name", event.target.value)}
                     />
-                  </Field>
-                  <Field label={`Quantity ${index + 1}`}>
+                  </FormField>
+                  <FormField htmlFor={`quantity-${index}`} label={`Quantity ${index + 1}`}>
                     <input
                       id={`quantity-${index}`}
                       type="number"
@@ -244,19 +263,24 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.quantity}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) => updateLineItem(index, "quantity", event.target.value)}
                     />
-                  </Field>
-                  <Field label={`Unit ${index + 1}`}>
+                  </FormField>
+                  <FormField htmlFor={`unit-${index}`} label={`Unit ${index + 1}`}>
                     <input
                       id={`unit-${index}`}
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.unit}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) => updateLineItem(index, "unit", event.target.value)}
                     />
-                  </Field>
-                  <Field label={`Estimated unit price ${index + 1}`}>
+                  </FormField>
+                  <FormField
+                    htmlFor={`unit-price-${index}`}
+                    label={`Estimated unit price ${index + 1}`}
+                  >
                     <input
                       id={`unit-price-${index}`}
                       type="number"
@@ -264,12 +288,13 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.estimatedUnitPrice}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) =>
                         updateLineItem(index, "estimatedUnitPrice", event.target.value)
                       }
                     />
-                  </Field>
-                  <Field label={`Currency ${index + 1}`}>
+                  </FormField>
+                  <FormField htmlFor={`currency-${index}`} label={`Currency ${index + 1}`}>
                     <select
                       id={`currency-${index}`}
                       className="min-h-11 w-full rounded-md border px-3 text-base"
@@ -280,7 +305,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       <option value="USD">USD</option>
                       <option value="SGD">SGD</option>
                     </select>
-                  </Field>
+                  </FormField>
                   <button
                     type="button"
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium md:self-end"
@@ -299,38 +324,40 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               ))}
             </div>
             {errors.lineItems?.[0] ? (
-              <p className="text-sm text-red-700">{errors.lineItems[0]}</p>
+              <p id="line-items-error" className="text-sm text-red-700">
+                {errors.lineItems[0]}
+              </p>
             ) : null}
           </section>
 
           <section className="space-y-3 rounded-md border p-4">
             <h2 className="text-base font-semibold">Optional context</h2>
             <div className="grid gap-3 md:grid-cols-2">
-              <Field label="Department">
+              <FormField htmlFor="department" label="Department">
                 <input
                   id="department"
                   className="min-h-11 w-full rounded-md border px-3 text-base"
                   value={values.department}
                   onChange={(event) => updateValue("department", event.target.value)}
                 />
-              </Field>
-              <Field label="Cost center">
+              </FormField>
+              <FormField htmlFor="cost-center" label="Cost center">
                 <input
                   id="cost-center"
                   className="min-h-11 w-full rounded-md border px-3 text-base"
                   value={values.costCenter}
                   onChange={(event) => updateValue("costCenter", event.target.value)}
                 />
-              </Field>
+              </FormField>
               <div className="md:col-span-2">
-                <Field label="Delivery location">
+                <FormField htmlFor="delivery-location" label="Delivery location">
                   <textarea
                     id="delivery-location"
                     className="min-h-20 w-full rounded-md border px-3 py-2 text-base"
                     value={values.deliveryLocation}
                     onChange={(event) => updateValue("deliveryLocation", event.target.value)}
                   />
-                </Field>
+                </FormField>
               </div>
             </div>
           </section>
@@ -346,28 +373,6 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
         onConfirm={handleConfirmSubmit}
       />
     </form>
-  );
-}
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactElement<{ id: string }>;
-}) {
-  const id = children.props.id;
-
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium">
-        {label}
-      </label>
-      {children}
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
-    </div>
   );
 }
 

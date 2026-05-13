@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useDataTableState } from "@/components/data-table/use-data-table-state";
 import { useRequisitions } from "../hooks/use-requisitions";
 import { RequisitionsTable } from "../tables/requisitions-table";
 
@@ -10,10 +11,30 @@ export function RequisitionListPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 300);
   const [status, setStatus] = useState("");
+  const tableState = useDataTableState({ initialSort: { columnId: "title", direction: "asc" } });
   const query = useMemo(() => ({ search: debouncedSearch, status }), [debouncedSearch, status]);
   const { data, isLoading, isError, refetch } = useRequisitions(query);
-  const requisitions = data?.data ?? [];
+  const sortedRequisitions = useMemo(() => {
+    const requisitions = data?.data ?? [];
+    const sort = tableState.sort;
+    if (!sort) return requisitions;
+
+    return [...requisitions].sort((first, second) => {
+      const firstValue = getSortValue(first, sort.columnId);
+      const secondValue = getSortValue(second, sort.columnId);
+      const result = firstValue.localeCompare(secondValue);
+
+      return sort.direction === "asc" ? result : -result;
+    });
+  }, [data?.data, tableState.sort]);
   const filtered = Boolean(search || status);
+  const renderedState = isLoading
+    ? "loading"
+    : isError
+      ? "error"
+      : sortedRequisitions.length === 0
+        ? "empty"
+        : "idle";
 
   return (
     <section className="space-y-5">
@@ -66,36 +87,23 @@ export function RequisitionListPage() {
         </button>
       </div>
 
-      {isLoading ? <TableSkeleton /> : null}
-      {isError ? (
-        <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-          <p className="font-medium">Requisitions could not be loaded.</p>
-          <button
-            type="button"
-            className="mt-3 min-h-11 rounded-md border bg-white px-3"
-            onClick={() => refetch()}
-          >
-            Retry
-          </button>
-        </div>
-      ) : null}
-      {!isLoading && !isError && requisitions.length === 0 ? (
-        <div className="rounded-md border p-6">
-          <h2 className="text-base font-semibold">
-            {filtered ? "No requisitions match these filters" : "No requisitions yet"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {filtered
-              ? "Clear filters to see the full work queue."
-              : "Create the first draft requisition for this tenant."}
-          </p>
-        </div>
-      ) : null}
-      {!isLoading && !isError && requisitions.length > 0 ? (
-        <RequisitionsTable requisitions={requisitions} />
-      ) : null}
+      <RequisitionsTable
+        requisitions={sortedRequisitions}
+        state={renderedState}
+        filtered={filtered}
+        pagination={data?.meta}
+        onRetry={() => refetch()}
+        sort={tableState.sort}
+        onSortChange={tableState.setSort}
+      />
     </section>
   );
+}
+
+function getSortValue(requisition: { title: string }, columnId: string) {
+  if (columnId === "title") return requisition.title;
+
+  return "";
 }
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -108,14 +116,4 @@ function useDebouncedValue<T>(value: T, delay: number): T {
   }, [delay, value]);
 
   return debouncedValue;
-}
-
-function TableSkeleton() {
-  return (
-    <div className="space-y-2 rounded-md border p-3" aria-label="Loading requisitions">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className="h-12 rounded-md bg-card" />
-      ))}
-    </div>
-  );
 }
