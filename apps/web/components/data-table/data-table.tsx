@@ -24,6 +24,8 @@ export function DataTable<TRow>({
   sort,
   onSortChange,
   pagination,
+  onPreviousPage,
+  onNextPage,
   renderRowActions,
   renderMobileRow,
 }: {
@@ -40,6 +42,8 @@ export function DataTable<TRow>({
   sort?: DataTableSort;
   onSortChange?: (sort: DataTableSort) => void;
   pagination?: DataTablePagination;
+  onPreviousPage?: () => void;
+  onNextPage?: () => void;
   renderRowActions?: (row: TRow) => ReactNode;
   renderMobileRow?: (row: TRow) => ReactNode;
 }) {
@@ -128,12 +132,65 @@ export function DataTable<TRow>({
             <div key={getRowId(row)}>{renderMobileRow(row)}</div>
           ))}
         </div>
-      ) : null}
+      ) : (
+        <ul className="space-y-3 md:hidden">
+          {rows.map((row) => {
+            const mobileColumns = columns.filter((column) => column.hideOnMobile !== true);
+
+            return (
+              <li key={getRowId(row)}>
+                <article className="rounded-md border p-3">
+                  <dl className="grid gap-3">
+                    {mobileColumns.map((column) => (
+                      <div
+                        key={column.id}
+                        className="grid gap-1 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3"
+                      >
+                        <dt className="text-xs font-medium uppercase text-muted-foreground">
+                          {column.header}
+                        </dt>
+                        <dd className={`min-w-0 break-words text-sm ${alignClassName(column.align)}`}>
+                          {column.cell(row)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {renderRowActions ? (
+                    <div className="mt-3 flex justify-end">{renderRowActions(row)}</div>
+                  ) : null}
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {pagination ? (
-        <p className="text-sm text-muted-foreground">
-          Showing {rows.length} of {pagination.total} records
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Showing {rows.length} of {pagination.total} records
+          </p>
+          {onPreviousPage || onNextPage ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={onPreviousPage}
+                disabled={!onPreviousPage || pagination.currentPage <= 1}
+              >
+                Previous page
+              </button>
+              <button
+                type="button"
+                className="rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={onNextPage}
+                disabled={!onNextPage || pagination.currentPage >= pagination.lastPage}
+              >
+                Next page
+              </button>
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

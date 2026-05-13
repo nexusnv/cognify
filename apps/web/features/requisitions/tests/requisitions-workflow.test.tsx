@@ -60,6 +60,13 @@ describe("requisitions workflow", () => {
     expect(
       screen.getByRole("link", { name: "Business justification is required before submission." }),
     ).toHaveAttribute("href", "#business-justification");
+    expect(screen.getByLabelText("Item name 1")).toHaveAccessibleDescription(
+      "Item name is required before submission.",
+    );
+    expect(screen.getAllByText("Item name is required before submission.")[1]).toHaveAttribute(
+      "id",
+      "line-items-error",
+    );
     expect(screen.queryByRole("dialog", { name: "Submit requisition?" })).not.toBeInTheDocument();
   });
 

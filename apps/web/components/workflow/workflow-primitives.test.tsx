@@ -68,4 +68,32 @@ describe("ActivityTimeline", () => {
     expect(screen.getByText(/Test User/)).toBeInTheDocument();
     expect(screen.getByText(/2026/)).toBeInTheDocument();
   });
+
+  it("renders metadata rows when present", () => {
+    render(
+      <ActivityTimeline
+        events={[
+          {
+            id: "audit-2",
+            action: "requisition.updated",
+            message: "Requisition updated",
+            occurredAt: "2026-05-13T08:30:00.000Z",
+            actor: { name: "Test User" },
+            metadata: {
+              amount: "MYR 3,600.00",
+              approvers: ["Finance", "Procurement"],
+              extra: { note: "Rechecked" },
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("amount")).toBeInTheDocument();
+    expect(screen.getByText("MYR 3,600.00")).toBeInTheDocument();
+    expect(screen.getByText("approvers")).toBeInTheDocument();
+    expect(screen.getByText(/\["Finance","Procurement"\]/)).toBeInTheDocument();
+    expect(screen.getByText("extra")).toBeInTheDocument();
+    expect(screen.getByText(/\{"note":"Rechecked"\}/)).toBeInTheDocument();
+  });
 });

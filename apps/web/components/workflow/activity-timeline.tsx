@@ -40,6 +40,7 @@ export function ActivityTimeline({
         const Icon = actionIcons[event.action] ?? actionIcons.default ?? FileClock;
         const actorName = event.actor?.name ?? "System";
         const formattedTime = new Date(event.occurredAt).toLocaleString();
+        const metadataEntries = event.metadata ? Object.entries(event.metadata).filter(([, value]) => value !== undefined && value !== null) : [];
 
         return (
           <li key={event.id} className="flex gap-3 rounded-md border p-3">
@@ -54,10 +55,38 @@ export function ActivityTimeline({
               {event.targetDisplay ? (
                 <p className="mt-1 text-xs text-muted-foreground">{event.targetDisplay}</p>
               ) : null}
+              {metadataEntries.length > 0 ? (
+                <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
+                  {metadataEntries.map(([key, value]) => (
+                    <div key={key} className="contents">
+                      <dt className="font-medium text-muted-foreground">{key}</dt>
+                      <dd className="min-w-0 break-words">{formatMetadataValue(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
             </div>
           </li>
         );
       })}
     </ol>
   );
+}
+
+function formatMetadataValue(value: unknown) {
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }

@@ -61,6 +61,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     () => withFieldIds(flattenZodFieldErrors(errors), requisitionFieldIds),
     [errors],
   );
+  const lineItemsErrorId = errors.lineItems?.[0] ? "line-items-error" : undefined;
 
   function updateValue(field: keyof RequisitionFormValues, value: string) {
     setSaveState("unsaved");
@@ -250,6 +251,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.name}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) => updateLineItem(index, "name", event.target.value)}
                     />
                   </FormField>
@@ -261,6 +263,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.quantity}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) => updateLineItem(index, "quantity", event.target.value)}
                     />
                   </FormField>
@@ -270,6 +273,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.unit}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) => updateLineItem(index, "unit", event.target.value)}
                     />
                   </FormField>
@@ -284,6 +288,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.estimatedUnitPrice}
                       aria-invalid={Boolean(errors.lineItems)}
+                      aria-describedby={lineItemsErrorId}
                       onChange={(event) =>
                         updateLineItem(index, "estimatedUnitPrice", event.target.value)
                       }
@@ -319,7 +324,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               ))}
             </div>
             {errors.lineItems?.[0] ? (
-              <p className="text-sm text-red-700">{errors.lineItems[0]}</p>
+              <p id="line-items-error" className="text-sm text-red-700">
+                {errors.lineItems[0]}
+              </p>
             ) : null}
           </section>
 

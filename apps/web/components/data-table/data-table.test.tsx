@@ -34,6 +34,7 @@ const columns: DataTableColumn<Row>[] = [
   { id: "number", header: "Number", cell: (row) => row.number, widthClassName: "w-36" },
   { id: "title", header: "Title", cell: (row) => row.title, sortable: true },
   { id: "status", header: "Status", cell: (row) => row.status, hideOnMobile: false },
+  { id: "internal", header: "Internal note", cell: (row) => `Internal ${row.id}`, hideOnMobile: true },
   { id: "total", header: "Estimated total", cell: (row) => row.total, align: "right" },
 ];
 
@@ -133,5 +134,48 @@ describe("DataTable", () => {
       "aria-sort",
       "descending",
     );
+  });
+
+  it("renders a default mobile fallback that hides mobile-only columns", () => {
+    render(
+      <DataTable
+        caption="Requisitions"
+        rows={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+      />,
+    );
+
+    const mobileList = screen.getByRole("list");
+    expect(within(mobileList).getByText("Field laptop refresh")).toBeInTheDocument();
+    expect(within(mobileList).getByText("REQ-2026-000001")).toBeInTheDocument();
+    expect(within(mobileList).queryByText("Internal req-1")).not.toBeInTheDocument();
+  });
+
+  it("renders pagination controls when callbacks are provided", async () => {
+    const user = userEvent.setup();
+    const previousPage = vi.fn();
+    const nextPage = vi.fn();
+
+    render(
+      <DataTable
+        caption="Requisitions"
+        rows={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+        pagination={{ currentPage: 1, perPage: 10, total: 20, lastPage: 2 }}
+        onPreviousPage={previousPage}
+        onNextPage={nextPage}
+      />,
+    );
+
+    const previousButton = screen.getByRole("button", { name: "Previous page" });
+    const nextButton = screen.getByRole("button", { name: "Next page" });
+    expect(previousButton).toBeDisabled();
+    expect(nextButton).not.toBeDisabled();
+
+    await user.click(nextButton);
+    expect(nextPage).toHaveBeenCalledTimes(1);
+    expect(previousPage).not.toHaveBeenCalled();
   });
 });
