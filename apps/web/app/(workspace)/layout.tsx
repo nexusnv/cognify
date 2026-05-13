@@ -1,10 +1,10 @@
-import { WorkspaceShell } from "@/components/shell/workspace-shell";
+import { AppShell } from "@/components/shell/app-shell";
 import { SessionGate } from "@/features/identity/workflows/session-gate";
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionGate>
-      <WorkspaceShell>{children}</WorkspaceShell>
+      <AppShell>{children}</AppShell>
     </SessionGate>
   );
 }

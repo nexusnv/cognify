@@ -1,8 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { http, HttpResponse } from "msw";
+import { describe, expect, it, vi } from "vitest";
+import { server } from "@/tests/msw/server";
+import { requisitionFixtures } from "../mocks/requisitions-fixtures";
 import { RequisitionCreatePage } from "../workflows/requisition-create-page";
+import { RequisitionDetailPage } from "../workflows/requisition-detail-page";
 import { RequisitionListPage } from "../workflows/requisition-list-page";
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -43,6 +47,90 @@ describe("requisitions workflow", () => {
     );
     expect(screen.getByText("Business justification is required before submission.")).toBeVisible();
     expect(screen.queryByRole("dialog", { name: "Submit requisition?" })).not.toBeInTheDocument();
+  });
+
+  it("renders requisition detail inside the record workspace layout", async () => {
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-1" />);
+
+    expect(await screen.findByRole("link", { name: "Back to requisitions" })).toHaveAttribute(
+      "href",
+      "/requisitions",
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Field laptop refresh", level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Record metadata" })).toHaveTextContent(
+      "Estimated total",
+    );
+    const sections = screen.getByRole("navigation", { name: "Record sections" });
+    expect(within(sections).getByRole("link", { name: "Overview" })).toHaveAttribute(
+      "href",
+      "#overview",
+    );
+    expect(within(sections).getByRole("link", { name: "Line items" })).toHaveAttribute(
+      "href",
+      "#line-items",
+    );
+    expect(within(sections).getByRole("link", { name: "Activity" })).toHaveAttribute(
+      "href",
+      "#activity",
+    );
+    expect(within(sections).queryByRole("link", { name: "Readiness" })).not.toBeInTheDocument();
+
+    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
+      "Approval readiness",
+    );
+  });
+
+  it("renders duplicate unnamed line item records without duplicate React keys", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const requisition = {
+      ...requisitionFixtures[0],
+      lineItems: [
+        {
+          id: undefined,
+          name: "Laptop",
+          quantity: 2,
+          unit: "each",
+          estimatedUnitPrice: 1800,
+          currency: "MYR",
+          estimatedLineTotal: 3600,
+        },
+        {
+          id: undefined,
+          name: "Laptop",
+          quantity: 2,
+          unit: "each",
+          estimatedUnitPrice: 1800,
+          currency: "MYR",
+          estimatedLineTotal: 3600,
+        },
+      ],
+    };
+
+    server.use(
+      http.get("/api/requisitions/req-duplicate-lines", () => {
+        return HttpResponse.json({ data: requisition });
+      }),
+      http.get("/api/requisitions/req-duplicate-lines/activity", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    try {
+      renderWithQuery(<RequisitionDetailPage requisitionId="req-duplicate-lines" />);
+
+      expect(
+        await screen.findByRole("heading", { name: "Field laptop refresh", level: 1 }),
+      ).toBeInTheDocument();
+      expect(screen.getAllByText("Laptop")).toHaveLength(2);
+      expect(consoleError).not.toHaveBeenCalledWith(
+        expect.stringContaining("Encountered two children with the same key"),
+        expect.anything(),
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it("saves and submits a valid requisition through MSW", async () => {
