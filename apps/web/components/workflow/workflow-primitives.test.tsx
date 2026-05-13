@@ -92,8 +92,54 @@ describe("ActivityTimeline", () => {
     expect(screen.getByText("amount")).toBeInTheDocument();
     expect(screen.getByText("MYR 3,600.00")).toBeInTheDocument();
     expect(screen.getByText("approvers")).toBeInTheDocument();
-    expect(screen.getByText(/\["Finance","Procurement"\]/)).toBeInTheDocument();
+    expect(screen.getByText("approvers").nextElementSibling).toHaveTextContent("Finance");
+    expect(screen.getByText("approvers").nextElementSibling).toHaveTextContent("Procurement");
     expect(screen.getByText("extra")).toBeInTheDocument();
-    expect(screen.getByText(/\{"note":"Rechecked"\}/)).toBeInTheDocument();
+    expect(screen.getByText("extra").nextElementSibling).toHaveTextContent("Rechecked");
+  });
+
+  it("renders malformed dates with a safe fallback", () => {
+    render(
+      <ActivityTimeline
+        events={[
+          {
+            id: "audit-3",
+            action: "requisition.updated",
+            message: "Requisition updated",
+            occurredAt: "not-a-date",
+            actor: { name: "Test User" },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/Unknown date/)).toBeInTheDocument();
+    expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
+  });
+
+  it("truncates long complex metadata values and keeps the full value in a title", () => {
+    const longNote = "A".repeat(240);
+
+    render(
+      <ActivityTimeline
+        events={[
+          {
+            id: "audit-4",
+            action: "requisition.updated",
+            message: "Requisition updated",
+            occurredAt: "2026-05-13T08:30:00.000Z",
+            actor: { name: "Test User" },
+            metadata: {
+              extra: { note: longNote },
+            },
+          },
+        ]}
+      />,
+    );
+
+    const extraValue = screen.getByText("extra").nextElementSibling;
+    expect(extraValue).toHaveTextContent("...");
+    expect(extraValue?.textContent?.length).toBeLessThan(240);
+    expect(extraValue).toHaveAttribute("title", JSON.stringify({ note: longNote }));
   });
 });

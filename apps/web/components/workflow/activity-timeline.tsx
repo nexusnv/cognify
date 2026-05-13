@@ -1,6 +1,13 @@
 import { FileClock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+const metadataValueMaxLength = 200;
+
+type FormattedMetadataValue = {
+  displayValue: string;
+  fullValue?: string;
+};
+
 export type ActivityTimelineActor = {
   id?: string;
   name?: string | null;
@@ -39,7 +46,7 @@ export function ActivityTimeline({
       {events.map((event) => {
         const Icon = actionIcons[event.action] ?? actionIcons.default ?? FileClock;
         const actorName = event.actor?.name ?? "System";
-        const formattedTime = new Date(event.occurredAt).toLocaleString();
+        const formattedTime = formatOccurredAt(event.occurredAt);
         const metadataEntries = event.metadata ? Object.entries(event.metadata).filter(([, value]) => value !== undefined && value !== null) : [];
 
         return (
@@ -57,12 +64,18 @@ export function ActivityTimeline({
               ) : null}
               {metadataEntries.length > 0 ? (
                 <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
-                  {metadataEntries.map(([key, value]) => (
-                    <div key={key} className="contents">
-                      <dt className="font-medium text-muted-foreground">{key}</dt>
-                      <dd className="min-w-0 break-words">{formatMetadataValue(value)}</dd>
-                    </div>
-                  ))}
+                  {metadataEntries.map(([key, value]) => {
+                    const formattedValue = formatMetadataValue(value);
+
+                    return (
+                      <div key={key} className="contents">
+                        <dt className="font-medium text-muted-foreground">{key}</dt>
+                        <dd className="min-w-0 break-words" title={formattedValue.fullValue}>
+                          {formattedValue.displayValue}
+                        </dd>
+                      </div>
+                    );
+                  })}
                 </dl>
               ) : null}
             </div>
@@ -73,7 +86,13 @@ export function ActivityTimeline({
   );
 }
 
-function formatMetadataValue(value: unknown) {
+function formatOccurredAt(occurredAt: string) {
+  const parsedDate = new Date(occurredAt);
+
+  return Number.isNaN(parsedDate.getTime()) ? "Unknown date" : parsedDate.toLocaleString();
+}
+
+function formatMetadataValue(value: unknown): FormattedMetadataValue {
   if (
     value === null ||
     typeof value === "string" ||
@@ -81,12 +100,23 @@ function formatMetadataValue(value: unknown) {
     typeof value === "boolean" ||
     typeof value === "bigint"
   ) {
-    return String(value);
+    return { displayValue: String(value) };
   }
 
   try {
-    return JSON.stringify(value);
+    return truncateMetadataValue(JSON.stringify(value));
   } catch {
-    return String(value);
+    return truncateMetadataValue(String(value));
   }
+}
+
+function truncateMetadataValue(value: string): FormattedMetadataValue {
+  if (value.length <= metadataValueMaxLength) {
+    return { displayValue: value };
+  }
+
+  return {
+    displayValue: `${value.slice(0, metadataValueMaxLength - 3)}...`,
+    fullValue: value,
+  };
 }

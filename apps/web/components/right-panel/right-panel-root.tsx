@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useOptionalRightPanel } from "./right-panel-provider";
-import type { RightPanelSize } from "./right-panel-types";
+import type { RightPanelDefinition, RightPanelSize } from "./right-panel-types";
 
 const widthClassBySize: Record<RightPanelSize, string> = {
   sm: "sm:max-w-96",
@@ -17,6 +17,7 @@ export function RightPanelRoot() {
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const previousPanelRef = useRef<RightPanelDefinition | null>(null);
   const panelRef = useRef<HTMLElement>(null);
   const panel = rightPanel?.panel ?? null;
   const closePanel = rightPanel?.closePanel;
@@ -70,19 +71,24 @@ export function RightPanelRoot() {
   }, [closePanel, panel]);
 
   useEffect(() => {
-    if (!panel) return undefined;
+    const wasOpen = Boolean(previousPanelRef.current);
 
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    window.setTimeout(() => {
-      const firstFocusable = getFocusableElements(panelRef.current)[0];
-      (firstFocusable ?? panelRef.current)?.focus();
-    }, 0);
+    if (panel) {
+      if (!wasOpen) {
+        previousFocusRef.current =
+          document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      }
 
-    return () => {
+      window.setTimeout(() => {
+        const firstFocusable = getFocusableElements(panelRef.current)[0];
+        (firstFocusable ?? panelRef.current)?.focus();
+      }, 0);
+    } else if (wasOpen) {
       previousFocusRef.current?.focus();
       previousFocusRef.current = null;
-    };
+    }
+
+    previousPanelRef.current = panel;
   }, [panel]);
 
   useEffect(() => {
