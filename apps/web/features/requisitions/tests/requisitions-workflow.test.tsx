@@ -3,6 +3,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
+import { RightPanelProvider } from "@/components/right-panel/right-panel-provider";
+import { RightPanelRoot } from "@/components/right-panel/right-panel-root";
 import { server } from "@/tests/msw/server";
 import { requisitionFixtures } from "../mocks/requisitions-fixtures";
 import { RequisitionCreatePage } from "../workflows/requisition-create-page";
@@ -17,7 +19,14 @@ function renderWithQuery(ui: React.ReactElement) {
     },
   });
 
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RightPanelProvider>
+        {ui}
+        <RightPanelRoot />
+      </RightPanelProvider>
+    </QueryClientProvider>,
+  );
 }
 
 describe("requisitions workflow", () => {
@@ -45,8 +54,50 @@ describe("requisitions workflow", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Complete the highlighted fields before submitting.",
     );
-    expect(screen.getByText("Business justification is required before submission.")).toBeVisible();
+    expect(
+      screen.getAllByText("Business justification is required before submission.")[0],
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Business justification is required before submission." }),
+    ).toHaveAttribute("href", "#business-justification");
     expect(screen.queryByRole("dialog", { name: "Submit requisition?" })).not.toBeInTheDocument();
+  });
+
+  it("opens a requisition details panel from the work queue", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionListPage />);
+
+    expect(await screen.findByRole("heading", { name: "Requisitions" })).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole("button", { name: "Open details panel for REQ-2026-000001" }),
+    );
+
+    const panel = screen.getByRole("dialog", { name: "Field laptop refresh" });
+    expect(panel).toBeInTheDocument();
+    expect(within(panel).getByText("REQ-2026-000001")).toBeInTheDocument();
+    expect(within(panel).getByText("Requester")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open workspace" })).toHaveAttribute(
+      "href",
+      "/requisitions/req-1",
+    );
+  });
+
+  it("sorts the work queue when a sortable heading changes", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionListPage />);
+
+    const table = await screen.findByRole("table", { name: "Requisitions" });
+    let rows = within(table).getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("Field laptop refresh");
+    expect(rows[2]).toHaveTextContent("Warehouse packing supplies");
+
+    await user.click(screen.getByRole("button", { name: "Sort by Title descending" }));
+
+    rows = within(table).getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("Warehouse packing supplies");
+    expect(rows[2]).toHaveTextContent("Field laptop refresh");
   });
 
   it("renders requisition detail inside the record workspace layout", async () => {
