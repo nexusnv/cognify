@@ -54,7 +54,7 @@ export function ProfileForm({
   const notificationPreferences = useWatch({
     control,
     name: "notificationPreferences",
-  });
+  }) ?? defaultNotificationPreferences;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -142,7 +142,6 @@ export function ProfileForm({
 
       <NotificationPreferencesFields
         preferences={notificationPreferences}
-        register={register}
         setValue={setValue}
       />
 

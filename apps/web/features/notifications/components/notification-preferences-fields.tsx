@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  FieldPath,
-  UseFormRegister,
-  UseFormSetValue,
-} from "react-hook-form";
+import type { UseFormSetValue } from "react-hook-form";
 import type { ProfileFormValues } from "@/features/identity/schemas/profile-schema";
 
 const preferenceFields = [
@@ -28,11 +24,9 @@ const preferenceFields = [
 
 export function NotificationPreferencesFields({
   preferences,
-  register,
   setValue,
 }: {
   preferences: ProfileFormValues["notificationPreferences"];
-  register: UseFormRegister<ProfileFormValues>;
   setValue: UseFormSetValue<ProfileFormValues>;
 }) {
   return (
@@ -53,10 +47,6 @@ export function NotificationPreferencesFields({
       </div>
       <div className="grid gap-3">
         {preferenceFields.map((field) => {
-          const fieldName =
-            `notificationPreferences.${field.key}.inApp` as FieldPath<ProfileFormValues>;
-          const registration = register(fieldName);
-
           return (
             <label
               key={field.key}
@@ -72,11 +62,9 @@ export function NotificationPreferencesFields({
                 type="checkbox"
                 role="switch"
                 aria-label={field.label}
-                defaultChecked={preferences[field.key].inApp}
+                checked={preferences[field.key].inApp}
                 className="mt-1 h-4 w-4"
-                {...registration}
                 onChange={(event) => {
-                  void registration.onChange(event);
                   setValue(
                     "notificationPreferences",
                     {
