@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('status');
             $table->decimal('budget_amount', 14, 2)->nullable();
-            $table->char('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('USD');
             $table->json('metadata')->nullable();
             $table->timestamps();
 
@@ -62,7 +62,7 @@ return new class extends Migration
             $table->string('number');
             $table->string('status');
             $table->decimal('total_amount', 14, 2)->nullable();
-            $table->char('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('USD');
             $table->json('metadata')->nullable();
             $table->timestamps();
 
@@ -96,7 +96,7 @@ return new class extends Migration
             $table->string('number');
             $table->string('status');
             $table->decimal('total_amount', 14, 2)->nullable();
-            $table->char('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('USD');
             $table->timestamp('decided_at')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
