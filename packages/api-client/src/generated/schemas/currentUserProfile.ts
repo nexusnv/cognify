@@ -16,5 +16,5 @@ export interface CurrentUserProfile {
   timezone: string;
   locale: string;
   theme: CurrentUserProfileTheme;
-  notificationPreferences?: NotificationPreferences;
+  notificationPreferences: NotificationPreferences;
 }

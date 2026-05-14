@@ -1813,6 +1813,21 @@
           }
         }
       },
+      "UpdateNotificationPreferences": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requisition.submitted": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "attachment.uploaded": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "system.announcement": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          }
+        }
+      },
       "NotificationActor": {
         "type": "object",
         "nullable": true,
@@ -2002,7 +2017,8 @@
           "email",
           "timezone",
           "locale",
-          "theme"
+          "theme",
+          "notificationPreferences"
         ],
         "properties": {
           "id": {
@@ -2195,7 +2211,7 @@
             ]
           },
           "notificationPreferences": {
-            "$ref": "#/components/schemas/NotificationPreferences"
+            "$ref": "#/components/schemas/UpdateNotificationPreferences"
           }
         }
       },

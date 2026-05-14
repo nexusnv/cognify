@@ -114,6 +114,7 @@ export * from "./unauthorizedResponse";
 export * from "./updateCurrentUserProfileRequest";
 export * from "./updateCurrentUserProfileRequestAvatarUrl";
 export * from "./updateCurrentUserProfileRequestTheme";
+export * from "./updateNotificationPreferences";
 export * from "./updateRequisitionLineItemRequest";
 export * from "./updateRequisitionLineItemRequestAllOf";
 export * from "./updateRequisitionRequest";

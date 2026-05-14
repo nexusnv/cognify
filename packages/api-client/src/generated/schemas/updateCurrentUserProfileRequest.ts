@@ -6,7 +6,7 @@
  */
 import type { UpdateCurrentUserProfileRequestAvatarUrl } from "./updateCurrentUserProfileRequestAvatarUrl";
 import type { UpdateCurrentUserProfileRequestTheme } from "./updateCurrentUserProfileRequestTheme";
-import type { NotificationPreferences } from "./notificationPreferences";
+import type { UpdateNotificationPreferences } from "./updateNotificationPreferences";
 
 export interface UpdateCurrentUserProfileRequest {
   /**
@@ -24,5 +24,5 @@ export interface UpdateCurrentUserProfileRequest {
    */
   locale: string;
   theme: UpdateCurrentUserProfileRequestTheme;
-  notificationPreferences?: NotificationPreferences;
+  notificationPreferences?: UpdateNotificationPreferences;
 }
