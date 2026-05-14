@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Pencil, Send } from "lucide-react";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { AttachmentList } from "@/features/attachments/components/attachment-list";
+import { AttachmentUploader } from "@/features/attachments/components/attachment-uploader";
 import { RequisitionActivityTimeline } from "../components/requisition-activity-timeline";
 import { RequisitionStatusBadge } from "../components/requisition-status-badge";
 import { SubmissionChecklist } from "../components/submission-checklist";
@@ -81,6 +83,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
       sections={[
         { id: "overview", label: "Overview" },
         { id: "line-items", label: "Line items" },
+        { id: "evidence", label: "Evidence" },
         { id: "activity", label: "Activity" },
       ]}
       primaryActions={actions}
@@ -103,6 +106,18 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
             <p className="mt-2 text-sm text-muted-foreground">
               Approval routing will attach here after the submitted workflow is active.
             </p>
+          </section>
+          <section className="rounded-md border p-4">
+            <h2 className="text-base font-semibold">Evidence</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Upload supporting files directly in the requisition workspace.
+            </p>
+            <a
+              href="#evidence"
+              className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
+            >
+              Jump to evidence
+            </a>
           </section>
         </>
       }
@@ -132,6 +147,14 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
               </span>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section id="evidence" className="rounded-md border p-4">
+        <h2 className="text-base font-semibold">Evidence</h2>
+        <div className="mt-3 space-y-3">
+          <AttachmentUploader requisitionId={requisition.id} />
+          <AttachmentList requisitionId={requisition.id} />
         </div>
       </section>
 

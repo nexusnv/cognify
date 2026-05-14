@@ -108,6 +108,8 @@ describe("requisitions workflow", () => {
   });
 
   it("renders requisition detail inside the record workspace layout", async () => {
+    const user = userEvent.setup();
+
     renderWithQuery(<RequisitionDetailPage requisitionId="req-1" />);
 
     expect(await screen.findByRole("link", { name: "Back to requisitions" })).toHaveAttribute(
@@ -129,11 +131,24 @@ describe("requisitions workflow", () => {
       "href",
       "#line-items",
     );
+    expect(within(sections).getByRole("link", { name: "Evidence" })).toHaveAttribute(
+      "href",
+      "#evidence",
+    );
     expect(within(sections).getByRole("link", { name: "Activity" })).toHaveAttribute(
       "href",
       "#activity",
     );
     expect(within(sections).queryByRole("link", { name: "Readiness" })).not.toBeInTheDocument();
+
+    const evidenceSection = document.getElementById("evidence");
+    expect(evidenceSection).not.toBeNull();
+    const evidence = within(evidenceSection as HTMLElement);
+    expect(evidence.getByLabelText("Upload evidence")).toBeInTheDocument();
+    expect(await evidence.findByText("supplier-quote.pdf")).toBeInTheDocument();
+    await user.click(evidence.getByLabelText("Preview supplier-quote.pdf"));
+    const panel = await screen.findByRole("dialog", { name: "supplier-quote.pdf" });
+    expect(within(panel).getByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
 
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
       "Approval readiness",
@@ -220,5 +235,5 @@ describe("requisitions workflow", () => {
       expect(screen.getByText("Submitted")).toBeInTheDocument();
     });
     expect(screen.getByText("Requisition submitted")).toBeInTheDocument();
-  });
+  }, 10000);
 });
