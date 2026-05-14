@@ -17,12 +17,14 @@ class StoreAttachmentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $extensions = implode(',', array_keys(AttachmentStorage::ALLOWED_EXTENSIONS_TO_MIME_TYPES));
+
         return [
             'file' => [
                 'required',
                 'file',
                 'max:25600',
-                'extensions:pdf,png,jpeg,jpg,webp,csv,xlsx,docx,txt',
+                "extensions:{$extensions}",
             ],
         ];
     }

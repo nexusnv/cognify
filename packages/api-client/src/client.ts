@@ -46,7 +46,9 @@ export async function cognifyFetch<TResponse>(
       ? undefined
       : response.ok && !isJsonResponse
         ? await response.blob()
-        : await response.json();
+        : !response.ok && !isJsonResponse
+          ? await response.text()
+          : await response.json();
 
   if (!response.ok) {
     throw {

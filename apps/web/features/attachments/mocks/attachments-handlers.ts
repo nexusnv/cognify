@@ -136,9 +136,18 @@ function findAttachment(attachmentId: string) {
 
 async function parseMultipartUpload(request: Request) {
   const formDataUpload = await parseFormDataUpload(request.clone());
-  if (formDataUpload) return formDataUpload;
+  if (formDataUpload && isHelpfulFilename(formDataUpload.filename)) return formDataUpload;
 
-  return parseMultipartUploadText(await request.text());
+  const textUpload = parseMultipartUploadText(await request.clone().text());
+  if (formDataUpload && textUpload?.filename) {
+    return {
+      filename: textUpload.filename,
+      mimeType: formDataUpload.mimeType,
+      sizeBytes: formDataUpload.sizeBytes,
+    };
+  }
+
+  return formDataUpload ?? textUpload;
 }
 
 async function parseFormDataUpload(request: Request) {
@@ -155,6 +164,10 @@ async function parseFormDataUpload(request: Request) {
   } catch {
     return null;
   }
+}
+
+function isHelpfulFilename(filename: string | null | undefined) {
+  return Boolean(filename && filename !== "blob");
 }
 
 function isFileLike(value: FormDataEntryValue | null): value is File {

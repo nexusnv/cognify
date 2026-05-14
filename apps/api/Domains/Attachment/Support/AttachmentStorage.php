@@ -8,6 +8,7 @@ use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class AttachmentStorage
 {
@@ -62,13 +63,19 @@ class AttachmentStorage
         );
         $filename = $extension !== null ? "{$safeFilename}.{$extension}" : $safeFilename;
         $path = "{$directory}/{$filename}";
+        $realPath = $file->getRealPath();
+        $checksum = $realPath !== false ? hash_file('sha256', $realPath) : false;
+
+        if ($checksum === false) {
+            throw new RuntimeException('Unable to calculate attachment checksum.');
+        }
 
         Storage::disk(self::DISK)->putFileAs($directory, $file, $filename);
 
         return [
             'disk' => self::DISK,
             'path' => $path,
-            'checksum' => hash_file('sha256', $file->getRealPath()) ?: hash('sha256', ''),
+            'checksum' => $checksum,
             'previewable' => in_array($this->mimeTypeFor($file), self::PREVIEWABLE_MIME_TYPES, true),
             'sizeBytes' => (int) $file->getSize(),
             'mimeType' => $this->mimeTypeFor($file),

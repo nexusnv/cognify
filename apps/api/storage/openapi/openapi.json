@@ -680,7 +680,7 @@
         "parameters": [
           { "name": "action", "in": "query", "required": false, "schema": { "type": "string" } },
           { "name": "actorId", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "subjectType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["requisition"] } },
+          { "name": "subjectType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["requisition", "attachment"] } },
           { "name": "subjectId", "in": "query", "required": false, "schema": { "type": "string" } },
           { "name": "occurredFrom", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
           { "name": "occurredTo", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },

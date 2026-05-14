@@ -42,6 +42,9 @@ class AttachmentApiTest extends TestCase
             ->assertJsonPath('data.permissions.canDelete', true);
 
         $attachmentId = (string) $uploadResponse->json('data.id');
+        $attachment = Attachment::query()->findOrFail($attachmentId);
+
+        Storage::disk('attachments')->assertExists($attachment->storage_path);
 
         $this->assertDatabaseHas('attachments', [
             'id' => $attachmentId,
@@ -81,6 +84,8 @@ class AttachmentApiTest extends TestCase
         $this->actingAsTenant($tenant, $user)
             ->deleteJson('/api/attachments/'.$attachmentId)
             ->assertNoContent();
+
+        Storage::disk('attachments')->assertMissing($attachment->storage_path);
 
         $this->assertSoftDeleted('attachments', [
             'id' => $attachmentId,
