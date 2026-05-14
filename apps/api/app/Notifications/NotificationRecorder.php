@@ -39,6 +39,10 @@ class NotificationRecorder
 
     private function allowsInApp(User $recipient, string $event): bool
     {
+        if (! in_array($event, NotificationPreferenceDefaults::EVENTS, true)) {
+            return false;
+        }
+
         $preferences = NotificationPreferenceDefaults::merge($recipient->notification_preferences);
 
         return $preferences[$event]['inApp'] ?? true;

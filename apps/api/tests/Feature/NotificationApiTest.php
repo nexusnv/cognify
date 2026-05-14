@@ -67,6 +67,24 @@ class NotificationApiTest extends TestCase
         $this->assertDatabaseCount('notifications', 0);
     }
 
+    public function test_recorder_skips_unknown_notification_types(): void
+    {
+        [$tenant, $actor] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+
+        app(NotificationRecorder::class)->record(
+            tenant: $tenant,
+            recipients: [$buyer],
+            data: new NotificationData(
+                type: 'unknown.event',
+                title: 'Unknown event',
+                actor: $actor,
+            ),
+        );
+
+        $this->assertDatabaseCount('notifications', 0);
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */
