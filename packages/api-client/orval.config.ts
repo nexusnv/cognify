@@ -15,6 +15,10 @@ export default defineConfig({
           path: "src/client.ts",
           name: "cognifyFetch",
         },
+        formData: {
+          path: "src/form-data.ts",
+          name: "buildFormData",
+        },
       },
     },
   },

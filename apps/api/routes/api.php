@@ -12,6 +12,7 @@ use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
+use Domains\Search\Http\Controllers\SearchController;
 
 Route::get('/health', static function (): JsonResponse {
     return response()->json([
@@ -34,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::middleware(ResolveCurrentTenant::class)->group(function (): void {
         Route::get('/me', [CurrentUserController::class, 'show']);
         Route::patch('/me/profile', [UserProfileController::class, 'update']);
+
+        Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
 
         // Existing requisition routes
         Route::get('/requisitions', [RequisitionController::class, 'index']);
