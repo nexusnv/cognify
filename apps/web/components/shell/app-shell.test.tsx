@@ -14,8 +14,31 @@ import { ShellFooter } from "./shell-footer";
 
 let mockPathname = "/dashboard";
 
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver = ResizeObserver as unknown as typeof window.ResizeObserver;
+  globalThis.ResizeObserver = ResizeObserver as unknown as typeof globalThis.ResizeObserver;
+}
+
+if (typeof window !== "undefined" && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
 }));
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -67,6 +90,22 @@ describe("app shell", () => {
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");
+  });
+
+  it("opens the command palette from the shell header", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    expect(await screen.findByRole("dialog", { name: "Command menu" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search or jump to...")).toHaveFocus();
   });
 
   it("protects dashboard routes with the operational shell", async () => {

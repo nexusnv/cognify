@@ -155,15 +155,26 @@ async function parseFormDataUpload(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     if (!isFileLike(file)) return null;
+    const filename = formDataString(formData, "file.filename") ?? file.name;
+    const mimeType =
+      formDataString(formData, "file.mimeType") ?? (file.type || "application/octet-stream");
+    const metadataSize = formDataString(formData, "file.sizeBytes");
+    const sizeBytes = metadataSize ? Number(metadataSize) : file.size;
 
     return {
-      filename: file.name,
-      mimeType: file.type || "application/octet-stream",
-      sizeBytes: file.size,
+      filename,
+      mimeType,
+      sizeBytes,
     };
   } catch {
     return null;
   }
+}
+
+function formDataString(formData: FormData, key: string): string | null {
+  const value = formData.get(key);
+
+  return typeof value === "string" ? value : null;
 }
 
 function isHelpfulFilename(filename: string | null | undefined) {
@@ -181,9 +192,12 @@ function isFileLike(value: FormDataEntryValue | null): value is File {
 }
 
 function parseMultipartUploadText(body: string) {
-  const filename = extractMultipartField(body, "filename");
-  const mimeType = extractMultipartField(body, "mimeType");
-  const sizeBytes = extractMultipartField(body, "sizeBytes");
+  const filename =
+    extractMultipartField(body, "file.filename") ?? extractMultipartField(body, "filename");
+  const mimeType =
+    extractMultipartField(body, "file.mimeType") ?? extractMultipartField(body, "mimeType");
+  const sizeBytes =
+    extractMultipartField(body, "file.sizeBytes") ?? extractMultipartField(body, "sizeBytes");
 
   if (filename && mimeType && sizeBytes) {
     return {

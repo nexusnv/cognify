@@ -599,6 +599,69 @@
         }
       }
     },
+    "/api/search": {
+      "get": {
+        "operationId": "listGlobalSearch",
+        "summary": "Search tenant-visible requisitions",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["requisition"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant-visible requisition search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
     "/api/me/profile": {
       "patch": {
         "operationId": "updateCurrentUserProfile",
@@ -786,6 +849,16 @@
       },
       "Forbidden": {
         "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too many requests",
         "content": {
           "application/json": {
             "schema": {
@@ -1250,6 +1323,92 @@
             }
           },
           "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "title",
+          "subtitle",
+          "status",
+          "href",
+          "updatedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["requisition"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "href": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "SearchMeta": {
+        "type": "object",
+        "required": [
+          "query",
+          "limit",
+          "returned"
+        ],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25
+          },
+          "returned": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/SearchMeta"
+          }
         }
       },
       "CreateRequisitionLineItemRequest": {

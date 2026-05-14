@@ -21,4 +21,13 @@ class Tenant extends Model
             ->withPivot('role')
             ->withTimestamps();
     }
+
+    public function roleFor(User $user): ?string
+    {
+        $membership = $user->tenants()
+            ->whereKey($this->id)
+            ->first();
+
+        return $membership?->pivot?->role;
+    }
 }

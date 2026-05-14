@@ -17,14 +17,17 @@ import type {
   HealthResponse,
   InvalidStateResponse,
   ListAuditEventsParams,
+  ListGlobalSearchParams,
   ListRequisitionActivity200,
   ListRequisitionsParams,
   LoginRequest,
   NotFoundResponse,
   RequisitionListResponse,
   RequisitionResponse,
+  SearchResponse,
   SetCurrentTenantRequest,
   SubmitRequisitionResponse,
+  TooManyRequestsResponse,
   UnauthenticatedResponse,
   UnauthorizedResponse,
   UpdateCurrentUserProfileRequest,
@@ -33,6 +36,7 @@ import type {
 } from "./schemas";
 
 import { cognifyFetch } from "../client";
+import { buildFormData } from "../form-data";
 
 /**
  * @summary Health check
@@ -514,18 +518,7 @@ export const uploadRequisitionAttachment = async (
   attachmentUploadRequest: AttachmentUploadRequest,
   options?: RequestInit,
 ): Promise<uploadRequisitionAttachmentResponse> => {
-  const formData = new FormData();
-  const file = attachmentUploadRequest.file;
-  const filename = (file as { name?: unknown }).name;
-  if (typeof filename === "string" && filename.length > 0) {
-    formData.append(`file`, new Blob([file], { type: file.type }), filename);
-    formData.append(`filename`, filename);
-    formData.append(`mimeType`, file.type);
-    formData.append(`sizeBytes`, file.size.toString());
-  } else {
-    formData.append(`file`, file);
-  }
-
+  const formData = buildFormData(attachmentUploadRequest);
   return cognifyFetch<uploadRequisitionAttachmentResponse>(
     getUploadRequisitionAttachmentUrl(requisitionId),
     {
@@ -851,6 +844,80 @@ export const getGetCurrentUserUrl = () => {
 
 export const getCurrentUser = async (options?: RequestInit): Promise<getCurrentUserResponse> => {
   return cognifyFetch<getCurrentUserResponse>(getGetCurrentUserUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Search tenant-visible requisitions
+ */
+export type listGlobalSearchResponse200 = {
+  data: SearchResponse;
+  status: 200;
+};
+
+export type listGlobalSearchResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listGlobalSearchResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listGlobalSearchResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listGlobalSearchResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type listGlobalSearchResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
+export type listGlobalSearchResponseSuccess = listGlobalSearchResponse200 & {
+  headers: Headers;
+};
+export type listGlobalSearchResponseError = (
+  | listGlobalSearchResponse400
+  | listGlobalSearchResponse401
+  | listGlobalSearchResponse403
+  | listGlobalSearchResponse422
+  | listGlobalSearchResponse429
+) & {
+  headers: Headers;
+};
+
+export type listGlobalSearchResponse =
+  | listGlobalSearchResponseSuccess
+  | listGlobalSearchResponseError;
+
+export const getListGlobalSearchUrl = (params: ListGlobalSearchParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/search?${stringifiedParams}` : `/api/search`;
+};
+
+export const listGlobalSearch = async (
+  params: ListGlobalSearchParams,
+  options?: RequestInit,
+): Promise<listGlobalSearchResponse> => {
+  return cognifyFetch<listGlobalSearchResponse>(getListGlobalSearchUrl(params), {
     ...options,
     method: "GET",
   });
