@@ -34,7 +34,7 @@ export const attachmentHandlers = [
 
   http.post("/api/requisitions/:requisitionId/attachments", async ({ request, params }) => {
     const requisitionId = String(params.requisitionId);
-    const upload = parseMultipartUpload(await request.text());
+    const upload = await parseMultipartUpload(request);
 
     if (!upload) {
       return validationError("File is required.");
@@ -134,7 +134,40 @@ function findAttachment(attachmentId: string) {
   return attachments.find((attachment) => attachment.id === attachmentId);
 }
 
-function parseMultipartUpload(body: string) {
+async function parseMultipartUpload(request: Request) {
+  const formDataUpload = await parseFormDataUpload(request.clone());
+  if (formDataUpload) return formDataUpload;
+
+  return parseMultipartUploadText(await request.text());
+}
+
+async function parseFormDataUpload(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
+    if (!isFileLike(file)) return null;
+
+    return {
+      filename: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isFileLike(value: FormDataEntryValue | null): value is File {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "type" in value &&
+    "size" in value
+  );
+}
+
+function parseMultipartUploadText(body: string) {
   const filename = extractMultipartField(body, "filename");
   const mimeType = extractMultipartField(body, "mimeType");
   const sizeBytes = extractMultipartField(body, "sizeBytes");

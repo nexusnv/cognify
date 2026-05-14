@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, Eye, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, Download, Eye, Loader2, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useRightPanel } from "@/components/right-panel/right-panel-provider";
 import { AttachmentPreviewPanel } from "./attachment-preview-panel";
 import { downloadAttachmentBlob } from "../api/attachments-api";
@@ -81,20 +82,27 @@ export function AttachmentList({ requisitionId }: { requisitionId: string }) {
   const { data: attachments, isLoading, isError } = useAttachments(requisitionId);
   const deleteMutation = useAttachmentDelete(requisitionId);
   const rightPanel = useRightPanel();
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   async function handleDownload(attachment: AttachmentViewModel) {
-    const blob = await downloadAttachmentBlob(attachment.id);
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    setDownloadError(null);
 
-    link.href = objectUrl;
-    link.download = attachment.filename;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    try {
+      const blob = await downloadAttachmentBlob(attachment.id);
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-    URL.revokeObjectURL(objectUrl);
+      link.href = objectUrl;
+      link.download = attachment.filename;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setDownloadError(`Could not download ${attachment.filename}.`);
+    }
   }
 
   if (isLoading) {
@@ -124,6 +132,15 @@ export function AttachmentList({ requisitionId }: { requisitionId: string }) {
 
   return (
     <div className="space-y-2">
+      {downloadError ? (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-900"
+        >
+          <AlertCircle className="h-4 w-4" aria-hidden="true" />
+          <span>{downloadError}</span>
+        </div>
+      ) : null}
       {attachments.map((attachment) => (
         <AttachmentRow
           key={attachment.id}
@@ -137,9 +154,7 @@ export function AttachmentList({ requisitionId }: { requisitionId: string }) {
               content: <AttachmentPreviewPanel attachment={attachment} />,
             })
           }
-          onDownload={() => {
-            void handleDownload(attachment).catch(() => undefined);
-          }}
+          onDownload={() => void handleDownload(attachment)}
           onDelete={() => deleteMutation.mutate(attachment.id)}
           isDeleting={deleteMutation.isPending && deleteMutation.variables === attachment.id}
         />

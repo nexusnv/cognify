@@ -36,4 +36,21 @@ export const attachmentFixtures = [
       canDelete: true,
     },
   },
+  {
+    id: "att-readonly",
+    parentType: AttachmentParentType.requisition,
+    parentId: "req-readonly",
+    filename: "readonly-evidence.pdf",
+    mimeType: "application/pdf",
+    extension: "pdf",
+    sizeBytes: 32768,
+    previewable: true,
+    uploadedBy: { id: "user-2", name: "Aisha Rahman" },
+    createdAt: "2026-05-13T12:00:00.000Z",
+    permissions: {
+      canPreview: false,
+      canDownload: false,
+      canDelete: false,
+    },
+  },
 ] satisfies Attachment[];

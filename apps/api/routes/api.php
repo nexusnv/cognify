@@ -8,6 +8,8 @@ use App\Auth\Http\Controllers\CurrentUserController;
 use App\Auth\Http\Controllers\UserProfileController;
 use App\Audit\Http\Controllers\AuditEventController;
 use App\Http\Middleware\ResolveCurrentTenant;
+use Domains\Attachment\Http\Controllers\AttachmentFileController;
+use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
 
@@ -40,6 +42,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::patch('/requisitions/{requisition}', [RequisitionController::class, 'update']);
         Route::post('/requisitions/{requisition}/submit', [RequisitionController::class, 'submit']);
         Route::get('/requisitions/{requisition}/activity', [RequisitionActivityController::class, 'index']);
+        Route::get('/requisitions/{requisition}/attachments', [RequisitionAttachmentController::class, 'index']);
+        Route::post('/requisitions/{requisition}/attachments', [RequisitionAttachmentController::class, 'store']);
+        Route::get('/attachments/{attachment}/preview', [AttachmentFileController::class, 'preview']);
+        Route::get('/attachments/{attachment}/download', [AttachmentFileController::class, 'download']);
+        Route::delete('/attachments/{attachment}', [AttachmentFileController::class, 'destroy']);
         Route::get('/audit/events', [AuditEventController::class, 'index'])->middleware('throttle:60,1');
     });
 });

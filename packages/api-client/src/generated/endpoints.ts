@@ -6,6 +6,9 @@
  */
 import type {
   AmbiguousTenantResponse,
+  AttachmentListResponse,
+  AttachmentResponse,
+  AttachmentUploadRequest,
   AuditEventListResponse,
   CreateRequisitionRequest,
   CurrentUserResponse,
@@ -401,6 +404,298 @@ export const listRequisitionActivity = async (
       method: "GET",
     },
   );
+};
+
+/**
+ * @summary List requisition attachments
+ */
+export type listRequisitionAttachmentsResponse200 = {
+  data: AttachmentListResponse;
+  status: 200;
+};
+
+export type listRequisitionAttachmentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionAttachmentsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionAttachmentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionAttachmentsResponseSuccess = listRequisitionAttachmentsResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionAttachmentsResponseError = (
+  | listRequisitionAttachmentsResponse401
+  | listRequisitionAttachmentsResponse403
+  | listRequisitionAttachmentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionAttachmentsResponse =
+  | listRequisitionAttachmentsResponseSuccess
+  | listRequisitionAttachmentsResponseError;
+
+export const getListRequisitionAttachmentsUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/attachments`;
+};
+
+export const listRequisitionAttachments = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionAttachmentsResponse> => {
+  return cognifyFetch<listRequisitionAttachmentsResponse>(
+    getListRequisitionAttachmentsUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Upload a requisition attachment
+ */
+export type uploadRequisitionAttachmentResponse201 = {
+  data: AttachmentResponse;
+  status: 201;
+};
+
+export type uploadRequisitionAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type uploadRequisitionAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type uploadRequisitionAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type uploadRequisitionAttachmentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type uploadRequisitionAttachmentResponseSuccess = uploadRequisitionAttachmentResponse201 & {
+  headers: Headers;
+};
+export type uploadRequisitionAttachmentResponseError = (
+  | uploadRequisitionAttachmentResponse401
+  | uploadRequisitionAttachmentResponse403
+  | uploadRequisitionAttachmentResponse404
+  | uploadRequisitionAttachmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type uploadRequisitionAttachmentResponse =
+  | uploadRequisitionAttachmentResponseSuccess
+  | uploadRequisitionAttachmentResponseError;
+
+export const getUploadRequisitionAttachmentUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/attachments`;
+};
+
+export const uploadRequisitionAttachment = async (
+  requisitionId: string,
+  attachmentUploadRequest: AttachmentUploadRequest,
+  options?: RequestInit,
+): Promise<uploadRequisitionAttachmentResponse> => {
+  const formData = new FormData();
+  const file = attachmentUploadRequest.file;
+  const filename = (file as { name?: unknown }).name;
+  if (typeof filename === "string" && filename.length > 0) {
+    formData.append(`file`, new Blob([file], { type: file.type }), filename);
+    formData.append(`filename`, filename);
+    formData.append(`mimeType`, file.type);
+    formData.append(`sizeBytes`, file.size.toString());
+  } else {
+    formData.append(`file`, file);
+  }
+
+  return cognifyFetch<uploadRequisitionAttachmentResponse>(
+    getUploadRequisitionAttachmentUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+/**
+ * @summary Preview an attachment
+ */
+export type previewAttachmentResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type previewAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type previewAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type previewAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type previewAttachmentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type previewAttachmentResponseSuccess = previewAttachmentResponse200 & {
+  headers: Headers;
+};
+export type previewAttachmentResponseError = (
+  | previewAttachmentResponse401
+  | previewAttachmentResponse403
+  | previewAttachmentResponse404
+  | previewAttachmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type previewAttachmentResponse =
+  | previewAttachmentResponseSuccess
+  | previewAttachmentResponseError;
+
+export const getPreviewAttachmentUrl = (attachmentId: string) => {
+  return `/api/attachments/${attachmentId}/preview`;
+};
+
+export const previewAttachment = async (
+  attachmentId: string,
+  options?: RequestInit,
+): Promise<previewAttachmentResponse> => {
+  return cognifyFetch<previewAttachmentResponse>(getPreviewAttachmentUrl(attachmentId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Download an attachment
+ */
+export type downloadAttachmentResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type downloadAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type downloadAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type downloadAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type downloadAttachmentResponseSuccess = downloadAttachmentResponse200 & {
+  headers: Headers;
+};
+export type downloadAttachmentResponseError = (
+  | downloadAttachmentResponse401
+  | downloadAttachmentResponse403
+  | downloadAttachmentResponse404
+) & {
+  headers: Headers;
+};
+
+export type downloadAttachmentResponse =
+  | downloadAttachmentResponseSuccess
+  | downloadAttachmentResponseError;
+
+export const getDownloadAttachmentUrl = (attachmentId: string) => {
+  return `/api/attachments/${attachmentId}/download`;
+};
+
+export const downloadAttachment = async (
+  attachmentId: string,
+  options?: RequestInit,
+): Promise<downloadAttachmentResponse> => {
+  return cognifyFetch<downloadAttachmentResponse>(getDownloadAttachmentUrl(attachmentId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Delete an attachment
+ */
+export type deleteAttachmentResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type deleteAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type deleteAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type deleteAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type deleteAttachmentResponseSuccess = deleteAttachmentResponse204 & {
+  headers: Headers;
+};
+export type deleteAttachmentResponseError = (
+  | deleteAttachmentResponse401
+  | deleteAttachmentResponse403
+  | deleteAttachmentResponse404
+) & {
+  headers: Headers;
+};
+
+export type deleteAttachmentResponse =
+  | deleteAttachmentResponseSuccess
+  | deleteAttachmentResponseError;
+
+export const getDeleteAttachmentUrl = (attachmentId: string) => {
+  return `/api/attachments/${attachmentId}`;
+};
+
+export const deleteAttachment = async (
+  attachmentId: string,
+  options?: RequestInit,
+): Promise<deleteAttachmentResponse> => {
+  return cognifyFetch<deleteAttachmentResponse>(getDeleteAttachmentUrl(attachmentId), {
+    ...options,
+    method: "DELETE",
+  });
 };
 
 /**

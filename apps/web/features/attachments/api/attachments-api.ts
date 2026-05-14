@@ -5,9 +5,8 @@ import {
   getPreviewAttachmentUrl,
   listRequisitionAttachments,
   previewAttachment as previewAttachmentEndpoint,
-  type uploadRequisitionAttachmentResponse,
+  uploadRequisitionAttachment,
 } from "@cognify/api-client/endpoints";
-import { cognifyFetch } from "@cognify/api-client";
 import type { Attachment } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "../../identity/api/identity-api";
 
@@ -18,19 +17,10 @@ export async function listAttachments(requisitionId: string) {
 }
 
 export async function uploadAttachment(requisitionId: string, file: File) {
-  const formData = new FormData();
-  formData.append("file", file, file.name);
-  formData.append("filename", file.name);
-  formData.append("mimeType", file.type || "application/octet-stream");
-  formData.append("sizeBytes", String(file.size));
-
-  const response = await cognifyFetch<uploadRequisitionAttachmentResponse>(
-    `/api/requisitions/${requisitionId}/attachments`,
-    {
-      ...withActiveTenantHeader(),
-      method: "POST",
-      body: formData,
-    },
+  const response = await uploadRequisitionAttachment(
+    requisitionId,
+    { file },
+    withActiveTenantHeader(),
   );
   if (response.status !== 201) throw response.data;
   return response.data.data as Attachment;
