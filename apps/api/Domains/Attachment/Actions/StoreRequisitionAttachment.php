@@ -5,6 +5,9 @@ namespace Domains\Attachment\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use App\Notifications\NotificationData;
+use App\Notifications\NotificationPreferenceDefaults;
+use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Support\AttachmentStorage;
@@ -20,6 +23,7 @@ class StoreRequisitionAttachment
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly AttachmentStorage $storage,
+        private readonly NotificationRecorder $notificationRecorder,
     ) {
     }
 
@@ -65,6 +69,28 @@ class StoreRequisitionAttachment
                     ],
                     subjectDisplay: $attachment->original_filename,
                 ));
+
+                $requester = $requisition->loadMissing('requester')->requester;
+
+                if ($requester !== null && $requester->id !== $actor->id) {
+                    $this->notificationRecorder->record(
+                        tenant: $tenant,
+                        recipients: [$requester],
+                        data: new NotificationData(
+                            type: NotificationPreferenceDefaults::EVENT_ATTACHMENT_UPLOADED,
+                            title: 'Evidence uploaded',
+                            body: "{$attachment->original_filename} was added to {$requisition->number}.",
+                            href: "/requisitions/{$requisition->id}",
+                            subject: $requisition,
+                            subjectLabel: $requisition->number,
+                            metadata: [
+                                'filename' => $attachment->original_filename,
+                                'number' => $requisition->number,
+                            ],
+                            actor: $actor,
+                        ),
+                    );
+                }
 
                 return $attachment->load(['uploader', 'attachable']);
             });

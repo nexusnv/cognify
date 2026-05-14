@@ -86,6 +86,28 @@ class NotificationApiTest extends TestCase
         $this->assertDatabaseCount('notifications', 0);
     }
 
+    public function test_system_announcement_can_omit_subject_and_href(): void
+    {
+        [$tenant, $user] = $this->tenantUser('buyer');
+
+        app(NotificationRecorder::class)->record(
+            tenant: $tenant,
+            recipients: [$user],
+            data: new NotificationData(
+                type: 'system.announcement',
+                title: 'Welcome to Cognify',
+                body: 'Your procurement workspace is ready.',
+            ),
+        );
+
+        $this->actingAsTenant($tenant, $user)
+            ->getJson('/api/notifications')
+            ->assertOk()
+            ->assertJsonPath('data.0.title', 'Welcome to Cognify')
+            ->assertJsonPath('data.0.href', null)
+            ->assertJsonPath('data.0.subject', null);
+    }
+
     public function test_user_lists_only_their_current_tenant_notifications_with_status_filters(): void
     {
         [$tenant, $user] = $this->tenantUser('buyer');

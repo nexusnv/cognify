@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 use App\Auth\TenantRole;
 use App\Models\User;
+use App\Notifications\NotificationData;
+use App\Notifications\NotificationPreferenceDefaults;
+use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -54,5 +57,15 @@ class DatabaseSeeder extends Seeder
         ]);
         $admin->tenants()->attach($acme->id, ['role' => TenantRole::Admin->value]);
         $admin->tenants()->attach($beta->id, ['role' => TenantRole::Admin->value]);
+
+        app(NotificationRecorder::class)->record(
+            tenant: $acme,
+            recipients: $acme->users()->get(),
+            data: new NotificationData(
+                type: NotificationPreferenceDefaults::EVENT_SYSTEM_ANNOUNCEMENT,
+                title: 'Welcome to Cognify',
+                body: 'Your tenant notification center is ready for workflow cues.',
+            ),
+        );
     }
 }

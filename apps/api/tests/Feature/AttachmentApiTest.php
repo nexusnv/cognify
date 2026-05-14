@@ -173,6 +173,47 @@ class AttachmentApiTest extends TestCase
             ->assertJsonPath('error.code', 'validation_failed');
     }
 
+    public function test_attachment_upload_notifies_requester_when_uploader_differs(): void
+    {
+        Storage::fake('attachments');
+
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $requisition = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->post('/api/requisitions/'.$requisition->id.'/attachments', [
+                'file' => UploadedFile::fake()->create('evidence.pdf', 64, 'application/pdf'),
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $requester->id,
+            'actor_id' => $buyer->id,
+            'type' => 'attachment.uploaded',
+            'title' => 'Evidence uploaded',
+            'href' => '/requisitions/'.$requisition->id,
+        ]);
+    }
+
+    public function test_attachment_upload_skips_notification_when_requester_uploads(): void
+    {
+        Storage::fake('attachments');
+
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createDraft($tenant, $requester);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->post('/api/requisitions/'.$requisition->id.'/attachments', [
+                'file' => UploadedFile::fake()->create('evidence.pdf', 64, 'application/pdf'),
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseCount('notifications', 0);
+    }
+
     public function test_non_previewable_attachment_rejects_preview_request(): void
     {
         Storage::fake('attachments');

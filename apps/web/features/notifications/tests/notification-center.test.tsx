@@ -4,9 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetNotificationMockState } from "../mocks/notification-handlers";
 
+const push = vi.fn();
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push,
   }),
 }));
 
@@ -24,6 +26,7 @@ function renderWithQuery(ui: React.ReactElement) {
 describe("notification center", () => {
   beforeEach(() => {
     resetNotificationMockState();
+    push.mockReset();
     window.localStorage.setItem("cognify.activeTenantId", "tenant-1");
   });
 
@@ -55,5 +58,16 @@ describe("notification center", () => {
 
     expect(await screen.findByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
     expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("marks a linked notification read before navigation", async () => {
+    const user = userEvent.setup();
+    const { NotificationCenter } = await import("../components/notification-center");
+
+    renderWithQuery(<NotificationCenter open onOpenChange={() => undefined} />);
+
+    await user.click(await screen.findByText("Requisition submitted"));
+
+    expect(push).toHaveBeenCalledWith("/requisitions/42");
   });
 });

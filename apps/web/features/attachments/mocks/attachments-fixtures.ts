@@ -1,10 +1,11 @@
-import type { Attachment } from "@cognify/api-client/schemas";
-import { AttachmentParentType } from "@cognify/api-client/schemas";
+import type { Attachment, AttachmentParentType } from "@cognify/api-client/schemas";
+
+const requisitionAttachmentParentType = "requisition" satisfies AttachmentParentType;
 
 export const attachmentFixtures = [
   {
     id: "att-1",
-    parentType: AttachmentParentType.requisition,
+    parentType: requisitionAttachmentParentType,
     parentId: "req-1",
     filename: "supplier-quote.pdf",
     mimeType: "application/pdf",
@@ -21,7 +22,7 @@ export const attachmentFixtures = [
   },
   {
     id: "att-2",
-    parentType: AttachmentParentType.requisition,
+    parentType: requisitionAttachmentParentType,
     parentId: "req-1",
     filename: "spec-sheet.png",
     mimeType: "image/png",
@@ -38,7 +39,7 @@ export const attachmentFixtures = [
   },
   {
     id: "att-readonly",
-    parentType: AttachmentParentType.requisition,
+    parentType: requisitionAttachmentParentType,
     parentId: "req-readonly",
     filename: "readonly-evidence.pdf",
     mimeType: "application/pdf",
