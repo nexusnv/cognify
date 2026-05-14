@@ -29,6 +29,7 @@ class User extends Authenticatable
         'timezone',
         'locale',
         'theme',
+        'notification_preferences',
     ];
 
     /**
@@ -51,6 +52,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'notification_preferences' => 'array',
         ];
     }
 

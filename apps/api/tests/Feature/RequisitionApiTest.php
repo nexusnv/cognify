@@ -148,6 +148,39 @@ class RequisitionApiTest extends TestCase
         ]);
     }
 
+    public function test_submitting_requisition_notifies_buyer_and_admin_but_not_requester(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        $requisition = $this->createDraft($tenant, $requester);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/submit")
+            ->assertOk();
+
+        $this->assertDatabaseCount('notifications', 2);
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $buyer->id,
+            'actor_id' => $requester->id,
+            'type' => 'requisition.submitted',
+            'href' => "/requisitions/{$requisition->id}",
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $admin->id,
+            'actor_id' => $requester->id,
+            'type' => 'requisition.submitted',
+            'href' => "/requisitions/{$requisition->id}",
+        ]);
+        $this->assertDatabaseMissing('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $requester->id,
+            'type' => 'requisition.submitted',
+        ]);
+    }
+
     public function test_invalid_draft_cannot_be_submitted(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');

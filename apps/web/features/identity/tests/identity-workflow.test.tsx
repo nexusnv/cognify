@@ -79,20 +79,52 @@ describe("identity workflow", () => {
     expect(await screen.findByText("Workspace ready")).toBeInTheDocument();
   });
 
-  it("updates profile preferences through the account settings workflow", async () => {
+  it("updates profile and notification preferences through the account settings workflow", async () => {
+    let submittedBody: unknown;
+    server.use(
+      http.patch("/api/me/profile", async ({ request }) => {
+        submittedBody = await request.json();
+        return HttpResponse.json({
+          data: {
+            ...multiTenantIdentity,
+            user: {
+              ...multiTenantIdentity.user,
+              name: "Taylor Buyer",
+              theme: "dark",
+              notificationPreferences: {
+                "requisition.submitted": { inApp: true },
+                "attachment.uploaded": { inApp: false },
+                "system.announcement": { inApp: true },
+              },
+            },
+          },
+        });
+      }),
+    );
     const user = userEvent.setup();
 
     renderWithQuery(<AccountSettingsPage />);
 
-    // Wait for the profile data to load
     const nameInput = await screen.findByLabelText("Name");
     await user.clear(nameInput);
     await user.type(nameInput, "Taylor Buyer");
     await user.selectOptions(screen.getByLabelText("Theme"), "dark");
+    await user.click(screen.getByRole("switch", { name: "Evidence uploaded" }));
     await user.click(screen.getByRole("button", { name: "Save profile" }));
 
     expect(await screen.findByText("Profile saved")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Taylor Buyer")).toBeInTheDocument();
+    expect(submittedBody).toEqual(expect.objectContaining({
+      name: "Taylor Buyer",
+      theme: "dark",
+    }));
+    expect(
+      (submittedBody as { notificationPreferences?: unknown })
+        .notificationPreferences,
+    ).toEqual({
+      "requisition.submitted": { inApp: true },
+      "attachment.uploaded": { inApp: false },
+      "system.announcement": { inApp: true },
+    });
   });
 
   it("shows an account settings error when profile loading fails", async () => {

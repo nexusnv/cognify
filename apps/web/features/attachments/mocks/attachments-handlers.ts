@@ -1,6 +1,5 @@
 import { http, HttpResponse } from "msw";
 import type { Attachment } from "@cognify/api-client/schemas";
-import { AttachmentParentType } from "@cognify/api-client/schemas";
 import { attachmentFixtures } from "./attachments-fixtures";
 
 let attachments: Attachment[] = structuredClone(attachmentFixtures);
@@ -110,7 +109,7 @@ function buildAttachment(
 
   return {
     id: `att-${sequence}`,
-    parentType: AttachmentParentType.requisition,
+    parentType: "requisition",
     parentId: requisitionId,
     filename: upload.filename,
     mimeType: upload.mimeType,

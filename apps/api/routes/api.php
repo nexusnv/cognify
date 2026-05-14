@@ -8,6 +8,7 @@ use App\Auth\Http\Controllers\CurrentUserController;
 use App\Auth\Http\Controllers\UserProfileController;
 use App\Audit\Http\Controllers\AuditEventController;
 use App\Http\Middleware\ResolveCurrentTenant;
+use App\Notifications\Http\Controllers\NotificationController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
@@ -35,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::middleware(ResolveCurrentTenant::class)->group(function (): void {
         Route::get('/me', [CurrentUserController::class, 'show']);
         Route::patch('/me/profile', [UserProfileController::class, 'update']);
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
 
         Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
 

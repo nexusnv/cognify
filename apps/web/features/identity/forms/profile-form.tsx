@@ -1,14 +1,16 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  defaultNotificationPreferences,
   profileSchema,
   type ProfileFormValues,
 } from "../schemas/profile-schema";
 import { useProfileUpdate } from "../hooks/use-profile-update";
 import type { CurrentUserProfile } from "@cognify/api-client/schemas";
 import { useEffect } from "react";
+import { NotificationPreferencesFields } from "@/features/notifications/components/notification-preferences-fields";
 
 function getProfileFormValues(profile: CurrentUserProfile): ProfileFormValues {
   return {
@@ -17,6 +19,8 @@ function getProfileFormValues(profile: CurrentUserProfile): ProfileFormValues {
     timezone: profile.timezone,
     locale: profile.locale,
     theme: profile.theme,
+    notificationPreferences:
+      profile.notificationPreferences ?? defaultNotificationPreferences,
   };
 }
 
@@ -29,6 +33,8 @@ export function ProfileForm({
 
   const {
     register,
+    control,
+    setValue,
     handleSubmit,
     reset,
     formState: { errors, isDirty },
@@ -44,6 +50,11 @@ export function ProfileForm({
   const onSubmit = async (values: ProfileFormValues) => {
     await updateMutation.mutateAsync(values);
   };
+
+  const notificationPreferences = useWatch({
+    control,
+    name: "notificationPreferences",
+  }) ?? defaultNotificationPreferences;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -128,6 +139,11 @@ export function ProfileForm({
           </p>
         )}
       </div>
+
+      <NotificationPreferencesFields
+        preferences={notificationPreferences}
+        setValue={setValue}
+      />
 
       <button
         type="submit"

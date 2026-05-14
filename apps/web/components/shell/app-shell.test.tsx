@@ -86,7 +86,7 @@ describe("app shell", () => {
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Dashboard");
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open notifications" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");

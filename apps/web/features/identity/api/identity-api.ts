@@ -44,6 +44,7 @@ export async function updateCurrentUserProfile(values: ProfileFormValues) {
   const request = {
     ...values,
     avatarUrl: values.avatarUrl || null,
+    notificationPreferences: values.notificationPreferences,
   } satisfies UpdateCurrentUserProfileRequest;
   const response = await updateCurrentUserProfileEndpoint(
     request,
