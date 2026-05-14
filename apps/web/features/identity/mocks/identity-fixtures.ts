@@ -9,6 +9,11 @@ export const requesterIdentity: CurrentUserContext = {
     timezone: "Asia/Kuala_Lumpur",
     locale: "en",
     theme: "system",
+    notificationPreferences: {
+      "requisition.submitted": { inApp: true },
+      "attachment.uploaded": { inApp: true },
+      "system.announcement": { inApp: true },
+    },
   },
   tenants: [{ id: "1", name: "Acme Procurement", role: "requester" }],
   activeTenant: { id: "1", name: "Acme Procurement" },
