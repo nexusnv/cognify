@@ -26,7 +26,11 @@ export function rememberRecentRecord(record: SearchResultViewModel): void {
     MAX_RECENT_RECORDS,
   );
   const serialized = JSON.stringify(nextRecords);
-  window.sessionStorage.setItem(STORAGE_KEY, serialized);
+  try {
+    window.sessionStorage.setItem(STORAGE_KEY, serialized);
+  } catch (error) {
+    console.debug("Unable to persist recent records.", error);
+  }
   cachedRawValue = serialized;
   cachedRecentRecords = nextRecords;
   window.dispatchEvent(new Event(RECENT_RECORDS_EVENT));

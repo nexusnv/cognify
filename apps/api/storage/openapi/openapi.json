@@ -618,7 +618,8 @@
             "name": "types",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["requisition"]
             }
           },
           {
@@ -1337,7 +1338,8 @@
         ],
         "properties": {
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": ["requisition"]
           },
           "id": {
             "type": "string"

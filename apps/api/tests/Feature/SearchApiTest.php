@@ -111,7 +111,7 @@ class SearchApiTest extends TestCase
         ]);
 
         $buyerResponse = $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/search?query=' . urlencode('Visible'));
+            ->getJson('/api/search?query=' . urlencode('REQ-2026-0001'));
 
         $buyerResponse->assertOk()
             ->assertJsonPath('meta.returned', 1)
@@ -119,7 +119,7 @@ class SearchApiTest extends TestCase
             ->assertJsonMissing(['id' => (string) $draft->id]);
 
         $approverResponse = $this->actingAsTenant($tenant, $approver)
-            ->getJson('/api/search?query=' . urlencode('Visible'));
+            ->getJson('/api/search?query=' . urlencode('REQ-2026-0001'));
 
         $approverResponse->assertOk()
             ->assertJsonPath('meta.returned', 1)

@@ -4,7 +4,6 @@ namespace Domains\Search\Providers;
 
 use App\Auth\TenantRole;
 use App\Models\User;
-use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
@@ -31,7 +30,7 @@ class RequisitionSearchProvider implements SearchProvider
             ->with('requester')
             ->where('tenant_id', $tenant->id);
 
-        $this->applyVisibility($builder, $user);
+        $this->applyVisibility($builder, $user, $tenant);
         $this->applySearchConstraint($builder, $normalizedQuery);
         $this->applyOrdering($builder, $normalizedQuery);
 
@@ -49,9 +48,9 @@ class RequisitionSearchProvider implements SearchProvider
             ));
     }
 
-    private function applyVisibility(Builder $builder, User $user): void
+    private function applyVisibility(Builder $builder, User $user, Tenant $tenant): void
     {
-        $role = app(CurrentTenant::class)->roleFor($user);
+        $role = $tenant->roleFor($user);
 
         if ($role === TenantRole::Buyer->value || $role === TenantRole::Approver->value) {
             $builder->where('status', RequisitionStatus::Submitted);

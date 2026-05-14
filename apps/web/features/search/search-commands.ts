@@ -6,12 +6,14 @@ import { getVisibleNavGroups } from "@/components/shell/shell-utils";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
 import type { SearchCommandViewModel } from "./types/search-view-model";
 
-export function getSearchCommands(permissions?: IdentityPermissions | null): SearchCommandViewModel[] {
+export function getSearchCommands(
+  permissions?: IdentityPermissions | null,
+): SearchCommandViewModel[] {
   const visibleGroups = permissions
     ? getVisibleNavGroups(shellNavGroups, permissions)
     : shellNavGroups.map((group) => ({
         ...group,
-        items: group.items.filter((item) => item.implemented),
+        items: [],
       }));
 
   const navigationCommands = visibleGroups.flatMap((group) =>
@@ -37,8 +39,8 @@ export function getSearchCommands(permissions?: IdentityPermissions | null): Sea
     href: "/requisitions/new",
     keywords: ["create", "new", "draft", "request"],
     icon: Plus,
-    enabled: permissions?.canCreateRequisition ?? true,
+    enabled: permissions?.canCreateRequisition ?? false,
   };
 
-  return [...navigationCommands, createRequisitionCommand];
+  return permissions ? [...navigationCommands, createRequisitionCommand] : navigationCommands;
 }

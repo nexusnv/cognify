@@ -24,13 +24,7 @@ class CurrentTenant
 
     public function roleFor(User $user): ?string
     {
-        $tenant = $this->get();
-
-        $membership = $user->tenants()
-            ->whereKey($tenant->id)
-            ->first();
-
-        return $membership?->pivot?->role;
+        return $this->get()->roleFor($user);
     }
 
     public function userIsMember(User $user): bool

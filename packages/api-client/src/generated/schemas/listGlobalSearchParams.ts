@@ -4,6 +4,7 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListGlobalSearchTypes } from "./listGlobalSearchTypes";
 
 export type ListGlobalSearchParams = {
   /**
@@ -11,7 +12,7 @@ export type ListGlobalSearchParams = {
    * @maxLength 120
    */
   query: string;
-  types?: string;
+  types?: ListGlobalSearchTypes;
   /**
    * @minimum 1
    * @maximum 25

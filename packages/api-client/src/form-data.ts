@@ -1,28 +1,38 @@
-export function buildFormData(body: object): FormData {
+export type BuildFormDataOptions = {
+  useBracketNotation?: boolean;
+};
+
+export function buildFormData(body: object, options: BuildFormDataOptions = {}): FormData {
   const formData = new FormData();
 
   for (const [key, value] of Object.entries(body)) {
-    appendFormDataValue(formData, key, value);
+    appendFormDataValue(formData, key, value, options);
   }
 
   return formData;
 }
 
-function appendFormDataValue(formData: FormData, key: string, value: unknown): void {
+function appendFormDataValue(
+  formData: FormData,
+  key: string,
+  value: unknown,
+  options: BuildFormDataOptions,
+): void {
   if (value === undefined || value === null) {
     return;
   }
 
   if (Array.isArray(value)) {
-    value.forEach((item) => appendFormDataValue(formData, key, item));
+    const arrayKey = options.useBracketNotation ? `${key}[]` : key;
+    value.forEach((item) => appendFormDataValue(formData, arrayKey, item, options));
     return;
   }
 
   if (value instanceof Blob) {
-    const filename = (value as { name?: unknown }).name;
-    if (typeof filename === "string" && filename.length > 0) {
+    if (isFile(value) && value.name.length > 0) {
+      const filename = value.name;
       formData.append(key, value, filename);
-      appendFileMetadata(formData, filename, value);
+      appendFileMetadata(formData, key, filename, value);
       return;
     }
 
@@ -43,16 +53,32 @@ function appendFormDataValue(formData: FormData, key: string, value: unknown): v
   formData.append(key, String(value));
 }
 
-function appendFileMetadata(formData: FormData, filename: string, value: Blob): void {
-  if (!formData.has("filename")) {
-    formData.append("filename", filename);
+function appendFileMetadata(
+  formData: FormData,
+  fieldKey: string,
+  filename: string,
+  value: Blob,
+): void {
+  formData.append(`${fieldKey}.filename`, filename);
+  formData.append(`${fieldKey}.mimeType`, value.type);
+  formData.append(`${fieldKey}.sizeBytes`, value.size.toString());
+}
+
+function isFile(value: Blob): value is File {
+  if (typeof File !== "undefined" && value instanceof File) {
+    return true;
   }
 
-  if (!formData.has("mimeType")) {
-    formData.append("mimeType", value.type);
+  if (
+    typeof window !== "undefined" &&
+    typeof window.File !== "undefined" &&
+    value instanceof window.File
+  ) {
+    return true;
   }
 
-  if (!formData.has("sizeBytes")) {
-    formData.append("sizeBytes", value.size.toString());
-  }
+  return (
+    Object.prototype.toString.call(value) === "[object File]" ||
+    ("name" in value && typeof value.name === "string")
+  );
 }

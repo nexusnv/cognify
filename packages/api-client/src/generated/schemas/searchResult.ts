@@ -4,12 +4,13 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { SearchResultType } from "./searchResultType";
 import type { SearchResultSubtitle } from "./searchResultSubtitle";
 import type { SearchResultStatus } from "./searchResultStatus";
 import type { SearchResultUpdatedAt } from "./searchResultUpdatedAt";
 
 export interface SearchResult {
-  type: string;
+  type: SearchResultType;
   id: string;
   title: string;
   subtitle: SearchResultSubtitle;
