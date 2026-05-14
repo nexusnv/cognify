@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Notifications\NotificationPreferenceDefaults;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,6 +24,7 @@ class UpdateProfileRequest extends FormRequest
             'timezone' => ['required', 'timezone', 'max:64'],
             'locale' => ['required', 'string', Rule::in(config('app.supported_locales', ['en']))],
             'theme' => ['required', 'in:light,dark,system'],
+            ...NotificationPreferenceDefaults::validationRules(),
         ];
     }
 }

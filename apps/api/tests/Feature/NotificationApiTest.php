@@ -188,6 +188,60 @@ class NotificationApiTest extends TestCase
         ]);
     }
 
+    public function test_current_user_response_includes_notification_preferences_with_defaults(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $this->actingAsTenant($tenant, $user)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.user.notificationPreferences.requisition.submitted.inApp', true)
+            ->assertJsonPath('data.user.notificationPreferences.attachment.uploaded.inApp', true)
+            ->assertJsonPath('data.user.notificationPreferences.system.announcement.inApp', true);
+    }
+
+    public function test_profile_update_validates_and_persists_notification_preferences(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson('/api/me/profile', [
+                'name' => $user->name,
+                'avatarUrl' => null,
+                'timezone' => 'UTC',
+                'locale' => 'en',
+                'theme' => 'system',
+                'notificationPreferences' => [
+                    'requisition.submitted' => ['inApp' => true],
+                    'attachment.uploaded' => ['inApp' => false],
+                    'system.announcement' => ['inApp' => true],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.user.notificationPreferences.attachment.uploaded.inApp', false);
+
+        $this->assertSame(false, $user->fresh()->notification_preferences['attachment.uploaded']['inApp']);
+    }
+
+    public function test_profile_update_rejects_unknown_notification_preference_keys(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson('/api/me/profile', [
+                'name' => $user->name,
+                'avatarUrl' => null,
+                'timezone' => 'UTC',
+                'locale' => 'en',
+                'theme' => 'system',
+                'notificationPreferences' => [
+                    'unknown.event' => ['inApp' => true],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */
