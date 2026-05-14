@@ -5,12 +5,15 @@ namespace Tests\Feature;
 use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use App\Notifications\NotificationRecord;
+use Domains\Attachment\Models\Attachment;
+use Domains\Demo\Models\DemoSeedRun;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Award\Models\Award;
-use Domains\Demo\Models\DemoSeedRun;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
+use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
@@ -257,5 +260,78 @@ class DemoSeederTest extends TestCase
             'total_amount' => '100.00',
             'currency' => 'USD',
         ]);
+    }
+
+    public function test_local_demo_seeder_is_idempotent(): void
+    {
+        $this->seed();
+        $this->seed();
+
+        $this->assertSame(3, Tenant::query()->count());
+        $this->assertSame(7, User::query()->count());
+        $this->assertSame(3, Requisition::query()->count());
+        $this->assertSame(6, Vendor::query()->count());
+        $this->assertSame(1, ProcurementProject::query()->count());
+        $this->assertSame(1, Rfq::query()->count());
+        $this->assertSame(1, Quotation::query()->count());
+        $this->assertSame(1, ApprovalTask::query()->count());
+        $this->assertSame(1, Award::query()->count());
+        $this->assertSame(1, Attachment::query()->count());
+        $this->assertSame(2, NotificationRecord::query()->count());
+        $this->assertSame(1, DemoSeedRun::query()->count());
+
+        $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
+        $northwind = Tenant::query()->where('name', 'Northwind Sourcing')->firstOrFail();
+        $beta = Tenant::query()->where('name', 'Beta Corp Sandbox')->firstOrFail();
+
+        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'name' => 'Test User']);
+        $this->assertDatabaseHas('users', ['email' => 'buyer@example.com', 'name' => 'Buyer User']);
+        $this->assertDatabaseHas('users', ['email' => 'approver@example.com', 'name' => 'Approver User']);
+        $this->assertDatabaseHas('users', ['email' => 'finance@example.com', 'name' => 'Finance User']);
+        $this->assertDatabaseHas('users', ['email' => 'auditor@example.com', 'name' => 'Audit User']);
+        $this->assertDatabaseHas('users', ['email' => 'vendor.manager@example.com', 'name' => 'Vendor Manager']);
+        $this->assertDatabaseHas('users', ['email' => 'admin@example.com', 'name' => 'Admin User']);
+
+        $this->assertSame(TenantRole::Requester->value, $acme->roleFor(User::where('email', 'test@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Buyer->value, $acme->roleFor(User::where('email', 'buyer@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Approver->value, $acme->roleFor(User::where('email', 'approver@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Approver->value, $acme->roleFor(User::where('email', 'finance@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Admin->value, $acme->roleFor(User::where('email', 'auditor@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Buyer->value, $northwind->roleFor(User::where('email', 'vendor.manager@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Admin->value, $acme->roleFor(User::where('email', 'admin@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Admin->value, $beta->roleFor(User::where('email', 'admin@example.com')->firstOrFail()));
+
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0001', 'title' => 'HQ workplace refresh']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0002', 'title' => 'Engineering laptop refresh']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0003', 'title' => 'Security audit services']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Atlas Office Supplies', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Northstar Furniture Co', 'status' => 'evaluation']);
+        $this->assertDatabaseHas('vendors', ['name' => 'SecureWorks Advisory', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Papertrail Logistics', 'status' => 'restricted']);
+        $this->assertDatabaseHas('vendors', ['name' => 'ByteForge Systems', 'status' => 'evaluation']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Greenline Facilities', 'status' => 'preferred']);
+        $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-0001', 'name' => 'HQ Workplace Refresh']);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-0001', 'title' => 'Office furniture package']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-0001', 'status' => 'received']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Finance approval for office furniture package', 'status' => 'pending']);
+        $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
+        $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
+        $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
+        $this->assertDatabaseHas('notifications', ['title' => 'Local demo data is ready']);
+        $this->assertDatabaseHas('demo_seed_runs', ['name' => 'local-demo']);
+
+        $run = DemoSeedRun::query()->firstOrFail();
+
+        $this->assertSame([
+            'tenants' => 3,
+            'users' => 7,
+            'requisitions' => 3,
+            'vendors' => 6,
+            'projects' => 1,
+            'rfqs' => 1,
+            'quotations' => 1,
+            'approval_tasks' => 1,
+            'awards' => 1,
+        ], $run->metadata);
     }
 }
