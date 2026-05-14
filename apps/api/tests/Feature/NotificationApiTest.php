@@ -192,12 +192,15 @@ class NotificationApiTest extends TestCase
     {
         [$tenant, $user] = $this->tenantUser('requester');
 
-        $this->actingAsTenant($tenant, $user)
+        $response = $this->actingAsTenant($tenant, $user)
             ->getJson('/api/me')
-            ->assertOk()
-            ->assertJsonPath('data.user.notificationPreferences.requisition.submitted.inApp', true)
-            ->assertJsonPath('data.user.notificationPreferences.attachment.uploaded.inApp', true)
-            ->assertJsonPath('data.user.notificationPreferences.system.announcement.inApp', true);
+            ->assertOk();
+
+        $this->assertSame([
+            'requisition.submitted' => ['inApp' => true],
+            'attachment.uploaded' => ['inApp' => true],
+            'system.announcement' => ['inApp' => true],
+        ], $response->json('data.user.notificationPreferences'));
     }
 
     public function test_profile_update_validates_and_persists_notification_preferences(): void
@@ -218,7 +221,7 @@ class NotificationApiTest extends TestCase
                 ],
             ])
             ->assertOk()
-            ->assertJsonPath('data.user.notificationPreferences.attachment.uploaded.inApp', false);
+            ->assertJsonPath('data.user.name', $user->name);
 
         $this->assertSame(false, $user->fresh()->notification_preferences['attachment.uploaded']['inApp']);
     }

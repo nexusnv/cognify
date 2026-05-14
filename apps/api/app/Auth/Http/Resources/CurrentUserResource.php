@@ -6,7 +6,6 @@ use App\Auth\Permissions\TenantPermissionResolver;
 use App\Models\User;
 use App\Notifications\NotificationPreferenceDefaults;
 use App\Tenancy\CurrentTenant;
-use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -40,7 +39,7 @@ class CurrentUserResource extends JsonResource
                 'timezone' => $this->timezone,
                 'locale' => $this->locale,
                 'theme' => $this->theme,
-                'notificationPreferences' => Arr::undot(NotificationPreferenceDefaults::merge($this->notification_preferences)),
+                'notificationPreferences' => NotificationPreferenceDefaults::merge($this->notification_preferences),
             ],
             'tenants' => $memberships,
             'activeTenant' => $tenant ? ['id' => (string) $tenant->id, 'name' => $tenant->name] : null,
