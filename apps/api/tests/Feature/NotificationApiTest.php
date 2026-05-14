@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\NotificationRecord;
 use App\Notifications\NotificationData;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
@@ -83,6 +84,108 @@ class NotificationApiTest extends TestCase
         );
 
         $this->assertDatabaseCount('notifications', 0);
+    }
+
+    public function test_user_lists_only_their_current_tenant_notifications_with_status_filters(): void
+    {
+        [$tenant, $user] = $this->tenantUser('buyer');
+        [$otherTenant, $otherUser] = $this->tenantUser('buyer');
+
+        NotificationRecord::query()->create([
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $user->id,
+            'type' => 'system.announcement',
+            'title' => 'Unread tenant notice',
+            'metadata' => [],
+        ]);
+        NotificationRecord::query()->create([
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $user->id,
+            'type' => 'system.announcement',
+            'title' => 'Read tenant notice',
+            'metadata' => [],
+            'read_at' => now(),
+        ]);
+        NotificationRecord::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'recipient_id' => $otherUser->id,
+            'type' => 'system.announcement',
+            'title' => 'Other tenant notice',
+            'metadata' => [],
+        ]);
+
+        $this->actingAsTenant($tenant, $user)
+            ->getJson('/api/notifications?status=unread')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Unread tenant notice')
+            ->assertJsonPath('meta.unreadCount', 1)
+            ->assertJsonPath('meta.status', 'unread');
+    }
+
+    public function test_mark_one_read_is_idempotent_and_rejects_other_recipients(): void
+    {
+        [$tenant, $user] = $this->tenantUser('buyer');
+        [, $otherUser] = $this->tenantUser('buyer', $tenant);
+        $notification = NotificationRecord::query()->create([
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $user->id,
+            'type' => 'system.announcement',
+            'title' => 'Unread tenant notice',
+            'metadata' => [],
+        ]);
+        $otherNotification = NotificationRecord::query()->create([
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $otherUser->id,
+            'type' => 'system.announcement',
+            'title' => 'Other recipient notice',
+            'metadata' => [],
+        ]);
+
+        $first = $this->actingAsTenant($tenant, $user)
+            ->postJson("/api/notifications/{$notification->id}/read")
+            ->assertOk()
+            ->json('data.readAt');
+
+        $this->actingAsTenant($tenant, $user)
+            ->postJson("/api/notifications/{$notification->id}/read")
+            ->assertOk()
+            ->assertJsonPath('data.readAt', $first);
+
+        $this->actingAsTenant($tenant, $user)
+            ->postJson("/api/notifications/{$otherNotification->id}/read")
+            ->assertNotFound();
+    }
+
+    public function test_mark_all_read_marks_only_current_user_current_tenant_notifications(): void
+    {
+        [$tenant, $user] = $this->tenantUser('buyer');
+        [, $otherUser] = $this->tenantUser('buyer', $tenant);
+        NotificationRecord::query()->create([
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $user->id,
+            'type' => 'system.announcement',
+            'title' => 'First unread',
+            'metadata' => [],
+        ]);
+        NotificationRecord::query()->create([
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $otherUser->id,
+            'type' => 'system.announcement',
+            'title' => 'Other unread',
+            'metadata' => [],
+        ]);
+
+        $this->actingAsTenant($tenant, $user)
+            ->postJson('/api/notifications/read-all')
+            ->assertOk()
+            ->assertJsonPath('data.marked', 1)
+            ->assertJsonPath('meta.unreadCount', 0);
+
+        $this->assertDatabaseHas('notifications', [
+            'recipient_id' => $otherUser->id,
+            'read_at' => null,
+        ]);
     }
 
     /**
