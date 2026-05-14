@@ -2,12 +2,14 @@
 
 namespace Domains\Requisition\Models;
 
+use Domains\Attachment\Models\Attachment;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Requisition extends Model
 {
@@ -58,5 +60,13 @@ class Requisition extends Model
     public function lineItems(): HasMany
     {
         return $this->hasMany(RequisitionLineItem::class);
+    }
+
+    /**
+     * @return MorphMany<Attachment, $this>
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 }

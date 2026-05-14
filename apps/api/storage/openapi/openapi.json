@@ -299,6 +299,217 @@
         }
       }
     },
+    "/api/requisitions/{requisitionId}/attachments": {
+      "get": {
+        "operationId": "listRequisitionAttachments",
+        "summary": "List requisition attachments",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requisition attachments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "uploadRequisitionAttachment",
+        "summary": "Upload a requisition attachment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attachment uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachmentId}/preview": {
+      "get": {
+        "operationId": "previewAttachment",
+        "summary": "Preview an attachment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AttachmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary preview response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachmentId}/download": {
+      "get": {
+        "operationId": "downloadAttachment",
+        "summary": "Download an attachment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AttachmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary download response",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachmentId}": {
+      "delete": {
+        "operationId": "deleteAttachment",
+        "summary": "Delete an attachment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AttachmentId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Attachment deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "operationId": "login",
@@ -469,7 +680,7 @@
         "parameters": [
           { "name": "action", "in": "query", "required": false, "schema": { "type": "string" } },
           { "name": "actorId", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "subjectType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["requisition"] } },
+          { "name": "subjectType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["requisition", "attachment"] } },
           { "name": "subjectId", "in": "query", "required": false, "schema": { "type": "string" } },
           { "name": "occurredFrom", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
           { "name": "occurredTo", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
@@ -497,6 +708,14 @@
     "parameters": {
       "RequisitionId": {
         "name": "requisitionId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AttachmentId": {
+        "name": "attachmentId",
         "in": "path",
         "required": true,
         "schema": {
@@ -880,6 +1099,140 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Requisition"
+          }
+        }
+      },
+      "AttachmentUser": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AttachmentPermissions": {
+        "type": "object",
+        "required": [
+          "canPreview",
+          "canDownload",
+          "canDelete"
+        ],
+        "properties": {
+          "canPreview": {
+            "type": "boolean"
+          },
+          "canDownload": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "required": [
+          "id",
+          "parentType",
+          "parentId",
+          "filename",
+          "mimeType",
+          "extension",
+          "sizeBytes",
+          "previewable",
+          "uploadedBy",
+          "createdAt",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parentType": {
+            "type": "string",
+            "enum": ["requisition"]
+          },
+          "parentId": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "extension": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "previewable": {
+            "type": "boolean"
+          },
+          "uploadedBy": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/AttachmentUser" },
+              { "type": "null" }
+            ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AttachmentPermissions"
+          }
+        }
+      },
+      "AttachmentResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Attachment"
+          }
+        }
+      },
+      "AttachmentListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        }
+      },
+      "AttachmentUploadRequest": {
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
           }
         }
       },
@@ -1387,7 +1740,7 @@
         "type": "object",
         "required": ["type", "id", "display"],
         "properties": {
-          "type": { "type": "string", "enum": ["requisition"] },
+          "type": { "type": "string", "enum": ["requisition", "attachment"] },
           "id": { "type": "string" },
           "display": {
             "oneOf": [

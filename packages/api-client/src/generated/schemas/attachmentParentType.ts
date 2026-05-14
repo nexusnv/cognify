@@ -5,10 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AuditSubjectType = (typeof AuditSubjectType)[keyof typeof AuditSubjectType];
+export type AttachmentParentType = (typeof AttachmentParentType)[keyof typeof AttachmentParentType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const AuditSubjectType = {
+export const AttachmentParentType = {
   requisition: "requisition",
-  attachment: "attachment",
 } as const;

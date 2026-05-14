@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Audit\AuditEvent;
 use App\Audit\Policies\AuditEventPolicy;
+use Domains\Attachment\Models\Attachment;
+use Domains\Attachment\Policies\AttachmentPolicy;
 use App\Tenancy\CurrentTenant;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Policies\RequisitionPolicy;
@@ -27,5 +29,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Requisition::class, RequisitionPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
+        Gate::policy(Attachment::class, AttachmentPolicy::class);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Audit;
 
+use Domains\Attachment\Models\Attachment;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +13,7 @@ class AuditSubject
      */
     protected static array $typeMap = [
         Requisition::class => 'requisition',
+        Attachment::class => 'attachment',
     ];
 
     /**
@@ -64,6 +66,11 @@ class AuditSubject
         $title = $subject->getAttribute('title');
         if ($title !== null) {
             return (string) $title;
+        }
+
+        $filename = $subject->getAttribute('original_filename');
+        if ($filename !== null) {
+            return (string) $filename;
         }
 
         return null;

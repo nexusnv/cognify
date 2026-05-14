@@ -38,7 +38,17 @@ export async function cognifyFetch<TResponse>(
     headers,
   });
 
-  const data = response.status === 204 ? undefined : await response.json();
+  const contentType = response.headers.get("content-type") ?? "";
+  const isJsonResponse =
+    contentType.includes("application/json") || contentType.includes("+json");
+  const data =
+    response.status === 204
+      ? undefined
+      : response.ok && !isJsonResponse
+        ? await response.blob()
+        : !response.ok && !isJsonResponse
+          ? await response.text()
+          : await response.json();
 
   if (!response.ok) {
     throw {
