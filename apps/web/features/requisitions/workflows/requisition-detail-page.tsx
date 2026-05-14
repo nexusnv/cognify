@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { Pencil, Send } from "lucide-react";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { AttachmentList } from "@/features/attachments/components/attachment-list";
 import { AttachmentUploader } from "@/features/attachments/components/attachment-uploader";
+import { rememberRecentRecord } from "@/features/search/hooks/use-recent-records";
 import { RequisitionActivityTimeline } from "../components/requisition-activity-timeline";
 import { RequisitionStatusBadge } from "../components/requisition-status-badge";
 import { SubmissionChecklist } from "../components/submission-checklist";
@@ -15,6 +17,20 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
   const requisitionQuery = useRequisition(requisitionId);
   const activityQuery = useRequisitionActivity(requisitionId);
   const requisition = requisitionQuery.data;
+
+  useEffect(() => {
+    if (!requisition) return;
+
+    rememberRecentRecord({
+      type: "requisition",
+      id: requisition.id,
+      title: requisition.title,
+      subtitle: requisition.number,
+      status: requisition.status,
+      href: `/requisitions/${requisition.id}`,
+      updatedAt: requisition.updatedAt,
+    });
+  }, [requisition]);
 
   if (requisitionQuery.isLoading) {
     return (
