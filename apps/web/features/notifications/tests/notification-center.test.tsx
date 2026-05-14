@@ -47,4 +47,13 @@ describe("notification center", () => {
 
     expect(await screen.findByText("No notifications for this view.")).toBeInTheDocument();
   });
+
+  it("shell bell renders unread count and accessible label", async () => {
+    const { NotificationHost } = await import("@/components/shell/notification-host");
+
+    renderWithQuery(<NotificationHost />);
+
+    expect(await screen.findByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
 });
