@@ -6,6 +6,7 @@ use App\Tenancy\Tenant;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 class Quotation extends Model
 {
@@ -26,6 +27,27 @@ class Quotation extends Model
             'total_amount' => 'decimal:2',
             'metadata' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $quotation): void {
+            if ($quotation->rfq_id !== null) {
+                $rfq = Rfq::query()->find($quotation->rfq_id);
+
+                if ($rfq !== null && (int) $rfq->tenant_id !== (int) $quotation->tenant_id) {
+                    throw new InvalidArgumentException('Quotation RFQ must belong to the same tenant.');
+                }
+            }
+
+            if ($quotation->vendor_id !== null) {
+                $vendor = Vendor::query()->find($quotation->vendor_id);
+
+                if ($vendor !== null && (int) $vendor->tenant_id !== (int) $quotation->tenant_id) {
+                    throw new InvalidArgumentException('Quotation vendor must belong to the same tenant.');
+                }
+            }
+        });
     }
 
     /**

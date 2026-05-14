@@ -13,6 +13,7 @@ use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class DemoSeederTest extends TestCase
@@ -115,6 +116,14 @@ class DemoSeederTest extends TestCase
             ],
         ]);
 
+        $vendor = $vendor->refresh();
+        $project = $project->refresh();
+        $rfq = $rfq->refresh();
+        $quotation = $quotation->refresh();
+        $approvalTask = $approvalTask->refresh();
+        $award = $award->refresh();
+        $demoSeedRun = $demoSeedRun->refresh();
+
         $this->assertSame($tenant->id, $vendor->tenant_id);
         $this->assertSame($tenant->id, $project->tenant_id);
         $this->assertSame($tenant->id, $rfq->tenant_id);
@@ -124,6 +133,7 @@ class DemoSeederTest extends TestCase
 
         $this->assertSame('APAC', $vendor->metadata['region']);
         $this->assertSame('125000.00', $project->budget_amount);
+        $this->assertSame(['program' => 'workspace-refresh'], $project->metadata);
         $this->assertSame(3, $rfq->metadata['invited_vendors']);
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $rfq->due_at);
         $this->assertSame('98500.00', $quotation->total_amount);
@@ -135,5 +145,117 @@ class DemoSeederTest extends TestCase
         $this->assertSame('local-demo', $demoSeedRun->name);
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $demoSeedRun->seeded_at);
         $this->assertSame(['records' => 5], $demoSeedRun->metadata);
+    }
+
+    public function test_preview_models_reject_cross_tenant_links(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+        $otherTenant = Tenant::query()->create([
+            'name' => 'Other Corp',
+        ]);
+
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $vendor = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Global Freight',
+            'status' => 'active',
+        ]);
+        $otherVendor = Vendor::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Foreign Freight',
+            'status' => 'active',
+        ]);
+        $project = ProcurementProject::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'owner_id' => null,
+            'number' => 'PRJ-9999',
+            'name' => 'Other tenant project',
+            'status' => 'planning',
+            'budget_amount' => '1000.00',
+            'currency' => 'USD',
+        ]);
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => null,
+            'requisition_id' => null,
+            'number' => 'RFQ-9999',
+            'title' => 'Cross tenant check',
+            'status' => 'open',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $otherVendor->id,
+            'number' => 'QUO-9999',
+            'status' => 'submitted',
+            'total_amount' => '100.00',
+            'currency' => 'USD',
+        ]);
+    }
+
+    public function test_awards_reject_cross_tenant_project_links(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+        $otherTenant = Tenant::query()->create([
+            'name' => 'Other Corp',
+        ]);
+
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $vendor = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Global Freight',
+            'status' => 'active',
+        ]);
+        $project = ProcurementProject::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'owner_id' => null,
+            'number' => 'PRJ-9999',
+            'name' => 'Other tenant project',
+            'status' => 'planning',
+            'budget_amount' => '1000.00',
+            'currency' => 'USD',
+        ]);
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => null,
+            'requisition_id' => null,
+            'number' => 'RFQ-9999',
+            'title' => 'Cross tenant check',
+            'status' => 'open',
+        ]);
+        $quotation = Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'QUO-9999',
+            'status' => 'submitted',
+            'total_amount' => '100.00',
+            'currency' => 'USD',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Award::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => $project->id,
+            'rfq_id' => $rfq->id,
+            'quotation_id' => $quotation->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'AWD-9999',
+            'status' => 'awarded',
+            'total_amount' => '100.00',
+            'currency' => 'USD',
+        ]);
     }
 }

@@ -9,6 +9,7 @@ use Domains\Quotation\Models\Rfq;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 class Award extends Model
 {
@@ -33,6 +34,43 @@ class Award extends Model
             'decided_at' => 'datetime',
             'metadata' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $award): void {
+            if ($award->project_id !== null) {
+                $project = ProcurementProject::query()->find($award->project_id);
+
+                if ($project !== null && (int) $project->tenant_id !== (int) $award->tenant_id) {
+                    throw new InvalidArgumentException('Award project must belong to the same tenant.');
+                }
+            }
+
+            if ($award->rfq_id !== null) {
+                $rfq = Rfq::query()->find($award->rfq_id);
+
+                if ($rfq !== null && (int) $rfq->tenant_id !== (int) $award->tenant_id) {
+                    throw new InvalidArgumentException('Award RFQ must belong to the same tenant.');
+                }
+            }
+
+            if ($award->quotation_id !== null) {
+                $quotation = Quotation::query()->find($award->quotation_id);
+
+                if ($quotation !== null && (int) $quotation->tenant_id !== (int) $award->tenant_id) {
+                    throw new InvalidArgumentException('Award quotation must belong to the same tenant.');
+                }
+            }
+
+            if ($award->vendor_id !== null) {
+                $vendor = Vendor::query()->find($award->vendor_id);
+
+                if ($vendor !== null && (int) $vendor->tenant_id !== (int) $award->tenant_id) {
+                    throw new InvalidArgumentException('Award vendor must belong to the same tenant.');
+                }
+            }
+        });
     }
 
     /**

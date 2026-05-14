@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 class ProcurementProject extends Model
 {
@@ -26,6 +27,24 @@ class ProcurementProject extends Model
             'budget_amount' => 'decimal:2',
             'metadata' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $project): void {
+            if ($project->owner_id === null) {
+                return;
+            }
+
+            $belongsToTenant = User::query()
+                ->whereKey($project->owner_id)
+                ->whereHas('tenants', fn ($query) => $query->whereKey($project->tenant_id))
+                ->exists();
+
+            if (! $belongsToTenant) {
+                throw new InvalidArgumentException('Project owner must belong to the same tenant.');
+            }
+        });
     }
 
     /**

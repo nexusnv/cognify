@@ -7,6 +7,7 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Project\Models\ProcurementProject;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 class Rfq extends Model
 {
@@ -29,6 +30,27 @@ class Rfq extends Model
             'due_at' => 'datetime',
             'metadata' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $rfq): void {
+            if ($rfq->project_id !== null) {
+                $project = ProcurementProject::query()->find($rfq->project_id);
+
+                if ($project !== null && (int) $project->tenant_id !== (int) $rfq->tenant_id) {
+                    throw new InvalidArgumentException('RFQ project must belong to the same tenant.');
+                }
+            }
+
+            if ($rfq->requisition_id !== null) {
+                $requisition = Requisition::query()->find($rfq->requisition_id);
+
+                if ($requisition !== null && (int) $requisition->tenant_id !== (int) $rfq->tenant_id) {
+                    throw new InvalidArgumentException('RFQ requisition must belong to the same tenant.');
+                }
+            }
+        });
     }
 
     /**
