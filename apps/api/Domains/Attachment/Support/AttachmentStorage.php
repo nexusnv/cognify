@@ -67,8 +67,14 @@ class AttachmentStorage
         $checksum = $realPath !== false ? hash_file('sha256', $realPath) : false;
 
         if ($checksum === false) {
-            throw new RuntimeException('Unable to calculate attachment checksum.');
+            throw new RuntimeException('AttachmentStorage could not calculate the attachment checksum.');
         }
+
+        $size = $file->getSize();
+        if ($size === false || ! is_numeric($size)) {
+            throw new RuntimeException('AttachmentStorage could not determine the attachment file size.');
+        }
+        $mimeType = $this->mimeTypeFor($file);
 
         Storage::disk(self::DISK)->putFileAs($directory, $file, $filename);
 
@@ -76,9 +82,9 @@ class AttachmentStorage
             'disk' => self::DISK,
             'path' => $path,
             'checksum' => $checksum,
-            'previewable' => in_array($this->mimeTypeFor($file), self::PREVIEWABLE_MIME_TYPES, true),
-            'sizeBytes' => (int) $file->getSize(),
-            'mimeType' => $this->mimeTypeFor($file),
+            'previewable' => in_array($mimeType, self::PREVIEWABLE_MIME_TYPES, true),
+            'sizeBytes' => (int) $size,
+            'mimeType' => $mimeType,
             'extension' => $extension,
             'originalFilename' => $file->getClientOriginalName(),
         ];
