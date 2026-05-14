@@ -31,6 +31,7 @@ import type {
   SearchResponse,
   SetCurrentTenantRequest,
   SubmitRequisitionResponse,
+  SystemStatusResponse,
   TooManyRequestsResponse,
   UnauthenticatedResponse,
   UnauthorizedResponse,
@@ -61,6 +62,53 @@ export const getGetHealthUrl = () => {
 
 export const getHealth = async (options?: RequestInit): Promise<getHealthResponse> => {
   return cognifyFetch<getHealthResponse>(getGetHealthUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Get system readiness status
+ */
+export type getSystemStatusResponse200 = {
+  data: SystemStatusResponse;
+  status: 200;
+};
+
+export type getSystemStatusResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type getSystemStatusResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getSystemStatusResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type getSystemStatusResponseSuccess = getSystemStatusResponse200 & {
+  headers: Headers;
+};
+export type getSystemStatusResponseError = (
+  | getSystemStatusResponse400
+  | getSystemStatusResponse401
+  | getSystemStatusResponse403
+) & {
+  headers: Headers;
+};
+
+export type getSystemStatusResponse = getSystemStatusResponseSuccess | getSystemStatusResponseError;
+
+export const getGetSystemStatusUrl = () => {
+  return `/api/system/status`;
+};
+
+export const getSystemStatus = async (options?: RequestInit): Promise<getSystemStatusResponse> => {
+  return cognifyFetch<getSystemStatusResponse>(getGetSystemStatusUrl(), {
     ...options,
     method: "GET",
   });

@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
+import { useSystemStatus } from "@/features/system-readiness/hooks/use-system-status";
 import { getBreadcrumbs, shellNavGroups } from "./shell-route-config";
-import { formatTenantRole, getVisibleNavGroups } from "./shell-utils";
+import { formatTenantRole, formatWorkspaceLabel, getVisibleNavGroups } from "./shell-utils";
 import { MobileShellNav } from "./mobile-shell-nav";
 import { RightPanelHost } from "./right-panel-host";
 import { ShellFooter } from "./shell-footer";
@@ -15,10 +16,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/dashboard";
   const { data } = useCurrentUser();
   const context = data?.data;
-  const tenantName = context?.activeTenant?.name ?? "Operational workspace";
+  const tenantName = formatWorkspaceLabel(context?.activeTenant?.name);
+  const tenantId = context?.activeTenant?.id ?? null;
   const userName = context?.user?.name ?? "Account";
   const roleLabel = formatTenantRole(context?.activeRole);
   const permissions = context?.permissions;
+  const canViewSystemStatus = Boolean(permissions?.canAccessAdmin);
+  const systemStatusQuery = useSystemStatus(tenantId, canViewSystemStatus);
   const [mobileOpen, setMobileOpen] = useState(false);
   const breadcrumbs = useMemo(() => getBreadcrumbs(pathname), [pathname]);
   const groups = useMemo(
@@ -59,7 +63,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main id="main-content" className="flex-1 px-4 py-6 md:px-6" tabIndex={-1}>
           {children}
         </main>
-        <ShellFooter tenantName={tenantName} />
+        <ShellFooter
+          tenantName={tenantName}
+          canViewSystemStatus={canViewSystemStatus}
+          readinessStatus={systemStatusQuery.data?.data.status}
+        />
       </div>
       <RightPanelHost />
     </div>

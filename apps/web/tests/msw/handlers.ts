@@ -3,6 +3,7 @@ import { attachmentHandlers } from "../../features/attachments/mocks/attachments
 import { auditHandlers } from "../../features/audit/mocks/audit-handlers";
 import { identityHandlers } from "../../features/identity/mocks/identity-handlers";
 import { notificationHandlers } from "../../features/notifications/mocks/notification-handlers";
+import { systemReadinessHandlers } from "@/features/system-readiness/mocks/system-readiness-handlers";
 import { searchHandlers } from "../../features/search/mocks/search-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 
@@ -18,5 +19,6 @@ export const handlers = [
   ...attachmentHandlers,
   ...identityHandlers,
   ...notificationHandlers,
+  ...systemReadinessHandlers,
   ...auditHandlers,
 ];

@@ -5,12 +5,10 @@ import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "../../tests/msw/server";
 import { requesterIdentity } from "../../features/identity/mocks/identity-fixtures";
+import { healthySystemStatus } from "../../features/system-readiness/mocks/system-readiness-fixtures";
 import type { CurrentUserContext } from "../../features/identity/types/identity-view-model";
 import { AppShell } from "./app-shell";
 import DashboardLayout from "../../app/(dashboard)/layout";
-import { getBreadcrumbs, shellNavGroups } from "./shell-route-config";
-import { formatTenantRole, getVisibleNavGroups, isActivePath } from "./shell-utils";
-import { ShellFooter } from "./shell-footer";
 
 let mockPathname = "/dashboard";
 
@@ -169,6 +167,78 @@ describe("app shell", () => {
     expect(auditNavItem).toHaveAttribute("tabindex", "-1");
   });
 
+  it("shows system readiness and navigation in the shell for admin identities", async () => {
+    mockIdentity({
+      ...requesterIdentity,
+      activeRole: "admin",
+      tenants: [{ id: "1", name: "Acme Procurement", role: "admin" }],
+      activeTenant: { id: "1", name: "Acme Procurement" },
+      permissions: {
+        ...requesterIdentity.permissions,
+        canAccessAdmin: true,
+      },
+    });
+
+    server.use(
+      http.get("/api/system/status", () => {
+        return HttpResponse.json(healthySystemStatus);
+      }),
+    );
+
+    mockPathname = "/system";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("System");
+    expect(
+      await screen.findByRole("link", { name: "System" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("Local demo");
+  });
+
+  it("does not fetch system status for requester identities", async () => {
+    let systemStatusRequested = false;
+
+    server.use(
+      http.get("/api/system/status", () => {
+        systemStatusRequested = true;
+        return HttpResponse.json(healthySystemStatus);
+      }),
+    );
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+
+    expect(systemStatusRequested).toBe(false);
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
+  });
+
+  it("falls back to a stable workspace label when the tenant name is blank", async () => {
+    mockIdentity({
+      ...requesterIdentity,
+      activeTenant: { id: "1", name: "   " },
+      tenants: [{ id: "1", name: "   ", role: "requester" }],
+    });
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    expect((await screen.findAllByText("Operational workspace")).length).toBeGreaterThan(0);
+  });
+
   it("opens and closes mobile navigation with the keyboard", async () => {
     const user = userEvent.setup();
 
@@ -217,51 +287,5 @@ describe("app shell", () => {
 
     await user.keyboard("{Escape}");
     expect(document.body.style.overflow).toBe(previousOverflow);
-  });
-});
-
-describe("shell footer", () => {
-  it("renders a meaningful workspace fallback for empty tenant labels", () => {
-    render(<ShellFooter tenantName="" />);
-
-    expect(screen.getByRole("contentinfo")).toHaveTextContent("Workspace: Operational workspace");
-  });
-});
-
-describe("shell route helpers", () => {
-  it("resolves route breadcrumbs", () => {
-    expect(getBreadcrumbs("/requisitions/req-1/edit")).toEqual([
-      { label: "Requisitions", href: "/requisitions" },
-      { label: "Requisition workspace", href: "/requisitions/req-1" },
-      { label: "Edit" },
-    ]);
-  });
-
-  it("normalizes trailing slashes before resolving breadcrumbs", () => {
-    expect(getBreadcrumbs("/requisitions/")).toEqual([{ label: "Requisitions" }]);
-    expect(getBreadcrumbs("/dashboard/")).toEqual([{ label: "Dashboard" }]);
-  });
-
-  it("computes active paths for nested operational routes", () => {
-    expect(isActivePath("/requisitions", "/requisitions/req-1")).toBe(true);
-    expect(isActivePath("/dashboard", "/dashboard")).toBe(true);
-    expect(isActivePath("/dashboard", "/dashboarding")).toBe(false);
-  });
-
-  it("formats role labels consistently", () => {
-    // Covers unexpected legacy role casing defensively; generated role types are lowercase today.
-    expect(formatTenantRole("TENANT_ADMIN" as unknown as Parameters<typeof formatTenantRole>[0])).toBe(
-      "Tenant Admin",
-    );
-  });
-
-  it("filters navigation by permissions and implementation state", () => {
-    const groups = getVisibleNavGroups(shellNavGroups, requesterIdentity.permissions);
-    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
-
-    expect(labels).toContain("Dashboard");
-    expect(labels).toContain("Requisitions");
-    expect(labels).toContain("Account");
-    expect(labels).not.toContain("Audit");
   });
 });

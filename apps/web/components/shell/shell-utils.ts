@@ -4,6 +4,11 @@ import type {
 } from "@/features/identity/types/identity-view-model";
 import type { ShellNavGroup } from "./shell-types";
 
+export function formatWorkspaceLabel(name: string | null | undefined): string {
+  const trimmed = name?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : "Operational workspace";
+}
+
 export function formatTenantRole(role: TenantRole | null | undefined): string {
   if (!role) return "Member";
 

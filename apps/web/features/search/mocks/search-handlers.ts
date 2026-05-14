@@ -1,17 +1,23 @@
 import { http, HttpResponse } from "msw";
+import type { ListGlobalSearchTypesItem } from "@cognify/api-client/schemas";
 import { searchResultFixtures } from "./search-fixtures";
-import type { SearchResultViewModel } from "../types/search-view-model";
+import { GLOBAL_SEARCH_TYPES, matchesSearchResultQuery } from "../search-contract";
 
 const MAX_LIMIT = 25;
+const ALLOWED_TYPES = new Set(GLOBAL_SEARCH_TYPES);
 
 export const searchHandlers = [
   http.get("/api/search", ({ request }) => {
     const url = new URL(request.url);
     const query = (url.searchParams.get("query") ?? "").trim();
-    const types = parseTypes(url.searchParams.get("types"));
+    const types = parseTypes(url.searchParams);
     const limit = parseLimit(url.searchParams.get("limit"));
 
-    if (query.length < 2 || !types.every((type) => type === "requisition") || limit === null) {
+    if (
+      query.length < 2 ||
+      !types.every((type) => ALLOWED_TYPES.has(type as ListGlobalSearchTypesItem)) ||
+      limit === null
+    ) {
       return HttpResponse.json(
         {
           error: {
@@ -27,7 +33,8 @@ export const searchHandlers = [
 
     const normalizedQuery = query.toLowerCase();
     const data = searchResultFixtures
-      .filter((result) => matchesResult(result, normalizedQuery))
+      .filter((result) => types.includes(result.type))
+      .filter((result) => matchesSearchResultQuery(result, normalizedQuery))
       .slice(0, limit);
 
     return HttpResponse.json({
@@ -41,13 +48,16 @@ export const searchHandlers = [
   }),
 ];
 
-function parseTypes(rawTypes: string | null): string[] {
-  if (!rawTypes) {
+function parseTypes(searchParams: URLSearchParams): string[] {
+  const repeatedTypes = searchParams.getAll("types");
+  const rawTypes = repeatedTypes.length > 0 ? repeatedTypes : searchParams.get("types") ? [searchParams.get("types") ?? ""] : [];
+
+  if (rawTypes.length === 0) {
     return ["requisition"];
   }
 
   return rawTypes
-    .split(",")
+    .flatMap((value) => value.split(","))
     .map((type) => type.trim())
     .filter(Boolean);
 }
@@ -64,10 +74,3 @@ function parseLimit(rawLimit: string | null): number | null {
 
   return limit;
 }
-
-function matchesResult(result: SearchResultViewModel, query: string): boolean {
-  return [result.title, result.subtitle ?? "", result.status ?? ""].some((value) =>
-    value.toLowerCase().includes(query),
-  );
-}
-
