@@ -6,6 +6,7 @@
  */
 import type { CurrentUserProfileAvatarUrl } from "./currentUserProfileAvatarUrl";
 import type { CurrentUserProfileTheme } from "./currentUserProfileTheme";
+import type { NotificationPreferences } from "./notificationPreferences";
 
 export interface CurrentUserProfile {
   id: string;
@@ -15,4 +16,5 @@ export interface CurrentUserProfile {
   timezone: string;
   locale: string;
   theme: CurrentUserProfileTheme;
+  notificationPreferences?: NotificationPreferences;
 }

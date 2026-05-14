@@ -699,6 +699,124 @@
         }
       }
     },
+    "/api/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NotificationStatusFilter"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications for the active tenant and authenticated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/notifications/{notification}/read": {
+      "post": {
+        "operationId": "markNotificationRead",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "notification",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated notification resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "post": {
+        "operationId": "markAllNotificationsRead",
+        "tags": ["Notifications"],
+        "responses": {
+          "200": {
+            "description": "Count of notifications marked read.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllNotificationsReadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
     "/api/tenants/current": {
       "post": {
         "operationId": "setCurrentTenant",
@@ -1638,6 +1756,244 @@
           "admin"
         ]
       },
+      "NotificationEventType": {
+        "type": "string",
+        "enum": [
+          "requisition.submitted",
+          "attachment.uploaded",
+          "system.announcement"
+        ]
+      },
+      "NotificationStatusFilter": {
+        "type": "string",
+        "enum": [
+          "all",
+          "unread",
+          "read"
+        ],
+        "default": "all"
+      },
+      "NotificationPriority": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "high"
+        ],
+        "default": "normal"
+      },
+      "NotificationPreference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "inApp"
+        ],
+        "properties": {
+          "inApp": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationPreferences": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requisition.submitted",
+          "attachment.uploaded",
+          "system.announcement"
+        ],
+        "properties": {
+          "requisition.submitted": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "attachment.uploaded": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "system.announcement": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          }
+        }
+      },
+      "NotificationActor": {
+        "type": "object",
+        "nullable": true,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificationSubject": {
+        "type": "object",
+        "nullable": true,
+        "required": [
+          "type",
+          "id",
+          "label"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "attachment",
+              "system"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "href",
+          "priority",
+          "readAt",
+          "createdAt",
+          "actor",
+          "subject",
+          "metadata"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationEventType"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "href": {
+            "type": "string",
+            "nullable": true
+          },
+          "priority": {
+            "$ref": "#/components/schemas/NotificationPriority"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/NotificationActor"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/NotificationSubject"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "NotificationListMeta": {
+        "type": "object",
+        "required": [
+          "unreadCount",
+          "returned",
+          "status"
+        ],
+        "properties": {
+          "unreadCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "returned": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/NotificationStatusFilter"
+          }
+        }
+      },
+      "NotificationListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/NotificationListMeta"
+          }
+        }
+      },
+      "NotificationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Notification"
+          }
+        }
+      },
+      "MarkAllNotificationsReadResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "marked"
+            ],
+            "properties": {
+              "marked": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "unreadCount"
+            ],
+            "properties": {
+              "unreadCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
       "CurrentUserProfile": {
         "type": "object",
         "required": [
@@ -1678,6 +2034,9 @@
               "dark",
               "system"
             ]
+          },
+          "notificationPreferences": {
+            "$ref": "#/components/schemas/NotificationPreferences"
           }
         }
       },
@@ -1834,6 +2193,9 @@
               "dark",
               "system"
             ]
+          },
+          "notificationPreferences": {
+            "$ref": "#/components/schemas/NotificationPreferences"
           }
         }
       },

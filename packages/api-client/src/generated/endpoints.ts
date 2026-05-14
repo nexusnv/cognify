@@ -18,10 +18,14 @@ import type {
   InvalidStateResponse,
   ListAuditEventsParams,
   ListGlobalSearchParams,
+  ListNotificationsParams,
   ListRequisitionActivity200,
   ListRequisitionsParams,
   LoginRequest,
+  MarkAllNotificationsReadResponse,
   NotFoundResponse,
+  NotificationListResponse,
+  NotificationResponse,
   RequisitionListResponse,
   RequisitionResponse,
   SearchResponse,
@@ -974,6 +978,176 @@ export const updateCurrentUserProfile = async (
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(updateCurrentUserProfileRequest),
+  });
+};
+
+export type listNotificationsResponse200 = {
+  data: NotificationListResponse;
+  status: 200;
+};
+
+export type listNotificationsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listNotificationsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listNotificationsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listNotificationsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type listNotificationsResponseSuccess = listNotificationsResponse200 & {
+  headers: Headers;
+};
+export type listNotificationsResponseError = (
+  | listNotificationsResponse400
+  | listNotificationsResponse401
+  | listNotificationsResponse403
+  | listNotificationsResponse422
+) & {
+  headers: Headers;
+};
+
+export type listNotificationsResponse =
+  | listNotificationsResponseSuccess
+  | listNotificationsResponseError;
+
+export const getListNotificationsUrl = (params?: ListNotificationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/notifications?${stringifiedParams}`
+    : `/api/notifications`;
+};
+
+export const listNotifications = async (
+  params?: ListNotificationsParams,
+  options?: RequestInit,
+): Promise<listNotificationsResponse> => {
+  return cognifyFetch<listNotificationsResponse>(getListNotificationsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type markNotificationReadResponse200 = {
+  data: NotificationResponse;
+  status: 200;
+};
+
+export type markNotificationReadResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type markNotificationReadResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markNotificationReadResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type markNotificationReadResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type markNotificationReadResponseSuccess = markNotificationReadResponse200 & {
+  headers: Headers;
+};
+export type markNotificationReadResponseError = (
+  | markNotificationReadResponse400
+  | markNotificationReadResponse401
+  | markNotificationReadResponse403
+  | markNotificationReadResponse404
+) & {
+  headers: Headers;
+};
+
+export type markNotificationReadResponse =
+  | markNotificationReadResponseSuccess
+  | markNotificationReadResponseError;
+
+export const getMarkNotificationReadUrl = (notification: string) => {
+  return `/api/notifications/${notification}/read`;
+};
+
+export const markNotificationRead = async (
+  notification: string,
+  options?: RequestInit,
+): Promise<markNotificationReadResponse> => {
+  return cognifyFetch<markNotificationReadResponse>(getMarkNotificationReadUrl(notification), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type markAllNotificationsReadResponse200 = {
+  data: MarkAllNotificationsReadResponse;
+  status: 200;
+};
+
+export type markAllNotificationsReadResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type markAllNotificationsReadResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markAllNotificationsReadResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type markAllNotificationsReadResponseSuccess = markAllNotificationsReadResponse200 & {
+  headers: Headers;
+};
+export type markAllNotificationsReadResponseError = (
+  | markAllNotificationsReadResponse400
+  | markAllNotificationsReadResponse401
+  | markAllNotificationsReadResponse403
+) & {
+  headers: Headers;
+};
+
+export type markAllNotificationsReadResponse =
+  | markAllNotificationsReadResponseSuccess
+  | markAllNotificationsReadResponseError;
+
+export const getMarkAllNotificationsReadUrl = () => {
+  return `/api/notifications/read-all`;
+};
+
+export const markAllNotificationsRead = async (
+  options?: RequestInit,
+): Promise<markAllNotificationsReadResponse> => {
+  return cognifyFetch<markAllNotificationsReadResponse>(getMarkAllNotificationsReadUrl(), {
+    ...options,
+    method: "POST",
   });
 };
 
