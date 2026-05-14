@@ -137,7 +137,7 @@ class SearchApiTest extends TestCase
         [$tenant, $user] = $this->tenantUser('requester');
 
         $this->actingAsTenant($tenant, $user)
-            ->getJson('/api/search?query=office&types=vendor,unknown')
+            ->getJson('/api/search?query=office&types[]=vendor&types[]=unknown')
             ->assertUnprocessable()
             ->assertJsonPath('error.code', 'validation_failed');
     }
@@ -145,6 +145,10 @@ class SearchApiTest extends TestCase
     public function test_search_returns_roadmap_preview_records_for_all_supported_types(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester, [
+            'title' => 'Alpha workplace refresh',
+            'number' => 'REQ-2026-ALPHA',
+        ]);
         $vendor = $this->createVendor($tenant, [
             'name' => 'Alpha Office Supplies',
             'status' => 'preferred',
@@ -161,6 +165,7 @@ class SearchApiTest extends TestCase
             'title' => 'Alpha furniture package',
             'status' => 'open',
             'project_id' => $project->id,
+            'requisition_id' => $requisition->id,
         ]);
         $quotation = $this->createQuotation($tenant, [
             'number' => 'QUO-2026-ALPHA',
@@ -178,7 +183,7 @@ class SearchApiTest extends TestCase
         ]);
 
         $response = $this->actingAsTenant($tenant, $requester)
-            ->getJson('/api/search?query=alpha&types=vendor,procurement_project,rfq,quotation,award&limit=10');
+            ->getJson('/api/search?query=alpha&types[]=vendor&types[]=project&types[]=rfq&types[]=quotation&types[]=award&limit=10');
 
         $response->assertOk()
             ->assertJsonPath('meta.query', 'alpha')
@@ -189,7 +194,7 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.0.subtitle', 'Office supplies')
             ->assertJsonPath('data.0.status', 'preferred')
             ->assertJsonPath('data.0.href', '/system')
-            ->assertJsonPath('data.1.type', 'procurement_project')
+            ->assertJsonPath('data.1.type', 'project')
             ->assertJsonPath('data.1.id', (string) $project->id)
             ->assertJsonPath('data.1.title', 'Alpha Workplace Refresh')
             ->assertJsonPath('data.1.subtitle', 'PRJ-2026-ALPHA')
@@ -200,19 +205,19 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.2.title', 'Alpha furniture package')
             ->assertJsonPath('data.2.subtitle', 'RFQ-2026-ALPHA')
             ->assertJsonPath('data.2.status', 'open')
-            ->assertJsonPath('data.2.href', '/system')
+            ->assertJsonPath('data.2.href', '/requisitions/' . $requisition->id)
             ->assertJsonPath('data.3.type', 'quotation')
             ->assertJsonPath('data.3.id', (string) $quotation->id)
             ->assertJsonPath('data.3.title', 'QUO-2026-ALPHA')
             ->assertJsonPath('data.3.subtitle', 'Alpha Office Supplies')
             ->assertJsonPath('data.3.status', 'received')
-            ->assertJsonPath('data.3.href', '/system')
+            ->assertJsonPath('data.3.href', '/requisitions/' . $requisition->id)
             ->assertJsonPath('data.4.type', 'award')
             ->assertJsonPath('data.4.id', (string) $award->id)
             ->assertJsonPath('data.4.title', 'AWD-2026-ALPHA')
             ->assertJsonPath('data.4.subtitle', 'Alpha Office Supplies')
             ->assertJsonPath('data.4.status', 'recommended')
-            ->assertJsonPath('data.4.href', '/system')
+            ->assertJsonPath('data.4.href', '/requisitions/' . $requisition->id)
             ->assertJsonStructure([
                 'data' => [
                     ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
@@ -225,10 +230,69 @@ class SearchApiTest extends TestCase
             ]);
     }
 
+    public function test_search_accepts_repeated_types_parameters_from_client_serialization(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $vendor = $this->createVendor($tenant, [
+            'name' => 'Alpha Office Supplies',
+            'status' => 'preferred',
+            'category' => 'Office supplies',
+            'risk_rating' => 'low',
+        ]);
+        $project = $this->createProject($tenant, $requester, [
+            'number' => 'PRJ-2026-ALPHA',
+            'name' => 'Alpha Workplace Refresh',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=alpha&types=vendor&types=project');
+
+        $response->assertOk()
+            ->assertJsonPath('meta.returned', 2)
+            ->assertJsonPath('data.0.type', 'vendor')
+            ->assertJsonPath('data.0.id', (string) $vendor->id)
+            ->assertJsonPath('data.1.type', 'project')
+            ->assertJsonPath('data.1.id', (string) $project->id);
+    }
+
+    public function test_search_preview_records_fall_back_to_system_when_unlinked(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $rfq = $this->createRfq($tenant, [
+            'number' => 'RFQ-2026-FALLBACK',
+            'title' => 'Fallback office package',
+            'status' => 'open',
+        ]);
+        $quotation = $this->createQuotation($tenant, [
+            'number' => 'QUO-2026-FALLBACK',
+            'status' => 'received',
+            'rfq_id' => $rfq->id,
+        ]);
+        $award = $this->createAward($tenant, [
+            'number' => 'AWD-2026-FALLBACK',
+            'status' => 'recommended',
+            'rfq_id' => $rfq->id,
+            'quotation_id' => $quotation->id,
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=fallback&types[]=rfq&types[]=quotation&types[]=award&limit=10');
+
+        $response->assertOk()
+            ->assertJsonPath('meta.returned', 3)
+            ->assertJsonPath('data.0.type', 'rfq')
+            ->assertJsonPath('data.0.href', '/system')
+            ->assertJsonPath('data.1.type', 'quotation')
+            ->assertJsonPath('data.1.href', '/system')
+            ->assertJsonPath('data.2.type', 'award')
+            ->assertJsonPath('data.2.href', '/system');
+    }
+
     public function test_search_is_tenant_scoped_and_omits_cross_tenant_preview_results(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
-        [$otherTenant] = $this->tenantUser('requester');
+        [$otherTenant, $otherRequester] = $this->tenantUser('requester');
 
         $visible = $this->createVendor($tenant, [
             'name' => 'Alpha Office Supplies',
@@ -236,21 +300,90 @@ class SearchApiTest extends TestCase
             'category' => 'Office supplies',
             'risk_rating' => 'low',
         ]);
+        $visibleProject = $this->createProject($tenant, $requester, [
+            'number' => 'PRJ-2026-ALPHA',
+            'name' => 'Alpha Workplace Refresh',
+            'status' => 'active',
+        ]);
+        $visibleRequisition = $this->createRequisition($tenant, $requester, [
+            'title' => 'Alpha workplace refresh',
+            'number' => 'REQ-2026-ALPHA',
+        ]);
+        $visibleRfq = $this->createRfq($tenant, [
+            'number' => 'RFQ-2026-ALPHA',
+            'title' => 'Alpha furniture package',
+            'status' => 'open',
+            'project_id' => $visibleProject->id,
+            'requisition_id' => $visibleRequisition->id,
+        ]);
+        $visibleQuotation = $this->createQuotation($tenant, [
+            'number' => 'QUO-2026-ALPHA',
+            'status' => 'received',
+            'vendor_id' => $visible->id,
+            'rfq_id' => $visibleRfq->id,
+        ]);
+        $visibleAward = $this->createAward($tenant, [
+            'number' => 'AWD-2026-ALPHA',
+            'status' => 'recommended',
+            'vendor_id' => $visible->id,
+            'project_id' => $visibleProject->id,
+            'rfq_id' => $visibleRfq->id,
+            'quotation_id' => $visibleQuotation->id,
+        ]);
 
         $hidden = $this->createVendor($otherTenant, [
-            'name' => 'Alpha Office Supplies',
+            'name' => 'Alpha Hidden Office Supplies',
             'status' => 'preferred',
             'category' => 'Office supplies',
             'risk_rating' => 'low',
         ]);
+        $hiddenProject = $this->createProject($otherTenant, $otherRequester, [
+            'number' => 'PRJ-2026-HIDDEN',
+            'name' => 'Alpha Hidden Workplace Refresh',
+            'status' => 'active',
+        ]);
+        $hiddenRequisition = $this->createRequisition($otherTenant, $otherRequester, [
+            'title' => 'Alpha hidden workplace refresh',
+            'number' => 'REQ-2026-HIDDEN',
+        ]);
+        $hiddenRfq = $this->createRfq($otherTenant, [
+            'number' => 'RFQ-2026-HIDDEN',
+            'title' => 'Alpha hidden furniture package',
+            'status' => 'open',
+            'project_id' => $hiddenProject->id,
+            'requisition_id' => $hiddenRequisition->id,
+        ]);
+        $hiddenQuotation = $this->createQuotation($otherTenant, [
+            'number' => 'QUO-2026-HIDDEN',
+            'status' => 'received',
+            'vendor_id' => $hidden->id,
+            'rfq_id' => $hiddenRfq->id,
+        ]);
+        $hiddenAward = $this->createAward($otherTenant, [
+            'number' => 'AWD-2026-HIDDEN',
+            'status' => 'recommended',
+            'vendor_id' => $hidden->id,
+            'project_id' => $hiddenProject->id,
+            'rfq_id' => $hiddenRfq->id,
+            'quotation_id' => $hiddenQuotation->id,
+        ]);
 
         $response = $this->actingAsTenant($tenant, $requester)
-            ->getJson('/api/search?query=alpha&types=vendor');
+            ->getJson('/api/search?query=alpha&types[]=vendor&types[]=project&types[]=rfq&types[]=quotation&types[]=award');
 
         $response->assertOk()
-            ->assertJsonPath('meta.returned', 1)
+            ->assertJsonPath('meta.returned', 5)
             ->assertJsonPath('data.0.id', (string) $visible->id)
-            ->assertJsonMissing(['id' => (string) $hidden->id]);
+            ->assertJsonPath('data.1.id', (string) $visibleProject->id)
+            ->assertJsonPath('data.2.id', (string) $visibleRfq->id)
+            ->assertJsonPath('data.3.id', (string) $visibleQuotation->id)
+            ->assertJsonPath('data.4.id', (string) $visibleAward->id)
+            ->assertJsonMissing(['title' => 'Alpha Hidden Office Supplies'])
+            ->assertJsonMissing(['title' => 'Alpha Hidden Workplace Refresh'])
+            ->assertJsonMissing(['title' => 'Alpha hidden workplace refresh'])
+            ->assertJsonMissing(['title' => 'Alpha hidden furniture package'])
+            ->assertJsonMissing(['title' => 'QUO-2026-HIDDEN'])
+            ->assertJsonMissing(['title' => 'AWD-2026-HIDDEN']);
     }
 
     public function test_search_rejects_queries_shorter_than_two_characters(): void

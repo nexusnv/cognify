@@ -18,7 +18,7 @@ class SearchRequest extends FormRequest
     {
         return [
             'query' => ['required', 'string', 'min:2', 'max:120'],
-            'types' => ['sometimes', 'string'],
+            'types' => ['sometimes'],
             'limit' => ['sometimes', 'integer', 'min:1', 'max:25'],
         ];
     }
@@ -40,14 +40,22 @@ class SearchRequest extends FormRequest
      */
     public function typeFilters(): array
     {
-        $types = trim((string) $this->query('types', ''));
+        $rawTypes = $this->query('types', null);
 
-        if ($types === '') {
-            return ['requisition'];
+        if (is_array($rawTypes)) {
+            $types = collect($rawTypes);
+        } else {
+            $types = collect($this->extractRepeatedQueryTypes());
+
+            if ($types->isEmpty() && is_string($rawTypes) && $rawTypes !== '') {
+                $types = str_contains($rawTypes, ',')
+                    ? collect(explode(',', $rawTypes))
+                    : collect([$rawTypes]);
+            }
         }
 
-        $types = collect(explode(',', $types))
-            ->map(fn (string $type): string => trim($type))
+        $types = $types
+            ->map(fn ($type): string => trim((string) $type))
             ->filter()
             ->values();
 
@@ -61,12 +69,41 @@ class SearchRequest extends FormRequest
     /**
      * @return array<int, string>
      */
+    private function extractRepeatedQueryTypes(): array
+    {
+        $queryString = (string) $this->server('QUERY_STRING', '');
+
+        if ($queryString === '') {
+            return [];
+        }
+
+        $types = [];
+
+        foreach (explode('&', $queryString) as $pair) {
+            if ($pair === '') {
+                continue;
+            }
+
+            [$rawKey, $rawValue] = array_pad(explode('=', $pair, 2), 2, '');
+            $key = urldecode($rawKey);
+
+            if ($key === 'types' || $key === 'types[]') {
+                $types[] = urldecode($rawValue);
+            }
+        }
+
+        return $types;
+    }
+
+    /**
+     * @return array<int, string>
+     */
     private function allowedTypes(): array
     {
         return [
             'requisition',
             'vendor',
-            'procurement_project',
+            'project',
             'rfq',
             'quotation',
             'award',

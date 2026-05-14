@@ -40,7 +40,7 @@ class RfqSearchProvider implements SearchProvider
                 title: $rfq->title,
                 subtitle: $rfq->number,
                 status: $rfq->status,
-                href: '/system',
+                href: $rfq->requisition_id ? "/requisitions/{$rfq->requisition_id}" : '/system',
                 updatedAt: $rfq->updated_at?->toISOString(),
             ));
     }

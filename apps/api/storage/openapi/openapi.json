@@ -618,15 +618,18 @@
             "name": "types",
             "in": "query",
             "schema": {
-              "type": "string",
-              "enum": [
-                "requisition",
-                "vendor",
-                "procurement_project",
-                "rfq",
-                "quotation",
-                "award"
-              ]
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "requisition",
+                  "vendor",
+                  "project",
+                  "rfq",
+                  "quotation",
+                  "award"
+                ]
+              }
             }
           },
           {
@@ -1467,7 +1470,7 @@
             "enum": [
               "requisition",
               "vendor",
-              "procurement_project",
+              "project",
               "rfq",
               "quotation",
               "award"

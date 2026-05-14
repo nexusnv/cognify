@@ -40,7 +40,7 @@ class AwardSearchProvider implements SearchProvider
                 title: $award->number,
                 subtitle: $award->vendor?->name ?? $award->project?->number,
                 status: $award->status,
-                href: '/system',
+                href: $award->rfq?->requisition_id ? "/requisitions/{$award->rfq->requisition_id}" : '/system',
                 updatedAt: $award->updated_at?->toISOString(),
             ));
     }

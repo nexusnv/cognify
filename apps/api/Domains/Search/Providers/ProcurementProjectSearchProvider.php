@@ -14,7 +14,7 @@ class ProcurementProjectSearchProvider implements SearchProvider
 {
     public function type(): string
     {
-        return 'procurement_project';
+        return 'project';
     }
 
     /**

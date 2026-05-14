@@ -59,7 +59,7 @@ export * from "./invalidStateResponse";
 export * from "./listAuditEventsParams";
 export * from "./listAuditEventsSubjectType";
 export * from "./listGlobalSearchParams";
-export * from "./listGlobalSearchTypes";
+export * from "./listGlobalSearchTypesItem";
 export * from "./listNotificationsParams";
 export * from "./listRequisitionActivity200";
 export * from "./listRequisitionsParams";

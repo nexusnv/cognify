@@ -11,7 +11,7 @@ export type SearchResultType = (typeof SearchResultType)[keyof typeof SearchResu
 export const SearchResultType = {
   requisition: "requisition",
   vendor: "vendor",
-  procurement_project: "procurement_project",
+  project: "project",
   rfq: "rfq",
   quotation: "quotation",
   award: "award",
