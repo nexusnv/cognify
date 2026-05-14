@@ -9,6 +9,7 @@ use App\Auth\Http\Controllers\UserProfileController;
 use App\Audit\Http\Controllers\AuditEventController;
 use App\Http\Middleware\ResolveCurrentTenant;
 use App\Notifications\Http\Controllers\NotificationController;
+use App\Observability\SystemStatus\Http\Controllers\SystemStatusController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
@@ -41,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
 
         Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
+        Route::get('/system/status', [SystemStatusController::class, 'show'])->middleware('throttle:30,1');
 
         // Existing requisition routes
         Route::get('/requisitions', [RequisitionController::class, 'index']);
