@@ -116,12 +116,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::dropIfExists('demo_seed_runs');
         Schema::dropIfExists('awards');
         Schema::dropIfExists('approval_tasks');
         Schema::dropIfExists('quotations');
         Schema::dropIfExists('rfqs');
         Schema::dropIfExists('procurement_projects');
         Schema::dropIfExists('vendors');
-        Schema::dropIfExists('demo_seed_runs');
     }
 };
