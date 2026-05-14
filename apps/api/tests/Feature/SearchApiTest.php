@@ -4,8 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Award\Models\Award;
+use Domains\Project\Models\ProcurementProject;
+use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\Rfq;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
+use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\Sanctum;
@@ -132,34 +137,120 @@ class SearchApiTest extends TestCase
         [$tenant, $user] = $this->tenantUser('requester');
 
         $this->actingAsTenant($tenant, $user)
-            ->getJson('/api/search?query=office&types=vendor')
+            ->getJson('/api/search?query=office&types=vendor,unknown')
             ->assertUnprocessable()
             ->assertJsonPath('error.code', 'validation_failed');
     }
 
-    public function test_search_is_tenant_scoped_and_omits_cross_tenant_results(): void
+    public function test_search_returns_roadmap_preview_records_for_all_supported_types(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
-        [$otherTenant, $otherRequester] = $this->tenantUser('requester');
-
-        $visible = $this->createRequisition($tenant, $requester, [
-            'title' => 'Laptop refresh',
-            'number' => 'REQ-2026-000201',
+        $vendor = $this->createVendor($tenant, [
+            'name' => 'Alpha Office Supplies',
+            'status' => 'preferred',
+            'category' => 'Office supplies',
+            'risk_rating' => 'low',
         ]);
-
-        $this->createRequisition($otherTenant, $otherRequester, [
-            'title' => 'Laptop refresh',
-            'number' => 'REQ-2026-000202',
+        $project = $this->createProject($tenant, $requester, [
+            'number' => 'PRJ-2026-ALPHA',
+            'name' => 'Alpha Workplace Refresh',
+            'status' => 'active',
+        ]);
+        $rfq = $this->createRfq($tenant, [
+            'number' => 'RFQ-2026-ALPHA',
+            'title' => 'Alpha furniture package',
+            'status' => 'open',
+            'project_id' => $project->id,
+        ]);
+        $quotation = $this->createQuotation($tenant, [
+            'number' => 'QUO-2026-ALPHA',
+            'status' => 'received',
+            'vendor_id' => $vendor->id,
+            'rfq_id' => $rfq->id,
+        ]);
+        $award = $this->createAward($tenant, [
+            'number' => 'AWD-2026-ALPHA',
+            'status' => 'recommended',
+            'vendor_id' => $vendor->id,
+            'project_id' => $project->id,
+            'rfq_id' => $rfq->id,
+            'quotation_id' => $quotation->id,
         ]);
 
         $response = $this->actingAsTenant($tenant, $requester)
-            ->getJson('/api/search?query=laptop');
+            ->getJson('/api/search?query=alpha&types=vendor,procurement_project,rfq,quotation,award&limit=10');
+
+        $response->assertOk()
+            ->assertJsonPath('meta.query', 'alpha')
+            ->assertJsonPath('meta.returned', 5)
+            ->assertJsonPath('data.0.type', 'vendor')
+            ->assertJsonPath('data.0.id', (string) $vendor->id)
+            ->assertJsonPath('data.0.title', 'Alpha Office Supplies')
+            ->assertJsonPath('data.0.subtitle', 'Office supplies')
+            ->assertJsonPath('data.0.status', 'preferred')
+            ->assertJsonPath('data.0.href', '/system')
+            ->assertJsonPath('data.1.type', 'procurement_project')
+            ->assertJsonPath('data.1.id', (string) $project->id)
+            ->assertJsonPath('data.1.title', 'Alpha Workplace Refresh')
+            ->assertJsonPath('data.1.subtitle', 'PRJ-2026-ALPHA')
+            ->assertJsonPath('data.1.status', 'active')
+            ->assertJsonPath('data.1.href', '/system')
+            ->assertJsonPath('data.2.type', 'rfq')
+            ->assertJsonPath('data.2.id', (string) $rfq->id)
+            ->assertJsonPath('data.2.title', 'Alpha furniture package')
+            ->assertJsonPath('data.2.subtitle', 'RFQ-2026-ALPHA')
+            ->assertJsonPath('data.2.status', 'open')
+            ->assertJsonPath('data.2.href', '/system')
+            ->assertJsonPath('data.3.type', 'quotation')
+            ->assertJsonPath('data.3.id', (string) $quotation->id)
+            ->assertJsonPath('data.3.title', 'QUO-2026-ALPHA')
+            ->assertJsonPath('data.3.subtitle', 'Alpha Office Supplies')
+            ->assertJsonPath('data.3.status', 'received')
+            ->assertJsonPath('data.3.href', '/system')
+            ->assertJsonPath('data.4.type', 'award')
+            ->assertJsonPath('data.4.id', (string) $award->id)
+            ->assertJsonPath('data.4.title', 'AWD-2026-ALPHA')
+            ->assertJsonPath('data.4.subtitle', 'Alpha Office Supplies')
+            ->assertJsonPath('data.4.status', 'recommended')
+            ->assertJsonPath('data.4.href', '/system')
+            ->assertJsonStructure([
+                'data' => [
+                    ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
+                    ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
+                    ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
+                    ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
+                    ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
+                ],
+                'meta' => ['query', 'limit', 'returned'],
+            ]);
+    }
+
+    public function test_search_is_tenant_scoped_and_omits_cross_tenant_preview_results(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [$otherTenant] = $this->tenantUser('requester');
+
+        $visible = $this->createVendor($tenant, [
+            'name' => 'Alpha Office Supplies',
+            'status' => 'preferred',
+            'category' => 'Office supplies',
+            'risk_rating' => 'low',
+        ]);
+
+        $hidden = $this->createVendor($otherTenant, [
+            'name' => 'Alpha Office Supplies',
+            'status' => 'preferred',
+            'category' => 'Office supplies',
+            'risk_rating' => 'low',
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=alpha&types=vendor');
 
         $response->assertOk()
             ->assertJsonPath('meta.returned', 1)
             ->assertJsonPath('data.0.id', (string) $visible->id)
-            ->assertJsonPath('data.0.subtitle', 'REQ-2026-000201')
-            ->assertJsonMissing(['subtitle' => 'REQ-2026-000202']);
+            ->assertJsonMissing(['id' => (string) $hidden->id]);
     }
 
     public function test_search_rejects_queries_shorter_than_two_characters(): void
@@ -262,5 +353,91 @@ class SearchApiTest extends TestCase
         ]);
 
         return $requisition;
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function createVendor(Tenant $tenant, array $attributes = []): Vendor
+    {
+        return Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => $attributes['name'] ?? 'Alpha Office Supplies',
+            'status' => $attributes['status'] ?? 'preferred',
+            'category' => $attributes['category'] ?? 'Office supplies',
+            'risk_rating' => $attributes['risk_rating'] ?? 'low',
+            'metadata' => $attributes['metadata'] ?? ['demo' => true],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function createProject(Tenant $tenant, User $owner, array $attributes = []): ProcurementProject
+    {
+        return ProcurementProject::query()->create([
+            'tenant_id' => $tenant->id,
+            'owner_id' => $owner->id,
+            'number' => $attributes['number'] ?? 'PRJ-2026-ALPHA',
+            'name' => $attributes['name'] ?? 'Alpha Workplace Refresh',
+            'status' => $attributes['status'] ?? 'active',
+            'budget_amount' => $attributes['budget_amount'] ?? '120000.00',
+            'currency' => $attributes['currency'] ?? 'USD',
+            'metadata' => $attributes['metadata'] ?? ['demo' => true],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function createRfq(Tenant $tenant, array $attributes = []): Rfq
+    {
+        return Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => $attributes['project_id'] ?? null,
+            'requisition_id' => $attributes['requisition_id'] ?? null,
+            'number' => $attributes['number'] ?? 'RFQ-2026-ALPHA',
+            'title' => $attributes['title'] ?? 'Alpha furniture package',
+            'status' => $attributes['status'] ?? 'open',
+            'due_at' => $attributes['due_at'] ?? now()->addDays(14),
+            'metadata' => $attributes['metadata'] ?? ['demo' => true],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function createQuotation(Tenant $tenant, array $attributes = []): Quotation
+    {
+        return Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $attributes['rfq_id'] ?? null,
+            'vendor_id' => $attributes['vendor_id'] ?? null,
+            'number' => $attributes['number'] ?? 'QUO-2026-ALPHA',
+            'status' => $attributes['status'] ?? 'received',
+            'total_amount' => $attributes['total_amount'] ?? '84500.00',
+            'currency' => $attributes['currency'] ?? 'USD',
+            'metadata' => $attributes['metadata'] ?? ['demo' => true],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function createAward(Tenant $tenant, array $attributes = []): Award
+    {
+        return Award::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => $attributes['project_id'] ?? null,
+            'rfq_id' => $attributes['rfq_id'] ?? null,
+            'quotation_id' => $attributes['quotation_id'] ?? null,
+            'vendor_id' => $attributes['vendor_id'] ?? null,
+            'number' => $attributes['number'] ?? 'AWD-2026-ALPHA',
+            'status' => $attributes['status'] ?? 'recommended',
+            'total_amount' => $attributes['total_amount'] ?? '84500.00',
+            'currency' => $attributes['currency'] ?? 'USD',
+            'decided_at' => $attributes['decided_at'] ?? now(),
+            'metadata' => $attributes['metadata'] ?? ['demo' => true],
+        ]);
     }
 }

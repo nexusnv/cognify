@@ -602,7 +602,7 @@
     "/api/search": {
       "get": {
         "operationId": "listGlobalSearch",
-        "summary": "Search tenant-visible requisitions",
+        "summary": "Search tenant-visible requisitions and roadmap preview records",
         "parameters": [
           {
             "name": "query",
@@ -619,7 +619,14 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["requisition"]
+              "enum": [
+                "requisition",
+                "vendor",
+                "procurement_project",
+                "rfq",
+                "quotation",
+                "award"
+              ]
             }
           },
           {
@@ -635,7 +642,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant-visible requisition search results",
+            "description": "Tenant-visible requisition and roadmap preview search results",
             "content": {
               "application/json": {
                 "schema": {
@@ -1457,7 +1464,14 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["requisition"]
+            "enum": [
+              "requisition",
+              "vendor",
+              "procurement_project",
+              "rfq",
+              "quotation",
+              "award"
+            ]
           },
           "id": {
             "type": "string"

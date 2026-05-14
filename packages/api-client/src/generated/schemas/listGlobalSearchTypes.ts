@@ -11,4 +11,9 @@ export type ListGlobalSearchTypes =
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ListGlobalSearchTypes = {
   requisition: "requisition",
+  vendor: "vendor",
+  procurement_project: "procurement_project",
+  rfq: "rfq",
+  quotation: "quotation",
+  award: "award",
 } as const;

@@ -27,7 +27,7 @@ class SearchRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             foreach ($this->typeFilters() as $type) {
-                if ($type !== 'requisition') {
+                if (! in_array($type, $this->allowedTypes(), true)) {
                     $validator->errors()->add('types', 'The selected types field is invalid.');
                     return;
                 }
@@ -56,6 +56,21 @@ class SearchRequest extends FormRequest
         }
 
         return $types->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function allowedTypes(): array
+    {
+        return [
+            'requisition',
+            'vendor',
+            'procurement_project',
+            'rfq',
+            'quotation',
+            'award',
+        ];
     }
 
     public function resultLimit(): int

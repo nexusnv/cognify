@@ -854,7 +854,7 @@ export const getCurrentUser = async (options?: RequestInit): Promise<getCurrentU
 };
 
 /**
- * @summary Search tenant-visible requisitions
+ * @summary Search tenant-visible requisitions and roadmap preview records
  */
 export type listGlobalSearchResponse200 = {
   data: SearchResponse;
