@@ -226,6 +226,45 @@ class NotificationApiTest extends TestCase
         $this->assertSame(false, $user->fresh()->notification_preferences['attachment.uploaded']['inApp']);
     }
 
+    public function test_profile_update_merges_partial_notification_preferences_without_resetting_existing_values(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson('/api/me/profile', [
+                'name' => $user->name,
+                'avatarUrl' => null,
+                'timezone' => 'UTC',
+                'locale' => 'en',
+                'theme' => 'system',
+                'notificationPreferences' => [
+                    'requisition.submitted' => ['inApp' => false],
+                    'attachment.uploaded' => ['inApp' => false],
+                    'system.announcement' => ['inApp' => false],
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson('/api/me/profile', [
+                'name' => $user->name,
+                'avatarUrl' => null,
+                'timezone' => 'UTC',
+                'locale' => 'en',
+                'theme' => 'system',
+                'notificationPreferences' => [
+                    'requisition.submitted' => ['inApp' => true],
+                ],
+            ])
+            ->assertOk();
+
+        $this->assertSame([
+            'requisition.submitted' => ['inApp' => true],
+            'attachment.uploaded' => ['inApp' => false],
+            'system.announcement' => ['inApp' => false],
+        ], $user->fresh()->notification_preferences);
+    }
+
     public function test_profile_update_rejects_unknown_notification_preference_keys(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');

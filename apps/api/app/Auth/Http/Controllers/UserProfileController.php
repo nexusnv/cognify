@@ -13,7 +13,10 @@ class UserProfileController
     {
         $user = $request->user();
         $preferences = $request->has('notificationPreferences')
-            ? NotificationPreferenceDefaults::merge($request->input('notificationPreferences'))
+            ? NotificationPreferenceDefaults::merge(array_merge(
+                $user->notification_preferences ?? [],
+                $request->input('notificationPreferences'),
+            ))
             : NotificationPreferenceDefaults::merge($user->notification_preferences);
 
         $user->update([
