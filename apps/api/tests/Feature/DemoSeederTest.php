@@ -14,8 +14,10 @@ use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
 use Domains\Requisition\Models\Requisition;
+use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -269,15 +271,15 @@ class DemoSeederTest extends TestCase
 
         $this->assertSame(3, Tenant::query()->count());
         $this->assertSame(7, User::query()->count());
-        $this->assertSame(3, Requisition::query()->count());
-        $this->assertSame(6, Vendor::query()->count());
-        $this->assertSame(1, ProcurementProject::query()->count());
-        $this->assertSame(1, Rfq::query()->count());
-        $this->assertSame(1, Quotation::query()->count());
-        $this->assertSame(1, ApprovalTask::query()->count());
-        $this->assertSame(1, Award::query()->count());
-        $this->assertSame(1, Attachment::query()->count());
-        $this->assertSame(2, NotificationRecord::query()->count());
+        $this->assertSame(5, Requisition::query()->count());
+        $this->assertSame(9, Vendor::query()->count());
+        $this->assertSame(2, ProcurementProject::query()->count());
+        $this->assertSame(2, Rfq::query()->count());
+        $this->assertSame(2, Quotation::query()->count());
+        $this->assertSame(2, ApprovalTask::query()->count());
+        $this->assertSame(2, Award::query()->count());
+        $this->assertSame(2, Attachment::query()->count());
+        $this->assertSame(3, NotificationRecord::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
 
         $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
@@ -304,34 +306,60 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0001', 'title' => 'HQ workplace refresh']);
         $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0002', 'title' => 'Engineering laptop refresh']);
         $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0003', 'title' => 'Security audit services']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-1001', 'title' => 'Regional warehouse supplies']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-1002', 'title' => 'Fleet maintenance review']);
+        $this->assertDatabaseHas('requisitions', [
+            'number' => 'REQ-2026-0003',
+            'status' => RequisitionStatus::PendingApproval->value,
+            'submitted_at' => '2026-05-15 09:00:00',
+        ]);
+        $this->assertDatabaseHas('requisitions', [
+            'number' => 'REQ-2026-1002',
+            'status' => RequisitionStatus::PendingApproval->value,
+            'submitted_at' => '2026-05-15 09:00:00',
+        ]);
         $this->assertDatabaseHas('vendors', ['name' => 'Atlas Office Supplies', 'status' => 'preferred']);
         $this->assertDatabaseHas('vendors', ['name' => 'Northstar Furniture Co', 'status' => 'evaluation']);
         $this->assertDatabaseHas('vendors', ['name' => 'SecureWorks Advisory', 'status' => 'preferred']);
         $this->assertDatabaseHas('vendors', ['name' => 'Papertrail Logistics', 'status' => 'restricted']);
         $this->assertDatabaseHas('vendors', ['name' => 'ByteForge Systems', 'status' => 'evaluation']);
         $this->assertDatabaseHas('vendors', ['name' => 'Greenline Facilities', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Harbor Industrial Supply', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'MetroFleet Services', 'status' => 'evaluation']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Civic Safety Partners', 'status' => 'restricted']);
         $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-0001', 'name' => 'HQ Workplace Refresh']);
+        $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-1001', 'name' => 'Northwind Warehouse Launch']);
         $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-0001', 'title' => 'Office furniture package']);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-1001', 'title' => 'Warehouse supply bundle']);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-0001', 'status' => 'received']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-1001', 'status' => 'received']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Finance approval for office furniture package', 'status' => 'pending']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Buyer review for warehouse supply bundle', 'status' => 'pending']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
+        $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-1001', 'status' => 'recommended']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
+        $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
         $this->assertDatabaseHas('notifications', ['title' => 'Local demo data is ready']);
         $this->assertDatabaseHas('demo_seed_runs', ['name' => 'local-demo']);
+
+        foreach (Attachment::query()->get() as $attachment) {
+            $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
+        }
 
         $run = DemoSeedRun::query()->firstOrFail();
 
         $this->assertSame([
             'tenants' => 3,
             'users' => 7,
-            'requisitions' => 3,
-            'vendors' => 6,
-            'projects' => 1,
-            'rfqs' => 1,
-            'quotations' => 1,
-            'approval_tasks' => 1,
-            'awards' => 1,
+            'requisitions' => 5,
+            'vendors' => 9,
+            'projects' => 2,
+            'rfqs' => 2,
+            'quotations' => 2,
+            'approval_tasks' => 2,
+            'awards' => 2,
         ], $run->metadata);
+        $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }
 }

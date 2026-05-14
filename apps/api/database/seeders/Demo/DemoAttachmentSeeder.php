@@ -9,11 +9,36 @@ class DemoAttachmentSeeder
 {
     public function run(DemoSeedContext $context): void
     {
-        $tenant = $context->tenants->get('acme');
-        $user = $context->users->get('requester');
-        $requisition = $context->requisitions->get('office-refresh');
-        $path = "tenants/{$tenant->id}/demo/office-refresh-brief.txt";
-        $contents = "Cognify local demo attachment for HQ workplace refresh.\n";
+        $this->seedAttachment(
+            context: $context,
+            tenantKey: 'acme',
+            userKey: 'requester',
+            requisitionKey: 'office-refresh',
+            filename: 'office-refresh-brief.txt',
+            contents: "Cognify local demo attachment for HQ workplace refresh.\n",
+        );
+        $this->seedAttachment(
+            context: $context,
+            tenantKey: 'northwind',
+            userKey: 'vendor_manager',
+            requisitionKey: 'warehouse-supplies',
+            filename: 'warehouse-supplies-brief.txt',
+            contents: "Cognify local demo attachment for Northwind warehouse supplies.\n",
+        );
+    }
+
+    private function seedAttachment(
+        DemoSeedContext $context,
+        string $tenantKey,
+        string $userKey,
+        string $requisitionKey,
+        string $filename,
+        string $contents,
+    ): void {
+        $tenant = $context->tenants->get($tenantKey);
+        $user = $context->users->get($userKey);
+        $requisition = $context->requisitions->get($requisitionKey);
+        $path = "tenants/{$tenant->id}/demo/{$filename}";
 
         Storage::disk('local')->put($path, $contents);
 
@@ -24,7 +49,7 @@ class DemoAttachmentSeeder
                 'attachable_type' => $requisition::class,
                 'attachable_id' => $requisition->id,
                 'uploaded_by' => $user->id,
-                'original_filename' => 'office-refresh-brief.txt',
+                'original_filename' => $filename,
                 'mime_type' => 'text/plain',
                 'extension' => 'txt',
                 'size_bytes' => strlen($contents),

@@ -11,7 +11,7 @@ const SEARCH_LIMIT = 10;
 
 export function useGlobalSearch(query: string, tenantId: string | null) {
   const debouncedQuery = useDebouncedValue(query.trim(), SEARCH_DEBOUNCE_MS);
-  const queryEnabled = debouncedQuery.length >= 2;
+  const queryEnabled = debouncedQuery.length >= 2 && tenantId !== null;
 
   const searchQuery = useQuery({
     queryKey: ["search", tenantId, debouncedQuery],

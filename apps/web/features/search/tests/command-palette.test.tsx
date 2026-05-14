@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommandPaletteHost } from "../../../components/shell/command-palette-host";
+import { multiTenantIdentity } from "../../identity/mocks/identity-fixtures";
 import { server } from "../../../tests/msw/server";
 import { rememberRecentRecord } from "../hooks/use-recent-records";
 
@@ -165,9 +166,36 @@ describe("command palette", () => {
 
     await user.type(screen.getByPlaceholderText("Search or jump to..."), "office");
 
-    expect(await screen.findByRole("status", { name: "Searching requisitions" })).toHaveTextContent(
-      "Searching requisitions...",
+    expect(await screen.findByRole("status", { name: "Searching records" })).toHaveTextContent("Searching records...");
+  });
+
+  it("does not run remote search before an active tenant is resolved", async () => {
+    const user = userEvent.setup();
+    let searchRequested = false;
+
+    server.use(
+      http.get("/api/me", () => HttpResponse.json({ data: multiTenantIdentity })),
+      http.get("/api/search", () => {
+        searchRequested = true;
+        return HttpResponse.json({
+          data: [],
+          meta: {
+            query: "office",
+            limit: 10,
+            returned: 0,
+          },
+        });
+      }),
     );
+    window.localStorage.removeItem("cognify.activeTenantId");
+
+    renderWithQuery(<CommandPaletteHost />);
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    await user.type(screen.getByPlaceholderText("Search or jump to..."), "office");
+
+    await waitFor(() => expect(screen.queryByRole("status", { name: "Searching records" })).not.toBeInTheDocument());
+    expect(searchRequested).toBe(false);
   });
 
   it("navigates to a remote requisition result with keyboard selection", async () => {

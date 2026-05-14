@@ -156,10 +156,10 @@ export function CommandPalette({
               {showRemoteSearch && searchState.isLoading ? (
                 <div
                   role="status"
-                  aria-label="Searching requisitions"
+                  aria-label="Searching records"
                   className="px-3 py-2 text-sm text-muted-foreground"
                 >
-                  Searching requisitions...
+                  Searching records...
                 </div>
               ) : null}
 

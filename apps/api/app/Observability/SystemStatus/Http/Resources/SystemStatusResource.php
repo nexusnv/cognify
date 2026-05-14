@@ -27,4 +27,3 @@ class SystemStatusResource extends JsonResource
         ];
     }
 }
-

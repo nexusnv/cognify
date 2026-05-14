@@ -11,7 +11,16 @@ class DemoNotificationSeeder
 {
     public function run(DemoSeedContext $context): void
     {
-        $tenant = $context->tenants->get('acme');
+        $this->seedAnnouncement($context, 'acme', ['admin', 'buyer']);
+        $this->seedAnnouncement($context, 'northwind', ['vendor_manager']);
+    }
+
+    /**
+     * @param list<string> $recipientKeys
+     */
+    private function seedAnnouncement(DemoSeedContext $context, string $tenantKey, array $recipientKeys): void
+    {
+        $tenant = $context->tenants->get($tenantKey);
 
         NotificationRecord::query()
             ->where('tenant_id', $tenant->id)
@@ -20,10 +29,7 @@ class DemoNotificationSeeder
 
         app(NotificationRecorder::class)->record(
             tenant: $tenant,
-            recipients: collect([
-                $context->users->get('admin'),
-                $context->users->get('buyer'),
-            ]),
+            recipients: collect($recipientKeys)->map(fn (string $key) => $context->users->get($key)),
             data: new NotificationData(
                 type: NotificationPreferenceDefaults::EVENT_SYSTEM_ANNOUNCEMENT,
                 title: 'Local demo data is ready',

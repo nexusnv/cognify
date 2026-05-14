@@ -11,7 +11,17 @@ use Domains\Vendor\Models\Vendor;
 
 class DemoRoadmapPreviewSeeder
 {
+    private const RFQ_DUE_AT = '2026-05-29 12:00:00';
+    private const APPROVAL_DUE_AT = '2026-05-22 12:00:00';
+    private const DECIDED_AT = '2026-05-20 12:00:00';
+
     public function run(DemoSeedContext $context): void
+    {
+        $this->seedAcmePreview($context);
+        $this->seedNorthwindPreview($context);
+    }
+
+    private function seedAcmePreview(DemoSeedContext $context): void
     {
         $tenant = $context->tenants->get('acme');
         $admin = $context->users->get('admin');
@@ -61,7 +71,7 @@ class DemoRoadmapPreviewSeeder
                 'requisition_id' => $context->requisitions->get('office-refresh')->id,
                 'title' => 'Office furniture package',
                 'status' => 'open',
-                'due_at' => now()->addDays(14),
+                'due_at' => self::RFQ_DUE_AT,
                 'metadata' => ['invited_vendors' => 3],
             ],
         );
@@ -90,7 +100,7 @@ class DemoRoadmapPreviewSeeder
             [
                 'approver_id' => $approver->id,
                 'status' => 'pending',
-                'due_at' => now()->addDays(7),
+                'due_at' => self::APPROVAL_DUE_AT,
                 'metadata' => ['stage' => 'finance'],
             ],
         );
@@ -106,10 +116,108 @@ class DemoRoadmapPreviewSeeder
                 'status' => 'recommended',
                 'total_amount' => 84500,
                 'currency' => 'USD',
-                'decided_at' => now(),
+                'decided_at' => self::DECIDED_AT,
                 'metadata' => ['rationale' => 'Best delivery confidence'],
             ],
         );
         $context->awards->put('office-award', $award);
+    }
+
+    private function seedNorthwindPreview(DemoSeedContext $context): void
+    {
+        $tenant = $context->tenants->get('northwind');
+        $owner = $context->users->get('vendor_manager');
+
+        $vendorRows = [
+            'harbor' => ['Harbor Industrial Supply', 'preferred', 'Warehouse supplies', 'low'],
+            'metrofleet' => ['MetroFleet Services', 'evaluation', 'Fleet services', 'medium'],
+            'civic-safety' => ['Civic Safety Partners', 'restricted', 'Safety equipment', 'high'],
+        ];
+
+        foreach ($vendorRows as $key => [$name, $status, $category, $risk]) {
+            $context->vendors->put(
+                $key,
+                Vendor::query()->updateOrCreate(
+                    ['tenant_id' => $tenant->id, 'name' => $name],
+                    [
+                        'status' => $status,
+                        'category' => $category,
+                        'risk_rating' => $risk,
+                        'metadata' => ['demo' => true],
+                    ],
+                ),
+            );
+        }
+
+        $project = ProcurementProject::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'PRJ-2026-1001'],
+            [
+                'owner_id' => $owner->id,
+                'name' => 'Northwind Warehouse Launch',
+                'status' => 'active',
+                'budget_amount' => 78000,
+                'currency' => 'USD',
+                'metadata' => ['department' => 'Operations'],
+            ],
+        );
+        $context->projects->put('warehouse-launch', $project);
+
+        $rfq = Rfq::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'RFQ-2026-1001'],
+            [
+                'project_id' => $project->id,
+                'requisition_id' => $context->requisitions->get('warehouse-supplies')->id,
+                'title' => 'Warehouse supply bundle',
+                'status' => 'open',
+                'due_at' => self::RFQ_DUE_AT,
+                'metadata' => ['invited_vendors' => 2],
+            ],
+        );
+        $context->rfqs->put('warehouse-supplies', $rfq);
+
+        $quotation = Quotation::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'QUO-2026-1001'],
+            [
+                'rfq_id' => $rfq->id,
+                'vendor_id' => $context->vendors->get('harbor')->id,
+                'status' => 'received',
+                'total_amount' => 61200,
+                'currency' => 'USD',
+                'metadata' => ['lead_time_days' => 14],
+            ],
+        );
+        $context->quotations->put('harbor-warehouse', $quotation);
+
+        $approvalTask = ApprovalTask::query()->updateOrCreate(
+            [
+                'tenant_id' => $tenant->id,
+                'subject_type' => Quotation::class,
+                'subject_id' => $quotation->id,
+                'title' => 'Buyer review for warehouse supply bundle',
+            ],
+            [
+                'approver_id' => $owner->id,
+                'status' => 'pending',
+                'due_at' => self::APPROVAL_DUE_AT,
+                'metadata' => ['stage' => 'buyer_review'],
+            ],
+        );
+        $context->approvalTasks->put('warehouse-buyer-review', $approvalTask);
+
+        $award = Award::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'AWD-2026-1001'],
+            [
+                'project_id' => $project->id,
+                'rfq_id' => $rfq->id,
+                'quotation_id' => $quotation->id,
+                'vendor_id' => $context->vendors->get('harbor')->id,
+                'status' => 'recommended',
+                'total_amount' => 61200,
+                'currency' => 'USD',
+                'decided_at' => self::DECIDED_AT,
+                'metadata' => ['rationale' => 'Best local availability'],
+            ],
+        );
+        $context->awards->put('warehouse-award', $award);
     }
 }

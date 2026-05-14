@@ -15,6 +15,8 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    private const SEEDED_AT = '2026-05-15 09:00:00';
+
     public function run(): void
     {
         $context = new DemoSeedContext();
@@ -30,7 +32,7 @@ class DatabaseSeeder extends Seeder
         DemoSeedRun::query()->updateOrCreate(
             ['name' => 'local-demo'],
             [
-                'seeded_at' => now(),
+                'seeded_at' => self::SEEDED_AT,
                 'metadata' => [
                     'tenants' => $context->tenants->count(),
                     'users' => $context->users->count(),
