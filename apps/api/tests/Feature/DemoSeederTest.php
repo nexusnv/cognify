@@ -123,10 +123,17 @@ class DemoSeederTest extends TestCase
         $this->assertSame($tenant->id, $award->tenant_id);
 
         $this->assertSame('APAC', $vendor->metadata['region']);
+        $this->assertSame('125000.00', $project->budget_amount);
         $this->assertSame(3, $rfq->metadata['invited_vendors']);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $rfq->due_at);
+        $this->assertSame('98500.00', $quotation->total_amount);
         $this->assertSame(21, $quotation->metadata['lead_time_days']);
         $this->assertSame('finance', $approvalTask->metadata['stage']);
+        $this->assertSame('98500.00', $award->total_amount);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $award->decided_at);
         $this->assertSame('Best delivery confidence', $award->metadata['rationale']);
         $this->assertSame('local-demo', $demoSeedRun->name);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $demoSeedRun->seeded_at);
+        $this->assertSame(['records' => 5], $demoSeedRun->metadata);
     }
 }
