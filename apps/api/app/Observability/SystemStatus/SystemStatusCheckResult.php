@@ -5,25 +5,30 @@ namespace App\Observability\SystemStatus;
 class SystemStatusCheckResult
 {
     /**
-     * @param  array<string, mixed>  $details
+     * @param array<string, mixed> $metadata
      */
     public function __construct(
+        public readonly string $id,
+        public readonly string $label,
         public readonly string $status,
-        public readonly array $details = [],
-        public readonly ?string $message = null,
+        public readonly string $message,
+        public readonly ?string $remediation = null,
+        public readonly array $metadata = [],
     ) {
     }
 
     /**
-     * @return array{status: string, message: ?string, details: array<string, mixed>}
+     * @return array{id: string, label: string, status: string, message: string, remediation: ?string, metadata: object}
      */
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
+            'label' => $this->label,
             'status' => $this->status,
             'message' => $this->message,
-            'details' => $this->details,
+            'remediation' => $this->remediation,
+            'metadata' => (object) $this->metadata,
         ];
     }
 }
-

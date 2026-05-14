@@ -10,43 +10,40 @@ use App\Observability\SystemStatus\Checks\OpenApiCheck;
 use App\Observability\SystemStatus\Checks\QueueCheck;
 use App\Observability\SystemStatus\Checks\StorageCheck;
 use App\Tenancy\Tenant;
-use Domains\Approval\Models\ApprovalTask;
-use Domains\Award\Models\Award;
-use Domains\Demo\Models\DemoSeedRun;
-use Domains\Quotation\Models\Quotation;
-use Domains\Quotation\Models\Rfq;
-use Domains\Requisition\Models\Requisition;
-use Domains\Vendor\Models\Vendor;
-use Illuminate\Support\Carbon;
 use Throwable;
 
 class SystemStatusService
 {
-    public function build(Tenant $tenant): SystemStatus
+    public function report(Tenant $tenant): SystemStatus
     {
         $checkedAt = now();
-        $checks = [];
+        /** @var array<int, SystemStatusCheckResult> $results */
+        $results = [];
 
         foreach ($this->checks() as $check) {
-            try {
-                $result = $check->run();
-                $checks[$check->key()] = $result->toArray();
-            } catch (Throwable $exception) {
-                $checks[$check->key()] = (new SystemStatusCheckResult(
-                    status: 'error',
-                    message: $exception->getMessage(),
-                ))->toArray();
-            }
+            $results[] = $this->safeRun($check, $tenant);
         }
+
+        $checks = array_map(
+            static fn (SystemStatusCheckResult $result): array => $result->toArray(),
+            $results,
+        );
+        $demoCheck = collect($results)->firstWhere('id', 'demo_seed');
 
         return new SystemStatus(
             status: $this->overallStatus($checks),
             environment: (string) config('app.env'),
             service: 'cognify-api',
-            version: (string) config('app.version'),
-            checkedAt: $checkedAt instanceof Carbon ? $checkedAt : Carbon::parse($checkedAt),
+            version: (string) config('app.version', '0.1.0'),
+            checkedAt: $checkedAt,
             checks: $checks,
-            demo: $this->demoSummary($tenant),
+            demo: $demoCheck instanceof SystemStatusCheckResult
+                ? $demoCheck->metadata
+                : [
+                    'seeded' => false,
+                    'lastSeededAt' => null,
+                    'counts' => [],
+                ],
         );
     }
 
@@ -67,42 +64,35 @@ class SystemStatusService
     }
 
     /**
-     * @param  array<string, array{status: string, message: ?string, details: array<string, mixed>}>  $checks
+     * @param array<int, array{id: string, label: string, status: string, message: string, remediation: ?string, metadata: object}> $checks
      */
     private function overallStatus(array $checks): string
     {
-        foreach ($checks as $check) {
-            if (($check['status'] ?? 'error') !== 'ok') {
-                return 'degraded';
-            }
+        $statuses = array_column($checks, 'status');
+
+        if (in_array('error', $statuses, true)) {
+            return 'error';
+        }
+
+        if (in_array('warning', $statuses, true)) {
+            return 'warning';
         }
 
         return 'ok';
     }
 
-    /**
-     * @return array{seeded: bool, lastSeededAt: ?string, counts: array<string, int>}
-     */
-    private function demoSummary(Tenant $tenant): array
+    private function safeRun(SystemStatusCheck $check, Tenant $tenant): SystemStatusCheckResult
     {
-        $latestRun = DemoSeedRun::query()
-            ->latest('seeded_at')
-            ->latest('id')
-            ->first();
-
-        return [
-            'seeded' => $latestRun !== null,
-            'lastSeededAt' => $latestRun?->seeded_at?->toISOString(),
-            'counts' => [
-                'tenants' => 1,
-                'users' => $tenant->users()->count(),
-                'requisitions' => Requisition::query()->where('tenant_id', $tenant->id)->count(),
-                'vendors' => Vendor::query()->where('tenant_id', $tenant->id)->count(),
-                'rfqs' => Rfq::query()->where('tenant_id', $tenant->id)->count(),
-                'quotations' => Quotation::query()->where('tenant_id', $tenant->id)->count(),
-                'approvalTasks' => ApprovalTask::query()->where('tenant_id', $tenant->id)->count(),
-                'awards' => Award::query()->where('tenant_id', $tenant->id)->count(),
-            ],
-        ];
+        try {
+            return $check->run($tenant);
+        } catch (Throwable $exception) {
+            return new SystemStatusCheckResult(
+                id: $check->key(),
+                label: ucfirst(str_replace('_', ' ', $check->key())),
+                status: 'error',
+                message: 'Readiness check failed.',
+                remediation: 'Review local service configuration and application logs.',
+            );
+        }
     }
 }

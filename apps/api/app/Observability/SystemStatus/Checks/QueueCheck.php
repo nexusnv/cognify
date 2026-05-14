@@ -4,6 +4,7 @@ namespace App\Observability\SystemStatus\Checks;
 
 use App\Observability\SystemStatus\SystemStatusCheck;
 use App\Observability\SystemStatus\SystemStatusCheckResult;
+use App\Tenancy\Tenant;
 use Illuminate\Support\Facades\Queue;
 
 class QueueCheck implements SystemStatusCheck
@@ -13,13 +14,18 @@ class QueueCheck implements SystemStatusCheck
         return 'queue';
     }
 
-    public function run(): SystemStatusCheckResult
+    public function run(Tenant $tenant): SystemStatusCheckResult
     {
         Queue::size();
 
-        return new SystemStatusCheckResult('ok', [
-            'connection' => config('queue.default'),
-        ]);
+        return new SystemStatusCheckResult(
+            id: 'queue',
+            label: 'Queue',
+            status: 'ok',
+            message: 'Queue storage is available',
+            metadata: [
+                'connection' => config('queue.default'),
+            ],
+        );
     }
 }
-

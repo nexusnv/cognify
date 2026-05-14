@@ -7,8 +7,8 @@ use Illuminate\Support\Carbon;
 class SystemStatus
 {
     /**
-     * @param  array<string, array{status: string, message: ?string, details: array<string, mixed>}>  $checks
-     * @param  array{seeded: bool, lastSeededAt: ?string, counts: array<string, int>}  $demo
+     * @param array<int, array{id: string, label: string, status: string, message: string, remediation: ?string, metadata: object}> $checks
+     * @param array{seeded: bool, lastSeededAt: ?string, counts: array<string, int>} $demo
      */
     public function __construct(
         public readonly string $status,
@@ -21,4 +21,3 @@ class SystemStatus
     ) {
     }
 }
-

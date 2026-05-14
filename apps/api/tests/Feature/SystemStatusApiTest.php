@@ -127,13 +127,13 @@ class SystemStatusApiTest extends TestCase
                     'version',
                     'checkedAt',
                     'checks' => [
-                        'apiMetadata',
-                        'database',
-                        'cache',
-                        'queue',
-                        'storage',
-                        'openApi',
-                        'demoSeed',
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
+                        ['id', 'label', 'status', 'message', 'remediation', 'metadata'],
                     ],
                     'demo' => [
                         'seeded',
@@ -154,6 +154,13 @@ class SystemStatusApiTest extends TestCase
             ->assertJsonPath('data.service', 'cognify-api')
             ->assertJsonPath('data.version', config('app.version'))
             ->assertJsonPath('data.demo.seeded', true)
+            ->assertJsonPath('data.checks.0.id', 'api')
+            ->assertJsonPath('data.checks.1.id', 'database')
+            ->assertJsonPath('data.checks.2.id', 'cache')
+            ->assertJsonPath('data.checks.3.id', 'queue')
+            ->assertJsonPath('data.checks.4.id', 'storage')
+            ->assertJsonPath('data.checks.5.id', 'openapi')
+            ->assertJsonPath('data.checks.6.id', 'demo_seed')
             ->assertJsonPath('data.demo.counts.tenants', 1)
             ->assertJsonPath('data.demo.counts.users', 2)
             ->assertJsonPath('data.demo.counts.requisitions', 1)

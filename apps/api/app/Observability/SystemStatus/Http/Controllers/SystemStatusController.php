@@ -19,6 +19,6 @@ class SystemStatusController extends Controller
         abort_unless($user !== null, 401, 'Authentication is required.');
         abort_unless($tenant->roleFor($user) === TenantRole::Admin->value, 403, 'You are not allowed to perform this action.');
 
-        return new SystemStatusResource($service->build($tenant));
+        return new SystemStatusResource($service->report($tenant));
     }
 }
