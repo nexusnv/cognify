@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { createRequisitionResponse201 } from "@cognify/api-client";
 
 test.describe("requisition authoring critical path", () => {
   test("logs in, saves a draft, applies a template, selects a suggestion, and shows a stale-save conflict", async ({
@@ -22,12 +23,7 @@ test.describe("requisition authoring critical path", () => {
     await page.getByRole("button", { name: "Save draft" }).click();
 
     const createResponse = await createResponsePromise;
-    const createPayload = (await createResponse.json()) as {
-      data: {
-        id: string;
-        lockVersion: number;
-      };
-    };
+    const createPayload = (await createResponse.json()) as createRequisitionResponse201["data"];
     const requisitionId = createPayload.data.id;
 
     await expect(page.getByText("Saved")).toBeVisible();
@@ -53,12 +49,15 @@ test.describe("requisition authoring critical path", () => {
     await expect(page.getByLabel("Estimated unit price 1")).toHaveValue("700");
     await expect(page.getByLabel("Currency 1")).toHaveValue("MYR");
 
-    await page.request.patch(new URL(`/api/requisitions/${requisitionId}`, page.url()).toString(), {
+    const patchResponse = await page.request.patch(new URL(`/api/requisitions/${requisitionId}`, page.url()).toString(), {
       data: {
         title: "Field laptop refresh",
         lockVersion: createPayload.data.lockVersion + 1,
       },
     });
+    expect(patchResponse.ok()).toBeTruthy();
+    const patchPayload = (await patchResponse.json()) as createRequisitionResponse201["data"];
+    createPayload.data.lockVersion = patchPayload.data.lockVersion;
 
     await page.getByLabel("Title").fill("Field laptop refresh v2");
     await page.getByRole("button", { name: "Save draft" }).click();

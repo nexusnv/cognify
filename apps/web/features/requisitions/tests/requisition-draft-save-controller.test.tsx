@@ -114,4 +114,56 @@ describe("useRequisitionDraftSaveController", () => {
     expect(result.current.saveState).toBe("conflict");
     expect(result.current.lastFailedValues).toEqual(baseValues);
   });
+
+  it("serializes overlapping saves so the second update uses the refreshed lock version", async () => {
+    const firstSave = deferred<{ id: string; lockVersion: number }>();
+    const secondSave = deferred<{ id: string; lockVersion: number }>();
+    const nextValues = { ...baseValues, title: "Laptop refresh v2" };
+    const createDraft = vi.fn();
+    const updateDraft = vi
+      .fn()
+      .mockImplementationOnce(() => firstSave.promise)
+      .mockImplementationOnce(() => secondSave.promise);
+
+    const { result } = renderHook(() =>
+      useRequisitionDraftSaveController({
+        initialRequisition: { id: "req-1", lockVersion: 1 },
+        createDraft,
+        updateDraft,
+      }),
+    );
+
+    await act(async () => {
+      const firstResult = result.current.saveNow(baseValues);
+      const secondResult = result.current.saveNow(nextValues);
+
+      await Promise.resolve();
+      expect(updateDraft).toHaveBeenCalledTimes(1);
+      expect(updateDraft).toHaveBeenCalledWith("req-1", baseValues, 1);
+
+      firstSave.resolve({ id: "req-1", lockVersion: 2 });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(updateDraft).toHaveBeenCalledTimes(2);
+      expect(updateDraft).toHaveBeenLastCalledWith("req-1", nextValues, 2);
+
+      secondSave.resolve({ id: "req-1", lockVersion: 3 });
+      await Promise.all([firstResult, secondResult]);
+    });
+
+    expect(result.current.lockVersion).toBe(3);
+    expect(result.current.saveState).toBe("saved");
+  });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+
+  return { promise, resolve, reject };
+}

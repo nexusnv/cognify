@@ -6,15 +6,17 @@ import { useRequisitionLineItemSuggestions } from "../hooks/use-requisition-line
 export function RequisitionLineItemSuggestionCombobox({
   search,
   currency,
+  disabled = false,
   onSelect,
 }: {
   search: string;
   currency: string;
+  disabled?: boolean;
   onSelect: (suggestion: RequisitionItemSuggestion) => void;
 }) {
-  const suggestions = useRequisitionLineItemSuggestions(search, currency);
+  const suggestions = useRequisitionLineItemSuggestions(disabled ? "" : search, currency);
 
-  if (search.trim().length < 2 || suggestions.isError || !suggestions.data?.length) return null;
+  if (disabled || search.trim().length < 2 || suggestions.isError || !suggestions.data?.length) return null;
 
   return (
     <div className="mt-2 rounded-md border bg-background p-2" aria-label="Line item suggestions">
@@ -24,6 +26,7 @@ export function RequisitionLineItemSuggestionCombobox({
             key={suggestion.id}
             type="button"
             className="block w-full rounded px-2 py-2 text-left text-sm hover:bg-muted"
+            disabled={disabled}
             onClick={() => onSelect(suggestion)}
           >
             <span className="font-medium">{suggestion.name}</span>

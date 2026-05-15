@@ -16,10 +16,17 @@ export function useSaveRequisitionDraft() {
       requisitionId?: string;
       values: RequisitionFormValues;
       lockVersion?: number;
-    }) =>
-      requisitionId
-        ? updateRequisitionDraft(requisitionId, values, lockVersion ?? 0)
-        : createRequisitionDraft(values),
+    }) => {
+      if (requisitionId) {
+        if (lockVersion == null) {
+          throw new Error("lockVersion required for updates");
+        }
+
+        return updateRequisitionDraft(requisitionId, values, lockVersion);
+      }
+
+      return createRequisitionDraft(values);
+    },
     onSuccess: async (requisition) => {
       await queryClient.invalidateQueries({ queryKey: ["requisitions"] });
       queryClient.setQueryData(["requisition", requisition.id], requisition);

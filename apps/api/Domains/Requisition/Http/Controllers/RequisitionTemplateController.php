@@ -12,6 +12,7 @@ class RequisitionTemplateController extends Controller
     public function index(CurrentTenant $currentTenant)
     {
         $tenant = $currentTenant->get();
+        abort_if($tenant === null, 403, 'Tenant context missing.');
 
         $templates = RequisitionTemplate::query()
             ->where('active', true)

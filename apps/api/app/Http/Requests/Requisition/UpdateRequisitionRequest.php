@@ -20,7 +20,10 @@ class UpdateRequisitionRequest extends FormRequest
      */
     public function rules(): array
     {
-        $tenantId = app(CurrentTenant::class)->get()->id;
+        $tenant = app(CurrentTenant::class)->get();
+        abort_if($tenant === null, 400, 'Tenant context missing.');
+
+        $tenantId = $tenant->id;
 
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],

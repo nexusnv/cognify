@@ -13,6 +13,8 @@ class RequisitionItemSuggestionController extends Controller
     public function index(Request $request, CurrentTenant $currentTenant)
     {
         $tenant = $currentTenant->get();
+        abort_if($tenant === null, 403, 'Tenant context missing.');
+
         $search = mb_strtolower(trim((string) $request->query('search', '')));
 
         $suggestions = RequisitionItemSuggestion::query()

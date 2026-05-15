@@ -26,7 +26,6 @@ import { requisitionSubmitSchema } from "../schemas/requisition-form-schema";
 import type {
   Requisition,
   RequisitionFormValues,
-  RequisitionItemSuggestion,
   RequisitionTemplate,
   RequisitionTemplateMode,
 } from "../types/requisition-view-model";
@@ -116,7 +115,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
   useEffect(() => {
     if (saveController.saveState === "saved") {
-      setErrors({});
+      queueMicrotask(() => setErrors({}));
       return;
     }
 
@@ -125,13 +124,13 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     const validationErrors = getApiValidationErrors(saveController.lastError);
 
     if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+      queueMicrotask(() => setErrors(validationErrors));
       window.setTimeout(() => focusFirstInvalidField(formRef.current ?? document), 0);
       return;
     }
 
     if (saveController.saveState === "conflict") {
-      setErrors({});
+      queueMicrotask(() => setErrors({}));
     }
   }, [saveController.lastError, saveController.saveState]);
 
@@ -255,20 +254,26 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
       return;
     }
 
-    const requisition = await applyTemplateMutation.mutateAsync({
-      requisitionId: saveController.requisitionId,
-      templateId: template.id,
-      mode,
-      lockVersion: saveController.lockVersion,
-    });
+    try {
+      const requisition = await applyTemplateMutation.mutateAsync({
+        requisitionId: saveController.requisitionId,
+        templateId: template.id,
+        mode,
+        lockVersion: saveController.lockVersion,
+      });
 
-    setValues(requisitionToFormValues(requisition));
-    saveController.syncSavedDraft({
-      id: requisition.id,
-      lockVersion: requisition.lockVersion,
-    });
-    setStatus(requisition.status);
-    setPendingTemplate(null);
+      setValues(requisitionToFormValues(requisition));
+      saveController.syncSavedDraft({
+        id: requisition.id,
+        lockVersion: requisition.lockVersion,
+      });
+      setStatus(requisition.status);
+      setPendingTemplate(null);
+    } catch (error) {
+      setPendingTemplate(null);
+      console.error("Unable to apply requisition template", error);
+      toast.error("Unable to apply template. Refresh the draft and try again.");
+    }
   }
 
   function renderDepartmentField() {
@@ -282,7 +287,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.department}
             aria-invalid={Boolean(errors.department)}
-            onChange={(event) => updateValue("department", event.target.value)}
+            disabled={!canEdit}
+            onChange={(event) => {
+              if (canEdit) updateValue("department", event.target.value);
+            }}
           />
         </FormField>
       );
@@ -297,7 +305,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
           className="min-h-11 w-full rounded-md border px-3 text-base"
           value={values.department}
           aria-invalid={Boolean(errors.department)}
-          onChange={(event) => updateValue("department", event.target.value)}
+          disabled={!canEdit}
+          onChange={(event) => {
+            if (canEdit) updateValue("department", event.target.value);
+          }}
         >
           <option value="">Select department</option>
           {options.map((department) => (
@@ -321,7 +332,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.costCenter}
             aria-invalid={Boolean(errors.costCenter)}
-            onChange={(event) => updateValue("costCenter", event.target.value)}
+            disabled={!canEdit}
+            onChange={(event) => {
+              if (canEdit) updateValue("costCenter", event.target.value);
+            }}
           />
         </FormField>
       );
@@ -349,7 +363,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               : ""
           }
           aria-invalid={Boolean(errors.costCenter)}
+          disabled={!canEdit}
           onChange={(event) => {
+            if (!canEdit) return;
             const selected = event.target.value;
             const match = costCenters.find((item) => `${item.code} - ${item.name}` === selected);
             updateValue("costCenter", match?.code ?? selected);
@@ -551,7 +567,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       <input
                         id={`currency-${index}`}
                         className="min-h-11 w-full rounded-md border px-3 text-base"
-                        value={item.currency}
+                        value={item.currency ?? ""}
                         aria-invalid={Boolean(errors[`lineItems.${index}.currency`])}
                         aria-describedby={lineItemsErrorId}
                         onChange={(event) => updateLineItem(index, "currency", event.target.value)}
@@ -571,8 +587,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                   </div>
                   <RequisitionLineItemSuggestionCombobox
                     search={item.name}
-                    currency={item.currency}
-                    onSelect={(suggestion) =>
+                    currency={item.currency ?? values.currency}
+                    disabled={!canEdit}
+                    onSelect={(suggestion) => {
+                      if (!canEdit) return;
                       updateDraftValues((current) => ({
                         ...current,
                         lineItems: current.lineItems.map((currentItem, itemIndex) =>
@@ -586,8 +604,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                               }
                             : currentItem,
                         ),
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </div>
               ))}
@@ -705,7 +723,7 @@ function requisitionToFormValues(requisition: Requisition): RequisitionFormValue
     projectId: requisition.projectId ?? "",
     costCenter: requisition.costCenter ?? "",
     deliveryLocation: requisition.deliveryLocation ?? "",
-    currency: requisition.currency,
+    currency: requisition.currency ?? "MYR",
     lineItems: requisition.lineItems.map((item) => ({
       ...item,
     })),
@@ -792,8 +810,7 @@ function isBlankLineItem(item: RequisitionFormValues["lineItems"][number]): bool
     !item.description?.trim() &&
     item.quantity === 1 &&
     item.unit === "each" &&
-    item.estimatedUnitPrice === 0 &&
-    item.currency === "MYR"
+    item.estimatedUnitPrice === 0
   );
 }
 

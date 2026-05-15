@@ -157,7 +157,7 @@ function mapRequisition(requisition: ApiRequisition): Requisition {
     projectId: requisition.projectId ?? undefined,
     costCenter: requisition.costCenter ?? undefined,
     deliveryLocation: requisition.deliveryLocation ?? undefined,
-    currency: requisition.currency ?? "MYR",
+    currency: requisition.currency ?? undefined,
     estimatedTotal: requisition.estimatedTotal,
     requester: {
       id: requisition.requester.id,
@@ -180,7 +180,7 @@ function mapRequisitionLineItem(lineItem: ApiRequisition["lineItems"][number]): 
     quantity: lineItem.quantity,
     unit: lineItem.unit,
     estimatedUnitPrice: lineItem.estimatedUnitPrice,
-    currency: lineItem.currency,
+    currency: lineItem.currency ?? "",
     estimatedLineTotal: lineItem.estimatedLineTotal ?? undefined,
   };
 }
@@ -229,7 +229,7 @@ function mapTemplateLineItem(lineItem: unknown): RequisitionLineItem | null {
     quantity: toNumber(record.quantity) ?? 1,
     unit: toOptionalString(record.unit) ?? "each",
     estimatedUnitPrice: toNumber(record.estimatedUnitPrice) ?? 0,
-    currency: toOptionalString(record.currency) ?? "MYR",
+    currency: toOptionalString(record.currency) ?? "",
     estimatedLineTotal: toNumber(record.estimatedLineTotal) ?? undefined,
   };
 }

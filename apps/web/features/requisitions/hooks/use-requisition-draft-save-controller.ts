@@ -51,6 +51,7 @@ export function useRequisitionDraftSaveController({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requisitionIdRef = useRef(initialRequisition?.id);
   const lockVersionRef = useRef(initialRequisition?.lockVersion ?? 0);
+  const savingPromiseRef = useRef<Promise<RequisitionDraftSnapshot | undefined> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -80,20 +81,35 @@ export function useRequisitionDraftSaveController({
   const saveNow = useCallback(
     async (values: RequisitionFormValues) => {
       clearAutosaveTimer();
-      setSaveState("saving");
+      const previousSave = savingPromiseRef.current;
+
+      const savePromise = (async () => {
+        await previousSave;
+        setSaveState("saving");
+
+        try {
+          const savedDraft = requisitionIdRef.current
+            ? await updateDraft(requisitionIdRef.current, values, lockVersionRef.current)
+            : await createDraft(values);
+
+          applySavedDraft(savedDraft);
+          return savedDraft;
+        } catch (error) {
+          setLastFailedValues(values);
+          setLastError(error);
+          setSaveState(isDraftConflict(error) ? "conflict" : "failed");
+          return undefined;
+        }
+      })();
+
+      savingPromiseRef.current = savePromise;
 
       try {
-        const savedDraft = requisitionIdRef.current
-          ? await updateDraft(requisitionIdRef.current, values, lockVersionRef.current)
-          : await createDraft(values);
-
-        applySavedDraft(savedDraft);
-        return savedDraft;
-      } catch (error) {
-        setLastFailedValues(values);
-        setLastError(error);
-        setSaveState(isDraftConflict(error) ? "conflict" : "failed");
-        return undefined;
+        return await savePromise;
+      } finally {
+        if (savingPromiseRef.current === savePromise) {
+          savingPromiseRef.current = null;
+        }
       }
     },
     [applySavedDraft, clearAutosaveTimer, createDraft, updateDraft],

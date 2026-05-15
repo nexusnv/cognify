@@ -10,6 +10,7 @@ use Domains\Requisition\Actions\ApplyRequisitionTemplate;
 use Domains\Requisition\Actions\CreateRequisitionDraft;
 use Domains\Requisition\Actions\SubmitRequisition;
 use Domains\Requisition\Actions\UpdateRequisitionDraft;
+use Domains\Requisition\Exceptions\DraftConflictException;
 use Domains\Requisition\Http\Requests\ApplyRequisitionTemplateRequest;
 use Domains\Requisition\Http\Resources\RequisitionResource;
 use Domains\Requisition\Models\Requisition;
@@ -17,7 +18,6 @@ use Domains\Requisition\Models\RequisitionTemplate;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RequisitionController extends Controller
 {
@@ -25,7 +25,7 @@ class RequisitionController extends Controller
     {
         $this->authorize('viewAny', Requisition::class);
 
-        $tenant = $currentTenant->get();
+        $tenant = $this->tenantOrAbort($currentTenant);
         $user = $request->user();
         $role = $currentTenant->roleFor($user);
 
@@ -72,7 +72,7 @@ class RequisitionController extends Controller
         CreateRequisitionDraft $createRequisitionDraft,
     ): JsonResponse {
         $requisition = $createRequisitionDraft->handle(
-            $currentTenant->get(),
+            $this->tenantOrAbort($currentTenant),
             $request->user(),
             $request->validated(),
         );
@@ -108,12 +108,8 @@ class RequisitionController extends Controller
                 $requisition,
                 $request->validated(),
             );
-        } catch (ConflictHttpException $exception) {
-            if ($exception->getMessage() === 'The draft has changed since it was loaded.') {
-                return $this->draftConflictResponse($exception->getMessage());
-            }
-
-            throw $exception;
+        } catch (DraftConflictException $exception) {
+            return $this->draftConflictResponse($exception->getMessage());
         }
 
         return new RequisitionResource($requisition);
@@ -125,7 +121,7 @@ class RequisitionController extends Controller
         ApplyRequisitionTemplate $applyRequisitionTemplate,
         int $requisition,
     ): JsonResponse|RequisitionResource {
-        $tenant = $currentTenant->get();
+        $tenant = $this->tenantOrAbort($currentTenant);
         $requisition = $this->findTenantRequisition($currentTenant, $requisition);
 
         $this->authorize('update', $requisition);
@@ -144,12 +140,8 @@ class RequisitionController extends Controller
                 $request->validated('mode'),
                 (int) $request->validated('lockVersion'),
             );
-        } catch (ConflictHttpException $exception) {
-            if ($exception->getMessage() === 'The draft has changed since it was loaded.') {
-                return $this->draftConflictResponse($exception->getMessage());
-            }
-
-            throw $exception;
+        } catch (DraftConflictException $exception) {
+            return $this->draftConflictResponse($exception->getMessage());
         }
 
         return new RequisitionResource($requisition);
@@ -166,7 +158,7 @@ class RequisitionController extends Controller
         $this->authorize('submit', $requisition);
 
         $requisition = $submitRequisition->handle(
-            $currentTenant->get(),
+            $this->tenantOrAbort($currentTenant),
             $request->user(),
             $requisition,
         );
@@ -176,9 +168,19 @@ class RequisitionController extends Controller
 
     private function findTenantRequisition(CurrentTenant $currentTenant, int $id): Requisition
     {
+        $tenant = $this->tenantOrAbort($currentTenant);
+
         return Requisition::query()
-            ->where('tenant_id', $currentTenant->get()->id)
+            ->where('tenant_id', $tenant->id)
             ->findOrFail($id);
+    }
+
+    private function tenantOrAbort(CurrentTenant $currentTenant): \App\Tenancy\Tenant
+    {
+        $tenant = $currentTenant->get();
+        abort_if($tenant === null, 403, 'Tenant context missing.');
+
+        return $tenant;
     }
 
     private function draftConflictResponse(string $message): JsonResponse

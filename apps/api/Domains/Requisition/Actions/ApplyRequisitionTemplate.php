@@ -6,13 +6,13 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Requisition\Exceptions\DraftConflictException;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Models\RequisitionLineItem;
 use Domains\Requisition\Models\RequisitionTemplate;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApplyRequisitionTemplate
 {
@@ -23,7 +23,7 @@ class ApplyRequisitionTemplate
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, RequisitionTemplate $template, string $mode, int $lockVersion): Requisition
     {
         if ($requisition->status !== RequisitionStatus::Draft) {
-            throw new ConflictHttpException('Only draft requisitions can receive templates.');
+            throw new DraftConflictException('Only draft requisitions can receive templates.');
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $template, $mode, $lockVersion): Requisition {
@@ -33,8 +33,12 @@ class ApplyRequisitionTemplate
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ($requisition->status !== RequisitionStatus::Draft) {
+                throw new DraftConflictException('Only draft requisitions can receive templates.');
+            }
+
             if ($lockVersion !== (int) $requisition->lock_version) {
-                throw new ConflictHttpException('The draft has changed since it was loaded.');
+                throw new DraftConflictException('The draft has changed since it was loaded.');
             }
 
             $defaults = $template->defaults ?? [];
@@ -124,8 +128,7 @@ class ApplyRequisitionTemplate
             && blank($lineItem->description)
             && (float) $lineItem->quantity === 1.0
             && $lineItem->unit_of_measure === 'each'
-            && (float) $lineItem->estimated_unit_price === 0.0
-            && strtoupper($lineItem->currency) === 'MYR';
+            && (float) $lineItem->estimated_unit_price === 0.0;
     }
 
     /**

@@ -12,6 +12,7 @@ class RequisitionIntakeOptionsController extends Controller
     public function __invoke(CurrentTenant $currentTenant)
     {
         $tenant = $currentTenant->get();
+        abort_if($tenant === null, 403, 'Tenant context missing.');
 
         return response()->json([
             'data' => [
@@ -31,8 +32,8 @@ class RequisitionIntakeOptionsController extends Controller
                     ->get(['code', 'name'])
                     ->map(fn (RequisitionCostCenter $costCenter): array => ['code' => $costCenter->code, 'name' => $costCenter->name])
                     ->values(),
-                'currencies' => ['MYR', 'USD'],
-                'units' => ['each', 'bundle', 'month', 'hour', 'day'],
+                'currencies' => config('requisition.currencies', []),
+                'units' => config('requisition.units', []),
             ],
         ]);
     }

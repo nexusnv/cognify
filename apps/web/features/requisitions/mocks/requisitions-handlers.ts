@@ -11,7 +11,6 @@ import {
 import type {
   Requisition,
   RequisitionFormValues,
-  RequisitionItemSuggestion,
   RequisitionTemplate,
 } from "../types/requisition-view-model";
 
@@ -325,7 +324,7 @@ function toFormValues(requisition: Requisition): RequisitionFormValues {
     projectId: requisition.projectId ?? "",
     costCenter: requisition.costCenter ?? "",
     deliveryLocation: requisition.deliveryLocation ?? "",
-    currency: requisition.currency,
+    currency: requisition.currency ?? "MYR",
     lineItems: requisition.lineItems,
   };
 }
@@ -344,7 +343,7 @@ function mergeTemplateValues(
         quantity: lineItem.quantity ?? 1,
         unit: lineItem.unit ?? "each",
         estimatedUnitPrice: lineItem.estimatedUnitPrice ?? 0,
-        currency: lineItem.currency ?? current.currency ?? "MYR",
+        currency: lineItem.currency ?? defaults.currency ?? current.currency ?? "MYR",
         estimatedLineTotal: lineItem.estimatedLineTotal,
       }))
     : current.lineItems;
@@ -386,8 +385,7 @@ function isBlankLineItem(lineItem: RequisitionFormValues["lineItems"][number]): 
     !lineItem.description?.trim() &&
     lineItem.quantity === 1 &&
     lineItem.unit === "each" &&
-    lineItem.estimatedUnitPrice === 0 &&
-    lineItem.currency === "MYR"
+    lineItem.estimatedUnitPrice === 0
   );
 }
 

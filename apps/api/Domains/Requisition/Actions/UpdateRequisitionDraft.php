@@ -6,10 +6,10 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Requisition\Exceptions\DraftConflictException;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class UpdateRequisitionDraft
 {
@@ -23,7 +23,7 @@ class UpdateRequisitionDraft
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): Requisition
     {
         if ($requisition->status !== RequisitionStatus::Draft) {
-            throw new ConflictHttpException('Only draft requisitions can be updated.');
+            throw new DraftConflictException('Only draft requisitions can be updated.');
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $data): Requisition {
@@ -33,8 +33,12 @@ class UpdateRequisitionDraft
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ($requisition->status !== RequisitionStatus::Draft) {
+                throw new DraftConflictException('The requisition is no longer a draft.');
+            }
+
             if ((int) $data['lockVersion'] !== (int) $requisition->lock_version) {
-                throw new ConflictHttpException('The draft has changed since it was loaded.');
+                throw new DraftConflictException('The draft has changed since it was loaded.');
             }
 
             $before = [

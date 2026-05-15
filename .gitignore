@@ -8,6 +8,7 @@ out/
 dist/
 build/
 coverage/
+**/test-results/**
 .turbo/
 .vercel/
 *.tsbuildinfo
@@ -36,3 +37,6 @@ storage/debugbar/*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local agent/editor runtime state
+.kilo/agent-manager.json

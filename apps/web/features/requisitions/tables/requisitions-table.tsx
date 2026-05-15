@@ -53,7 +53,7 @@ const requisitionColumns: DataTableColumn<Requisition>[] = [
     align: "right",
     cell: (requisition) => (
       <span className="font-mono tabular-nums">
-        {formatMoney(requisition.estimatedTotal, requisition.currency)}
+        {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
       </span>
     ),
   },
@@ -128,7 +128,7 @@ export function RequisitionsTable({
           <div className="mt-3 flex items-center justify-between text-sm">
             <span>Needed {requisition.neededByDate}</span>
             <span className="font-mono tabular-nums">
-              {formatMoney(requisition.estimatedTotal, requisition.currency)}
+              {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
             </span>
           </div>
         </Link>
@@ -161,7 +161,7 @@ function requisitionPanel(requisition: Requisition) {
           <div>
             <dt className="text-muted-foreground">Estimated total</dt>
             <dd className="font-mono font-medium tabular-nums">
-              {formatMoney(requisition.estimatedTotal, requisition.currency)}
+              {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
             </dd>
           </div>
         </dl>

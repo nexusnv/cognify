@@ -89,7 +89,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           label: "Estimated total",
           value: (
             <span className="font-mono tabular-nums">
-              {formatMoney(requisition.estimatedTotal, requisition.currency)}
+              {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
             </span>
           ),
         },
@@ -114,7 +114,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
               projectId: requisition.projectId ?? "",
               costCenter: requisition.costCenter ?? "",
               deliveryLocation: requisition.deliveryLocation ?? "",
-              currency: requisition.currency,
+              currency: requisition.currency ?? "MYR",
               lineItems: requisition.lineItems,
             }}
           />
@@ -159,7 +159,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
               <span className="font-mono tabular-nums">
                 {formatMoney(
                   item.estimatedLineTotal ?? item.quantity * item.estimatedUnitPrice,
-                  item.currency,
+                  item.currency ?? requisition.currency ?? "MYR",
                 )}
               </span>
             </div>

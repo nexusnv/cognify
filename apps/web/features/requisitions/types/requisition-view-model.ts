@@ -1,3 +1,9 @@
+import type {
+  RequisitionIntakeOptions as GeneratedRequisitionIntakeOptions,
+  RequisitionItemSuggestion as GeneratedRequisitionItemSuggestion,
+  RequisitionTemplate as GeneratedRequisitionTemplate,
+} from "@cognify/api-client";
+
 export type RequisitionStatus = "draft" | "submitted" | "pending_approval";
 
 export type UserSummary = {
@@ -14,29 +20,13 @@ export type RequisitionPermissions = {
 
 export type RequisitionTemplateMode = "fill-empty" | "replace";
 
-export type RequisitionTemplate = {
-  id: string;
-  name: string;
-  description?: string | null;
-  category: string;
+export type RequisitionTemplate = Omit<GeneratedRequisitionTemplate, "defaults"> & {
   defaults: Partial<RequisitionFormValues>;
 };
 
-export type RequisitionItemSuggestion = {
-  id: string;
-  name: string;
-  category?: string | null;
-  unit: string;
-  estimatedUnitPrice: number;
-  currency: string;
-};
+export type RequisitionItemSuggestion = GeneratedRequisitionItemSuggestion;
 
-export type RequisitionIntakeOptions = {
-  departments: Array<{ name: string }>;
-  costCenters: Array<{ code: string; name: string }>;
-  currencies: string[];
-  units: string[];
-};
+export type RequisitionIntakeOptions = GeneratedRequisitionIntakeOptions;
 
 export type RequisitionLineItem = {
   id?: string;
@@ -62,7 +52,7 @@ export type Requisition = {
   projectId?: string;
   costCenter?: string;
   deliveryLocation?: string;
-  currency: string;
+  currency?: string;
   estimatedTotal: number;
   requester: UserSummary;
   lineItems: RequisitionLineItem[];
