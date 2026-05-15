@@ -27,6 +27,7 @@ export function storeActiveTenantId(tenantId: string) {
 }
 
 export async function login(values: LoginFormValues) {
+  await ensureCsrfCookie();
   await loginEndpoint(values satisfies LoginRequest);
 }
 
@@ -46,10 +47,7 @@ export async function updateCurrentUserProfile(values: ProfileFormValues) {
     avatarUrl: values.avatarUrl || null,
     notificationPreferences: values.notificationPreferences,
   } satisfies UpdateCurrentUserProfileRequest;
-  const response = await updateCurrentUserProfileEndpoint(
-    request,
-    withActiveTenantHeader(),
-  );
+  const response = await updateCurrentUserProfileEndpoint(request, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return response.data;
 }
@@ -71,4 +69,10 @@ function withActiveTenantHeader(): RequestInit | undefined {
       "X-Tenant-Id": tenantId,
     },
   };
+}
+
+async function ensureCsrfCookie() {
+  await fetch("/sanctum/csrf-cookie", {
+    credentials: "include",
+  });
 }

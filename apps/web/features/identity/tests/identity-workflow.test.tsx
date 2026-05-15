@@ -25,6 +25,21 @@ function renderWithQuery(ui: React.ReactElement) {
 
 describe("identity workflow", () => {
   it("signs in and loads current identity context", async () => {
+    let csrfRequested = false;
+    let loginXsrfHeader: string | null = null;
+    server.use(
+      http.get("/sanctum/csrf-cookie", () => {
+        csrfRequested = true;
+        document.cookie = "XSRF-TOKEN=dev-token";
+
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.post("/api/auth/login", ({ request }) => {
+        loginXsrfHeader = request.headers.get("x-xsrf-token");
+
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
     const user = userEvent.setup();
 
     renderWithQuery(<LoginPage />);
@@ -34,6 +49,8 @@ describe("identity workflow", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByText("Signed in")).toBeInTheDocument();
+    expect(csrfRequested).toBe(true);
+    expect(loginXsrfHeader).toBe("dev-token");
   });
 
   beforeEach(() => {
@@ -113,13 +130,14 @@ describe("identity workflow", () => {
     await user.click(screen.getByRole("button", { name: "Save profile" }));
 
     expect(await screen.findByText("Profile saved")).toBeInTheDocument();
-    expect(submittedBody).toEqual(expect.objectContaining({
-      name: "Taylor Buyer",
-      theme: "dark",
-    }));
+    expect(submittedBody).toEqual(
+      expect.objectContaining({
+        name: "Taylor Buyer",
+        theme: "dark",
+      }),
+    );
     expect(
-      (submittedBody as { notificationPreferences?: unknown })
-        .notificationPreferences,
+      (submittedBody as { notificationPreferences?: unknown }).notificationPreferences,
     ).toEqual({
       "requisition.submitted": { inApp: true },
       "attachment.uploaded": { inApp: false },

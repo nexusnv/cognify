@@ -32,6 +32,11 @@ export async function cognifyFetch<TResponse>(
     headers.set("X-Tenant-Id", tenantId);
   }
 
+  const xsrfToken = getXsrfToken();
+  if (xsrfToken && isStateChangingMethod(init?.method) && !headers.has("X-XSRF-TOKEN")) {
+    headers.set("X-XSRF-TOKEN", xsrfToken);
+  }
+
   const response = await fetch(`${baseUrl}${url}`, {
     ...init,
     credentials: "include",
@@ -39,8 +44,7 @@ export async function cognifyFetch<TResponse>(
   });
 
   const contentType = response.headers.get("content-type") ?? "";
-  const isJsonResponse =
-    contentType.includes("application/json") || contentType.includes("+json");
+  const isJsonResponse = contentType.includes("application/json") || contentType.includes("+json");
   const data =
     response.status === 204
       ? undefined
@@ -63,4 +67,21 @@ export async function cognifyFetch<TResponse>(
     status: response.status,
     headers: response.headers,
   } as TResponse;
+}
+
+function isStateChangingMethod(method: string | undefined): boolean {
+  return !["GET", "HEAD", "OPTIONS"].includes((method ?? "GET").toUpperCase());
+}
+
+function getXsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+
+  const cookie = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("XSRF-TOKEN="));
+
+  if (!cookie) return null;
+
+  return decodeURIComponent(cookie.slice("XSRF-TOKEN=".length));
 }
