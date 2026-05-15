@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleDot, Clock3 } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, CircleDot, Clock3, CircleX } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/status-badge";
 import type { WorkflowStateConfig } from "@/components/workflow/workflow-state";
 import type { RequisitionStatus } from "../types/requisition-view-model";
@@ -21,6 +21,24 @@ const requisitionStatusConfig = {
     description: "The requisition is waiting for an approval decision.",
     tone: "info",
     icon: Clock3,
+  },
+  changes_requested: {
+    label: "Changes requested",
+    description: "The requisition needs requester updates before it can move forward.",
+    tone: "warning",
+    icon: AlertTriangle,
+  },
+  withdrawn: {
+    label: "Withdrawn",
+    description: "The requester stopped this requisition.",
+    tone: "locked",
+    icon: Ban,
+  },
+  cancelled: {
+    label: "Cancelled",
+    description: "An administrator cancelled this requisition.",
+    tone: "danger",
+    icon: CircleX,
   },
 } satisfies WorkflowStateConfig<RequisitionStatus>;
 

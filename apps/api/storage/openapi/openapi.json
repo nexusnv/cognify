@@ -80,6 +80,67 @@
             }
           },
           {
+            "name": "requester",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountMin",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "amountMax",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "updatedFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "updatedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "queuePreset",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "my_drafts",
+                "submitted",
+                "needs_my_correction",
+                "buyer_review",
+                "stopped",
+                "all_visible"
+              ]
+            }
+          },
+          {
             "name": "neededByFrom",
             "in": "query",
             "schema": {
@@ -1152,6 +1213,295 @@
           }
         }
       }
+    },
+    "/api/requisitions/{requisitionId}/request-changes": {
+      "post": {
+        "operationId": "requestRequisitionChanges",
+        "summary": "Request changes for a submitted requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestRequisitionChangesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Changes requested",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/resubmit": {
+      "post": {
+        "operationId": "resubmitRequisition",
+        "summary": "Resubmit a change-requested requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requisition resubmitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/withdraw": {
+      "post": {
+        "operationId": "withdrawRequisition",
+        "summary": "Withdraw a requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonedRequisitionActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Requisition withdrawn",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/cancel": {
+      "post": {
+        "operationId": "cancelRequisition",
+        "summary": "Cancel a requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonedRequisitionActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Requisition cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/comments": {
+      "get": {
+        "operationId": "listRequisitionComments",
+        "summary": "List comments for a requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requisition comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCommentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRequisitionComment",
+        "summary": "Create a comment on a requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollaborationCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCommentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/mention-candidates": {
+      "get": {
+        "operationId": "listRequisitionMentionCandidates",
+        "summary": "List users who can be mentioned on a requisition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mention candidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationMentionCandidateListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1562,7 +1912,10 @@
         "enum": [
           "draft",
           "submitted",
-          "pending_approval"
+          "pending_approval",
+          "changes_requested",
+          "withdrawn",
+          "cancelled"
         ]
       },
       "RequisitionPermissions": {
@@ -1570,6 +1923,12 @@
         "required": [
           "canUpdate",
           "canSubmit",
+          "canResubmit",
+          "canRequestChanges",
+          "canWithdraw",
+          "canCancel",
+          "canComment",
+          "canMention",
           "canViewActivity"
         ],
         "properties": {
@@ -1580,6 +1939,24 @@
             "type": "boolean"
           },
           "canViewActivity": {
+            "type": "boolean"
+          },
+          "canResubmit": {
+            "type": "boolean"
+          },
+          "canRequestChanges": {
+            "type": "boolean"
+          },
+          "canWithdraw": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canComment": {
+            "type": "boolean"
+          },
+          "canMention": {
             "type": "boolean"
           }
         }
@@ -1653,6 +2030,16 @@
           "createdAt",
           "updatedAt",
           "submittedAt",
+          "changesRequestedAt",
+          "changesRequestedBy",
+          "changeRequestReason",
+          "changeRequestFields",
+          "withdrawnAt",
+          "withdrawnBy",
+          "withdrawalReason",
+          "cancelledAt",
+          "cancelledBy",
+          "cancellationReason",
           "permissions"
         ],
         "properties": {
@@ -1750,6 +2137,81 @@
           "lockVersion": {
             "type": "integer",
             "minimum": 0
+          },
+          "changesRequestedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "changesRequestedBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "changeRequestReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changeRequestFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "withdrawnAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "withdrawnBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "withdrawalReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelledAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cancelledBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancellationReason": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -2257,7 +2719,12 @@
         "type": "string",
         "enum": [
           "requisition.submitted",
+          "requisition.changes_requested",
+          "requisition.resubmitted",
+          "requisition.withdrawn",
+          "requisition.cancelled",
           "attachment.uploaded",
+          "collaboration.mentioned",
           "system.announcement"
         ]
       },
@@ -2295,14 +2762,34 @@
         "additionalProperties": false,
         "required": [
           "requisition.submitted",
+          "requisition.changes_requested",
+          "requisition.resubmitted",
+          "requisition.withdrawn",
+          "requisition.cancelled",
           "attachment.uploaded",
+          "collaboration.mentioned",
           "system.announcement"
         ],
         "properties": {
           "requisition.submitted": {
             "$ref": "#/components/schemas/NotificationPreference"
           },
+          "requisition.changes_requested": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "requisition.resubmitted": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "requisition.withdrawn": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "requisition.cancelled": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
           "attachment.uploaded": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "collaboration.mentioned": {
             "$ref": "#/components/schemas/NotificationPreference"
           },
           "system.announcement": {
@@ -2317,7 +2804,22 @@
           "requisition.submitted": {
             "$ref": "#/components/schemas/NotificationPreference"
           },
+          "requisition.changes_requested": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "requisition.resubmitted": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "requisition.withdrawn": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "requisition.cancelled": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
           "attachment.uploaded": {
+            "$ref": "#/components/schemas/NotificationPreference"
+          },
+          "collaboration.mentioned": {
             "$ref": "#/components/schemas/NotificationPreference"
           },
           "system.announcement": {
@@ -3061,6 +3563,161 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/RequisitionIntakeOptions"
+          }
+        }
+      },
+      "RequestRequisitionChangesRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "requestedFields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "default": []
+          }
+        }
+      },
+      "ReasonedRequisitionActionRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      },
+      "CollaborationMention": {
+        "type": "object",
+        "required": [
+          "id",
+          "mentionedUser"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mentionedUser": {
+            "$ref": "#/components/schemas/UserSummary"
+          }
+        }
+      },
+      "CollaborationComment": {
+        "type": "object",
+        "required": [
+          "id",
+          "subjectType",
+          "subjectId",
+          "author",
+          "body",
+          "mentions",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": [
+              "requisition"
+            ]
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "body": {
+            "type": "string"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollaborationMention"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CollaborationCommentListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollaborationComment"
+            }
+          }
+        }
+      },
+      "CreateCollaborationCommentRequest": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "mentionedUserIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      },
+      "CollaborationCommentResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CollaborationComment"
+          }
+        }
+      },
+      "CollaborationMentionCandidateListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummary"
+            }
           }
         }
       }

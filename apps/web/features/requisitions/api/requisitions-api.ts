@@ -1,17 +1,28 @@
 import {
+  cancelRequisition as cancelRequisitionEndpoint,
   applyRequisitionTemplate as applyRequisitionTemplateEndpoint,
+  createRequisitionComment as createRequisitionCommentEndpoint,
   createRequisition,
   getRequisition as getRequisitionEndpoint,
   getRequisitionIntakeOptions as getRequisitionIntakeOptionsEndpoint,
   listRequisitionActivity,
+  listRequisitionComments as listRequisitionCommentsEndpoint,
+  listRequisitionMentionCandidates as listRequisitionMentionCandidatesEndpoint,
   listRequisitionLineItemSuggestions as listRequisitionLineItemSuggestionsEndpoint,
   listRequisitionTemplates as listRequisitionTemplatesEndpoint,
   listRequisitions as listRequisitionsEndpoint,
+  requestRequisitionChanges as requestRequisitionChangesEndpoint,
+  resubmitRequisition as resubmitRequisitionEndpoint,
   submitRequisition as submitRequisitionEndpoint,
+  withdrawRequisition as withdrawRequisitionEndpoint,
   updateRequisition,
 } from "@cognify/api-client/endpoints";
 import type {
+  CollaborationComment as ApiCollaborationComment,
+  CollaborationCommentListResponse as ApiCollaborationCommentListResponse,
+  CollaborationMention as ApiCollaborationMention,
   ApplyRequisitionTemplateRequest,
+  CreateCollaborationCommentRequest as ApiCreateCollaborationCommentRequest,
   ListRequisitionActivity200,
   ListRequisitionsParams,
   Requisition as ApiRequisition,
@@ -19,29 +30,49 @@ import type {
   RequisitionItemSuggestion as ApiRequisitionItemSuggestion,
   RequisitionListResponse as ApiRequisitionListResponse,
   RequisitionTemplate as ApiRequisitionTemplate,
+  ReasonedRequisitionActionRequest as ApiReasonedRequisitionActionRequest,
+  RequestRequisitionChangesRequest as ApiRequestRequisitionChangesRequest,
+  UserSummary as ApiUserSummary,
 } from "@cognify/api-client/schemas";
 import type {
+  CollaborationComment,
+  CollaborationMention,
   RequisitionIntakeOptions,
   Requisition,
   RequisitionFormValues,
   RequisitionLineItem,
   RequisitionListResponse,
   RequisitionItemSuggestion,
+  RequisitionQueuePreset,
+  RequisitionStatus,
   RequisitionTemplate,
   RequisitionTemplateMode,
+  UserSummary,
 } from "../types/requisition-view-model";
 import { getStoredActiveTenantId } from "../../identity/api/identity-api";
 
 type RequisitionQuery = {
   search?: string;
-  status?: string;
+  status?: RequisitionStatus | "";
   owner?: string;
+  requester?: string;
+  department?: string;
+  amountMin?: string;
+  amountMax?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
+  queuePreset?: RequisitionQueuePreset;
   neededByFrom?: string;
   neededByTo?: string;
+  page?: number;
+  perPage?: number;
 };
 
 export async function listRequisitions(query: RequisitionQuery = {}) {
-  const response = await listRequisitionsEndpoint(query as ListRequisitionsParams, withActiveTenantHeader());
+  const response = await listRequisitionsEndpoint(
+    query as ListRequisitionsParams,
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return mapRequisitionListResponse(response.data);
 }
@@ -108,7 +139,10 @@ export async function listRequisitionLineItemSuggestions(query: {
   category?: string;
   currency?: string;
 }) {
-  const response = await listRequisitionLineItemSuggestionsEndpoint(query, withActiveTenantHeader());
+  const response = await listRequisitionLineItemSuggestionsEndpoint(
+    query,
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return response.data.data.map(mapRequisitionItemSuggestion);
 }
@@ -123,6 +157,75 @@ export async function submitRequisition(requisitionId: string) {
   const response = await submitRequisitionEndpoint(requisitionId, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return { data: mapRequisition(response.data.data) };
+}
+
+export async function requestRequisitionChanges(
+  requisitionId: string,
+  values: ApiRequestRequisitionChangesRequest & { requestedFields: string[] },
+) {
+  const response = await requestRequisitionChangesEndpoint(
+    requisitionId,
+    values,
+    withActiveTenantHeader(),
+  );
+  if (response.status !== 200) throw response.data;
+  return { data: mapRequisition(response.data.data) };
+}
+
+export async function resubmitRequisition(requisitionId: string) {
+  const response = await resubmitRequisitionEndpoint(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return { data: mapRequisition(response.data.data) };
+}
+
+export async function withdrawRequisition(
+  requisitionId: string,
+  values: ApiReasonedRequisitionActionRequest,
+) {
+  const response = await withdrawRequisitionEndpoint(
+    requisitionId,
+    values,
+    withActiveTenantHeader(),
+  );
+  if (response.status !== 200) throw response.data;
+  return { data: mapRequisition(response.data.data) };
+}
+
+export async function cancelRequisition(
+  requisitionId: string,
+  values: ApiReasonedRequisitionActionRequest,
+) {
+  const response = await cancelRequisitionEndpoint(requisitionId, values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return { data: mapRequisition(response.data.data) };
+}
+
+export async function listRequisitionComments(requisitionId: string) {
+  const response = await listRequisitionCommentsEndpoint(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return mapCollaborationComments(response.data.data);
+}
+
+export async function createRequisitionComment(
+  requisitionId: string,
+  values: ApiCreateCollaborationCommentRequest & { mentionedUserIds: string[] },
+) {
+  const response = await createRequisitionCommentEndpoint(
+    requisitionId,
+    values,
+    withActiveTenantHeader(),
+  );
+  if (response.status !== 201) throw response.data;
+  return mapCollaborationComment(response.data.data);
+}
+
+export async function listRequisitionMentionCandidates(requisitionId: string) {
+  const response = await listRequisitionMentionCandidatesEndpoint(
+    requisitionId,
+    withActiveTenantHeader(),
+  );
+  if (response.status !== 200) throw response.data;
+  return response.data.data.map(mapUserSummary);
 }
 
 function withActiveTenantHeader(): RequestInit | undefined {
@@ -168,11 +271,25 @@ function mapRequisition(requisition: ApiRequisition): Requisition {
     createdAt: requisition.createdAt,
     updatedAt: requisition.updatedAt,
     submittedAt: requisition.submittedAt ?? undefined,
+    changesRequestedAt: requisition.changesRequestedAt ?? undefined,
+    changesRequestedBy: requisition.changesRequestedBy
+      ? mapUserSummary(requisition.changesRequestedBy)
+      : null,
+    changeRequestReason: requisition.changeRequestReason ?? undefined,
+    changeRequestFields: requisition.changeRequestFields,
+    withdrawnAt: requisition.withdrawnAt ?? undefined,
+    withdrawnBy: requisition.withdrawnBy ? mapUserSummary(requisition.withdrawnBy) : null,
+    withdrawalReason: requisition.withdrawalReason ?? undefined,
+    cancelledAt: requisition.cancelledAt ?? undefined,
+    cancelledBy: requisition.cancelledBy ? mapUserSummary(requisition.cancelledBy) : null,
+    cancellationReason: requisition.cancellationReason ?? undefined,
     permissions: requisition.permissions,
   };
 }
 
-function mapRequisitionLineItem(lineItem: ApiRequisition["lineItems"][number]): RequisitionLineItem {
+function mapRequisitionLineItem(
+  lineItem: ApiRequisition["lineItems"][number],
+): RequisitionLineItem {
   return {
     id: lineItem.id ?? undefined,
     name: lineItem.name,
@@ -198,7 +315,9 @@ function mapRequisitionTemplate(template: ApiRequisitionTemplate): RequisitionTe
 function mapTemplateDefaults(defaults: unknown): Partial<RequisitionFormValues> {
   const record = toRecord(defaults);
   const lineItems = Array.isArray(record.lineItems)
-    ? record.lineItems.map(mapTemplateLineItem).filter((lineItem): lineItem is RequisitionLineItem => lineItem !== null)
+    ? record.lineItems
+        .map(mapTemplateLineItem)
+        .filter((lineItem): lineItem is RequisitionLineItem => lineItem !== null)
     : undefined;
 
   return {
@@ -258,6 +377,40 @@ function mapRequisitionIntakeOptions(
     })),
     currencies: [...options.currencies],
     units: [...options.units],
+  };
+}
+
+function mapCollaborationComments(
+  comments: ApiCollaborationCommentListResponse["data"],
+): CollaborationComment[] {
+  return comments.map(mapCollaborationComment);
+}
+
+function mapCollaborationComment(comment: ApiCollaborationComment): CollaborationComment {
+  return {
+    id: comment.id,
+    subjectType: comment.subjectType,
+    subjectId: comment.subjectId,
+    author: mapUserSummary(comment.author),
+    body: comment.body,
+    mentions: comment.mentions.map(mapCollaborationMention),
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt,
+  };
+}
+
+function mapCollaborationMention(mention: ApiCollaborationMention): CollaborationMention {
+  return {
+    id: mention.id,
+    mentionedUser: mapUserSummary(mention.mentionedUser),
+  };
+}
+
+function mapUserSummary(user: ApiUserSummary): UserSummary {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email ?? "",
   };
 }
 

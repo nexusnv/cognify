@@ -9,4 +9,10 @@ export interface RequisitionPermissions {
   canUpdate: boolean;
   canSubmit: boolean;
   canViewActivity: boolean;
+  canResubmit: boolean;
+  canRequestChanges: boolean;
+  canWithdraw: boolean;
+  canCancel: boolean;
+  canComment: boolean;
+  canMention: boolean;
 }

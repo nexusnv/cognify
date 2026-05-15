@@ -5,11 +5,25 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { RequisitionStatus } from "./requisitionStatus";
+import type { ListRequisitionsQueuePreset } from "./listRequisitionsQueuePreset";
 
 export type ListRequisitionsParams = {
   search?: string;
   status?: RequisitionStatus;
   owner?: string;
+  requester?: string;
+  department?: string;
+  /**
+   * @minimum 0
+   */
+  amountMin?: number;
+  /**
+   * @minimum 0
+   */
+  amountMax?: number;
+  updatedFrom?: string;
+  updatedTo?: string;
+  queuePreset?: ListRequisitionsQueuePreset;
   neededByFrom?: string;
   neededByTo?: string;
   /**

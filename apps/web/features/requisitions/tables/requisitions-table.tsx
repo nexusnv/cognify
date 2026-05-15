@@ -41,10 +41,26 @@ const requisitionColumns: DataTableColumn<Requisition>[] = [
     cell: (requisition) => <span className="text-muted-foreground">{requisition.requester.name}</span>,
   },
   {
+    id: "department",
+    header: "Department",
+    widthClassName: "w-36",
+    cell: (requisition) => (
+      <span className="text-muted-foreground">{requisition.department ?? "Unassigned"}</span>
+    ),
+  },
+  {
     id: "neededByDate",
     header: "Needed by",
     widthClassName: "w-32",
     cell: (requisition) => <span className="tabular-nums">{requisition.neededByDate}</span>,
+  },
+  {
+    id: "updatedAt",
+    header: "Updated",
+    widthClassName: "w-40",
+    cell: (requisition) => (
+      <span className="text-muted-foreground">{formatDateLabel(requisition.updatedAt)}</span>
+    ),
   },
   {
     id: "estimatedTotal",
@@ -131,10 +147,20 @@ export function RequisitionsTable({
               {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
             </span>
           </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span>{requisition.department ?? "No department"}</span>
+            <span>Updated {formatDateLabel(requisition.updatedAt)}</span>
+          </div>
         </Link>
       )}
     />
   );
+}
+
+function formatDateLabel(value: string) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
 }
 
 function requisitionPanel(requisition: Requisition) {

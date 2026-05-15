@@ -2,16 +2,23 @@
 
 namespace Domains\Requisition\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Requisition\CreateRequisitionRequest;
 use App\Http\Requests\Requisition\UpdateRequisitionRequest;
-use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
+use App\Tenancy\Tenant;
 use Domains\Requisition\Actions\ApplyRequisitionTemplate;
+use Domains\Requisition\Actions\CancelRequisition;
 use Domains\Requisition\Actions\CreateRequisitionDraft;
+use Domains\Requisition\Actions\RequestRequisitionChanges;
+use Domains\Requisition\Actions\ResubmitRequisition;
 use Domains\Requisition\Actions\SubmitRequisition;
 use Domains\Requisition\Actions\UpdateRequisitionDraft;
+use Domains\Requisition\Actions\WithdrawRequisition;
 use Domains\Requisition\Exceptions\DraftConflictException;
 use Domains\Requisition\Http\Requests\ApplyRequisitionTemplateRequest;
+use Domains\Requisition\Http\Requests\ReasonedRequisitionActionRequest;
+use Domains\Requisition\Http\Requests\RequestRequisitionChangesRequest;
 use Domains\Requisition\Http\Resources\RequisitionResource;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Models\RequisitionTemplate;
@@ -28,16 +35,19 @@ class RequisitionController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $user = $request->user();
         $role = $currentTenant->roleFor($user);
+        $amountMin = $request->query('amountMin');
+        $amountMax = $request->query('amountMax');
 
         $query = Requisition::query()
-            ->with(['requester', 'lineItems'])
-            ->where('tenant_id', $tenant->id)
-            ->latest('updated_at');
+            ->select('requisitions.*')
+            ->with(['requester', 'lineItems', 'changesRequestedBy', 'withdrawnBy', 'cancelledBy'])
+            ->where('requisitions.tenant_id', $tenant->id)
+            ->latest('requisitions.updated_at');
 
         if ($role === 'buyer' || $role === 'approver') {
-            $query->where('status', RequisitionStatus::Submitted);
+            $query->where('requisitions.status', RequisitionStatus::Submitted);
         } elseif ($role !== 'admin') {
-            $query->where('requester_id', $user->id);
+            $query->where('requisitions.requester_id', $user->id);
         }
 
         $query->when($request->query('search'), function ($query, string $search): void {
@@ -47,10 +57,34 @@ class RequisitionController extends Controller
             });
         });
 
-        $query->when($request->query('status'), fn ($query, string $status) => $query->where('status', $status));
-        $query->when($request->query('owner'), fn ($query, string $owner) => $query->where('requester_id', $owner));
-        $query->when($request->query('neededByFrom'), fn ($query, string $date) => $query->whereDate('needed_by_date', '>=', $date));
-        $query->when($request->query('neededByTo'), fn ($query, string $date) => $query->whereDate('needed_by_date', '<=', $date));
+        $query->when($request->query('status'), fn ($query, string $status) => $query->where('requisitions.status', $status));
+        $query->when($request->query('requester'), fn ($query, string $requester) => $query->where('requisitions.requester_id', $requester));
+        $query->when($request->query('owner'), fn ($query, string $owner) => $query->where('requisitions.requester_id', $owner));
+        $query->when($request->query('department'), fn ($query, string $department) => $query->where('requisitions.department', $department));
+        $query->when($request->query('neededByFrom'), fn ($query, string $date) => $query->whereDate('requisitions.needed_by_date', '>=', $date));
+        $query->when($request->query('neededByTo'), fn ($query, string $date) => $query->whereDate('requisitions.needed_by_date', '<=', $date));
+        $query->when($request->query('updatedFrom'), fn ($query, string $date) => $query->whereDate('requisitions.updated_at', '>=', $date));
+        $query->when($request->query('updatedTo'), fn ($query, string $date) => $query->whereDate('requisitions.updated_at', '<=', $date));
+        if ($amountMin !== null || $amountMax !== null) {
+            $estimatedTotalSql = '(select cast(coalesce(sum(quantity * estimated_unit_price), 0) as real) from requisition_line_items where requisition_line_items.requisition_id = requisitions.id)';
+
+            if ($amountMin !== null && $amountMax !== null) {
+                $query->whereRaw("{$estimatedTotalSql} between ? and ?", [(float) $amountMin, (float) $amountMax]);
+            } elseif ($amountMin !== null) {
+                $query->whereRaw("{$estimatedTotalSql} >= ?", [(float) $amountMin]);
+            } else {
+                $query->whereRaw("{$estimatedTotalSql} <= ?", [(float) $amountMax]);
+            }
+        }
+
+        match ($request->query('queuePreset')) {
+            'my_drafts' => $query->where('requisitions.requester_id', $user->id)->where('requisitions.status', RequisitionStatus::Draft),
+            'submitted' => $query->where('requisitions.status', RequisitionStatus::Submitted),
+            'needs_my_correction' => $query->where('requisitions.requester_id', $user->id)->where('requisitions.status', RequisitionStatus::ChangesRequested),
+            'buyer_review' => $query->where('requisitions.status', RequisitionStatus::Submitted),
+            'stopped' => $query->whereIn('requisitions.status', [RequisitionStatus::Withdrawn, RequisitionStatus::Cancelled]),
+            default => null,
+        };
 
         $perPage = max(1, min($request->integer('perPage', 15), 100));
         $paginator = $query->paginate($perPage);
@@ -88,7 +122,7 @@ class RequisitionController extends Controller
 
         $this->authorize('view', $requisition);
 
-        return new RequisitionResource($requisition->load(['requester', 'lineItems']));
+        return new RequisitionResource($requisition->load(['requester', 'lineItems', 'changesRequestedBy', 'withdrawnBy', 'cancelledBy']));
     }
 
     public function update(
@@ -166,6 +200,77 @@ class RequisitionController extends Controller
         return new RequisitionResource($requisition);
     }
 
+    public function requestChanges(
+        RequestRequisitionChangesRequest $request,
+        CurrentTenant $currentTenant,
+        RequestRequisitionChanges $requestRequisitionChanges,
+        int $requisition,
+    ): RequisitionResource {
+        $requisition = $this->findTenantRequisition($currentTenant, $requisition);
+
+        $this->authorize('requestChanges', $requisition);
+
+        return new RequisitionResource($requestRequisitionChanges->handle(
+            $this->tenantOrAbort($currentTenant),
+            $request->user(),
+            $requisition,
+            $request->validated(),
+        ));
+    }
+
+    public function resubmit(
+        Request $request,
+        CurrentTenant $currentTenant,
+        ResubmitRequisition $resubmitRequisition,
+        int $requisition,
+    ): RequisitionResource {
+        $requisition = $this->findTenantRequisition($currentTenant, $requisition);
+
+        $this->authorize('resubmit', $requisition);
+
+        return new RequisitionResource($resubmitRequisition->handle(
+            $this->tenantOrAbort($currentTenant),
+            $request->user(),
+            $requisition,
+        ));
+    }
+
+    public function withdraw(
+        ReasonedRequisitionActionRequest $request,
+        CurrentTenant $currentTenant,
+        WithdrawRequisition $withdrawRequisition,
+        int $requisition,
+    ): RequisitionResource {
+        $requisition = $this->findTenantRequisition($currentTenant, $requisition);
+
+        $this->authorize('withdraw', $requisition);
+
+        return new RequisitionResource($withdrawRequisition->handle(
+            $this->tenantOrAbort($currentTenant),
+            $request->user(),
+            $requisition,
+            (string) $request->validated('reason'),
+        ));
+    }
+
+    public function cancel(
+        ReasonedRequisitionActionRequest $request,
+        CurrentTenant $currentTenant,
+        CancelRequisition $cancelRequisition,
+        int $requisition,
+    ): RequisitionResource {
+        $requisition = $this->findTenantRequisition($currentTenant, $requisition);
+
+        $this->authorize('cancel', $requisition);
+
+        return new RequisitionResource($cancelRequisition->handle(
+            $this->tenantOrAbort($currentTenant),
+            $request->user(),
+            $requisition,
+            (string) $request->validated('reason'),
+        ));
+    }
+
     private function findTenantRequisition(CurrentTenant $currentTenant, int $id): Requisition
     {
         $tenant = $this->tenantOrAbort($currentTenant);
@@ -175,7 +280,7 @@ class RequisitionController extends Controller
             ->findOrFail($id);
     }
 
-    private function tenantOrAbort(CurrentTenant $currentTenant): \App\Tenancy\Tenant
+    private function tenantOrAbort(CurrentTenant $currentTenant): Tenant
     {
         $tenant = $currentTenant->get();
         abort_if($tenant === null, 403, 'Tenant context missing.');

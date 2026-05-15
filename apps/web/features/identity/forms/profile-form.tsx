@@ -19,8 +19,10 @@ function getProfileFormValues(profile: CurrentUserProfile): ProfileFormValues {
     timezone: profile.timezone,
     locale: profile.locale,
     theme: profile.theme,
-    notificationPreferences:
-      profile.notificationPreferences ?? defaultNotificationPreferences,
+    notificationPreferences: {
+      ...defaultNotificationPreferences,
+      ...(profile.notificationPreferences ?? {}),
+    },
   };
 }
 

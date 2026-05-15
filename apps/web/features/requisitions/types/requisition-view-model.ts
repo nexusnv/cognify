@@ -4,7 +4,13 @@ import type {
   RequisitionTemplate as GeneratedRequisitionTemplate,
 } from "@cognify/api-client";
 
-export type RequisitionStatus = "draft" | "submitted" | "pending_approval";
+export type RequisitionStatus =
+  | "draft"
+  | "submitted"
+  | "pending_approval"
+  | "changes_requested"
+  | "withdrawn"
+  | "cancelled";
 
 export type UserSummary = {
   id: string;
@@ -15,7 +21,37 @@ export type UserSummary = {
 export type RequisitionPermissions = {
   canUpdate: boolean;
   canSubmit: boolean;
+  canResubmit: boolean;
+  canRequestChanges: boolean;
+  canWithdraw: boolean;
+  canCancel: boolean;
+  canComment: boolean;
+  canMention: boolean;
   canViewActivity: boolean;
+};
+
+export type RequisitionQueuePreset =
+  | "my_drafts"
+  | "submitted"
+  | "needs_my_correction"
+  | "buyer_review"
+  | "stopped"
+  | "all_visible";
+
+export type CollaborationMention = {
+  id: string;
+  mentionedUser: UserSummary;
+};
+
+export type CollaborationComment = {
+  id: string;
+  subjectType: "requisition";
+  subjectId: string;
+  author: UserSummary;
+  body: string;
+  mentions: CollaborationMention[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type RequisitionTemplateMode = "fill-empty" | "replace";
@@ -59,6 +95,16 @@ export type Requisition = {
   createdAt: string;
   updatedAt: string;
   submittedAt?: string | null;
+  changesRequestedAt?: string | null;
+  changesRequestedBy?: UserSummary | null;
+  changeRequestReason?: string | null;
+  changeRequestFields?: string[];
+  withdrawnAt?: string | null;
+  withdrawnBy?: UserSummary | null;
+  withdrawalReason?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: UserSummary | null;
+  cancellationReason?: string | null;
   permissions: RequisitionPermissions;
 };
 

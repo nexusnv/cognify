@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Notifications\NotificationRecord;
 use App\Notifications\NotificationData;
+use App\Notifications\NotificationPreferenceDefaults;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -218,11 +219,10 @@ class NotificationApiTest extends TestCase
             ->getJson('/api/me')
             ->assertOk();
 
-        $this->assertSame([
-            'requisition.submitted' => ['inApp' => true],
-            'attachment.uploaded' => ['inApp' => true],
-            'system.announcement' => ['inApp' => true],
-        ], $response->json('data.user.notificationPreferences'));
+        $this->assertSame(
+            NotificationPreferenceDefaults::defaults(),
+            $response->json('data.user.notificationPreferences'),
+        );
     }
 
     public function test_profile_update_validates_and_persists_notification_preferences(): void
@@ -280,11 +280,12 @@ class NotificationApiTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertSame([
-            'requisition.submitted' => ['inApp' => true],
-            'attachment.uploaded' => ['inApp' => false],
-            'system.announcement' => ['inApp' => false],
-        ], $user->fresh()->notification_preferences);
+        $expected = NotificationPreferenceDefaults::defaults();
+        $expected['requisition.submitted']['inApp'] = true;
+        $expected['attachment.uploaded']['inApp'] = false;
+        $expected['system.announcement']['inApp'] = false;
+
+        $this->assertSame($expected, $user->fresh()->notification_preferences);
     }
 
     public function test_profile_update_rejects_unknown_notification_preference_keys(): void

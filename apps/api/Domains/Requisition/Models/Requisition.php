@@ -28,6 +28,16 @@ class Requisition extends Model
         'status',
         'lock_version',
         'submitted_at',
+        'changes_requested_at',
+        'changes_requested_by_id',
+        'change_request_reason',
+        'change_request_fields',
+        'withdrawn_at',
+        'withdrawn_by_id',
+        'withdrawal_reason',
+        'cancelled_at',
+        'cancelled_by_id',
+        'cancellation_reason',
     ];
 
     protected function casts(): array
@@ -35,6 +45,10 @@ class Requisition extends Model
         return [
             'needed_by_date' => 'date',
             'submitted_at' => 'datetime',
+            'changes_requested_at' => 'datetime',
+            'change_request_fields' => 'array',
+            'withdrawn_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'lock_version' => 'integer',
             'status' => RequisitionStatus::class,
         ];
@@ -70,5 +84,29 @@ class Requisition extends Model
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function changesRequestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'changes_requested_by_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function withdrawnBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'withdrawn_by_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by_id');
     }
 }

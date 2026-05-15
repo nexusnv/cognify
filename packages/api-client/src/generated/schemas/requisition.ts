@@ -16,6 +16,15 @@ import type { UserSummary } from "./userSummary";
 import type { RequisitionLineItem } from "./requisitionLineItem";
 import type { RequisitionSubmittedAt } from "./requisitionSubmittedAt";
 import type { RequisitionPermissions } from "./requisitionPermissions";
+import type { RequisitionChangesRequestedAt } from "./requisitionChangesRequestedAt";
+import type { RequisitionChangesRequestedBy } from "./requisitionChangesRequestedBy";
+import type { RequisitionChangeRequestReason } from "./requisitionChangeRequestReason";
+import type { RequisitionWithdrawnAt } from "./requisitionWithdrawnAt";
+import type { RequisitionWithdrawnBy } from "./requisitionWithdrawnBy";
+import type { RequisitionWithdrawalReason } from "./requisitionWithdrawalReason";
+import type { RequisitionCancelledAt } from "./requisitionCancelledAt";
+import type { RequisitionCancelledBy } from "./requisitionCancelledBy";
+import type { RequisitionCancellationReason } from "./requisitionCancellationReason";
 
 export interface Requisition {
   id: string;
@@ -44,4 +53,14 @@ export interface Requisition {
   permissions: RequisitionPermissions;
   /** @minimum 0 */
   lockVersion: number;
+  changesRequestedAt: RequisitionChangesRequestedAt;
+  changesRequestedBy: RequisitionChangesRequestedBy;
+  changeRequestReason: RequisitionChangeRequestReason;
+  changeRequestFields: string[];
+  withdrawnAt: RequisitionWithdrawnAt;
+  withdrawnBy: RequisitionWithdrawnBy;
+  withdrawalReason: RequisitionWithdrawalReason;
+  cancelledAt: RequisitionCancelledAt;
+  cancelledBy: RequisitionCancelledBy;
+  cancellationReason: RequisitionCancellationReason;
 }

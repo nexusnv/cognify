@@ -3,27 +3,42 @@ import type { AuditEvent } from "@cognify/api-client/schemas";
 import { calculateEstimatedTotal } from "../utils/requisition-totals";
 import {
   requisitionActivityFixtures,
+  requisitionCommentFixtures,
   requisitionFixtures,
   requisitionIntakeOptionsFixture,
   requisitionItemSuggestionFixtures,
+  requisitionMentionCandidateFixtures,
   requisitionTemplateFixtures,
 } from "./requisitions-fixtures";
 import type {
+  CollaborationComment,
   Requisition,
   RequisitionFormValues,
+  RequisitionStatus,
   RequisitionTemplate,
+  UserSummary,
 } from "../types/requisition-view-model";
 
 let requisitions = [...requisitionFixtures];
 let activity = structuredClone(requisitionActivityFixtures);
+let comments = structuredClone(requisitionCommentFixtures);
 let requisitionSequence = requisitionFixtures.length;
 let activitySequence = 0;
+let commentSequence = Object.values(requisitionCommentFixtures).reduce(
+  (total, requisitionComments) => total + requisitionComments.length,
+  0,
+);
 
 export function resetRequisitionMockState() {
   requisitions = [...requisitionFixtures];
   activity = structuredClone(requisitionActivityFixtures);
+  comments = structuredClone(requisitionCommentFixtures);
   requisitionSequence = requisitionFixtures.length;
   activitySequence = 0;
+  commentSequence = Object.values(requisitionCommentFixtures).reduce(
+    (total, requisitionComments) => total + requisitionComments.length,
+    0,
+  );
 }
 
 export const requisitionsHandlers = [
@@ -60,14 +75,37 @@ export const requisitionsHandlers = [
     const url = new URL(request.url);
     const search = url.searchParams.get("search")?.toLowerCase();
     const status = url.searchParams.get("status");
+    const department = url.searchParams.get("department")?.toLowerCase();
+    const queuePreset = url.searchParams.get("queuePreset");
+    const amountMin = toOptionalNumber(url.searchParams.get("amountMin"));
+    const amountMax = toOptionalNumber(url.searchParams.get("amountMax"));
+    const updatedFrom = url.searchParams.get("updatedFrom");
+    const updatedTo = url.searchParams.get("updatedTo");
+
     const data = requisitions.filter((requisition) => {
       const matchesSearch =
         !search ||
         requisition.title.toLowerCase().includes(search) ||
         requisition.number.toLowerCase().includes(search);
       const matchesStatus = !status || requisition.status === status;
+      const matchesDepartment =
+        !department || requisition.department?.toLowerCase().includes(department);
+      const matchesAmountMin = amountMin === undefined || requisition.estimatedTotal >= amountMin;
+      const matchesAmountMax = amountMax === undefined || requisition.estimatedTotal <= amountMax;
+      const matchesUpdatedFrom = !updatedFrom || requisition.updatedAt >= updatedFrom;
+      const matchesUpdatedTo = !updatedTo || requisition.updatedAt <= updatedTo;
+      const matchesQueuePreset = matchesQueueFilter(requisition, queuePreset);
 
-      return matchesSearch && matchesStatus;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesDepartment &&
+        matchesAmountMin &&
+        matchesAmountMax &&
+        matchesUpdatedFrom &&
+        matchesUpdatedTo &&
+        matchesQueuePreset
+      );
     });
 
     return HttpResponse.json({
@@ -134,7 +172,7 @@ export const requisitionsHandlers = [
       );
     }
 
-    if (existing.status !== "draft") {
+    if (existing.status !== "draft" && existing.status !== "changes_requested") {
       return HttpResponse.json(
         { message: "Submitted requisitions cannot be edited.", code: "invalid_state" },
         { status: 409 },
@@ -166,14 +204,27 @@ export const requisitionsHandlers = [
     const updated = buildRequisition(
       values,
       existing.id,
-      "draft",
+      existing.status,
       existing.number,
       existing.createdAt,
       existing.lockVersion + 1,
+      {
+        submittedAt: existing.submittedAt ?? null,
+        changesRequestedAt: existing.changesRequestedAt ?? null,
+        changesRequestedBy: existing.changesRequestedBy ?? null,
+        changeRequestReason: existing.changeRequestReason ?? null,
+        changeRequestFields: existing.changeRequestFields,
+        withdrawnAt: existing.withdrawnAt ?? null,
+        withdrawnBy: existing.withdrawnBy ?? null,
+        withdrawalReason: existing.withdrawalReason ?? null,
+        cancelledAt: existing.cancelledAt ?? null,
+        cancelledBy: existing.cancelledBy ?? null,
+        cancellationReason: existing.cancellationReason ?? null,
+      },
     );
-    requisitions = requisitions.map((item) => (item.id === existing.id ? updated : item));
-    activity[updated.id] = [
-      ...(activity[updated.id] ?? []),
+    updateRequisitionState(updated);
+    pushActivity(
+      updated.id,
       buildActivityEvent(
         "requisition.updated",
         "Draft updated",
@@ -182,7 +233,7 @@ export const requisitionsHandlers = [
         existing,
         updated,
       ),
-    ];
+    );
 
     return HttpResponse.json({ data: updated });
   }),
@@ -202,9 +253,9 @@ export const requisitionsHandlers = [
       );
     }
 
-    if (existing.status !== "draft") {
+    if (existing.status !== "draft" && existing.status !== "changes_requested") {
       return HttpResponse.json(
-        { message: "Only draft requisitions can receive templates.", code: "invalid_state" },
+        { message: "Only editable requisitions can receive templates.", code: "invalid_state" },
         { status: 409 },
       );
     }
@@ -243,15 +294,28 @@ export const requisitionsHandlers = [
     const updated = buildRequisition(
       mergedValues,
       existing.id,
-      "draft",
+      existing.status,
       existing.number,
       existing.createdAt,
       existing.lockVersion + 1,
+      {
+        submittedAt: existing.submittedAt ?? null,
+        changesRequestedAt: existing.changesRequestedAt ?? null,
+        changesRequestedBy: existing.changesRequestedBy ?? null,
+        changeRequestReason: existing.changeRequestReason ?? null,
+        changeRequestFields: existing.changeRequestFields,
+        withdrawnAt: existing.withdrawnAt ?? null,
+        withdrawnBy: existing.withdrawnBy ?? null,
+        withdrawalReason: existing.withdrawalReason ?? null,
+        cancelledAt: existing.cancelledAt ?? null,
+        cancelledBy: existing.cancelledBy ?? null,
+        cancellationReason: existing.cancellationReason ?? null,
+      },
     );
 
-    requisitions = requisitions.map((item) => (item.id === existing.id ? updated : item));
-    activity[updated.id] = [
-      ...(activity[updated.id] ?? []),
+    updateRequisitionState(updated);
+    pushActivity(
+      updated.id,
       buildActivityEvent(
         "requisition.template_applied",
         "Template applied",
@@ -260,7 +324,7 @@ export const requisitionsHandlers = [
         existing,
         updated,
       ),
-    ];
+    );
 
     return HttpResponse.json({ data: updated });
   }),
@@ -292,11 +356,14 @@ export const requisitionsHandlers = [
         ...existing.permissions,
         canUpdate: false,
         canSubmit: false,
+        canResubmit: false,
+        canRequestChanges: true,
+        canWithdraw: false,
       },
     };
-    requisitions = requisitions.map((item) => (item.id === existing.id ? submitted : item));
-    activity[submitted.id] = [
-      ...(activity[submitted.id] ?? []),
+    updateRequisitionState(submitted);
+    pushActivity(
+      submitted.id,
       buildActivityEvent(
         "requisition.submitted",
         "Submitted for review",
@@ -305,13 +372,318 @@ export const requisitionsHandlers = [
         existing,
         submitted,
       ),
-    ];
+    );
 
     return HttpResponse.json({ data: submitted });
   }),
 
+  http.post("/api/requisitions/:requisitionId/request-changes", async ({ params, request }) => {
+    const requisitionId = String(params.requisitionId);
+    const existing = requisitions.find((item) => item.id === requisitionId);
+    const body = (await request.json()) as { reason?: string; requestedFields?: string[] };
+
+    if (!existing) {
+      return errorResponse(404, "not_found", "Requisition not found.");
+    }
+
+    if (existing.status !== "submitted") {
+      return errorResponse(
+        409,
+        "conflict",
+        "Only submitted requisitions can receive change requests.",
+      );
+    }
+
+    const updatedAt = new Date().toISOString();
+    const updated: Requisition = {
+      ...existing,
+      status: "changes_requested",
+      updatedAt,
+      changesRequestedAt: updatedAt,
+      changesRequestedBy: requisitionMentionCandidateFixtures[1] ?? null,
+      changeRequestReason: body.reason?.trim() ?? "",
+      changeRequestFields: (body.requestedFields ?? []).filter(Boolean),
+      permissions: {
+        ...existing.permissions,
+        canUpdate: true,
+        canSubmit: false,
+        canResubmit: true,
+        canRequestChanges: false,
+        canWithdraw: true,
+      },
+    };
+
+    updateRequisitionState(updated);
+    pushActivity(
+      requisitionId,
+      buildActivityEvent(
+        "requisition.changes_requested",
+        "Changes requested",
+        updated,
+        updatedAt,
+        existing,
+        updated,
+        {
+          requestedFields: updated.changeRequestFields,
+        },
+      ),
+    );
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.post("/api/requisitions/:requisitionId/resubmit", ({ params }) => {
+    const requisitionId = String(params.requisitionId);
+    const existing = requisitions.find((item) => item.id === requisitionId);
+
+    if (!existing) {
+      return errorResponse(404, "not_found", "Requisition not found.");
+    }
+
+    if (existing.status !== "changes_requested") {
+      return errorResponse(409, "conflict", "Only change-requested requisitions can be resubmitted.");
+    }
+
+    const updatedAt = new Date().toISOString();
+    const updated: Requisition = {
+      ...existing,
+      status: "submitted",
+      updatedAt,
+      submittedAt: updatedAt,
+      changesRequestedAt: null,
+      changesRequestedBy: null,
+      changeRequestReason: null,
+      changeRequestFields: [],
+      permissions: {
+        ...existing.permissions,
+        canUpdate: false,
+        canSubmit: false,
+        canResubmit: false,
+        canRequestChanges: true,
+        canWithdraw: false,
+      },
+    };
+
+    updateRequisitionState(updated);
+    pushActivity(
+      requisitionId,
+      buildActivityEvent(
+        "requisition.resubmitted",
+        "Requisition resubmitted",
+        updated,
+        updatedAt,
+        existing,
+        updated,
+      ),
+    );
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.post("/api/requisitions/:requisitionId/withdraw", async ({ params, request }) => {
+    const requisitionId = String(params.requisitionId);
+    const existing = requisitions.find((item) => item.id === requisitionId);
+    const body = (await request.json()) as { reason?: string };
+
+    if (!existing) {
+      return errorResponse(404, "not_found", "Requisition not found.");
+    }
+
+    if (existing.status === "withdrawn" || existing.status === "cancelled") {
+      return errorResponse(409, "conflict", "Stopped requisitions cannot be changed.");
+    }
+
+    const updatedAt = new Date().toISOString();
+    const updated: Requisition = {
+      ...existing,
+      status: "withdrawn",
+      updatedAt,
+      withdrawnAt: updatedAt,
+      withdrawnBy: requisitionMentionCandidateFixtures[0] ?? null,
+      withdrawalReason: body.reason?.trim() ?? "",
+      permissions: {
+        ...existing.permissions,
+        canUpdate: false,
+        canSubmit: false,
+        canResubmit: false,
+        canRequestChanges: false,
+        canWithdraw: false,
+        canCancel: false,
+        canComment: false,
+        canMention: false,
+      },
+    };
+
+    updateRequisitionState(updated);
+    pushActivity(
+      requisitionId,
+      buildActivityEvent(
+        "requisition.withdrawn",
+        "Requisition withdrawn",
+        updated,
+        updatedAt,
+        existing,
+        updated,
+        {
+          reason: updated.withdrawalReason,
+        },
+      ),
+    );
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.post("/api/requisitions/:requisitionId/cancel", async ({ params, request }) => {
+    const requisitionId = String(params.requisitionId);
+    const existing = requisitions.find((item) => item.id === requisitionId);
+    const body = (await request.json()) as { reason?: string };
+
+    if (!existing) {
+      return errorResponse(404, "not_found", "Requisition not found.");
+    }
+
+    if (existing.status !== "submitted" && existing.status !== "changes_requested") {
+      return errorResponse(
+        409,
+        "conflict",
+        "Only submitted or change-requested requisitions can be cancelled.",
+      );
+    }
+
+    const updatedAt = new Date().toISOString();
+    const updated: Requisition = {
+      ...existing,
+      status: "cancelled",
+      updatedAt,
+      cancelledAt: updatedAt,
+      cancelledBy: requisitionMentionCandidateFixtures[2] ?? null,
+      cancellationReason: body.reason?.trim() ?? "",
+      permissions: {
+        ...existing.permissions,
+        canUpdate: false,
+        canSubmit: false,
+        canResubmit: false,
+        canRequestChanges: false,
+        canWithdraw: false,
+        canCancel: false,
+        canComment: false,
+        canMention: false,
+      },
+    };
+
+    updateRequisitionState(updated);
+    pushActivity(
+      requisitionId,
+      buildActivityEvent(
+        "requisition.cancelled",
+        "Requisition cancelled",
+        updated,
+        updatedAt,
+        existing,
+        updated,
+        {
+          reason: updated.cancellationReason,
+        },
+      ),
+    );
+
+    return HttpResponse.json({ data: updated });
+  }),
+
   http.get("/api/requisitions/:requisitionId/activity", ({ params }) => {
     return HttpResponse.json({ data: activity[String(params.requisitionId)] ?? [] });
+  }),
+
+  http.get("/api/requisitions/:requisitionId/comments", ({ params }) => {
+    return HttpResponse.json({ data: comments[String(params.requisitionId)] ?? [] });
+  }),
+
+  http.get("/api/requisitions/:requisitionId/mention-candidates", ({ params }) => {
+    const existing = requisitions.find((item) => item.id === String(params.requisitionId));
+
+    if (!existing) {
+      return errorResponse(404, "not_found", "Requisition not found.");
+    }
+
+    return HttpResponse.json({
+      data: requisitionMentionCandidateFixtures,
+    });
+  }),
+
+  http.post("/api/requisitions/:requisitionId/comments", async ({ params, request }) => {
+    const requisitionId = String(params.requisitionId);
+    const existing = requisitions.find((item) => item.id === requisitionId);
+    const body = (await request.json()) as { body?: string; mentionedUserIds?: string[] };
+
+    if (!existing) {
+      return errorResponse(404, "not_found", "Requisition not found.");
+    }
+
+    if (!body.body?.trim()) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "validation_failed",
+            message: "Validation failed",
+            details: {
+              fields: { body: ["Comment is required."] },
+            },
+          },
+        },
+        { status: 422 },
+      );
+    }
+
+    const mentionedUsers = (body.mentionedUserIds ?? [])
+      .map((mentionedUserId) =>
+        requisitionMentionCandidateFixtures.find((candidate) => candidate.id === mentionedUserId),
+      )
+      .filter((candidate): candidate is UserSummary => Boolean(candidate))
+      .map((candidate) => ({
+        id: `mention-${candidate.id}`,
+        mentionedUser: candidate,
+      }));
+
+    const timestamp = new Date().toISOString();
+    const comment: CollaborationComment = {
+      id: `comment-${++commentSequence}`,
+      subjectType: "requisition",
+      subjectId: requisitionId,
+      author: requisitionMentionCandidateFixtures[0] ?? existing.requester,
+      body: body.body.trim(),
+      mentions: mentionedUsers,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    comments[requisitionId] = [...(comments[requisitionId] ?? []), comment];
+    pushActivity(
+      requisitionId,
+      buildActivityEvent(
+        "collaboration.comment_created",
+        "Comment added",
+        existing,
+        timestamp,
+      ),
+    );
+    if (mentionedUsers.length > 0) {
+      pushActivity(
+        requisitionId,
+        buildActivityEvent(
+          "collaboration.mentioned",
+          "Collaborator mentioned",
+          existing,
+          timestamp,
+          null,
+          null,
+          {
+            users: mentionedUsers.map((mention) => mention.mentionedUser.name),
+          },
+        ),
+      );
+    }
+
+    return HttpResponse.json({ data: comment }, { status: 201 });
   }),
 ];
 
@@ -392,10 +764,26 @@ function isBlankLineItem(lineItem: RequisitionFormValues["lineItems"][number]): 
 function buildRequisition(
   values: RequisitionFormValues,
   id: string,
-  status: Requisition["status"],
+  status: RequisitionStatus,
   number: string,
   createdAt?: string,
   lockVersion = 0,
+  metadata?: Partial<
+    Pick<
+      Requisition,
+      | "submittedAt"
+      | "changesRequestedAt"
+      | "changesRequestedBy"
+      | "changeRequestReason"
+      | "changeRequestFields"
+      | "withdrawnAt"
+      | "withdrawnBy"
+      | "withdrawalReason"
+      | "cancelledAt"
+      | "cancelledBy"
+      | "cancellationReason"
+    >
+  >,
 ): Requisition {
   const totals = calculateEstimatedTotal(values.lineItems);
   const now = new Date().toISOString();
@@ -427,12 +815,32 @@ function buildRequisition(
     })),
     createdAt: createdAt ?? now,
     updatedAt: now,
-    submittedAt: status === "submitted" ? now : null,
-    permissions: {
-      canUpdate: status === "draft",
-      canSubmit: status === "draft",
-      canViewActivity: true,
-    },
+    submittedAt: metadata?.submittedAt ?? (status === "submitted" ? now : null),
+    changesRequestedAt: metadata?.changesRequestedAt ?? null,
+    changesRequestedBy: metadata?.changesRequestedBy ?? null,
+    changeRequestReason: metadata?.changeRequestReason ?? null,
+    changeRequestFields: metadata?.changeRequestFields ?? [],
+    withdrawnAt: metadata?.withdrawnAt ?? null,
+    withdrawnBy: metadata?.withdrawnBy ?? null,
+    withdrawalReason: metadata?.withdrawalReason ?? null,
+    cancelledAt: metadata?.cancelledAt ?? null,
+    cancelledBy: metadata?.cancelledBy ?? null,
+    cancellationReason: metadata?.cancellationReason ?? null,
+    permissions: buildPermissions(status),
+  };
+}
+
+function buildPermissions(status: RequisitionStatus): Requisition["permissions"] {
+  return {
+    canUpdate: status === "draft" || status === "changes_requested",
+    canSubmit: status === "draft",
+    canResubmit: status === "changes_requested",
+    canRequestChanges: status === "submitted",
+    canWithdraw: status === "draft" || status === "changes_requested",
+    canCancel: status === "submitted" || status === "changes_requested",
+    canComment: status !== "withdrawn" && status !== "cancelled",
+    canMention: status !== "withdrawn" && status !== "cancelled",
+    canViewActivity: true,
   };
 }
 
@@ -448,6 +856,7 @@ function buildActivityEvent(
   occurredAt: string,
   before: Requisition | null = null,
   after: Requisition | null = null,
+  metadata: Record<string, unknown> = {},
 ): AuditEvent {
   return {
     id: `activity-${Date.now()}-${++activitySequence}`,
@@ -461,10 +870,50 @@ function buildActivityEvent(
     },
     metadata: {
       status: requisition.status,
+      ...metadata,
     },
     before,
     after,
     occurredAt,
     requestId: null,
   };
+}
+
+function matchesQueueFilter(requisition: Requisition, queuePreset: string | null) {
+  switch (queuePreset) {
+    case null:
+    case "":
+    case "all_visible":
+      return true;
+    case "my_drafts":
+      return requisition.status === "draft";
+    case "submitted":
+      return requisition.status === "submitted";
+    case "needs_my_correction":
+      return requisition.status === "changes_requested";
+    case "buyer_review":
+      return requisition.status === "submitted" || requisition.status === "changes_requested";
+    case "stopped":
+      return requisition.status === "withdrawn" || requisition.status === "cancelled";
+    default:
+      return true;
+  }
+}
+
+function updateRequisitionState(updated: Requisition) {
+  requisitions = requisitions.map((item) => (item.id === updated.id ? updated : item));
+}
+
+function pushActivity(requisitionId: string, event: AuditEvent) {
+  activity[requisitionId] = [...(activity[requisitionId] ?? []), event];
+}
+
+function errorResponse(status: number, code: string, message: string) {
+  return HttpResponse.json({ error: { code, message } }, { status });
+}
+
+function toOptionalNumber(value: string | null) {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }

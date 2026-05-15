@@ -10,10 +10,35 @@ const preferenceFields = [
     description: "Notify me when requisitions are ready for procurement review.",
   },
   {
+    key: "requisition.changes_requested",
+    label: "Changes requested",
+    description: "Notify me when a requisition needs requester correction.",
+  },
+  {
+    key: "requisition.resubmitted",
+    label: "Requisition resubmitted",
+    description: "Notify me when corrected requisitions return to review.",
+  },
+  {
+    key: "requisition.withdrawn",
+    label: "Requisition withdrawn",
+    description: "Notify me when a requester stops a requisition.",
+  },
+  {
+    key: "requisition.cancelled",
+    label: "Requisition cancelled",
+    description: "Notify me when an admin cancels a requisition.",
+  },
+  {
     key: "attachment.uploaded",
     label: "Evidence uploaded",
     description:
       "Notify me when evidence is added to my requisitions by another user.",
+  },
+  {
+    key: "collaboration.mentioned",
+    label: "Mentions",
+    description: "Notify me when a visible collaborator mentions me.",
   },
   {
     key: "system.announcement",

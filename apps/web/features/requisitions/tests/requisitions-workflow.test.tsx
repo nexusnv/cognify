@@ -91,14 +91,14 @@ describe("requisitions workflow", () => {
 
     const table = await screen.findByRole("table", { name: "Requisitions" });
     let rows = within(table).getAllByRole("row");
-    expect(rows[1]).toHaveTextContent("Field laptop refresh");
-    expect(rows[2]).toHaveTextContent("Warehouse packing supplies");
+    expect(rows[1]).toHaveTextContent("Cancelled courier contract");
+    expect(rows[2]).toHaveTextContent("Field laptop refresh");
 
     await user.click(screen.getByRole("button", { name: "Sort by Title descending" }));
 
     rows = within(table).getAllByRole("row");
-    expect(rows[1]).toHaveTextContent("Warehouse packing supplies");
-    expect(rows[2]).toHaveTextContent("Field laptop refresh");
+    expect(rows[1]).toHaveTextContent("Withdrawn printer refresh");
+    expect(rows[2]).toHaveTextContent("Warehouse packing supplies");
   });
 
   it("renders requisition detail inside the record workspace layout", async () => {
@@ -129,6 +129,10 @@ describe("requisitions workflow", () => {
       "href",
       "#evidence",
     );
+    expect(within(sections).getByRole("link", { name: "Comments" })).toHaveAttribute(
+      "href",
+      "#comments",
+    );
     expect(within(sections).getByRole("link", { name: "Activity" })).toHaveAttribute(
       "href",
       "#activity",
@@ -147,6 +151,38 @@ describe("requisitions workflow", () => {
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
       "Approval readiness",
     );
+    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
+      "Quotation readiness",
+    );
+  });
+
+  it("shows correction guidance and resubmits a change-requested requisition", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-changes" />);
+
+    expect(await screen.findByRole("heading", { name: "Returned laptop request" })).toBeInTheDocument();
+    expect(screen.getByText("Please clarify quantity and delivery location.")).toBeInTheDocument();
+    expect(screen.getByText("lineItems")).toBeInTheDocument();
+    expect(screen.getByText("deliveryLocation")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Resubmit" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Submitted")[0]).toBeInTheDocument();
+    });
+    expect(screen.getByText("Requisition resubmitted")).toBeInTheDocument();
+  });
+
+  it("requires a reason before withdrawing a requisition", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-1" />);
+
+    await user.click(await screen.findByRole("button", { name: "Withdraw" }));
+    await user.click(screen.getByRole("button", { name: "Confirm withdrawal" }));
+
+    expect(await screen.findByText("Reason is required.")).toBeInTheDocument();
   });
 
   it("renders duplicate unnamed line item records without duplicate React keys", async () => {
@@ -322,5 +358,25 @@ describe("requisitions workflow", () => {
     window.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("filters the work queue by queue preset", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionListPage />);
+
+    await user.click(await screen.findByRole("button", { name: "Needs my correction" }));
+
+    expect((await screen.findAllByText("Returned laptop request")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Field laptop refresh")).not.toBeInTheDocument();
+  });
+
+  it("loads an existing requisition into the edit workflow", async () => {
+    renderWithQuery(<RequisitionCreatePage requisitionId="req-changes" />);
+
+    expect(await screen.findByDisplayValue("Returned laptop request")).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("Replace unsupported devices for the buyer team."),
+    ).toBeInTheDocument();
   });
 });

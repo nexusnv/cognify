@@ -11,6 +11,11 @@ export type NotificationEventType =
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const NotificationEventType = {
   requisitionsubmitted: "requisition.submitted",
+  requisitionchanges_requested: "requisition.changes_requested",
+  requisitionresubmitted: "requisition.resubmitted",
+  requisitionwithdrawn: "requisition.withdrawn",
+  requisitioncancelled: "requisition.cancelled",
   attachmentuploaded: "attachment.uploaded",
+  collaborationmentioned: "collaboration.mentioned",
   systemannouncement: "system.announcement",
 } as const;
