@@ -1,0 +1,410 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Auth\TenantRole;
+use App\Models\User;
+use App\Notifications\NotificationRecord;
+use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalTask;
+use Domains\Attachment\Models\Attachment;
+use Domains\Award\Models\Award;
+use Domains\Demo\Models\DemoSeedRun;
+use Domains\Project\Models\ProcurementProject;
+use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\Rfq;
+use Domains\Requisition\Models\Requisition;
+use Domains\Requisition\States\RequisitionStatus;
+use Domains\Vendor\Models\Vendor;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
+use Tests\TestCase;
+
+class DemoSeederTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_preview_models_are_tenant_scoped_and_cast_metadata(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $vendor = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Global Freight',
+            'status' => 'active',
+            'category' => 'logistics',
+            'risk_rating' => 'low',
+            'metadata' => [
+                'region' => 'APAC',
+            ],
+        ]);
+
+        $project = ProcurementProject::query()->create([
+            'tenant_id' => $tenant->id,
+            'owner_id' => $admin->id,
+            'number' => 'PRJ-1001',
+            'name' => 'Office relocation',
+            'status' => 'planning',
+            'budget_amount' => '125000.00',
+            'currency' => 'USD',
+            'metadata' => [
+                'program' => 'workspace-refresh',
+            ],
+        ]);
+
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => $project->id,
+            'requisition_id' => null,
+            'number' => 'RFQ-2001',
+            'title' => 'Office relocation shortlist',
+            'status' => 'open',
+            'due_at' => now()->addDays(7),
+            'metadata' => [
+                'invited_vendors' => 3,
+            ],
+        ]);
+
+        $quotation = Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'QUO-3001',
+            'status' => 'submitted',
+            'total_amount' => '98500.00',
+            'currency' => 'USD',
+            'metadata' => [
+                'lead_time_days' => 21,
+            ],
+        ]);
+
+        $approvalTask = ApprovalTask::query()->create([
+            'tenant_id' => $tenant->id,
+            'approver_id' => $admin->id,
+            'subject_type' => Quotation::class,
+            'subject_id' => $quotation->id,
+            'title' => 'Approve relocation quotation',
+            'status' => 'pending',
+            'due_at' => now()->addDays(2),
+            'metadata' => [
+                'stage' => 'finance',
+            ],
+        ]);
+
+        $award = Award::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => $project->id,
+            'rfq_id' => $rfq->id,
+            'quotation_id' => $quotation->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'AWD-4001',
+            'status' => 'awarded',
+            'total_amount' => '98500.00',
+            'currency' => 'USD',
+            'decided_at' => now(),
+            'metadata' => [
+                'rationale' => 'Best delivery confidence',
+            ],
+        ]);
+
+        $demoSeedRun = DemoSeedRun::query()->create([
+            'name' => 'local-demo',
+            'seeded_at' => now(),
+            'metadata' => [
+                'records' => 5,
+            ],
+        ]);
+
+        $vendor = $vendor->refresh();
+        $project = $project->refresh();
+        $rfq = $rfq->refresh();
+        $quotation = $quotation->refresh();
+        $approvalTask = $approvalTask->refresh();
+        $award = $award->refresh();
+        $demoSeedRun = $demoSeedRun->refresh();
+
+        $this->assertSame($tenant->id, $vendor->tenant_id);
+        $this->assertSame($tenant->id, $project->tenant_id);
+        $this->assertSame($tenant->id, $rfq->tenant_id);
+        $this->assertSame($tenant->id, $quotation->tenant_id);
+        $this->assertSame($tenant->id, $approvalTask->tenant_id);
+        $this->assertSame($tenant->id, $award->tenant_id);
+
+        $this->assertSame('APAC', $vendor->metadata['region']);
+        $this->assertSame('125000.00', $project->budget_amount);
+        $this->assertSame(['program' => 'workspace-refresh'], $project->metadata);
+        $this->assertSame(3, $rfq->metadata['invited_vendors']);
+        $this->assertInstanceOf(Carbon::class, $rfq->due_at);
+        $this->assertSame('98500.00', $quotation->total_amount);
+        $this->assertSame(21, $quotation->metadata['lead_time_days']);
+        $this->assertSame('finance', $approvalTask->metadata['stage']);
+        $this->assertSame('98500.00', $award->total_amount);
+        $this->assertInstanceOf(Carbon::class, $award->decided_at);
+        $this->assertSame('Best delivery confidence', $award->metadata['rationale']);
+        $this->assertSame('local-demo', $demoSeedRun->name);
+        $this->assertInstanceOf(Carbon::class, $demoSeedRun->seeded_at);
+        $this->assertSame(['records' => 5], $demoSeedRun->metadata);
+    }
+
+    public function test_preview_models_reject_cross_tenant_links(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+        $otherTenant = Tenant::query()->create([
+            'name' => 'Other Corp',
+        ]);
+
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $vendor = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Global Freight',
+            'status' => 'active',
+        ]);
+        $otherVendor = Vendor::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Foreign Freight',
+            'status' => 'active',
+        ]);
+        $project = ProcurementProject::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'owner_id' => null,
+            'number' => 'PRJ-9999',
+            'name' => 'Other tenant project',
+            'status' => 'planning',
+            'budget_amount' => '1000.00',
+            'currency' => 'USD',
+        ]);
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => null,
+            'requisition_id' => null,
+            'number' => 'RFQ-9999',
+            'title' => 'Cross tenant check',
+            'status' => 'open',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $otherVendor->id,
+            'number' => 'QUO-9999',
+            'status' => 'submitted',
+            'total_amount' => '100.00',
+            'currency' => 'USD',
+        ]);
+    }
+
+    public function test_awards_reject_cross_tenant_project_links(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+        $otherTenant = Tenant::query()->create([
+            'name' => 'Other Corp',
+        ]);
+
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $vendor = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Global Freight',
+            'status' => 'active',
+        ]);
+        $project = ProcurementProject::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'owner_id' => null,
+            'number' => 'PRJ-9999',
+            'name' => 'Other tenant project',
+            'status' => 'planning',
+            'budget_amount' => '1000.00',
+            'currency' => 'USD',
+        ]);
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => null,
+            'requisition_id' => null,
+            'number' => 'RFQ-9999',
+            'title' => 'Cross tenant check',
+            'status' => 'open',
+        ]);
+        $quotation = Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'QUO-9999',
+            'status' => 'submitted',
+            'total_amount' => '100.00',
+            'currency' => 'USD',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Award::query()->create([
+            'tenant_id' => $tenant->id,
+            'project_id' => $project->id,
+            'rfq_id' => $rfq->id,
+            'quotation_id' => $quotation->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'AWD-9999',
+            'status' => 'awarded',
+            'total_amount' => '100.00',
+            'currency' => 'USD',
+        ]);
+    }
+
+    public function test_local_demo_seeder_is_idempotent(): void
+    {
+        $this->seed();
+        $this->seed();
+
+        $this->assertSame(3, Tenant::query()->count());
+        $this->assertSame(7, User::query()->count());
+        $this->assertSame(5, Requisition::query()->count());
+        $this->assertSame(9, Vendor::query()->count());
+        $this->assertSame(2, ProcurementProject::query()->count());
+        $this->assertSame(2, Rfq::query()->count());
+        $this->assertSame(2, Quotation::query()->count());
+        $this->assertSame(2, ApprovalTask::query()->count());
+        $this->assertSame(2, Award::query()->count());
+        $this->assertSame(2, Attachment::query()->count());
+        $this->assertSame(3, NotificationRecord::query()->count());
+        $this->assertSame(1, DemoSeedRun::query()->count());
+
+        $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
+        $northwind = Tenant::query()->where('name', 'Northwind Sourcing')->firstOrFail();
+        $beta = Tenant::query()->where('name', 'Beta Corp Sandbox')->firstOrFail();
+
+        $this->assertDatabaseHas('tenants', ['slug' => 'acme', 'name' => 'Acme Procurement']);
+        $this->assertDatabaseHas('tenants', ['slug' => 'northwind', 'name' => 'Northwind Sourcing']);
+        $this->assertDatabaseHas('tenants', ['slug' => 'beta', 'name' => 'Beta Corp Sandbox']);
+
+        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'name' => 'Test User']);
+        $this->assertDatabaseHas('users', ['email' => 'buyer@example.com', 'name' => 'Buyer User']);
+        $this->assertDatabaseHas('users', ['email' => 'approver@example.com', 'name' => 'Approver User']);
+        $this->assertDatabaseHas('users', ['email' => 'finance@example.com', 'name' => 'Finance User']);
+        $this->assertDatabaseHas('users', ['email' => 'auditor@example.com', 'name' => 'Audit User']);
+        $this->assertDatabaseHas('users', ['email' => 'vendor.manager@example.com', 'name' => 'Vendor Manager']);
+        $this->assertDatabaseHas('users', ['email' => 'admin@example.com', 'name' => 'Admin User']);
+
+        $this->assertSame(TenantRole::Requester->value, $acme->roleFor(User::where('email', 'test@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Buyer->value, $acme->roleFor(User::where('email', 'buyer@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Approver->value, $acme->roleFor(User::where('email', 'approver@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Approver->value, $acme->roleFor(User::where('email', 'finance@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Admin->value, $acme->roleFor(User::where('email', 'auditor@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Buyer->value, $northwind->roleFor(User::where('email', 'vendor.manager@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Admin->value, $acme->roleFor(User::where('email', 'admin@example.com')->firstOrFail()));
+        $this->assertSame(TenantRole::Admin->value, $beta->roleFor(User::where('email', 'admin@example.com')->firstOrFail()));
+
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0001', 'title' => 'HQ workplace refresh']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0002', 'title' => 'Engineering laptop refresh']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-0003', 'title' => 'Security audit services']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-1001', 'title' => 'Regional warehouse supplies']);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-1002', 'title' => 'Fleet maintenance review']);
+        $this->assertDatabaseHas('requisitions', [
+            'number' => 'REQ-2026-0003',
+            'status' => RequisitionStatus::PendingApproval->value,
+            'submitted_at' => '2026-05-15 09:00:00',
+        ]);
+        $this->assertDatabaseHas('requisitions', [
+            'number' => 'REQ-2026-1002',
+            'status' => RequisitionStatus::PendingApproval->value,
+            'submitted_at' => '2026-05-15 09:00:00',
+        ]);
+        $this->assertDatabaseHas('vendors', ['name' => 'Atlas Office Supplies', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Northstar Furniture Co', 'status' => 'evaluation']);
+        $this->assertDatabaseHas('vendors', ['name' => 'SecureWorks Advisory', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Papertrail Logistics', 'status' => 'restricted']);
+        $this->assertDatabaseHas('vendors', ['name' => 'ByteForge Systems', 'status' => 'evaluation']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Greenline Facilities', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Harbor Industrial Supply', 'status' => 'preferred']);
+        $this->assertDatabaseHas('vendors', ['name' => 'MetroFleet Services', 'status' => 'evaluation']);
+        $this->assertDatabaseHas('vendors', ['name' => 'Civic Safety Partners', 'status' => 'restricted']);
+        $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-0001', 'name' => 'HQ Workplace Refresh']);
+        $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-1001', 'name' => 'Northwind Warehouse Launch']);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-0001', 'title' => 'Office furniture package']);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-1001', 'title' => 'Warehouse supply bundle']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-0001', 'status' => 'received']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-1001', 'status' => 'received']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Finance approval for office furniture package', 'status' => 'pending']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Buyer review for warehouse supply bundle', 'status' => 'pending']);
+        $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
+        $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-1001', 'status' => 'recommended']);
+        $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
+        $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
+        $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
+        $this->assertDatabaseHas('notifications', ['title' => 'Local demo data is ready']);
+        $this->assertDatabaseHas('demo_seed_runs', ['name' => 'local-demo']);
+
+        foreach (Attachment::query()->get() as $attachment) {
+            $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
+        }
+
+        $run = DemoSeedRun::query()->firstOrFail();
+
+        $this->assertSame([
+            'tenants' => 3,
+            'users' => 7,
+            'requisitions' => 5,
+            'vendors' => 9,
+            'projects' => 2,
+            'rfqs' => 2,
+            'quotations' => 2,
+            'approval_tasks' => 2,
+            'awards' => 2,
+        ], $run->metadata);
+        $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
+    }
+
+    public function test_demo_tenant_seed_uses_slug_as_stable_lookup_key(): void
+    {
+        Tenant::query()->create([
+            'slug' => 'acme',
+            'name' => 'Old Acme Name',
+        ]);
+
+        $this->seed();
+
+        $this->assertSame(3, Tenant::query()->count());
+        $this->assertDatabaseHas('tenants', [
+            'slug' => 'acme',
+            'name' => 'Acme Procurement',
+        ]);
+        $this->assertDatabaseMissing('tenants', [
+            'name' => 'Old Acme Name',
+        ]);
+    }
+
+    public function test_approval_tasks_reject_non_model_subject_types(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Approval task subject type must be an Eloquent model.');
+
+        ApprovalTask::query()->create([
+            'tenant_id' => $tenant->id,
+            'approver_id' => $admin->id,
+            'subject_type' => self::class,
+            'subject_id' => 1,
+            'title' => 'Invalid subject',
+            'status' => 'pending',
+        ]);
+    }
+}

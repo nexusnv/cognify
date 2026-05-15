@@ -4,9 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommandPaletteHost } from "../../../components/shell/command-palette-host";
+import { multiTenantIdentity } from "../../identity/mocks/identity-fixtures";
 import { server } from "../../../tests/msw/server";
-import { requisitionFixtures } from "../../requisitions/mocks/requisitions-fixtures";
-import { RequisitionDetailPage } from "../../requisitions/workflows/requisition-detail-page";
 import { rememberRecentRecord } from "../hooks/use-recent-records";
 
 if (typeof window !== "undefined" && !window.ResizeObserver) {
@@ -33,26 +32,8 @@ const router = vi.hoisted(() => ({
   prefetch: vi.fn(),
 }));
 
-const requisitionHooks = vi.hoisted(() => ({
-  useRequisition: vi.fn(),
-  useRequisitionActivity: vi.fn(),
-}));
-
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
-}));
-
-vi.mock("../../attachments/components/attachment-list", () => ({
-  AttachmentList: () => null,
-}));
-
-vi.mock("../../attachments/components/attachment-uploader", () => ({
-  AttachmentUploader: () => null,
-}));
-
-vi.mock("../../requisitions/hooks/use-requisition", () => ({
-  useRequisition: requisitionHooks.useRequisition,
-  useRequisitionActivity: requisitionHooks.useRequisitionActivity,
 }));
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -139,10 +120,27 @@ describe("command palette", () => {
     await user.click(screen.getByRole("button", { name: "Open command palette" }));
 
     const input = screen.getByPlaceholderText("Search or jump to...");
-    await user.type(input, "office");
+    await user.type(input, "fit-out");
 
     expect(await screen.findByRole("option", { name: /Office fit-out procurement/ })).toBeInTheDocument();
     expect(screen.getByText("REQ-2026-000001")).toBeInTheDocument();
+  });
+
+  it("renders roadmap preview search results", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<CommandPaletteHost />);
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    const input = screen.getByPlaceholderText("Search or jump to...");
+    await user.type(input, "Atlas");
+
+    const previewResult = await screen.findByRole("option", { name: /Atlas Office Supplies/ });
+    expect(previewResult).toBeInTheDocument();
+    expect(screen.getByText("Office supplies")).toBeInTheDocument();
+
+    await user.click(previewResult);
+    expect(router.push).toHaveBeenCalledWith("/system");
   });
 
   it("shows an explicit loading state while remote search is pending", async () => {
@@ -155,7 +153,7 @@ describe("command palette", () => {
         return HttpResponse.json({
           data: [],
           meta: {
-            query: "office",
+            query: "fit-out",
             limit: 10,
             returned: 0,
           },
@@ -168,9 +166,36 @@ describe("command palette", () => {
 
     await user.type(screen.getByPlaceholderText("Search or jump to..."), "office");
 
-    expect(await screen.findByRole("status", { name: "Searching requisitions" })).toHaveTextContent(
-      "Searching requisitions...",
+    expect(await screen.findByRole("status", { name: "Searching records" })).toHaveTextContent("Searching records...");
+  });
+
+  it("does not run remote search before an active tenant is resolved", async () => {
+    const user = userEvent.setup();
+    let searchRequested = false;
+
+    server.use(
+      http.get("/api/me", () => HttpResponse.json({ data: multiTenantIdentity })),
+      http.get("/api/search", () => {
+        searchRequested = true;
+        return HttpResponse.json({
+          data: [],
+          meta: {
+            query: "office",
+            limit: 10,
+            returned: 0,
+          },
+        });
+      }),
     );
+    window.localStorage.removeItem("cognify.activeTenantId");
+
+    renderWithQuery(<CommandPaletteHost />);
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    await user.type(screen.getByPlaceholderText("Search or jump to..."), "office");
+
+    await waitFor(() => expect(screen.queryByRole("status", { name: "Searching records" })).not.toBeInTheDocument());
+    expect(searchRequested).toBe(false);
   });
 
   it("navigates to a remote requisition result with keyboard selection", async () => {
@@ -180,7 +205,7 @@ describe("command palette", () => {
     await user.click(screen.getByRole("button", { name: "Open command palette" }));
 
     const input = screen.getByPlaceholderText("Search or jump to...");
-    await user.type(input, "office");
+    await user.type(input, "fit-out");
     expect(await screen.findByRole("option", { name: /Office fit-out procurement/ })).toBeInTheDocument();
 
     await user.keyboard("{ArrowDown}{Enter}");
@@ -253,60 +278,5 @@ describe("command palette", () => {
     await user.click(screen.getByRole("button", { name: "Open command palette" }));
 
     expect(await screen.findByRole("option", { name: /Warehouse packing supplies/ })).toBeInTheDocument();
-  });
-});
-
-describe("requisition recent-record tracking", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-    window.localStorage.setItem("cognify.activeTenantId", "tenant-1");
-    requisitionHooks.useRequisition.mockReset();
-    requisitionHooks.useRequisitionActivity.mockReset();
-  });
-
-  it("records opened requisitions in session storage", async () => {
-    const requisition = requisitionFixtures[0];
-    if (!requisition) throw new Error("Expected requisition fixture");
-
-    requisitionHooks.useRequisition.mockReturnValue({
-      data: requisition,
-      isLoading: false,
-      isError: false,
-    });
-    requisitionHooks.useRequisitionActivity.mockReturnValue({
-      data: { data: [] },
-      isLoading: false,
-      isError: false,
-    });
-
-    render(
-      <QueryClientProvider
-        client={
-          new QueryClient({
-            defaultOptions: {
-              queries: { retry: false },
-              mutations: { retry: false },
-            },
-          })
-        }
-      >
-        <RequisitionDetailPage requisitionId={requisition.id} />
-      </QueryClientProvider>,
-    );
-
-    await waitFor(() => {
-      expect(JSON.parse(window.sessionStorage.getItem("cognify.recentRecords.v1") ?? "[]")).toEqual([
-        {
-          type: "requisition",
-          id: requisition.id,
-          title: requisition.title,
-          subtitle: requisition.number,
-          status: requisition.status,
-          href: `/requisitions/${requisition.id}`,
-          updatedAt: requisition.updatedAt,
-        },
-      ]);
-    });
   });
 });

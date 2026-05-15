@@ -2,70 +2,52 @@
 
 namespace Database\Seeders;
 
-use App\Auth\TenantRole;
-use App\Models\User;
-use App\Notifications\NotificationData;
-use App\Notifications\NotificationPreferenceDefaults;
-use App\Notifications\NotificationRecorder;
-use App\Tenancy\Tenant;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\Demo\DemoAttachmentSeeder;
+use Database\Seeders\Demo\DemoAuditSeeder;
+use Database\Seeders\Demo\DemoNotificationSeeder;
+use Database\Seeders\Demo\DemoRequisitionSeeder;
+use Database\Seeders\Demo\DemoRoadmapPreviewSeeder;
+use Database\Seeders\Demo\DemoSeedContext;
+use Database\Seeders\Demo\DemoTenantSeeder;
+use Database\Seeders\Demo\DemoUserSeeder;
+use Domains\Demo\Models\DemoSeedRun;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+    private const SEEDED_AT = '2026-05-15 09:00:00';
 
     public function run(): void
     {
-        $acme = Tenant::create(['name' => 'Acme Procurement']);
-        $northwind = Tenant::create(['name' => 'Northwind Sourcing']);
-        $beta = Tenant::create(['name' => 'Beta Corp']);
+        DB::transaction(function (): void {
+            $context = new DemoSeedContext;
 
-        $requester = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'timezone' => 'Asia/Kuala_Lumpur',
-            'locale' => 'en',
-            'theme' => 'system',
-        ]);
-        $requester->tenants()->attach($acme->id, ['role' => TenantRole::Requester->value]);
+            app(DemoTenantSeeder::class)->run($context);
+            app(DemoUserSeeder::class)->run($context);
+            app(DemoRequisitionSeeder::class)->run($context);
+            app(DemoRoadmapPreviewSeeder::class)->run($context);
+            app(DemoAttachmentSeeder::class)->run($context);
+            app(DemoAuditSeeder::class)->run($context);
+            app(DemoNotificationSeeder::class)->run($context);
 
-        $buyer = User::factory()->create([
-            'name' => 'Buyer User',
-            'email' => 'buyer@example.com',
-            'timezone' => 'UTC',
-            'locale' => 'en',
-            'theme' => 'light',
-        ]);
-        $buyer->tenants()->attach($northwind->id, ['role' => TenantRole::Buyer->value]);
-
-        $approver = User::factory()->create([
-            'name' => 'Approver User',
-            'email' => 'approver@example.com',
-            'timezone' => 'America/New_York',
-            'locale' => 'en',
-            'theme' => 'dark',
-        ]);
-        $approver->tenants()->attach($acme->id, ['role' => TenantRole::Approver->value]);
-
-        $admin = User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'timezone' => 'UTC',
-            'locale' => 'en',
-            'theme' => 'system',
-        ]);
-        $admin->tenants()->attach($acme->id, ['role' => TenantRole::Admin->value]);
-        $admin->tenants()->attach($beta->id, ['role' => TenantRole::Admin->value]);
-
-        app(NotificationRecorder::class)->record(
-            tenant: $acme,
-            recipients: $acme->users()->get(),
-            data: new NotificationData(
-                type: NotificationPreferenceDefaults::EVENT_SYSTEM_ANNOUNCEMENT,
-                title: 'Welcome to Cognify',
-                body: 'Your tenant notification center is ready for workflow cues.',
-            ),
-        );
+            DemoSeedRun::query()->updateOrCreate(
+                ['name' => 'local-demo'],
+                [
+                    'seeded_at' => self::SEEDED_AT,
+                    'metadata' => [
+                        'tenants' => $context->tenants->count(),
+                        'users' => $context->users->count(),
+                        'requisitions' => $context->requisitions->count(),
+                        'vendors' => $context->vendors->count(),
+                        'projects' => $context->projects->count(),
+                        'rfqs' => $context->rfqs->count(),
+                        'quotations' => $context->quotations->count(),
+                        'approval_tasks' => $context->approvalTasks->count(),
+                        'awards' => $context->awards->count(),
+                    ],
+                ],
+            );
+        });
     }
 }

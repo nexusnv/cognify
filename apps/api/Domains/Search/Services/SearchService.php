@@ -6,7 +6,12 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Search\Contracts\SearchProvider;
 use Domains\Search\Data\SearchResultData;
+use Domains\Search\Providers\AwardSearchProvider;
+use Domains\Search\Providers\ProcurementProjectSearchProvider;
+use Domains\Search\Providers\QuotationSearchProvider;
+use Domains\Search\Providers\RfqSearchProvider;
 use Domains\Search\Providers\RequisitionSearchProvider;
+use Domains\Search\Providers\VendorSearchProvider;
 use Illuminate\Support\Collection;
 
 class SearchService
@@ -36,6 +41,11 @@ class SearchService
     {
         return [
             app(RequisitionSearchProvider::class),
+            app(VendorSearchProvider::class),
+            app(ProcurementProjectSearchProvider::class),
+            app(RfqSearchProvider::class),
+            app(QuotationSearchProvider::class),
+            app(AwardSearchProvider::class),
         ];
     }
 }

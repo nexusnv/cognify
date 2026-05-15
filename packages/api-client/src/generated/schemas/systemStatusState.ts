@@ -5,10 +5,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListGlobalSearchTypes =
-  (typeof ListGlobalSearchTypes)[keyof typeof ListGlobalSearchTypes];
+export type SystemStatusState = (typeof SystemStatusState)[keyof typeof SystemStatusState];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ListGlobalSearchTypes = {
-  requisition: "requisition",
+export const SystemStatusState = {
+  ok: "ok",
+  warning: "warning",
+  error: "error",
 } as const;

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Tenant extends Model
 {
     protected $fillable = [
+        'slug',
         'name',
     ];
 

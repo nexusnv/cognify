@@ -23,6 +23,34 @@
         }
       }
     },
+    "/api/system/status": {
+      "get": {
+        "operationId": "getSystemStatus",
+        "summary": "Get system readiness status",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "System readiness status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
     "/api/requisitions": {
       "get": {
         "operationId": "listRequisitions",
@@ -602,7 +630,7 @@
     "/api/search": {
       "get": {
         "operationId": "listGlobalSearch",
-        "summary": "Search tenant-visible requisitions",
+        "summary": "Search tenant-visible requisitions and roadmap preview records",
         "parameters": [
           {
             "name": "query",
@@ -618,8 +646,18 @@
             "name": "types",
             "in": "query",
             "schema": {
-              "type": "string",
-              "enum": ["requisition"]
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "requisition",
+                  "vendor",
+                  "project",
+                  "rfq",
+                  "quotation",
+                  "award"
+                ]
+              }
             }
           },
           {
@@ -635,7 +673,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant-visible requisition search results",
+            "description": "Tenant-visible requisition and roadmap preview search results",
             "content": {
               "application/json": {
                 "schema": {
@@ -1001,6 +1039,178 @@
           "service": {
             "type": "string",
             "const": "cognify-api"
+          }
+        }
+      },
+      "SystemStatusResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SystemStatus"
+          }
+        }
+      },
+      "SystemStatus": {
+        "type": "object",
+        "required": [
+          "status",
+          "environment",
+          "service",
+          "version",
+          "checkedAt",
+          "checks",
+          "demo"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/SystemStatusState"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string",
+            "const": "cognify-api"
+          },
+          "version": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SystemStatusCheck"
+            }
+          },
+          "demo": {
+            "$ref": "#/components/schemas/SystemStatusDemo"
+          }
+        }
+      },
+      "SystemStatusState": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "warning",
+          "error"
+        ]
+      },
+      "SystemStatusCheck": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "message",
+          "remediation",
+          "metadata"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SystemStatusState"
+          },
+          "message": {
+            "type": "string"
+          },
+          "remediation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SystemStatusCheckMetadata"
+          }
+        }
+      },
+      "SystemStatusCheckMetadata": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "SystemStatusDemo": {
+        "type": "object",
+        "required": [
+          "seeded",
+          "lastSeededAt",
+          "counts"
+        ],
+        "properties": {
+          "seeded": {
+            "type": "boolean"
+          },
+          "lastSeededAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "counts": {
+            "$ref": "#/components/schemas/SystemStatusDemoCounts"
+          }
+        }
+      },
+      "SystemStatusDemoCounts": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenants",
+          "users",
+          "requisitions",
+          "vendors",
+          "rfqs",
+          "quotations",
+          "approvalTasks",
+          "awards"
+        ],
+        "properties": {
+          "tenants": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "users": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requisitions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "vendors": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rfqs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quotations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "approvalTasks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "awards": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       },
@@ -1457,7 +1667,14 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["requisition"]
+            "enum": [
+              "requisition",
+              "vendor",
+              "project",
+              "rfq",
+              "quotation",
+              "award"
+            ]
           },
           "id": {
             "type": "string"

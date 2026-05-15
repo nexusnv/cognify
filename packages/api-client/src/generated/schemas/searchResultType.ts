@@ -10,4 +10,9 @@ export type SearchResultType = (typeof SearchResultType)[keyof typeof SearchResu
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const SearchResultType = {
   requisition: "requisition",
+  vendor: "vendor",
+  project: "project",
+  rfq: "rfq",
+  quotation: "quotation",
+  award: "award",
 } as const;

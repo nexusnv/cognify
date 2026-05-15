@@ -2,7 +2,15 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
-import { Search } from "lucide-react";
+import {
+  Building2,
+  CheckCircle2,
+  FileText,
+  FolderKanban,
+  ReceiptText,
+  Search,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CommandPaletteItem } from "./command-palette-item";
@@ -10,6 +18,7 @@ import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { getSearchCommands } from "../search-commands";
 import { useGlobalSearch } from "../hooks/use-global-search";
 import { useRecentRecords } from "../hooks/use-recent-records";
+import type { SearchResultViewModel } from "../types/search-view-model";
 
 export function CommandPalette({
   open,
@@ -147,10 +156,10 @@ export function CommandPalette({
               {showRemoteSearch && searchState.isLoading ? (
                 <div
                   role="status"
-                  aria-label="Searching requisitions"
+                  aria-label="Searching records"
                   className="px-3 py-2 text-sm text-muted-foreground"
                 >
-                  Searching requisitions...
+                  Searching records...
                 </div>
               ) : null}
 
@@ -161,6 +170,7 @@ export function CommandPalette({
                       key={`result:${result.type}:${result.id}`}
                       value={`${result.title} ${result.subtitle ?? ""} ${result.status ?? ""}`}
                       keywords={[result.title, result.subtitle ?? "", result.status ?? ""]}
+                      icon={resultIcons[result.type]}
                       label={result.title}
                       description={result.subtitle ?? undefined}
                       trailing={result.status ?? undefined}
@@ -186,3 +196,12 @@ export function CommandPalette({
 function matchesQuery(query: string, values: Array<string | null | undefined>): boolean {
   return values.some((value) => (value ?? "").toLowerCase().includes(query));
 }
+
+const resultIcons: Record<SearchResultViewModel["type"], LucideIcon> = {
+  requisition: FileText,
+  vendor: Building2,
+  project: FolderKanban,
+  rfq: ReceiptText,
+  quotation: ReceiptText,
+  award: CheckCircle2,
+};

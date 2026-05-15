@@ -2,6 +2,7 @@ import {
   Archive,
   Building2,
   CheckSquare,
+  Activity,
   FileSearch,
   FileText,
   Gauge,
@@ -65,7 +66,16 @@ export const shellNavGroups: ShellNavGroup[] = [
   {
     id: "manage",
     label: "Manage",
-    items: [{ label: "Account", href: "/account", icon: UserRound, implemented: true }],
+    items: [
+      {
+        label: "System",
+        href: "/system",
+        icon: Activity,
+        implemented: true,
+        permission: canUseAudit,
+      },
+      { label: "Account", href: "/account", icon: UserRound, implemented: true },
+    ],
   },
 ];
 
@@ -78,6 +88,10 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (normalizedPathname === "/account") {
     return [{ label: "Account" }];
+  }
+
+  if (normalizedPathname === "/system") {
+    return [{ label: "System" }];
   }
 
   if (normalizedPathname === "/requisitions") {
