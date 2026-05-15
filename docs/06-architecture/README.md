@@ -2,7 +2,7 @@
 
 The active root architecture source is:
 
-- `ARCHITECHTURAL.md`
+- `ARCHITECTURE.md`
 
 The original greenfield runbook remains historical context:
 

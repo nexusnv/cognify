@@ -45,7 +45,7 @@ Do not introduce new shared packages for a feature unless there is real cross-ap
 
 Before changing files:
 
-1. Read `AGENTS.md`, `ARCHITECHTURAL.md`, this runbook, and the domain docs relevant to the feature.
+1. Read `AGENTS.md`, `ARCHITECTURE.md`, this runbook, and the domain docs relevant to the feature.
 2. Inspect the existing files that own adjacent behavior.
 3. Check `git status --short --branch` and avoid overwriting unrelated work.
 4. Confirm whether the feature changes API contracts, tenant-sensitive data, permissions, queues, audit trails, or AI behavior.

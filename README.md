@@ -261,7 +261,7 @@ Run `pnpm check:api-contract` after OpenAPI changes so `packages/api-client` sta
 
 For deeper guidance, see:
 
-- `ARCHITECHTURAL.md`
+- `ARCHITECTURE.md`
 - `AGENTS.md`
 - `DEVELOPER_GUIDELINE.md`
 - `docs/05-runbooks/local-development.md`

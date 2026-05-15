@@ -50,7 +50,7 @@ Before claiming work is complete, run the narrow checks for the files touched an
 
 ## Deeper Guidance
 
-- Architecture reference: `ARCHITECHTURAL.md`
+- Architecture reference: `ARCHITECTURE.md`
 - Agent workflow: `docs/agentic/AGENTIC_CODING_GUIDELINES.md`
 - Developer workflow: `DEVELOPER_GUIDELINE.md`
 - Feature development runbook: `docs/05-runbooks/feature-development.md`
