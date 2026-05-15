@@ -1,14 +1,24 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export const notificationPreferencesSchema = z.object({
   "requisition.submitted": z.object({ inApp: z.boolean() }),
+  "requisition.changes_requested": z.object({ inApp: z.boolean() }),
+  "requisition.resubmitted": z.object({ inApp: z.boolean() }),
+  "requisition.withdrawn": z.object({ inApp: z.boolean() }),
+  "requisition.cancelled": z.object({ inApp: z.boolean() }),
   "attachment.uploaded": z.object({ inApp: z.boolean() }),
+  "collaboration.mentioned": z.object({ inApp: z.boolean() }),
   "system.announcement": z.object({ inApp: z.boolean() }),
 });
 
 export const defaultNotificationPreferences = {
   "requisition.submitted": { inApp: true },
+  "requisition.changes_requested": { inApp: true },
+  "requisition.resubmitted": { inApp: true },
+  "requisition.withdrawn": { inApp: true },
+  "requisition.cancelled": { inApp: true },
   "attachment.uploaded": { inApp: true },
+  "collaboration.mentioned": { inApp: true },
   "system.announcement": { inApp: true },
 } satisfies z.infer<typeof notificationPreferencesSchema>;
 

@@ -50,4 +50,37 @@ class RequisitionPolicy
     {
         return $this->update($user, $requisition);
     }
+
+    public function requestChanges(User $user, Requisition $requisition): bool
+    {
+        $role = app(CurrentTenant::class)->roleFor($user);
+
+        return in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value, TenantRole::Admin->value], true);
+    }
+
+    public function resubmit(User $user, Requisition $requisition): bool
+    {
+        return $requisition->requester_id === $user->id || app(CurrentTenant::class)->roleFor($user) === TenantRole::Admin->value;
+    }
+
+    public function withdraw(User $user, Requisition $requisition): bool
+    {
+        return $requisition->requester_id === $user->id || app(CurrentTenant::class)->roleFor($user) === TenantRole::Admin->value;
+    }
+
+    public function cancel(User $user, Requisition $requisition): bool
+    {
+        return app(CurrentTenant::class)->roleFor($user) === TenantRole::Admin->value;
+    }
+
+    public function comment(User $user, Requisition $requisition): bool
+    {
+        return $this->view($user, $requisition)
+            && ! in_array($requisition->status, [RequisitionStatus::Withdrawn, RequisitionStatus::Cancelled], true);
+    }
+
+    public function mention(User $user, Requisition $requisition): bool
+    {
+        return $this->comment($user, $requisition);
+    }
 }

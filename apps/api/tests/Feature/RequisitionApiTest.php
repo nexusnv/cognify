@@ -326,6 +326,145 @@ class RequisitionApiTest extends TestCase
             ->assertJsonPath('data.id', (string) $submitted->id);
     }
 
+    public function test_buyer_can_request_changes_on_submitted_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $requisition = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/requisitions/{$requisition->id}/request-changes", [
+                'reason' => 'Please clarify the delivery location and line item quantity.',
+                'requestedFields' => ['deliveryLocation', 'lineItems'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', RequisitionStatus::ChangesRequested->value)
+            ->assertJsonPath('data.changeRequestReason', 'Please clarify the delivery location and line item quantity.')
+            ->assertJsonPath('data.changeRequestFields.0', 'deliveryLocation')
+            ->assertJsonPath('data.permissions.canRequestChanges', false);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $buyer->id,
+            'event_type' => 'requisition.changes_requested',
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $requester->id,
+            'actor_id' => $buyer->id,
+            'type' => 'requisition.changes_requested',
+            'href' => "/requisitions/{$requisition->id}",
+        ]);
+    }
+
+    public function test_requester_can_edit_change_requested_requisition_and_resubmit(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $requisition = $this->createDraft($tenant, $requester, [
+            'status' => RequisitionStatus::ChangesRequested,
+            'change_request_reason' => 'Clarify line items.',
+            'change_request_fields' => ['lineItems'],
+            'changes_requested_by_id' => $buyer->id,
+            'changes_requested_at' => now(),
+        ]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
+                'title' => 'Updated after change request',
+                'businessJustification' => 'Updated justification for resubmission.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Updated after change request');
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/resubmit")
+            ->assertOk()
+            ->assertJsonPath('data.status', RequisitionStatus::Submitted->value)
+            ->assertJsonPath('data.changeRequestReason', null)
+            ->assertJsonPath('data.changeRequestFields', []);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $requester->id,
+            'event_type' => 'requisition.resubmitted',
+        ]);
+    }
+
+    public function test_requester_can_withdraw_submitted_requisition_with_reason(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/withdraw", [
+                'reason' => 'Budget moved to a different project.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', RequisitionStatus::Withdrawn->value)
+            ->assertJsonPath('data.withdrawalReason', 'Budget moved to a different project.')
+            ->assertJsonPath('data.permissions.canSubmit', false)
+            ->assertJsonPath('data.permissions.canWithdraw', false);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $requester->id,
+            'event_type' => 'requisition.withdrawn',
+        ]);
+    }
+
+    public function test_admin_can_cancel_submitted_requisition_with_reason(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        $requisition = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/requisitions/{$requisition->id}/cancel", [
+                'reason' => 'Duplicate request already approved outside this record.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', RequisitionStatus::Cancelled->value)
+            ->assertJsonPath('data.cancellationReason', 'Duplicate request already approved outside this record.');
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $admin->id,
+            'event_type' => 'requisition.cancelled',
+        ]);
+    }
+
+    public function test_terminal_requisitions_reject_workflow_actions_and_updates(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        $withdrawn = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Withdrawn]);
+        $cancelled = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Cancelled]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$withdrawn->id}/submit")
+            ->assertStatus(409);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$withdrawn->id}/resubmit")
+            ->assertStatus(409);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->patchJson("/api/requisitions/{$withdrawn->id}", [
+                'lockVersion' => 0,
+                'title' => 'Should not change',
+            ])
+            ->assertStatus(409);
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/requisitions/{$cancelled->id}/cancel", [
+                'reason' => 'Already cancelled.',
+            ])
+            ->assertStatus(409);
+    }
+
     public function test_activity_endpoint_returns_audit_events_for_requisition(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');
@@ -387,7 +526,20 @@ class RequisitionApiTest extends TestCase
             'currency' => $attributes['currency'] ?? 'USD',
             'status' => $attributes['status'] ?? RequisitionStatus::Draft,
             'lock_version' => $attributes['lock_version'] ?? 0,
-            'submitted_at' => ($attributes['status'] ?? null) === RequisitionStatus::Submitted ? now() : null,
+            'submitted_at' => in_array(($attributes['status'] ?? null), [
+                RequisitionStatus::Submitted,
+                RequisitionStatus::ChangesRequested,
+            ], true) ? now() : null,
+            'changes_requested_at' => $attributes['changes_requested_at'] ?? null,
+            'changes_requested_by_id' => $attributes['changes_requested_by_id'] ?? null,
+            'change_request_reason' => $attributes['change_request_reason'] ?? null,
+            'change_request_fields' => $attributes['change_request_fields'] ?? null,
+            'withdrawn_at' => $attributes['withdrawn_at'] ?? null,
+            'withdrawn_by_id' => $attributes['withdrawn_by_id'] ?? null,
+            'withdrawal_reason' => $attributes['withdrawal_reason'] ?? null,
+            'cancelled_at' => $attributes['cancelled_at'] ?? null,
+            'cancelled_by_id' => $attributes['cancelled_by_id'] ?? null,
+            'cancellation_reason' => $attributes['cancellation_reason'] ?? null,
         ]);
 
         $requisition->lineItems()->create([

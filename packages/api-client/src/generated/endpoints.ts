@@ -11,6 +11,10 @@ import type {
   AttachmentResponse,
   AttachmentUploadRequest,
   AuditEventListResponse,
+  CollaborationCommentListResponse,
+  CollaborationCommentResponse,
+  CollaborationMentionCandidateListResponse,
+  CreateCollaborationCommentRequest,
   CreateRequisitionRequest,
   CurrentUserResponse,
   ForbiddenResponse,
@@ -28,6 +32,8 @@ import type {
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
+  ReasonedRequisitionActionRequest,
+  RequestRequisitionChangesRequest,
   RequisitionIntakeOptionsResponse,
   RequisitionItemSuggestionListResponse,
   RequisitionListResponse,
@@ -1557,4 +1563,447 @@ export const getRequisitionIntakeOptions = async (
     ...options,
     method: "GET",
   });
+};
+
+/**
+ * @summary Request changes for a submitted requisition
+ */
+export type requestRequisitionChangesResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type requestRequisitionChangesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type requestRequisitionChangesResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type requestRequisitionChangesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type requestRequisitionChangesResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type requestRequisitionChangesResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type requestRequisitionChangesResponseSuccess = requestRequisitionChangesResponse200 & {
+  headers: Headers;
+};
+export type requestRequisitionChangesResponseError = (
+  | requestRequisitionChangesResponse401
+  | requestRequisitionChangesResponse403
+  | requestRequisitionChangesResponse404
+  | requestRequisitionChangesResponse409
+  | requestRequisitionChangesResponse422
+) & {
+  headers: Headers;
+};
+
+export type requestRequisitionChangesResponse =
+  | requestRequisitionChangesResponseSuccess
+  | requestRequisitionChangesResponseError;
+
+export const getRequestRequisitionChangesUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/request-changes`;
+};
+
+export const requestRequisitionChanges = async (
+  requisitionId: string,
+  requestRequisitionChangesRequest: RequestRequisitionChangesRequest,
+  options?: RequestInit,
+): Promise<requestRequisitionChangesResponse> => {
+  return cognifyFetch<requestRequisitionChangesResponse>(
+    getRequestRequisitionChangesUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(requestRequisitionChangesRequest),
+    },
+  );
+};
+
+/**
+ * @summary Resubmit a change-requested requisition
+ */
+export type resubmitRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type resubmitRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type resubmitRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type resubmitRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type resubmitRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type resubmitRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type resubmitRequisitionResponseSuccess = resubmitRequisitionResponse200 & {
+  headers: Headers;
+};
+export type resubmitRequisitionResponseError = (
+  | resubmitRequisitionResponse401
+  | resubmitRequisitionResponse403
+  | resubmitRequisitionResponse404
+  | resubmitRequisitionResponse409
+  | resubmitRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type resubmitRequisitionResponse =
+  | resubmitRequisitionResponseSuccess
+  | resubmitRequisitionResponseError;
+
+export const getResubmitRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/resubmit`;
+};
+
+export const resubmitRequisition = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<resubmitRequisitionResponse> => {
+  return cognifyFetch<resubmitRequisitionResponse>(getResubmitRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Withdraw a requisition
+ */
+export type withdrawRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type withdrawRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type withdrawRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type withdrawRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type withdrawRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type withdrawRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type withdrawRequisitionResponseSuccess = withdrawRequisitionResponse200 & {
+  headers: Headers;
+};
+export type withdrawRequisitionResponseError = (
+  | withdrawRequisitionResponse401
+  | withdrawRequisitionResponse403
+  | withdrawRequisitionResponse404
+  | withdrawRequisitionResponse409
+  | withdrawRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type withdrawRequisitionResponse =
+  | withdrawRequisitionResponseSuccess
+  | withdrawRequisitionResponseError;
+
+export const getWithdrawRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/withdraw`;
+};
+
+export const withdrawRequisition = async (
+  requisitionId: string,
+  reasonedRequisitionActionRequest: ReasonedRequisitionActionRequest,
+  options?: RequestInit,
+): Promise<withdrawRequisitionResponse> => {
+  return cognifyFetch<withdrawRequisitionResponse>(getWithdrawRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reasonedRequisitionActionRequest),
+  });
+};
+
+/**
+ * @summary Cancel a requisition
+ */
+export type cancelRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type cancelRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelRequisitionResponseSuccess = cancelRequisitionResponse200 & {
+  headers: Headers;
+};
+export type cancelRequisitionResponseError = (
+  | cancelRequisitionResponse401
+  | cancelRequisitionResponse403
+  | cancelRequisitionResponse404
+  | cancelRequisitionResponse409
+  | cancelRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelRequisitionResponse =
+  | cancelRequisitionResponseSuccess
+  | cancelRequisitionResponseError;
+
+export const getCancelRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/cancel`;
+};
+
+export const cancelRequisition = async (
+  requisitionId: string,
+  reasonedRequisitionActionRequest: ReasonedRequisitionActionRequest,
+  options?: RequestInit,
+): Promise<cancelRequisitionResponse> => {
+  return cognifyFetch<cancelRequisitionResponse>(getCancelRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reasonedRequisitionActionRequest),
+  });
+};
+
+/**
+ * @summary List comments for a requisition
+ */
+export type listRequisitionCommentsResponse200 = {
+  data: CollaborationCommentListResponse;
+  status: 200;
+};
+
+export type listRequisitionCommentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionCommentsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listRequisitionCommentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionCommentsResponseSuccess = listRequisitionCommentsResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionCommentsResponseError = (
+  | listRequisitionCommentsResponse401
+  | listRequisitionCommentsResponse403
+  | listRequisitionCommentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionCommentsResponse =
+  | listRequisitionCommentsResponseSuccess
+  | listRequisitionCommentsResponseError;
+
+export const getListRequisitionCommentsUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/comments`;
+};
+
+export const listRequisitionComments = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionCommentsResponse> => {
+  return cognifyFetch<listRequisitionCommentsResponse>(
+    getListRequisitionCommentsUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create a comment on a requisition
+ */
+export type createRequisitionCommentResponse201 = {
+  data: CollaborationCommentResponse;
+  status: 201;
+};
+
+export type createRequisitionCommentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRequisitionCommentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createRequisitionCommentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createRequisitionCommentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createRequisitionCommentResponseSuccess = createRequisitionCommentResponse201 & {
+  headers: Headers;
+};
+export type createRequisitionCommentResponseError = (
+  | createRequisitionCommentResponse401
+  | createRequisitionCommentResponse403
+  | createRequisitionCommentResponse404
+  | createRequisitionCommentResponse422
+) & {
+  headers: Headers;
+};
+
+export type createRequisitionCommentResponse =
+  | createRequisitionCommentResponseSuccess
+  | createRequisitionCommentResponseError;
+
+export const getCreateRequisitionCommentUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/comments`;
+};
+
+export const createRequisitionComment = async (
+  requisitionId: string,
+  createCollaborationCommentRequest: CreateCollaborationCommentRequest,
+  options?: RequestInit,
+): Promise<createRequisitionCommentResponse> => {
+  return cognifyFetch<createRequisitionCommentResponse>(
+    getCreateRequisitionCommentUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createCollaborationCommentRequest),
+    },
+  );
+};
+
+/**
+ * @summary List users who can be mentioned on a requisition
+ */
+export type listRequisitionMentionCandidatesResponse200 = {
+  data: CollaborationMentionCandidateListResponse;
+  status: 200;
+};
+
+export type listRequisitionMentionCandidatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionMentionCandidatesResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listRequisitionMentionCandidatesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionMentionCandidatesResponseSuccess =
+  listRequisitionMentionCandidatesResponse200 & {
+    headers: Headers;
+  };
+export type listRequisitionMentionCandidatesResponseError = (
+  | listRequisitionMentionCandidatesResponse401
+  | listRequisitionMentionCandidatesResponse403
+  | listRequisitionMentionCandidatesResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionMentionCandidatesResponse =
+  | listRequisitionMentionCandidatesResponseSuccess
+  | listRequisitionMentionCandidatesResponseError;
+
+export const getListRequisitionMentionCandidatesUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/mention-candidates`;
+};
+
+export const listRequisitionMentionCandidates = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionMentionCandidatesResponse> => {
+  return cognifyFetch<listRequisitionMentionCandidatesResponse>(
+    getListRequisitionMentionCandidatesUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };

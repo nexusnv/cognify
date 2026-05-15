@@ -2,9 +2,11 @@
 
 namespace Domains\Requisition\Http\Resources;
 
+use App\Models\User;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\MissingValue;
 
 /**
  * @mixin \Domains\Requisition\Models\Requisition
@@ -39,11 +41,34 @@ class RequisitionResource extends JsonResource
             ],
             'lineItems' => RequisitionLineItemResource::collection($lineItems),
             'estimatedTotal' => $this->estimatedTotal(),
+            'changesRequestedAt' => $this->changes_requested_at?->toISOString(),
+            'changesRequestedBy' => $this->userSummary($this->whenLoaded('changesRequestedBy')),
+            'changeRequestReason' => $this->change_request_reason,
+            'changeRequestFields' => $this->change_request_fields ?? [],
+            'withdrawnAt' => $this->withdrawn_at?->toISOString(),
+            'withdrawnBy' => $this->userSummary($this->whenLoaded('withdrawnBy')),
+            'withdrawalReason' => $this->withdrawal_reason,
+            'cancelledAt' => $this->cancelled_at?->toISOString(),
+            'cancelledBy' => $this->userSummary($this->whenLoaded('cancelledBy')),
+            'cancellationReason' => $this->cancellation_reason,
             'permissions' => [
-                'canUpdate' => $this->status === RequisitionStatus::Draft
+                'canUpdate' => in_array($this->status, [RequisitionStatus::Draft, RequisitionStatus::ChangesRequested], true)
                     && ($request->user()?->can('update', $this->resource) ?? false),
                 'canSubmit' => $this->status === RequisitionStatus::Draft
                     && ($request->user()?->can('submit', $this->resource) ?? false),
+                'canResubmit' => $this->status === RequisitionStatus::ChangesRequested
+                    && ($request->user()?->can('resubmit', $this->resource) ?? false),
+                'canRequestChanges' => $this->status === RequisitionStatus::Submitted
+                    && ($request->user()?->can('requestChanges', $this->resource) ?? false),
+                'canWithdraw' => in_array($this->status, [
+                    RequisitionStatus::Draft,
+                    RequisitionStatus::Submitted,
+                    RequisitionStatus::ChangesRequested,
+                ], true) && ($request->user()?->can('withdraw', $this->resource) ?? false),
+                'canCancel' => in_array($this->status, [RequisitionStatus::Submitted, RequisitionStatus::ChangesRequested], true)
+                    && ($request->user()?->can('cancel', $this->resource) ?? false),
+                'canComment' => $request->user()?->can('comment', $this->resource) ?? false,
+                'canMention' => $request->user()?->can('mention', $this->resource) ?? false,
                 'canViewActivity' => $request->user()?->can('view', $this->resource) ?? false,
             ],
             'submittedAt' => $this->submitted_at?->toISOString(),
@@ -64,5 +89,22 @@ class RequisitionResource extends JsonResource
         );
 
         return round($total, 2);
+    }
+
+    /**
+     * @param User|MissingValue|null $user
+     * @return array{id: string, name: string, email: string|null}|null
+     */
+    private function userSummary(User|MissingValue|null $user): ?array
+    {
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        return [
+            'id' => (string) $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ];
     }
 }

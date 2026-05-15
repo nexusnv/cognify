@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRequisition, getRequisitionActivity } from "../api/requisitions-api";
 
-export function useRequisition(requisitionId: string) {
+export function useRequisition(requisitionId?: string) {
   return useQuery({
     queryKey: ["requisition", requisitionId],
-    queryFn: () => getRequisition(requisitionId),
+    queryFn: () => getRequisition(requisitionId ?? ""),
+    enabled: Boolean(requisitionId),
   });
 }
 

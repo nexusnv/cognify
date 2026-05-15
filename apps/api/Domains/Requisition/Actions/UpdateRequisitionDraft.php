@@ -22,8 +22,8 @@ class UpdateRequisitionDraft
      */
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): Requisition
     {
-        if ($requisition->status !== RequisitionStatus::Draft) {
-            throw new DraftConflictException('Only draft requisitions can be updated.');
+        if (! in_array($requisition->status, [RequisitionStatus::Draft, RequisitionStatus::ChangesRequested], true)) {
+            throw new DraftConflictException('Only draft or change-requested requisitions can be updated.');
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $data): Requisition {
@@ -33,8 +33,8 @@ class UpdateRequisitionDraft
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($requisition->status !== RequisitionStatus::Draft) {
-                throw new DraftConflictException('The requisition is no longer a draft.');
+            if (! in_array($requisition->status, [RequisitionStatus::Draft, RequisitionStatus::ChangesRequested], true)) {
+                throw new DraftConflictException('The requisition is no longer editable.');
             }
 
             if ((int) $data['lockVersion'] !== (int) $requisition->lock_version) {

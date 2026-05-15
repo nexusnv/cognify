@@ -9,6 +9,7 @@ import { SessionGate } from "../workflows/session-gate";
 import { AccountSettingsPage } from "../workflows/account-settings-page";
 import { resetIdentityMockState } from "../mocks/identity-handlers";
 import { multiTenantIdentity } from "../mocks/identity-fixtures";
+import { defaultNotificationPreferences } from "../schemas/profile-schema";
 import type { CurrentUserContext } from "../types/identity-view-model";
 import { getStoredActiveTenantId, setCurrentTenant } from "../api/identity-api";
 
@@ -108,11 +109,10 @@ describe("identity workflow", () => {
               ...multiTenantIdentity.user,
               name: "Taylor Buyer",
               theme: "dark",
-              notificationPreferences: {
-                "requisition.submitted": { inApp: true },
-                "attachment.uploaded": { inApp: false },
-                "system.announcement": { inApp: true },
-              },
+            notificationPreferences: {
+              ...defaultNotificationPreferences,
+              "attachment.uploaded": { inApp: false },
+            },
             },
           },
         });
@@ -139,9 +139,8 @@ describe("identity workflow", () => {
     expect(
       (submittedBody as { notificationPreferences?: unknown }).notificationPreferences,
     ).toEqual({
-      "requisition.submitted": { inApp: true },
+      ...defaultNotificationPreferences,
       "attachment.uploaded": { inApp: false },
-      "system.announcement": { inApp: true },
     });
   });
 

@@ -8,6 +8,11 @@ import type { NotificationPreference } from "./notificationPreference";
 
 export interface UpdateNotificationPreferences {
   "requisition.submitted"?: NotificationPreference;
+  "requisition.changes_requested"?: NotificationPreference;
+  "requisition.resubmitted"?: NotificationPreference;
+  "requisition.withdrawn"?: NotificationPreference;
+  "requisition.cancelled"?: NotificationPreference;
   "attachment.uploaded"?: NotificationPreference;
+  "collaboration.mentioned"?: NotificationPreference;
   "system.announcement"?: NotificationPreference;
 }

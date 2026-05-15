@@ -1,4 +1,5 @@
 import type { CurrentUserContext } from "../types/identity-view-model";
+import { defaultNotificationPreferences } from "../schemas/profile-schema";
 
 export const requesterIdentity: CurrentUserContext = {
   user: {
@@ -9,11 +10,7 @@ export const requesterIdentity: CurrentUserContext = {
     timezone: "Asia/Kuala_Lumpur",
     locale: "en",
     theme: "system",
-    notificationPreferences: {
-      "requisition.submitted": { inApp: true },
-      "attachment.uploaded": { inApp: true },
-      "system.announcement": { inApp: true },
-    },
+    notificationPreferences: defaultNotificationPreferences,
   },
   tenants: [{ id: "1", name: "Acme Procurement", role: "requester" }],
   activeTenant: { id: "1", name: "Acme Procurement" },
