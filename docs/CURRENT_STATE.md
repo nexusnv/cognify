@@ -12,6 +12,7 @@ Cognify is in the local demo and system readiness implementation slice for the f
 ## Active Design Source
 
 - `docs/superpowers/specs/2026-05-09-cognify-greenfield-saas-runbook-design.md`
+- `docs/superpowers/specs/2026-05-15-local-demo-system-readiness-design.md`
 - Prior P0 feature specs remain relevant context for requisitions, notifications, attachments, audit history, and search behavior.
 
 ## Active Implementation Plan

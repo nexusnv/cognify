@@ -11,7 +11,7 @@ class DemoRequisitionSeeder
 
     public function run(DemoSeedContext $context): void
     {
-        $records = $this->records($context);
+        $records = $this->records();
 
         foreach ($records as $key => [$tenantKey, $requesterKey, $number, $title, $status, $department, $costCenter, $items]) {
             $tenant = $context->tenants->get($tenantKey);
@@ -51,7 +51,7 @@ class DemoRequisitionSeeder
     /**
      * @return array<string, array{string, string, string, string, RequisitionStatus, string, string, list<array{string, int, int}>}>
      */
-    private function records(DemoSeedContext $context): array
+    private function records(): array
     {
         return [
             'office-refresh' => [

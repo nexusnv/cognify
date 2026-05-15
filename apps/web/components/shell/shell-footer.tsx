@@ -1,5 +1,3 @@
-"use client";
-
 import { formatSystemStatusLabel } from "@/features/system-readiness/utils/system-status-label";
 import { formatWorkspaceLabel } from "./shell-utils";
 

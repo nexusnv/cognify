@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class ProcurementProject extends Model
@@ -32,18 +33,21 @@ class ProcurementProject extends Model
     protected static function booted(): void
     {
         static::saving(function (self $project): void {
-            if ($project->owner_id === null) {
-                return;
-            }
+            DB::transaction(function () use ($project): void {
+                if ($project->owner_id === null || (! $project->isDirty('owner_id') && ! $project->isDirty('tenant_id'))) {
+                    return;
+                }
 
-            $belongsToTenant = User::query()
-                ->whereKey($project->owner_id)
-                ->whereHas('tenants', fn ($query) => $query->whereKey($project->tenant_id))
-                ->exists();
+                $belongsToTenant = User::query()
+                    ->whereKey($project->owner_id)
+                    ->whereHas('tenants', fn ($query) => $query->whereKey($project->tenant_id))
+                    ->lockForUpdate()
+                    ->exists();
 
-            if (! $belongsToTenant) {
-                throw new InvalidArgumentException('Project owner must belong to the same tenant.');
-            }
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Project owner must belong to the same tenant.');
+                }
+            });
         });
     }
 

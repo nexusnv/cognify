@@ -12,11 +12,11 @@ class DemoTenantSeeder
             'acme' => 'Acme Procurement',
             'northwind' => 'Northwind Sourcing',
             'beta' => 'Beta Corp Sandbox',
-        ] as $key => $name) {
+        ] as $slug => $name) {
             $context->tenants->put(
-                $key,
+                $slug,
                 Tenant::query()->updateOrCreate(
-                    ['name' => $name],
+                    ['slug' => $slug],
                     ['name' => $name],
                 ),
             );

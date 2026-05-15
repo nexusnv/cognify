@@ -6,6 +6,7 @@ use App\Tenancy\Tenant;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class Quotation extends Model
@@ -32,21 +33,31 @@ class Quotation extends Model
     protected static function booted(): void
     {
         static::saving(function (self $quotation): void {
-            if ($quotation->rfq_id !== null) {
-                $rfq = Rfq::query()->find($quotation->rfq_id);
+            DB::transaction(function () use ($quotation): void {
+                if ($quotation->rfq_id !== null && ($quotation->isDirty('rfq_id') || $quotation->isDirty('tenant_id'))) {
+                    $belongsToTenant = Rfq::query()
+                        ->whereKey($quotation->rfq_id)
+                        ->where('tenant_id', $quotation->tenant_id)
+                        ->lockForUpdate()
+                        ->exists();
 
-                if ($rfq !== null && (int) $rfq->tenant_id !== (int) $quotation->tenant_id) {
-                    throw new InvalidArgumentException('Quotation RFQ must belong to the same tenant.');
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Quotation RFQ must belong to the same tenant.');
+                    }
                 }
-            }
 
-            if ($quotation->vendor_id !== null) {
-                $vendor = Vendor::query()->find($quotation->vendor_id);
+                if ($quotation->vendor_id !== null && ($quotation->isDirty('vendor_id') || $quotation->isDirty('tenant_id'))) {
+                    $belongsToTenant = Vendor::query()
+                        ->whereKey($quotation->vendor_id)
+                        ->where('tenant_id', $quotation->tenant_id)
+                        ->lockForUpdate()
+                        ->exists();
 
-                if ($vendor !== null && (int) $vendor->tenant_id !== (int) $quotation->tenant_id) {
-                    throw new InvalidArgumentException('Quotation vendor must belong to the same tenant.');
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Quotation vendor must belong to the same tenant.');
+                    }
                 }
-            }
+            });
         });
     }
 

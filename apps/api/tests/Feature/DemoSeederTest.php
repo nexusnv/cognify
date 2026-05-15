@@ -4,12 +4,12 @@ namespace Tests\Feature;
 
 use App\Auth\TenantRole;
 use App\Models\User;
-use App\Tenancy\Tenant;
 use App\Notifications\NotificationRecord;
-use Domains\Attachment\Models\Attachment;
-use Domains\Demo\Models\DemoSeedRun;
+use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Attachment\Models\Attachment;
 use Domains\Award\Models\Award;
+use Domains\Demo\Models\DemoSeedRun;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
@@ -17,6 +17,7 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Tests\TestCase;
@@ -140,15 +141,15 @@ class DemoSeederTest extends TestCase
         $this->assertSame('125000.00', $project->budget_amount);
         $this->assertSame(['program' => 'workspace-refresh'], $project->metadata);
         $this->assertSame(3, $rfq->metadata['invited_vendors']);
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $rfq->due_at);
+        $this->assertInstanceOf(Carbon::class, $rfq->due_at);
         $this->assertSame('98500.00', $quotation->total_amount);
         $this->assertSame(21, $quotation->metadata['lead_time_days']);
         $this->assertSame('finance', $approvalTask->metadata['stage']);
         $this->assertSame('98500.00', $award->total_amount);
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $award->decided_at);
+        $this->assertInstanceOf(Carbon::class, $award->decided_at);
         $this->assertSame('Best delivery confidence', $award->metadata['rationale']);
         $this->assertSame('local-demo', $demoSeedRun->name);
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $demoSeedRun->seeded_at);
+        $this->assertInstanceOf(Carbon::class, $demoSeedRun->seeded_at);
         $this->assertSame(['records' => 5], $demoSeedRun->metadata);
     }
 
@@ -286,6 +287,10 @@ class DemoSeederTest extends TestCase
         $northwind = Tenant::query()->where('name', 'Northwind Sourcing')->firstOrFail();
         $beta = Tenant::query()->where('name', 'Beta Corp Sandbox')->firstOrFail();
 
+        $this->assertDatabaseHas('tenants', ['slug' => 'acme', 'name' => 'Acme Procurement']);
+        $this->assertDatabaseHas('tenants', ['slug' => 'northwind', 'name' => 'Northwind Sourcing']);
+        $this->assertDatabaseHas('tenants', ['slug' => 'beta', 'name' => 'Beta Corp Sandbox']);
+
         $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'name' => 'Test User']);
         $this->assertDatabaseHas('users', ['email' => 'buyer@example.com', 'name' => 'Buyer User']);
         $this->assertDatabaseHas('users', ['email' => 'approver@example.com', 'name' => 'Approver User']);
@@ -361,5 +366,45 @@ class DemoSeederTest extends TestCase
             'awards' => 2,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
+    }
+
+    public function test_demo_tenant_seed_uses_slug_as_stable_lookup_key(): void
+    {
+        Tenant::query()->create([
+            'slug' => 'acme',
+            'name' => 'Old Acme Name',
+        ]);
+
+        $this->seed();
+
+        $this->assertSame(3, Tenant::query()->count());
+        $this->assertDatabaseHas('tenants', [
+            'slug' => 'acme',
+            'name' => 'Acme Procurement',
+        ]);
+        $this->assertDatabaseMissing('tenants', [
+            'name' => 'Old Acme Name',
+        ]);
+    }
+
+    public function test_approval_tasks_reject_non_model_subject_types(): void
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Acme Corp',
+        ]);
+        $admin = User::factory()->create();
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Approval task subject type must be an Eloquent model.');
+
+        ApprovalTask::query()->create([
+            'tenant_id' => $tenant->id,
+            'approver_id' => $admin->id,
+            'subject_type' => self::class,
+            'subject_id' => 1,
+            'title' => 'Invalid subject',
+            'status' => 'pending',
+        ]);
     }
 }

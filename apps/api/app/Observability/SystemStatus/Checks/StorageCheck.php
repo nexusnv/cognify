@@ -6,6 +6,7 @@ use App\Observability\SystemStatus\SystemStatusCheck;
 use App\Observability\SystemStatus\SystemStatusCheckResult;
 use App\Tenancy\Tenant;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class StorageCheck implements SystemStatusCheck
 {
@@ -17,12 +18,26 @@ class StorageCheck implements SystemStatusCheck
     public function run(Tenant $tenant): SystemStatusCheckResult
     {
         $disk = config('filesystems.default');
-        $probePath = 'system-status/probe-' . bin2hex(random_bytes(6)) . '.txt';
+        $probePath = 'system-status/probe-'.bin2hex(random_bytes(6)).'.txt';
         $value = now()->toISOString();
+        $operationException = null;
 
-        Storage::disk($disk)->put($probePath, $value);
-        $loaded = Storage::disk($disk)->get($probePath);
-        Storage::disk($disk)->delete($probePath);
+        try {
+            Storage::disk($disk)->put($probePath, $value);
+            $loaded = Storage::disk($disk)->get($probePath);
+        } catch (Throwable $exception) {
+            $operationException = $exception;
+
+            throw $exception;
+        } finally {
+            try {
+                Storage::disk($disk)->delete($probePath);
+            } catch (Throwable $deleteException) {
+                if (! $operationException instanceof Throwable) {
+                    throw $deleteException;
+                }
+            }
+        }
 
         if ($loaded !== $value) {
             return new SystemStatusCheckResult(

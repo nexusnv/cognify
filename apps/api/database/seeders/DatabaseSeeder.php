@@ -12,6 +12,7 @@ use Database\Seeders\Demo\DemoTenantSeeder;
 use Database\Seeders\Demo\DemoUserSeeder;
 use Domains\Demo\Models\DemoSeedRun;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,32 +20,34 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $context = new DemoSeedContext();
+        DB::transaction(function (): void {
+            $context = new DemoSeedContext;
 
-        app(DemoTenantSeeder::class)->run($context);
-        app(DemoUserSeeder::class)->run($context);
-        app(DemoRequisitionSeeder::class)->run($context);
-        app(DemoRoadmapPreviewSeeder::class)->run($context);
-        app(DemoAttachmentSeeder::class)->run($context);
-        app(DemoAuditSeeder::class)->run($context);
-        app(DemoNotificationSeeder::class)->run($context);
+            app(DemoTenantSeeder::class)->run($context);
+            app(DemoUserSeeder::class)->run($context);
+            app(DemoRequisitionSeeder::class)->run($context);
+            app(DemoRoadmapPreviewSeeder::class)->run($context);
+            app(DemoAttachmentSeeder::class)->run($context);
+            app(DemoAuditSeeder::class)->run($context);
+            app(DemoNotificationSeeder::class)->run($context);
 
-        DemoSeedRun::query()->updateOrCreate(
-            ['name' => 'local-demo'],
-            [
-                'seeded_at' => self::SEEDED_AT,
-                'metadata' => [
-                    'tenants' => $context->tenants->count(),
-                    'users' => $context->users->count(),
-                    'requisitions' => $context->requisitions->count(),
-                    'vendors' => $context->vendors->count(),
-                    'projects' => $context->projects->count(),
-                    'rfqs' => $context->rfqs->count(),
-                    'quotations' => $context->quotations->count(),
-                    'approval_tasks' => $context->approvalTasks->count(),
-                    'awards' => $context->awards->count(),
+            DemoSeedRun::query()->updateOrCreate(
+                ['name' => 'local-demo'],
+                [
+                    'seeded_at' => self::SEEDED_AT,
+                    'metadata' => [
+                        'tenants' => $context->tenants->count(),
+                        'users' => $context->users->count(),
+                        'requisitions' => $context->requisitions->count(),
+                        'vendors' => $context->vendors->count(),
+                        'projects' => $context->projects->count(),
+                        'rfqs' => $context->rfqs->count(),
+                        'quotations' => $context->quotations->count(),
+                        'approval_tasks' => $context->approvalTasks->count(),
+                        'awards' => $context->awards->count(),
+                    ],
                 ],
-            ],
-        );
+            );
+        });
     }
 }

@@ -12,8 +12,12 @@ export function SystemStatusPage() {
   const query = useSystemStatus(tenantId);
   const status = query.data?.data;
 
-  if (currentUserQuery.isLoading || query.isLoading || tenantId === null) {
+  if (currentUserQuery.isLoading || query.isLoading) {
     return <div role="status">Loading system status...</div>;
+  }
+
+  if (tenantId === null) {
+    return <div role="alert">No active workspace selected.</div>;
   }
 
   if (query.isError || !status) {

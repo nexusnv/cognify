@@ -38,7 +38,6 @@ class DemoUserSeeder
                 $user->tenants()->syncWithoutDetaching([
                     $tenant->id => ['role' => $role],
                 ]);
-                $user->tenants()->updateExistingPivot($tenant->id, ['role' => $role]);
             }
 
             $context->users->put($key, $user->refresh());

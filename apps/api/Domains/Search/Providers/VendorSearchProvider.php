@@ -23,6 +23,7 @@ class VendorSearchProvider implements SearchProvider
     public function search(Tenant $tenant, User $user, string $query, int $limit): Collection
     {
         $normalizedQuery = mb_strtolower(trim($query));
+        // TODO: Vendor visibility is tenant-wide for P0; keep $user for the shared provider contract.
 
         $builder = Vendor::query()
             ->where('tenant_id', $tenant->id);
@@ -48,11 +49,11 @@ class VendorSearchProvider implements SearchProvider
     {
         $builder->where(function (Builder $builder) use ($query): void {
             $builder->whereRaw('lower(name) = ?', [$query])
-                ->orWhereRaw('lower(name) like ?', [$query . '%'])
-                ->orWhereRaw('lower(name) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(category) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(risk_rating) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(status) like ?', ['%' . $query . '%']);
+                ->orWhereRaw('lower(name) like ?', [$query.'%'])
+                ->orWhereRaw('lower(name) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(category) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(risk_rating) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(status) like ?', ['%'.$query.'%']);
         });
     }
 
@@ -63,14 +64,16 @@ class VendorSearchProvider implements SearchProvider
                 WHEN lower(name) = ? THEN 0
                 WHEN lower(name) LIKE ? THEN 1
                 WHEN lower(category) LIKE ? THEN 2
-                WHEN lower(risk_rating) LIKE ? THEN 3
-                ELSE 4
+                WHEN lower(status) LIKE ? THEN 3
+                WHEN lower(risk_rating) LIKE ? THEN 4
+                ELSE 5
             END',
             [
                 $query,
-                $query . '%',
-                '%' . $query . '%',
-                '%' . $query . '%',
+                $query.'%',
+                '%'.$query.'%',
+                '%'.$query.'%',
+                '%'.$query.'%',
             ],
         )->orderByDesc('updated_at');
     }

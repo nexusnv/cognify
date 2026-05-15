@@ -23,7 +23,7 @@ class ApiMetadataCheck implements SystemStatusCheck
             metadata: [
                 'service' => 'cognify-api',
                 'environment' => config('app.env'),
-                'version' => (string) config('app.version', '0.1.0'),
+                'version' => (string) config('app.version'),
             ],
         );
     }

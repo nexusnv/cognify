@@ -4,6 +4,11 @@ namespace Tests\Feature;
 
 use App\Auth\TenantRole;
 use App\Models\User;
+use App\Observability\SystemStatus\Checks\OpenApiCheck;
+use App\Observability\SystemStatus\Checks\StorageCheck;
+use App\Observability\SystemStatus\SystemStatusCheck;
+use App\Observability\SystemStatus\SystemStatusCheckResult;
+use App\Observability\SystemStatus\SystemStatusService;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Award\Models\Award;
@@ -13,8 +18,12 @@ use Domains\Quotation\Models\Rfq;
 use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
 use Tests\TestCase;
+use Throwable;
 
 class SystemStatusApiTest extends TestCase
 {
@@ -169,6 +178,77 @@ class SystemStatusApiTest extends TestCase
             ->assertJsonPath('data.demo.counts.quotations', 1)
             ->assertJsonPath('data.demo.counts.approvalTasks', 1)
             ->assertJsonPath('data.demo.counts.awards', 1);
+    }
+
+    public function test_openapi_check_reports_error_when_spec_is_not_readable(): void
+    {
+        [$tenant] = $this->tenantUser(TenantRole::Admin->value);
+        $path = tempnam(sys_get_temp_dir(), 'openapi-');
+        $this->assertIsString($path);
+        file_put_contents($path, '{}');
+        chmod($path, 0000);
+
+        try {
+            $result = (new OpenApiCheck($path))->run($tenant);
+        } finally {
+            chmod($path, 0600);
+            unlink($path);
+        }
+
+        $this->assertSame('openapi', $result->id);
+        $this->assertSame('error', $result->status);
+        $this->assertSame('OpenAPI spec file is not readable.', $result->message);
+        $this->assertSame([], $result->metadata);
+    }
+
+    public function test_storage_check_deletes_probe_when_read_fails(): void
+    {
+        [$tenant] = $this->tenantUser(TenantRole::Admin->value);
+        config(['filesystems.default' => 'local']);
+        $disk = Mockery::mock();
+
+        Storage::shouldReceive('disk')
+            ->with('local')
+            ->andReturn($disk);
+        $disk->shouldReceive('put')->once();
+        $disk->shouldReceive('get')->once()->andThrow(new \RuntimeException('read failed'));
+        $disk->shouldReceive('delete')->once();
+
+        $this->expectException(\RuntimeException::class);
+
+        (new StorageCheck)->run($tenant);
+    }
+
+    public function test_system_status_service_logs_failed_checks(): void
+    {
+        [$tenant] = $this->tenantUser(TenantRole::Admin->value);
+        Log::spy();
+
+        $service = new SystemStatusService([
+            new class implements SystemStatusCheck
+            {
+                public function key(): string
+                {
+                    return 'broken_check';
+                }
+
+                public function run(Tenant $tenant): SystemStatusCheckResult
+                {
+                    throw new \RuntimeException('readiness failed');
+                }
+            },
+        ]);
+
+        $report = $service->report($tenant);
+
+        $this->assertSame('error', $report->status);
+        Log::shouldHaveReceived('error')->once()->withArgs(
+            fn (string $message, array $context): bool => $message === 'System readiness check failed.'
+                && $context['check'] === 'broken_check'
+                && $context['message'] === 'readiness failed'
+                && is_string($context['trace'])
+                && $context['exception'] instanceof Throwable,
+        );
     }
 
     /**

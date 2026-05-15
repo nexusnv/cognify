@@ -36,7 +36,7 @@ class SearchApiTest extends TestCase
         ]);
 
         $response = $this->actingAsTenant($tenant, $requester)
-            ->getJson('/api/search?query=' . urlencode($requester->name));
+            ->getJson('/api/search?query='.urlencode($requester->name));
 
         $response->assertOk()
             ->assertJsonPath('meta.query', $requester->name)
@@ -47,7 +47,7 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.0.title', 'Office fit-out procurement')
             ->assertJsonPath('data.0.subtitle', 'REQ-2026-000042')
             ->assertJsonPath('data.0.status', RequisitionStatus::Draft->value)
-            ->assertJsonPath('data.0.href', '/requisitions/' . $visible->id)
+            ->assertJsonPath('data.0.href', '/requisitions/'.$visible->id)
             ->assertJsonStructure([
                 'data' => [
                     ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
@@ -86,7 +86,7 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.0.id', (string) $titleMatch->id)
             ->assertJsonPath('data.0.title', 'Office fit-out procurement')
             ->assertJsonPath('data.0.subtitle', 'REQ-2026-000042')
-            ->assertJsonPath('data.0.href', '/requisitions/' . $titleMatch->id);
+            ->assertJsonPath('data.0.href', '/requisitions/'.$titleMatch->id);
 
         $numberResponse = $this->actingAsTenant($tenant, $requester)
             ->getJson('/api/search?query=000777&types=requisition&limit=10');
@@ -116,7 +116,7 @@ class SearchApiTest extends TestCase
         ]);
 
         $buyerResponse = $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/search?query=' . urlencode('REQ-2026-0001'));
+            ->getJson('/api/search?query='.urlencode('REQ-2026-0001'));
 
         $buyerResponse->assertOk()
             ->assertJsonPath('meta.returned', 1)
@@ -124,7 +124,7 @@ class SearchApiTest extends TestCase
             ->assertJsonMissing(['id' => (string) $draft->id]);
 
         $approverResponse = $this->actingAsTenant($tenant, $approver)
-            ->getJson('/api/search?query=' . urlencode('REQ-2026-0001'));
+            ->getJson('/api/search?query='.urlencode('REQ-2026-0001'));
 
         $approverResponse->assertOk()
             ->assertJsonPath('meta.returned', 1)
@@ -205,19 +205,19 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.2.title', 'Alpha furniture package')
             ->assertJsonPath('data.2.subtitle', 'RFQ-2026-ALPHA')
             ->assertJsonPath('data.2.status', 'open')
-            ->assertJsonPath('data.2.href', '/requisitions/' . $requisition->id)
+            ->assertJsonPath('data.2.href', '/requisitions/'.$requisition->id)
             ->assertJsonPath('data.3.type', 'quotation')
             ->assertJsonPath('data.3.id', (string) $quotation->id)
             ->assertJsonPath('data.3.title', 'QUO-2026-ALPHA')
             ->assertJsonPath('data.3.subtitle', 'Alpha Office Supplies')
             ->assertJsonPath('data.3.status', 'received')
-            ->assertJsonPath('data.3.href', '/requisitions/' . $requisition->id)
+            ->assertJsonPath('data.3.href', '/requisitions/'.$requisition->id)
             ->assertJsonPath('data.4.type', 'award')
             ->assertJsonPath('data.4.id', (string) $award->id)
             ->assertJsonPath('data.4.title', 'AWD-2026-ALPHA')
             ->assertJsonPath('data.4.subtitle', 'Alpha Office Supplies')
             ->assertJsonPath('data.4.status', 'recommended')
-            ->assertJsonPath('data.4.href', '/requisitions/' . $requisition->id)
+            ->assertJsonPath('data.4.href', '/requisitions/'.$requisition->id)
             ->assertJsonStructure([
                 'data' => [
                     ['type', 'id', 'title', 'subtitle', 'status', 'href', 'updatedAt'],
@@ -228,6 +228,31 @@ class SearchApiTest extends TestCase
                 ],
                 'meta' => ['query', 'limit', 'returned'],
             ]);
+    }
+
+    public function test_vendor_search_ranks_status_matches_before_risk_matches(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $statusMatch = $this->createVendor($tenant, [
+            'name' => 'Metro Facilities',
+            'status' => 'preferred',
+            'category' => 'Facilities',
+            'risk_rating' => 'low',
+        ]);
+        $riskMatch = $this->createVendor($tenant, [
+            'name' => 'Risk Advisory',
+            'status' => 'active',
+            'category' => 'Compliance',
+            'risk_rating' => 'preferred',
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=preferred&types[]=vendor&limit=10');
+
+        $response->assertOk()
+            ->assertJsonPath('meta.returned', 2)
+            ->assertJsonPath('data.0.id', (string) $statusMatch->id)
+            ->assertJsonPath('data.1.id', (string) $riskMatch->id);
     }
 
     public function test_search_accepts_repeated_types_parameters_from_client_serialization(): void
@@ -456,7 +481,7 @@ class SearchApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createRequisition(Tenant $tenant, User $user, array $attributes = []): Requisition
     {
@@ -489,7 +514,7 @@ class SearchApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createVendor(Tenant $tenant, array $attributes = []): Vendor
     {
@@ -504,7 +529,7 @@ class SearchApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createProject(Tenant $tenant, User $owner, array $attributes = []): ProcurementProject
     {
@@ -521,7 +546,7 @@ class SearchApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createRfq(Tenant $tenant, array $attributes = []): Rfq
     {
@@ -538,7 +563,7 @@ class SearchApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createQuotation(Tenant $tenant, array $attributes = []): Quotation
     {
@@ -555,7 +580,7 @@ class SearchApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createAward(Tenant $tenant, array $attributes = []): Award
     {

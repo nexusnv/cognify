@@ -10,10 +10,16 @@ use App\Observability\SystemStatus\Checks\OpenApiCheck;
 use App\Observability\SystemStatus\Checks\QueueCheck;
 use App\Observability\SystemStatus\Checks\StorageCheck;
 use App\Tenancy\Tenant;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SystemStatusService
 {
+    /**
+     * @param  array<int, SystemStatusCheck>|null  $checks
+     */
+    public function __construct(private readonly ?array $checks = null) {}
+
     public function report(Tenant $tenant): SystemStatus
     {
         $checkedAt = now();
@@ -34,7 +40,7 @@ class SystemStatusService
             status: $this->overallStatus($checks),
             environment: (string) config('app.env'),
             service: 'cognify-api',
-            version: (string) config('app.version', '0.1.0'),
+            version: (string) config('app.version'),
             checkedAt: $checkedAt,
             checks: $checks,
             demo: $demoCheck instanceof SystemStatusCheckResult
@@ -52,19 +58,23 @@ class SystemStatusService
      */
     private function checks(): array
     {
+        if ($this->checks !== null) {
+            return $this->checks;
+        }
+
         return [
-            new ApiMetadataCheck(),
-            new DatabaseCheck(),
-            new CacheCheck(),
-            new QueueCheck(),
-            new StorageCheck(),
-            new OpenApiCheck(),
-            new DemoSeedCheck(),
+            new ApiMetadataCheck,
+            new DatabaseCheck,
+            new CacheCheck,
+            new QueueCheck,
+            new StorageCheck,
+            new OpenApiCheck,
+            new DemoSeedCheck,
         ];
     }
 
     /**
-     * @param array<int, array{id: string, label: string, status: string, message: string, remediation: ?string, metadata: object}> $checks
+     * @param  array<int, array{id: string, label: string, status: string, message: string, remediation: ?string, metadata: object}>  $checks
      */
     private function overallStatus(array $checks): string
     {
@@ -86,6 +96,13 @@ class SystemStatusService
         try {
             return $check->run($tenant);
         } catch (Throwable $exception) {
+            Log::error('System readiness check failed.', [
+                'check' => $check->key(),
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+                'exception' => $exception,
+            ]);
+
             return new SystemStatusCheckResult(
                 id: $check->key(),
                 label: ucfirst(str_replace('_', ' ', $check->key())),

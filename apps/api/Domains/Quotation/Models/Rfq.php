@@ -3,10 +3,11 @@
 namespace Domains\Quotation\Models;
 
 use App\Tenancy\Tenant;
-use Domains\Requisition\Models\Requisition;
 use Domains\Project\Models\ProcurementProject;
+use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class Rfq extends Model
@@ -35,21 +36,29 @@ class Rfq extends Model
     protected static function booted(): void
     {
         static::saving(function (self $rfq): void {
-            if ($rfq->project_id !== null) {
-                $project = ProcurementProject::query()->find($rfq->project_id);
+            DB::transaction(function () use ($rfq): void {
+                if ($rfq->project_id !== null && ($rfq->isDirty('project_id') || $rfq->isDirty('tenant_id'))) {
+                    $project = ProcurementProject::query()
+                        ->whereKey($rfq->project_id)
+                        ->lockForUpdate()
+                        ->first();
 
-                if ($project !== null && (int) $project->tenant_id !== (int) $rfq->tenant_id) {
-                    throw new InvalidArgumentException('RFQ project must belong to the same tenant.');
+                    if ($project !== null && (int) $project->tenant_id !== (int) $rfq->tenant_id) {
+                        throw new InvalidArgumentException('RFQ project must belong to the same tenant.');
+                    }
                 }
-            }
 
-            if ($rfq->requisition_id !== null) {
-                $requisition = Requisition::query()->find($rfq->requisition_id);
+                if ($rfq->requisition_id !== null && ($rfq->isDirty('requisition_id') || $rfq->isDirty('tenant_id'))) {
+                    $requisition = Requisition::query()
+                        ->whereKey($rfq->requisition_id)
+                        ->lockForUpdate()
+                        ->first();
 
-                if ($requisition !== null && (int) $requisition->tenant_id !== (int) $rfq->tenant_id) {
-                    throw new InvalidArgumentException('RFQ requisition must belong to the same tenant.');
+                    if ($requisition !== null && (int) $requisition->tenant_id !== (int) $rfq->tenant_id) {
+                        throw new InvalidArgumentException('RFQ requisition must belong to the same tenant.');
+                    }
                 }
-            }
+            });
         });
     }
 

@@ -7,6 +7,7 @@ use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class ApprovalTask extends Model
@@ -33,26 +34,41 @@ class ApprovalTask extends Model
     protected static function booted(): void
     {
         static::saving(function (self $task): void {
-            if ($task->approver_id !== null) {
-                $belongsToTenant = User::query()
-                    ->whereKey($task->approver_id)
-                    ->whereHas('tenants', fn ($query) => $query->whereKey($task->tenant_id))
-                    ->exists();
+            DB::transaction(function () use ($task): void {
+                if ($task->approver_id !== null && ($task->isDirty('approver_id') || $task->isDirty('tenant_id'))) {
+                    $belongsToTenant = User::query()
+                        ->whereKey($task->approver_id)
+                        ->whereHas('tenants', fn ($query) => $query->whereKey($task->tenant_id))
+                        ->lockForUpdate()
+                        ->exists();
 
-                if (! $belongsToTenant) {
-                    throw new InvalidArgumentException('Approval task approver must belong to the same tenant.');
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Approval task approver must belong to the same tenant.');
+                    }
                 }
-            }
 
-            if (! is_string($task->subject_type) || ! class_exists($task->subject_type)) {
-                return;
-            }
+                if (! $task->isDirty('subject_type') && ! $task->isDirty('subject_id') && ! $task->isDirty('tenant_id')) {
+                    return;
+                }
 
-            $subject = $task->subject_type::query()->find($task->subject_id);
+                if (! is_string($task->subject_type) || ! class_exists($task->subject_type)) {
+                    return;
+                }
 
-            if ($subject !== null && isset($subject->tenant_id) && (int) $subject->tenant_id !== (int) $task->tenant_id) {
-                throw new InvalidArgumentException('Approval task subject must belong to the same tenant.');
-            }
+                if (! is_subclass_of($task->subject_type, Model::class)) {
+                    throw new InvalidArgumentException('Approval task subject type must be an Eloquent model.');
+                }
+
+                /** @var Model|null $subject */
+                $subject = $task->subject_type::query()
+                    ->whereKey($task->subject_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($subject !== null && isset($subject->tenant_id) && (int) $subject->tenant_id !== (int) $task->tenant_id) {
+                    throw new InvalidArgumentException('Approval task subject must belong to the same tenant.');
+                }
+            });
         });
     }
 

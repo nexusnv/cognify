@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { AppProviders } from "@/components/providers/app-providers";
 import { server } from "@/tests/msw/server";
+import { multiTenantIdentity } from "@/features/identity/mocks/identity-fixtures";
 import { SystemStatusPage } from "../workflows/system-status-page";
 import { healthySystemStatus } from "../mocks/system-readiness-fixtures";
 
@@ -55,6 +56,28 @@ describe("SystemStatusPage", () => {
       </AppProviders>,
     );
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("System status could not be loaded.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "System status could not be loaded.",
+    );
+  });
+
+  it("shows a no active tenant state instead of loading forever", async () => {
+    let systemStatusRequested = false;
+    server.use(
+      http.get("/api/me", () => HttpResponse.json({ data: multiTenantIdentity })),
+      http.get("/api/system/status", () => {
+        systemStatusRequested = true;
+        return HttpResponse.json(healthySystemStatus);
+      }),
+    );
+
+    render(
+      <AppProviders>
+        <SystemStatusPage />
+      </AppProviders>,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No active workspace selected.");
+    expect(systemStatusRequested).toBe(false);
   });
 });

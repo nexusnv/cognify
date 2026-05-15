@@ -50,7 +50,8 @@ export const searchHandlers = [
 
 function parseTypes(searchParams: URLSearchParams): string[] {
   const repeatedTypes = searchParams.getAll("types");
-  const rawTypes = repeatedTypes.length > 0 ? repeatedTypes : searchParams.get("types") ? [searchParams.get("types") ?? ""] : [];
+  const singleType = searchParams.get("types");
+  const rawTypes = repeatedTypes.length > 0 ? repeatedTypes : singleType ? [singleType] : [];
 
   if (rawTypes.length === 0) {
     return ["requisition"];
