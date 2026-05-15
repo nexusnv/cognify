@@ -39,7 +39,16 @@ export function RequisitionListPage() {
       updatedTo,
       queuePreset,
     }),
-    [amountMax, amountMin, debouncedSearch, department, queuePreset, status, updatedFrom, updatedTo],
+    [
+      amountMax,
+      amountMin,
+      debouncedSearch,
+      department,
+      queuePreset,
+      status,
+      updatedFrom,
+      updatedTo,
+    ],
   );
   const { data, isLoading, isError, refetch } = useRequisitions(query);
   const sortedRequisitions = useMemo(() => {
@@ -56,7 +65,14 @@ export function RequisitionListPage() {
     });
   }, [data?.data, tableState.sort]);
   const filtered = Boolean(
-    search || status || department || amountMin || amountMax || updatedFrom || updatedTo,
+    search ||
+    status ||
+    department ||
+    amountMin ||
+    amountMax ||
+    updatedFrom ||
+    updatedTo ||
+    queuePreset !== "all_visible",
   );
   const renderedState = isLoading
     ? "loading"

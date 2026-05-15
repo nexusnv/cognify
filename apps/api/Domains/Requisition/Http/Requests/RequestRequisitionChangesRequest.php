@@ -11,6 +11,17 @@ class RequestRequisitionChangesRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $requestedFields = $this->input('requestedFields');
+
+        if (is_array($requestedFields)) {
+            $this->merge([
+                'requestedFields' => array_values(array_unique($requestedFields)),
+            ]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -18,8 +29,8 @@ class RequestRequisitionChangesRequest extends FormRequest
     {
         return [
             'reason' => ['required', 'string', 'max:2000'],
-            'requestedFields' => ['sometimes', 'array'],
-            'requestedFields.*' => ['string', 'max:80'],
+            'requestedFields' => ['sometimes', 'array', 'max:50'],
+            'requestedFields.*' => ['string', 'max:80', 'distinct'],
         ];
     }
 }

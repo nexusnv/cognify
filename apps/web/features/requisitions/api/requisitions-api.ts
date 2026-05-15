@@ -69,7 +69,10 @@ type RequisitionQuery = {
 };
 
 export async function listRequisitions(query: RequisitionQuery = {}) {
-  const response = await listRequisitionsEndpoint(query as ListRequisitionsParams, withActiveTenantHeader());
+  const response = await listRequisitionsEndpoint(
+    query as ListRequisitionsParams,
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return mapRequisitionListResponse(response.data);
 }
@@ -136,7 +139,10 @@ export async function listRequisitionLineItemSuggestions(query: {
   category?: string;
   currency?: string;
 }) {
-  const response = await listRequisitionLineItemSuggestionsEndpoint(query, withActiveTenantHeader());
+  const response = await listRequisitionLineItemSuggestionsEndpoint(
+    query,
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return response.data.data.map(mapRequisitionItemSuggestion);
 }
@@ -157,7 +163,11 @@ export async function requestRequisitionChanges(
   requisitionId: string,
   values: ApiRequestRequisitionChangesRequest & { requestedFields: string[] },
 ) {
-  const response = await requestRequisitionChangesEndpoint(requisitionId, values, withActiveTenantHeader());
+  const response = await requestRequisitionChangesEndpoint(
+    requisitionId,
+    values,
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return { data: mapRequisition(response.data.data) };
 }
@@ -172,12 +182,19 @@ export async function withdrawRequisition(
   requisitionId: string,
   values: ApiReasonedRequisitionActionRequest,
 ) {
-  const response = await withdrawRequisitionEndpoint(requisitionId, values, withActiveTenantHeader());
+  const response = await withdrawRequisitionEndpoint(
+    requisitionId,
+    values,
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return { data: mapRequisition(response.data.data) };
 }
 
-export async function cancelRequisition(requisitionId: string, values: ApiReasonedRequisitionActionRequest) {
+export async function cancelRequisition(
+  requisitionId: string,
+  values: ApiReasonedRequisitionActionRequest,
+) {
   const response = await cancelRequisitionEndpoint(requisitionId, values, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return { data: mapRequisition(response.data.data) };
@@ -255,9 +272,11 @@ function mapRequisition(requisition: ApiRequisition): Requisition {
     updatedAt: requisition.updatedAt,
     submittedAt: requisition.submittedAt ?? undefined,
     changesRequestedAt: requisition.changesRequestedAt ?? undefined,
-    changesRequestedBy: requisition.changesRequestedBy ? mapUserSummary(requisition.changesRequestedBy) : null,
+    changesRequestedBy: requisition.changesRequestedBy
+      ? mapUserSummary(requisition.changesRequestedBy)
+      : null,
     changeRequestReason: requisition.changeRequestReason ?? undefined,
-    changeRequestFields: requisition.changeRequestFields ?? [],
+    changeRequestFields: requisition.changeRequestFields,
     withdrawnAt: requisition.withdrawnAt ?? undefined,
     withdrawnBy: requisition.withdrawnBy ? mapUserSummary(requisition.withdrawnBy) : null,
     withdrawalReason: requisition.withdrawalReason ?? undefined,
@@ -268,7 +287,9 @@ function mapRequisition(requisition: ApiRequisition): Requisition {
   };
 }
 
-function mapRequisitionLineItem(lineItem: ApiRequisition["lineItems"][number]): RequisitionLineItem {
+function mapRequisitionLineItem(
+  lineItem: ApiRequisition["lineItems"][number],
+): RequisitionLineItem {
   return {
     id: lineItem.id ?? undefined,
     name: lineItem.name,
@@ -294,7 +315,9 @@ function mapRequisitionTemplate(template: ApiRequisitionTemplate): RequisitionTe
 function mapTemplateDefaults(defaults: unknown): Partial<RequisitionFormValues> {
   const record = toRecord(defaults);
   const lineItems = Array.isArray(record.lineItems)
-    ? record.lineItems.map(mapTemplateLineItem).filter((lineItem): lineItem is RequisitionLineItem => lineItem !== null)
+    ? record.lineItems
+        .map(mapTemplateLineItem)
+        .filter((lineItem): lineItem is RequisitionLineItem => lineItem !== null)
     : undefined;
 
   return {

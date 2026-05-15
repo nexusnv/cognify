@@ -55,7 +55,9 @@ class RequisitionPolicy
     {
         $role = app(CurrentTenant::class)->roleFor($user);
 
-        return in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value, TenantRole::Admin->value], true);
+        return $this->view($user, $requisition)
+            && in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value, TenantRole::Admin->value], true)
+            && $requisition->status === RequisitionStatus::Submitted;
     }
 
     public function resubmit(User $user, Requisition $requisition): bool

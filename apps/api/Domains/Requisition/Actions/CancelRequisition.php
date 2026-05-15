@@ -19,8 +19,7 @@ class CancelRequisition
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, string $reason): Requisition
     {
@@ -49,7 +48,9 @@ class CancelRequisition
 
             $this->notificationRecorder->record(
                 tenant: $tenant,
-                recipients: collect([$requisition->requester])->reject(fn (User $recipient): bool => $recipient->id === $actor->id),
+                recipients: collect([$requisition->requester])
+                    ->filter(fn (?User $recipient): bool => $recipient !== null)
+                    ->reject(fn (User $recipient): bool => $recipient->id === $actor->id),
                 data: new NotificationData(
                     type: NotificationPreferenceDefaults::EVENT_REQUISITION_CANCELLED,
                     title: 'Requisition cancelled',

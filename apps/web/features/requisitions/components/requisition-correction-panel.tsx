@@ -17,9 +17,10 @@ export function RequisitionCorrectionPanel({ requisition }: { requisition: Requi
     <section className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
       <h2 className="text-base font-semibold">Changes requested</h2>
       <p className="mt-2 whitespace-pre-wrap">
-        {requisition.changeRequestReason ?? "Please review the requested updates before resubmitting."}
+        {requisition.changeRequestReason ??
+          "Please review the requested updates before resubmitting."}
       </p>
-      {requisition.changeRequestFields.length > 0 ? (
+      {requisition.changeRequestFields?.length ? (
         <div className="mt-3">
           <p className="font-medium">Requested fields</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -33,8 +34,8 @@ export function RequisitionCorrectionPanel({ requisition }: { requisition: Requi
         {requisition.changesRequestedBy
           ? `Requested by ${requisition.changesRequestedBy.name}`
           : "Requested by a reviewer"}
-        {formattedChangesRequestedAt ? ` on ${formattedChangesRequestedAt}` : ""}
-        . Update the draft, then resubmit from this workspace when you are ready.
+        {formattedChangesRequestedAt ? ` on ${formattedChangesRequestedAt}` : ""}. Update the draft,
+        then resubmit from this workspace when you are ready.
       </p>
     </section>
   );

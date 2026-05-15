@@ -302,6 +302,23 @@ class RequisitionApiTest extends TestCase
             ->assertJsonPath('meta.perPage', 100);
     }
 
+    public function test_requisition_list_filters_by_estimated_amount_range(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+        $low = $this->createDraft($tenant, $user, ['title' => 'Low value']);
+        $high = $this->createDraft($tenant, $user, ['title' => 'High value']);
+        $low->lineItems()->update(['estimated_unit_price' => '10.00']);
+        $high->lineItems()->update(['estimated_unit_price' => '2500.00']);
+
+        $response = $this->actingAsTenant($tenant, $user)
+            ->getJson('/api/requisitions?amountMin=1000&amountMax=6000')
+            ->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertSame([(string) $high->id], $ids);
+    }
+
     public function test_buyer_and_approver_can_view_submitted_requisitions(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -335,12 +352,13 @@ class RequisitionApiTest extends TestCase
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/requisitions/{$requisition->id}/request-changes", [
                 'reason' => 'Please clarify the delivery location and line item quantity.',
-                'requestedFields' => ['deliveryLocation', 'lineItems'],
+                'requestedFields' => ['deliveryLocation', 'lineItems', 'lineItems'],
             ])
             ->assertOk()
             ->assertJsonPath('data.status', RequisitionStatus::ChangesRequested->value)
             ->assertJsonPath('data.changeRequestReason', 'Please clarify the delivery location and line item quantity.')
             ->assertJsonPath('data.changeRequestFields.0', 'deliveryLocation')
+            ->assertJsonPath('data.changeRequestFields.1', 'lineItems')
             ->assertJsonPath('data.permissions.canRequestChanges', false);
 
         $this->assertDatabaseHas('audit_events', [
@@ -356,6 +374,19 @@ class RequisitionApiTest extends TestCase
             'type' => 'requisition.changes_requested',
             'href' => "/requisitions/{$requisition->id}",
         ]);
+    }
+
+    public function test_admin_cannot_request_changes_on_draft_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        $requisition = $this->createDraft($tenant, $requester);
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/requisitions/{$requisition->id}/request-changes", [
+                'reason' => 'Please update this draft.',
+            ])
+            ->assertForbidden();
     }
 
     public function test_requester_can_edit_change_requested_requisition_and_resubmit(): void
@@ -412,6 +443,28 @@ class RequisitionApiTest extends TestCase
             'tenant_id' => $tenant->id,
             'actor_id' => $requester->id,
             'event_type' => 'requisition.withdrawn',
+        ]);
+    }
+
+    public function test_admin_withdrawal_notifies_original_requester(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        $requisition = $this->createDraft($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/requisitions/{$requisition->id}/withdraw", [
+                'reason' => 'Admin withdrawal on behalf of requester.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', RequisitionStatus::Withdrawn->value);
+
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $requester->id,
+            'actor_id' => $admin->id,
+            'type' => 'requisition.withdrawn',
+            'href' => "/requisitions/{$requisition->id}",
         ]);
     }
 
@@ -509,7 +562,7 @@ class RequisitionApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createDraft(Tenant $tenant, User $user, array $attributes = []): Requisition
     {

@@ -62,6 +62,13 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
     );
   }
 
+  const hasPendingWorkflowAction = Boolean(
+    requisition.permissions.canResubmit ||
+    requisition.permissions.canRequestChanges ||
+    requisition.permissions.canWithdraw ||
+    requisition.permissions.canCancel,
+  );
+
   const actions = (
     <>
       {requisition.permissions.canSubmit ? (
@@ -156,7 +163,9 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           }}
         />
       ) : null}
-      {!requisition.permissions.canSubmit && !requisition.permissions.canUpdate ? (
+      {!requisition.permissions.canSubmit &&
+      !requisition.permissions.canUpdate &&
+      !hasPendingWorkflowAction ? (
         <p className="text-sm text-muted-foreground">
           Requester editing is locked after submission.
         </p>
@@ -210,13 +219,15 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           <section className="rounded-md border p-4">
             <h2 className="text-base font-semibold">Approval readiness</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Required request data, evidence, and change history are in place for later approval routing.
+              Required request data, evidence, and change history are in place for later approval
+              routing.
             </p>
           </section>
           <section className="rounded-md border p-4">
             <h2 className="text-base font-semibold">Quotation readiness</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Buyer intake, sourcing packages, and quotation comparisons are deferred to later workflow slices.
+              Buyer intake, sourcing packages, and quotation comparisons are deferred to later
+              workflow slices.
             </p>
           </section>
           <section className="rounded-md border p-4">

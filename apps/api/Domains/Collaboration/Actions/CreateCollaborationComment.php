@@ -22,11 +22,10 @@ class CreateCollaborationComment
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array{body:string,mentionedUserIds?:array<int,string>} $data
+     * @param  array{body:string,mentionedUserIds?:array<int,string>}  $data
      */
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): CollaborationComment
     {
@@ -115,19 +114,20 @@ class CreateCollaborationComment
     }
 
     /**
-     * @param array<int, string> $mentionedUserIds
+     * @param  array<int, string>  $mentionedUserIds
      * @return Collection<int, User>
      */
     private function visibleMentionedUsers(Tenant $tenant, User $actor, Requisition $requisition, array $mentionedUserIds): Collection
     {
-        $visibleUsers = $tenant->users()
-            ->get()
-            ->filter(fn (User $user): bool => Gate::forUser($user)->allows('view', $requisition))
-            ->values();
-
         $selected = collect($mentionedUserIds)
             ->filter(fn (string $userId): bool => $userId !== '')
             ->unique()
+            ->values();
+
+        $visibleUsers = $tenant->users()
+            ->whereIn('users.id', $selected)
+            ->get()
+            ->filter(fn (User $user): bool => Gate::forUser($user)->allows('view', $requisition))
             ->values();
 
         $invalid = $selected->diff($visibleUsers->pluck('id')->map(fn (int $id): string => (string) $id));

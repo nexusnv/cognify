@@ -1,6 +1,8 @@
 import type { CurrentUserContext } from "../types/identity-view-model";
 import { defaultNotificationPreferences } from "../schemas/profile-schema";
 
+const cloneNotificationPreferences = () => structuredClone(defaultNotificationPreferences);
+
 export const requesterIdentity: CurrentUserContext = {
   user: {
     id: "1",
@@ -10,7 +12,7 @@ export const requesterIdentity: CurrentUserContext = {
     timezone: "Asia/Kuala_Lumpur",
     locale: "en",
     theme: "system",
-    notificationPreferences: defaultNotificationPreferences,
+    notificationPreferences: cloneNotificationPreferences(),
   },
   tenants: [{ id: "1", name: "Acme Procurement", role: "requester" }],
   activeTenant: { id: "1", name: "Acme Procurement" },

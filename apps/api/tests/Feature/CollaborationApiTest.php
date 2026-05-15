@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Audit\AuditEvent;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Requisition\Models\Requisition;
@@ -102,6 +101,24 @@ class CollaborationApiTest extends TestCase
             (string) $admin->id,
         ], $ids);
         $this->assertNotContains((string) $buyer->id, $ids);
+    }
+
+    public function test_mention_candidates_apply_search_before_visibility_filtering(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $admin->forceFill(['name' => 'Avery Admin', 'email' => 'avery@example.com'])->save();
+        $buyer->forceFill(['name' => 'Avery Buyer', 'email' => 'buyer@example.com'])->save();
+        $requisition = $this->requisition($tenant, $requester, RequisitionStatus::Draft);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}/mention-candidates?search=Avery")
+            ->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertSame([(string) $admin->id], $ids);
     }
 
     public function test_cross_tenant_comment_routes_are_blocked(): void

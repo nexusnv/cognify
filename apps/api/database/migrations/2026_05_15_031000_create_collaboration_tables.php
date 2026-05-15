@@ -17,15 +17,20 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['tenant_id', 'subject_type', 'subject_id']);
+            $table->unique(['tenant_id', 'id']);
         });
 
         Schema::create('collaboration_mentions', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('comment_id')->constrained('collaboration_comments')->cascadeOnDelete();
+            $table->foreignId('comment_id');
             $table->foreignId('mentioned_user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
 
+            $table->foreign(['tenant_id', 'comment_id'])
+                ->references(['tenant_id', 'id'])
+                ->on('collaboration_comments')
+                ->cascadeOnDelete();
             $table->unique(['comment_id', 'mentioned_user_id']);
             $table->index(['tenant_id', 'mentioned_user_id']);
         });

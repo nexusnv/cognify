@@ -4,12 +4,14 @@ namespace Domains\Collaboration\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
+use App\Tenancy\Tenant;
 use Domains\Collaboration\Actions\CreateCollaborationComment;
 use Domains\Collaboration\Http\Requests\CreateCollaborationCommentRequest;
 use Domains\Collaboration\Http\Resources\CollaborationCommentResource;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class RequisitionCommentController extends Controller
@@ -54,17 +56,25 @@ class RequisitionCommentController extends Controller
             ->setStatusCode(201);
     }
 
-    public function mentionCandidates(CurrentTenant $currentTenant, int $requisition)
+    public function mentionCandidates(Request $request, CurrentTenant $currentTenant, int $requisition)
     {
         $tenant = $this->tenantOrAbort($currentTenant);
         $requisition = $this->findTenantRequisition($currentTenant, $requisition);
+        $search = trim((string) $request->query('search', ''));
 
         $this->authorize('mention', $requisition);
 
         $users = $tenant->users()
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->limit(50)
             ->get()
             ->filter(fn ($user) => Gate::forUser($user)->allows('view', $requisition))
-            ->sortBy('name')
             ->values()
             ->map(fn ($user): array => [
                 'id' => (string) $user->id,
@@ -85,7 +95,7 @@ class RequisitionCommentController extends Controller
             ->findOrFail($id);
     }
 
-    private function tenantOrAbort(CurrentTenant $currentTenant): \App\Tenancy\Tenant
+    private function tenantOrAbort(CurrentTenant $currentTenant): Tenant
     {
         $tenant = $currentTenant->get();
         abort_if($tenant === null, 403, 'Tenant context missing.');

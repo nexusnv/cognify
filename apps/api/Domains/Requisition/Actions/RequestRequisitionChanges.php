@@ -19,11 +19,10 @@ class RequestRequisitionChanges
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array{reason:string,requestedFields?:array<int,string>} $data
+     * @param  array{reason:string,requestedFields?:array<int,string>}  $data
      */
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): Requisition
     {
@@ -63,7 +62,9 @@ class RequestRequisitionChanges
 
             $this->notificationRecorder->record(
                 tenant: $tenant,
-                recipients: collect([$requisition->requester])->reject(fn (User $recipient): bool => $recipient->id === $actor->id),
+                recipients: collect([$requisition->requester])
+                    ->filter(fn (?User $recipient): bool => $recipient !== null)
+                    ->reject(fn (User $recipient): bool => $recipient->id === $actor->id),
                 data: new NotificationData(
                     type: NotificationPreferenceDefaults::EVENT_REQUISITION_CHANGES_REQUESTED,
                     title: 'Changes requested',

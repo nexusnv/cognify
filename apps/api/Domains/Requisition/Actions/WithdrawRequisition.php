@@ -5,6 +5,9 @@ namespace Domains\Requisition\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use App\Notifications\NotificationData;
+use App\Notifications\NotificationPreferenceDefaults;
+use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
@@ -13,9 +16,10 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class WithdrawRequisition
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly NotificationRecorder $notificationRecorder,
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, string $reason): Requisition
     {
@@ -45,6 +49,25 @@ class WithdrawRequisition
                 after: ['status' => RequisitionStatus::Withdrawn->value],
                 subjectDisplay: $requisition->number,
             ));
+
+            $this->notificationRecorder->record(
+                tenant: $tenant,
+                recipients: collect([$requisition->requester])
+                    ->filter(fn (?User $recipient): bool => $recipient !== null)
+                    ->reject(fn (User $recipient): bool => $recipient->id === $actor->id),
+                data: new NotificationData(
+                    type: NotificationPreferenceDefaults::EVENT_REQUISITION_WITHDRAWN,
+                    title: 'Requisition withdrawn',
+                    body: "{$requisition->number} was withdrawn.",
+                    href: "/requisitions/{$requisition->id}",
+                    subject: $requisition,
+                    subjectLabel: $requisition->number,
+                    metadata: [
+                        'number' => $requisition->number,
+                    ],
+                    actor: $actor,
+                ),
+            );
 
             return $requisition->refresh()->load([
                 'requester',

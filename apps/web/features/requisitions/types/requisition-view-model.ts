@@ -98,7 +98,7 @@ export type Requisition = {
   changesRequestedAt?: string | null;
   changesRequestedBy?: UserSummary | null;
   changeRequestReason?: string | null;
-  changeRequestFields: string[];
+  changeRequestFields?: string[];
   withdrawnAt?: string | null;
   withdrawnBy?: UserSummary | null;
   withdrawalReason?: string | null;
