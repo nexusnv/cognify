@@ -1,5 +1,10 @@
 import type { AuditEvent } from "@cognify/api-client/schemas";
-import type { Requisition } from "../types/requisition-view-model";
+import type {
+  Requisition,
+  RequisitionIntakeOptions,
+  RequisitionItemSuggestion,
+  RequisitionTemplate,
+} from "../types/requisition-view-model";
 
 const actor = {
   id: "user-1",
@@ -20,6 +25,7 @@ export const requisitionFixtures: Requisition[] = [
     costCenter: "OPS-110",
     deliveryLocation: "Kuala Lumpur office",
     currency: "MYR",
+    lockVersion: 0,
     estimatedTotal: 7200,
     requester: actor,
     lineItems: [
@@ -54,6 +60,7 @@ export const requisitionFixtures: Requisition[] = [
     costCenter: "OPS-220",
     deliveryLocation: "Shah Alam warehouse",
     currency: "MYR",
+    lockVersion: 0,
     estimatedTotal: 3400,
     requester: actor,
     lineItems: [
@@ -131,4 +138,93 @@ export const requisitionActivityFixtures: Record<string, AuditEvent[]> = {
       requestId: null,
     },
   ],
+};
+
+export const requisitionTemplateFixtures: RequisitionTemplate[] = [
+  {
+    id: "template-it-equipment",
+    name: "IT equipment",
+    description: "Laptop, monitor, and accessory purchases.",
+    category: "it_equipment",
+    defaults: {
+      department: "IT",
+      costCenter: "IT-210",
+      businessJustification: "Provision or replace equipment required for business operations.",
+      lineItems: [
+        {
+          name: "Laptop",
+          quantity: 1,
+          unit: "each",
+          estimatedUnitPrice: 1800,
+          currency: "MYR",
+        },
+      ],
+    },
+  },
+  {
+    id: "template-saas-subscription",
+    name: "SaaS subscription",
+    description: "Software subscription or renewal request.",
+    category: "saas_subscription",
+    defaults: {
+      department: "IT",
+      costCenter: "IT-210",
+      businessJustification: "Maintain software access required for business continuity.",
+      lineItems: [
+        {
+          name: "SaaS subscription",
+          quantity: 12,
+          unit: "month",
+          estimatedUnitPrice: 250,
+          currency: "MYR",
+        },
+      ],
+    },
+  },
+];
+
+export const requisitionItemSuggestionFixtures: RequisitionItemSuggestion[] = [
+  {
+    id: "suggestion-laptop",
+    name: "Laptop",
+    category: "it_equipment",
+    unit: "each",
+    estimatedUnitPrice: 1800,
+    currency: "MYR",
+  },
+  {
+    id: "suggestion-monitor",
+    name: "Monitor",
+    category: "it_equipment",
+    unit: "each",
+    estimatedUnitPrice: 700,
+    currency: "MYR",
+  },
+  {
+    id: "suggestion-saas",
+    name: "SaaS subscription",
+    category: "saas_subscription",
+    unit: "month",
+    estimatedUnitPrice: 250,
+    currency: "MYR",
+  },
+  {
+    id: "suggestion-box-bundle",
+    name: "Packing box bundle",
+    category: "office_supplies",
+    unit: "bundle",
+    estimatedUnitPrice: 170,
+    currency: "MYR",
+  },
+];
+
+export const requisitionIntakeOptionsFixture: RequisitionIntakeOptions = {
+  departments: [{ name: "Procurement" }, { name: "IT" }, { name: "Operations" }],
+  costCenters: [
+    { code: "OPS-110", name: "Operations" },
+    { code: "IT-210", name: "Information Technology" },
+    { code: "FIN-310", name: "Finance" },
+  ],
+  currencies: ["MYR", "USD", "SGD"],
+  units: ["each", "bundle", "month", "hour", "day"],
 };

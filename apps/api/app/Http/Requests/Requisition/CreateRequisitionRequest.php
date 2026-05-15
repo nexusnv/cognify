@@ -2,7 +2,11 @@
 
 namespace App\Http\Requests\Requisition;
 
+use App\Tenancy\CurrentTenant;
+use Domains\Requisition\Models\RequisitionCostCenter;
+use Domains\Requisition\Models\RequisitionDepartment;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateRequisitionRequest extends FormRequest
 {
@@ -16,13 +20,25 @@ class CreateRequisitionRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = app(CurrentTenant::class)->get()->id;
+
         return [
             'title' => ['required', 'string', 'max:255'],
             'businessJustification' => ['nullable', 'string'],
             'neededByDate' => ['nullable', 'date'],
-            'department' => ['nullable', 'string', 'max:255'],
+            'department' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::exists(RequisitionDepartment::class, 'name')->where(fn ($query) => $query->where('tenant_id', $tenantId)->where('active', true)),
+            ],
             'projectId' => ['nullable', 'string', 'max:255'],
-            'costCenter' => ['nullable', 'string', 'max:255'],
+            'costCenter' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::exists(RequisitionCostCenter::class, 'code')->where(fn ($query) => $query->where('tenant_id', $tenantId)->where('active', true)),
+            ],
             'deliveryLocation' => ['nullable', 'string'],
             'currency' => ['nullable', 'string', 'size:3'],
             'lineItems' => ['sometimes', 'array'],

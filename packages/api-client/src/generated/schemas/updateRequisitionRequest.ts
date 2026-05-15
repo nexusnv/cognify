@@ -27,4 +27,6 @@ export interface UpdateRequisitionRequest {
    */
   currency?: UpdateRequisitionRequestCurrency;
   lineItems?: UpdateRequisitionLineItemRequest[];
+  /** @minimum 0 */
+  lockVersion: number;
 }

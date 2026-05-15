@@ -8,8 +8,18 @@ export function useSaveRequisitionDraft() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ requisitionId, values }: { requisitionId?: string; values: RequisitionFormValues }) =>
-      requisitionId ? updateRequisitionDraft(requisitionId, values) : createRequisitionDraft(values),
+    mutationFn: ({
+      requisitionId,
+      values,
+      lockVersion,
+    }: {
+      requisitionId?: string;
+      values: RequisitionFormValues;
+      lockVersion?: number;
+    }) =>
+      requisitionId
+        ? updateRequisitionDraft(requisitionId, values, lockVersion ?? 0)
+        : createRequisitionDraft(values),
     onSuccess: async (requisition) => {
       await queryClient.invalidateQueries({ queryKey: ["requisitions"] });
       queryClient.setQueryData(["requisition", requisition.id], requisition);

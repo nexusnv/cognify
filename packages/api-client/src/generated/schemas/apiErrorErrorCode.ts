@@ -14,6 +14,7 @@ export const ApiErrorErrorCode = {
   forbidden: "forbidden",
   not_found: "not_found",
   conflict: "conflict",
+  draft_conflict: "draft_conflict",
   ambiguous_tenant: "ambiguous_tenant",
   too_many_requests: "too_many_requests",
   server_error: "server_error",

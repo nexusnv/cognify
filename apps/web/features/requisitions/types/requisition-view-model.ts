@@ -12,6 +12,32 @@ export type RequisitionPermissions = {
   canViewActivity: boolean;
 };
 
+export type RequisitionTemplateMode = "fill-empty" | "replace";
+
+export type RequisitionTemplate = {
+  id: string;
+  name: string;
+  description?: string | null;
+  category: string;
+  defaults: Partial<RequisitionFormValues>;
+};
+
+export type RequisitionItemSuggestion = {
+  id: string;
+  name: string;
+  category?: string | null;
+  unit: string;
+  estimatedUnitPrice: number;
+  currency: string;
+};
+
+export type RequisitionIntakeOptions = {
+  departments: Array<{ name: string }>;
+  costCenters: Array<{ code: string; name: string }>;
+  currencies: string[];
+  units: string[];
+};
+
 export type RequisitionLineItem = {
   id?: string;
   name: string;
@@ -29,6 +55,7 @@ export type Requisition = {
   tenantId: string;
   title: string;
   status: RequisitionStatus;
+  lockVersion: number;
   businessJustification: string;
   neededByDate: string;
   department?: string;

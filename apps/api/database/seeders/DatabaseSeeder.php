@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Database\Seeders\Demo\DemoAttachmentSeeder;
 use Database\Seeders\Demo\DemoAuditSeeder;
+use Database\Seeders\Demo\DemoRequisitionAuthoringSeeder;
 use Database\Seeders\Demo\DemoNotificationSeeder;
 use Database\Seeders\Demo\DemoRequisitionSeeder;
 use Database\Seeders\Demo\DemoRoadmapPreviewSeeder;
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             app(DemoTenantSeeder::class)->run($context);
             app(DemoUserSeeder::class)->run($context);
             app(DemoRequisitionSeeder::class)->run($context);
+            app(DemoRequisitionAuthoringSeeder::class)->run();
             app(DemoRoadmapPreviewSeeder::class)->run($context);
             app(DemoAttachmentSeeder::class)->run($context);
             app(DemoAuditSeeder::class)->run($context);

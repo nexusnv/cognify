@@ -26,6 +26,7 @@ class Requisition extends Model
         'delivery_location',
         'currency',
         'status',
+        'lock_version',
         'submitted_at',
     ];
 
@@ -34,6 +35,7 @@ class Requisition extends Model
         return [
             'needed_by_date' => 'date',
             'submitted_at' => 'datetime',
+            'lock_version' => 'integer',
             'status' => RequisitionStatus::class,
         ];
     }

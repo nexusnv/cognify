@@ -1,16 +1,28 @@
 import {
+  applyRequisitionTemplate as applyRequisitionTemplateEndpoint,
   createRequisition,
   getRequisition as getRequisitionEndpoint,
+  getRequisitionIntakeOptions as getRequisitionIntakeOptionsEndpoint,
   listRequisitionActivity,
+  listRequisitionLineItemSuggestions as listRequisitionLineItemSuggestionsEndpoint,
+  listRequisitionTemplates as listRequisitionTemplatesEndpoint,
   listRequisitions as listRequisitionsEndpoint,
   submitRequisition as submitRequisitionEndpoint,
   updateRequisition,
 } from "@cognify/api-client/endpoints";
-import type { ListRequisitionActivity200, ListRequisitionsParams } from "@cognify/api-client/schemas";
 import type {
+  ApplyRequisitionTemplateRequest,
+  ListRequisitionActivity200,
+  ListRequisitionsParams,
+} from "@cognify/api-client/schemas";
+import type {
+  RequisitionIntakeOptions,
   Requisition,
   RequisitionFormValues,
   RequisitionListResponse,
+  RequisitionItemSuggestion,
+  RequisitionTemplate,
+  RequisitionTemplateMode,
 } from "../types/requisition-view-model";
 import { getStoredActiveTenantId } from "../../identity/api/identity-api";
 
@@ -46,10 +58,59 @@ export async function createRequisitionDraft(values: RequisitionFormValues) {
   return response.data.data as Requisition;
 }
 
-export async function updateRequisitionDraft(requisitionId: string, values: RequisitionFormValues) {
-  const response = await updateRequisition(requisitionId, values, withActiveTenantHeader());
+export async function updateRequisitionDraft(
+  requisitionId: string,
+  values: RequisitionFormValues,
+  lockVersion: number,
+) {
+  const response = await updateRequisition(
+    requisitionId,
+    { ...values, lockVersion },
+    withActiveTenantHeader(),
+  );
   if (response.status !== 200) throw response.data;
   return response.data.data as Requisition;
+}
+
+export async function listRequisitionTemplates() {
+  const response = await listRequisitionTemplatesEndpoint(withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as RequisitionTemplate[];
+}
+
+export async function applyRequisitionTemplate(
+  requisitionId: string,
+  templateId: string,
+  mode: RequisitionTemplateMode,
+  lockVersion: number,
+) {
+  const response = await applyRequisitionTemplateEndpoint(
+    requisitionId,
+    {
+      templateId,
+      mode,
+      lockVersion,
+    } satisfies ApplyRequisitionTemplateRequest,
+    withActiveTenantHeader(),
+  );
+  if (response.status !== 200) throw response.data;
+  return response.data.data as Requisition;
+}
+
+export async function listRequisitionLineItemSuggestions(query: {
+  search?: string;
+  category?: string;
+  currency?: string;
+}) {
+  const response = await listRequisitionLineItemSuggestionsEndpoint(query, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as RequisitionItemSuggestion[];
+}
+
+export async function getRequisitionIntakeOptions() {
+  const response = await getRequisitionIntakeOptionsEndpoint(withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as RequisitionIntakeOptions;
 }
 
 export async function submitRequisition(requisitionId: string) {

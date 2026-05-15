@@ -6,6 +6,7 @@ use App\Audit\AuditEvent;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Requisition\Models\Requisition;
+use Domains\Requisition\Models\RequisitionDepartment;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -18,6 +19,12 @@ class RequisitionApiTest extends TestCase
     public function test_tenant_member_can_create_requisition_draft(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');
+        RequisitionDepartment::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Engineering',
+            'active' => true,
+            'sort_order' => 1,
+        ]);
 
         $response = $this->actingAsTenant($tenant, $user)
             ->postJson('/api/requisitions', [
@@ -64,6 +71,7 @@ class RequisitionApiTest extends TestCase
 
         $response = $this->actingAsTenant($tenant, $user)
             ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
                 'title' => 'Updated laptop refresh',
                 'businessJustification' => 'Updated business justification.',
                 'lineItems' => [
@@ -86,6 +94,62 @@ class RequisitionApiTest extends TestCase
             'actor_id' => $user->id,
             'event_type' => 'requisition.updated',
         ]);
+    }
+
+    public function test_requester_must_send_current_lock_version_when_updating_draft(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+        $requisition = $this->createDraft($tenant, $user);
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'title' => 'Updated without lock version',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
+    public function test_stale_draft_update_returns_conflict_without_overwriting_current_values(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+        $requisition = $this->createDraft($tenant, $user);
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
+                'title' => 'Newer saved title',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Newer saved title')
+            ->assertJsonPath('data.lockVersion', 1);
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
+                'title' => 'Stale overwritten title',
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'draft_conflict');
+
+        $this->assertDatabaseHas('requisitions', [
+            'id' => $requisition->id,
+            'title' => 'Newer saved title',
+            'lock_version' => 1,
+        ]);
+    }
+
+    public function test_update_response_includes_lock_version(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+        $requisition = $this->createDraft($tenant, $user);
+
+        $this->actingAsTenant($tenant, $user)
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
+                'title' => 'Lock version response',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.lockVersion', 1);
     }
 
     public function test_requisition_line_items_reject_negative_quantity_and_price(): void
@@ -116,6 +180,7 @@ class RequisitionApiTest extends TestCase
 
         $response = $this->actingAsTenant($tenant, $user)
             ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
                 'title' => 'Should not update',
             ]);
 
@@ -321,6 +386,7 @@ class RequisitionApiTest extends TestCase
             'needed_by_date' => $attributes['needed_by_date'] ?? '2026-07-15',
             'currency' => $attributes['currency'] ?? 'USD',
             'status' => $attributes['status'] ?? RequisitionStatus::Draft,
+            'lock_version' => $attributes['lock_version'] ?? 0,
             'submitted_at' => ($attributes['status'] ?? null) === RequisitionStatus::Submitted ? now() : null,
         ]);
 

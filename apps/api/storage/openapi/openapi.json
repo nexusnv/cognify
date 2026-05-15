@@ -27,7 +27,9 @@
       "get": {
         "operationId": "getSystemStatus",
         "summary": "Get system readiness status",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "responses": {
           "200": {
             "description": "System readiness status",
@@ -740,7 +742,9 @@
     "/api/notifications": {
       "get": {
         "operationId": "listNotifications",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "parameters": [
           {
             "name": "status",
@@ -791,7 +795,9 @@
     "/api/notifications/{notification}/read": {
       "post": {
         "operationId": "markNotificationRead",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "parameters": [
           {
             "name": "notification",
@@ -831,7 +837,9 @@
     "/api/notifications/read-all": {
       "post": {
         "operationId": "markAllNotificationsRead",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "responses": {
           "200": {
             "description": "Count of notifications marked read.",
@@ -897,28 +905,251 @@
         "operationId": "listAuditEvents",
         "summary": "List tenant audit events",
         "parameters": [
-          { "name": "action", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "actorId", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "subjectType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["requisition", "attachment"] } },
-          { "name": "subjectId", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "occurredFrom", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
-          { "name": "occurredTo", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
-          { "name": "page", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "default": 1 } },
-          { "name": "perPage", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 } }
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "requisition",
+                "attachment"
+              ]
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "occurredFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "occurredTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Tenant audit event feed",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/AuditEventListResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventListResponse"
+                }
               }
             }
           },
-          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "422": { "$ref": "#/components/responses/ValidationFailed" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisition-templates": {
+      "get": {
+        "operationId": "listRequisitionTemplates",
+        "summary": "List requisition templates",
+        "responses": {
+          "200": {
+            "description": "Requisition templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionTemplateListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisitionId}/apply-template": {
+      "post": {
+        "operationId": "applyRequisitionTemplate",
+        "summary": "Apply a requisition template",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequisitionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyRequisitionTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Requisition template applied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisition-line-item-suggestions": {
+      "get": {
+        "operationId": "listRequisitionLineItemSuggestions",
+        "summary": "List requisition line item suggestions",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requisition line item suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionItemSuggestionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/requisition-intake-options": {
+      "get": {
+        "operationId": "getRequisitionIntakeOptions",
+        "summary": "Get requisition intake options",
+        "responses": {
+          "200": {
+            "description": "Requisition intake options",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequisitionIntakeOptionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       }
     }
@@ -1216,11 +1447,18 @@
       },
       "ApiError": {
         "type": "object",
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "properties": {
           "error": {
             "type": "object",
-            "required": ["code", "message", "details", "requestId"],
+            "required": [
+              "code",
+              "message",
+              "details",
+              "requestId"
+            ],
             "properties": {
               "code": {
                 "type": "string",
@@ -1230,17 +1468,27 @@
                   "forbidden",
                   "not_found",
                   "conflict",
+                  "draft_conflict",
                   "ambiguous_tenant",
                   "too_many_requests",
                   "server_error"
                 ]
               },
-              "message": { "type": "string" },
-              "details": { "type": "object", "additionalProperties": true },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              },
               "requestId": {
                 "oneOf": [
-                  { "type": "string" },
-                  { "type": "null" }
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               }
             }
@@ -1249,7 +1497,9 @@
       },
       "ValidationError": {
         "allOf": [
-          { "$ref": "#/components/schemas/ApiError" },
+          {
+            "$ref": "#/components/schemas/ApiError"
+          },
           {
             "type": "object",
             "properties": {
@@ -1258,17 +1508,23 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "enum": ["validation_failed"]
+                    "enum": [
+                      "validation_failed"
+                    ]
                   },
                   "details": {
                     "type": "object",
-                    "required": ["fields"],
+                    "required": [
+                      "fields"
+                    ],
                     "properties": {
                       "fields": {
                         "type": "object",
                         "additionalProperties": {
                           "type": "array",
-                          "items": { "type": "string" }
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       }
                     }
@@ -1383,6 +1639,7 @@
           "tenantId",
           "title",
           "status",
+          "lockVersion",
           "businessJustification",
           "neededByDate",
           "department",
@@ -1489,6 +1746,10 @@
           },
           "permissions": {
             "$ref": "#/components/schemas/RequisitionPermissions"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       },
@@ -1558,7 +1819,9 @@
           },
           "parentType": {
             "type": "string",
-            "enum": ["requisition"]
+            "enum": [
+              "requisition"
+            ]
           },
           "parentId": {
             "type": "string"
@@ -1571,8 +1834,12 @@
           },
           "extension": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "null" }
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "sizeBytes": {
@@ -1584,8 +1851,12 @@
           },
           "uploadedBy": {
             "oneOf": [
-              { "$ref": "#/components/schemas/AttachmentUser" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/AttachmentUser"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -1650,7 +1921,9 @@
               "$ref": "#/components/schemas/Requisition"
             }
           },
-          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
         }
       },
       "SearchResult": {
@@ -1916,8 +2189,15 @@
             "items": {
               "$ref": "#/components/schemas/UpdateRequisitionLineItemRequest"
             }
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 0
           }
-        }
+        },
+        "required": [
+          "lockVersion"
+        ]
       },
       "SubmitRequisitionResponse": {
         "type": "object",
@@ -2445,73 +2725,343 @@
       },
       "AuditEventListResponse": {
         "type": "object",
-        "required": ["data", "meta"],
+        "required": [
+          "data",
+          "meta"
+        ],
         "properties": {
           "data": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/AuditEvent" }
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            }
           },
-          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
         }
       },
       "AuditEvent": {
         "type": "object",
-        "required": ["id", "action", "message", "actor", "subject", "metadata", "before", "after", "occurredAt", "requestId"],
+        "required": [
+          "id",
+          "action",
+          "message",
+          "actor",
+          "subject",
+          "metadata",
+          "before",
+          "after",
+          "occurredAt",
+          "requestId"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "action": { "type": "string" },
-          "message": { "type": "string" },
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
           "actor": {
             "oneOf": [
-              { "$ref": "#/components/schemas/UserSummary" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
-          "subject": { "$ref": "#/components/schemas/AuditSubject" },
-          "metadata": { "type": "object", "additionalProperties": true },
+          "subject": {
+            "$ref": "#/components/schemas/AuditSubject"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
           "before": {
             "oneOf": [
-              { "type": "object", "additionalProperties": true },
-              { "type": "null" }
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "after": {
             "oneOf": [
-              { "type": "object", "additionalProperties": true },
-              { "type": "null" }
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
             ]
           },
-          "occurredAt": { "type": "string", "format": "date-time" },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "requestId": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "null" }
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         }
       },
       "AuditSubject": {
         "type": "object",
-        "required": ["type", "id", "display"],
+        "required": [
+          "type",
+          "id",
+          "display"
+        ],
         "properties": {
-          "type": { "type": "string", "enum": ["requisition", "attachment"] },
-          "id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "attachment"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
           "display": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "null" }
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         }
       },
       "PaginationMeta": {
         "type": "object",
-        "required": ["currentPage", "perPage", "total", "lastPage"],
+        "required": [
+          "currentPage",
+          "perPage",
+          "total",
+          "lastPage"
+        ],
         "properties": {
-          "currentPage": { "type": "integer", "minimum": 1 },
-          "perPage": { "type": "integer", "minimum": 1 },
-          "total": { "type": "integer", "minimum": 0 },
-          "lastPage": { "type": "integer", "minimum": 1 }
+          "currentPage": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "perPage": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastPage": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "RequisitionTemplateMode": {
+        "type": "string",
+        "enum": [
+          "fill-empty",
+          "replace"
+        ]
+      },
+      "RequisitionTemplate": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "defaults"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "defaults": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "RequisitionTemplateListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequisitionTemplate"
+            }
+          }
+        }
+      },
+      "ApplyRequisitionTemplateRequest": {
+        "type": "object",
+        "required": [
+          "templateId",
+          "mode",
+          "lockVersion"
+        ],
+        "properties": {
+          "templateId": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/RequisitionTemplateMode"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "RequisitionItemSuggestion": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "unit",
+          "estimatedUnitPrice",
+          "currency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": "string"
+          },
+          "estimatedUnitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          }
+        }
+      },
+      "RequisitionItemSuggestionListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequisitionItemSuggestion"
+            }
+          }
+        }
+      },
+      "RequisitionIntakeOptions": {
+        "type": "object",
+        "required": [
+          "departments",
+          "costCenters",
+          "currencies",
+          "units"
+        ],
+        "properties": {
+          "departments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "costCenters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "name"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "currencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RequisitionIntakeOptionsResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RequisitionIntakeOptions"
+          }
         }
       }
     }

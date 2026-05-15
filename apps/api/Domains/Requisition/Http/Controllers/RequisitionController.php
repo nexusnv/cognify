@@ -6,14 +6,18 @@ use App\Http\Requests\Requisition\CreateRequisitionRequest;
 use App\Http\Requests\Requisition\UpdateRequisitionRequest;
 use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
+use Domains\Requisition\Actions\ApplyRequisitionTemplate;
 use Domains\Requisition\Actions\CreateRequisitionDraft;
 use Domains\Requisition\Actions\SubmitRequisition;
 use Domains\Requisition\Actions\UpdateRequisitionDraft;
+use Domains\Requisition\Http\Requests\ApplyRequisitionTemplateRequest;
 use Domains\Requisition\Http\Resources\RequisitionResource;
 use Domains\Requisition\Models\Requisition;
+use Domains\Requisition\Models\RequisitionTemplate;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RequisitionController extends Controller
 {
@@ -92,17 +96,61 @@ class RequisitionController extends Controller
         CurrentTenant $currentTenant,
         UpdateRequisitionDraft $updateRequisitionDraft,
         int $requisition,
-    ): RequisitionResource {
+    ): JsonResponse|RequisitionResource {
         $requisition = $this->findTenantRequisition($currentTenant, $requisition);
 
         $this->authorize('update', $requisition);
 
-        $requisition = $updateRequisitionDraft->handle(
-            $currentTenant->get(),
-            $request->user(),
-            $requisition,
-            $request->validated(),
-        );
+        try {
+            $requisition = $updateRequisitionDraft->handle(
+                $currentTenant->get(),
+                $request->user(),
+                $requisition,
+                $request->validated(),
+            );
+        } catch (ConflictHttpException $exception) {
+            if ($exception->getMessage() === 'The draft has changed since it was loaded.') {
+                return $this->draftConflictResponse($exception->getMessage());
+            }
+
+            throw $exception;
+        }
+
+        return new RequisitionResource($requisition);
+    }
+
+    public function applyTemplate(
+        ApplyRequisitionTemplateRequest $request,
+        CurrentTenant $currentTenant,
+        ApplyRequisitionTemplate $applyRequisitionTemplate,
+        int $requisition,
+    ): JsonResponse|RequisitionResource {
+        $tenant = $currentTenant->get();
+        $requisition = $this->findTenantRequisition($currentTenant, $requisition);
+
+        $this->authorize('update', $requisition);
+
+        $template = RequisitionTemplate::query()
+            ->where('active', true)
+            ->where(fn ($query) => $query->whereNull('tenant_id')->orWhere('tenant_id', $tenant->id))
+            ->findOrFail((int) $request->validated('templateId'));
+
+        try {
+            $requisition = $applyRequisitionTemplate->handle(
+                $tenant,
+                $request->user(),
+                $requisition,
+                $template,
+                $request->validated('mode'),
+                (int) $request->validated('lockVersion'),
+            );
+        } catch (ConflictHttpException $exception) {
+            if ($exception->getMessage() === 'The draft has changed since it was loaded.') {
+                return $this->draftConflictResponse($exception->getMessage());
+            }
+
+            throw $exception;
+        }
 
         return new RequisitionResource($requisition);
     }
@@ -131,5 +179,15 @@ class RequisitionController extends Controller
         return Requisition::query()
             ->where('tenant_id', $currentTenant->get()->id)
             ->findOrFail($id);
+    }
+
+    private function draftConflictResponse(string $message): JsonResponse
+    {
+        return response()->json([
+            'error' => [
+                'code' => 'draft_conflict',
+                'message' => $message,
+            ],
+        ], 409);
     }
 }

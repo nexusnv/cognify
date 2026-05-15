@@ -14,6 +14,9 @@ use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
+use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
+use Domains\Requisition\Http\Controllers\RequisitionItemSuggestionController;
+use Domains\Requisition\Http\Controllers\RequisitionTemplateController;
 use Domains\Search\Http\Controllers\SearchController;
 
 Route::get('/health', static function (): JsonResponse {
@@ -44,11 +47,16 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
         Route::get('/system/status', [SystemStatusController::class, 'show'])->middleware('throttle:30,1');
 
+        Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
+        Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
+        Route::get('/requisition-intake-options', RequisitionIntakeOptionsController::class);
+
         // Existing requisition routes
         Route::get('/requisitions', [RequisitionController::class, 'index']);
         Route::post('/requisitions', [RequisitionController::class, 'store']);
         Route::get('/requisitions/{requisition}', [RequisitionController::class, 'show']);
         Route::patch('/requisitions/{requisition}', [RequisitionController::class, 'update']);
+        Route::post('/requisitions/{requisition}/apply-template', [RequisitionController::class, 'applyTemplate']);
         Route::post('/requisitions/{requisition}/submit', [RequisitionController::class, 'submit']);
         Route::get('/requisitions/{requisition}/activity', [RequisitionActivityController::class, 'index']);
         Route::get('/requisitions/{requisition}/attachments', [RequisitionAttachmentController::class, 'index']);

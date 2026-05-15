@@ -27,6 +27,16 @@ class UpdateRequisitionDraft
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $data): Requisition {
+            $requisition = Requisition::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereKey($requisition->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ((int) $data['lockVersion'] !== (int) $requisition->lock_version) {
+                throw new ConflictHttpException('The draft has changed since it was loaded.');
+            }
+
             $before = [
                 'title' => $requisition->title,
                 'businessJustification' => $requisition->business_justification,
@@ -37,6 +47,7 @@ class UpdateRequisitionDraft
                 'deliveryLocation' => $requisition->delivery_location,
                 'currency' => $requisition->currency,
                 'status' => $requisition->status->value,
+                'lockVersion' => $requisition->lock_version,
                 'lineItemCount' => $requisition->lineItems()->count(),
             ];
 
@@ -57,6 +68,7 @@ class UpdateRequisitionDraft
                 'currency' => array_key_exists('currency', $data)
                     ? strtoupper($data['currency'] ?? 'MYR')
                     : $requisition->currency,
+                'lock_version' => $requisition->lock_version + 1,
             ])->save();
 
             if (array_key_exists('lineItems', $data)) {
@@ -95,6 +107,7 @@ class UpdateRequisitionDraft
                     'deliveryLocation' => $requisition->delivery_location,
                     'currency' => $requisition->currency,
                     'status' => $requisition->status->value,
+                    'lockVersion' => $requisition->lock_version,
                     'lineItemCount' => $afterLineItemCount,
                 ],
                 subjectDisplay: $requisition->number,

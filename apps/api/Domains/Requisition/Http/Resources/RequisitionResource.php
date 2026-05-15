@@ -24,6 +24,7 @@ class RequisitionResource extends JsonResource
             'tenantId' => (string) $this->tenant_id,
             'title' => $this->title,
             'status' => $this->status->value,
+            'lockVersion' => $this->lock_version,
             'businessJustification' => $this->business_justification,
             'neededByDate' => $this->needed_by_date?->toDateString(),
             'department' => $this->department,
