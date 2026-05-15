@@ -20,9 +20,9 @@ pnpm dev:services:down
 ## Services
 
 - PostgreSQL: `localhost:5433`
-- Redis: `localhost:6379`
-- MinIO API: `localhost:9000`
-- MinIO Console: `localhost:9001`
+- Redis: `localhost:6381`
+- MinIO API: `localhost:9002`
+- MinIO Console: `localhost:9003`
 
 ## Databases
 
@@ -30,6 +30,14 @@ pnpm dev:services:down
 - Test: `cognify_test`
 
 ## Local Demo Data
+
+One-command local reset and startup:
+
+```bash
+pnpm dev:reset
+```
+
+This waits for Docker services, runs `php artisan migrate:fresh --seed`, then starts the Laravel API on `127.0.0.1:8890` and the Next.js app on `127.0.0.1:8880`.
 
 Run the local demo seed after migrations:
 

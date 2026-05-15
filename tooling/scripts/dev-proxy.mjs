@@ -4,9 +4,9 @@ import net from "node:net";
 const proxyHost = process.env.COGNIFY_PROXY_HOST ?? "127.0.0.1";
 const proxyPort = Number(process.env.COGNIFY_PROXY_PORT ?? 3001);
 const webHost = process.env.COGNIFY_WEB_HOST ?? "127.0.0.1";
-const webPort = Number(process.env.COGNIFY_WEB_PORT ?? 3002);
+const webPort = Number(process.env.COGNIFY_WEB_PORT ?? 8880);
 const apiHost = process.env.COGNIFY_API_HOST ?? "127.0.0.1";
-const apiPort = Number(process.env.COGNIFY_API_PORT ?? 8001);
+const apiPort = Number(process.env.COGNIFY_API_PORT ?? 8890);
 
 function targetFor(path = "/") {
   if (path.startsWith("/api") || path.startsWith("/sanctum")) {

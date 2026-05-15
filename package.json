@@ -4,6 +4,7 @@
   "packageManager": "pnpm@10.33.3",
   "scripts": {
     "dev": "turbo run dev --parallel",
+    "dev:reset": "node tooling/scripts/dev-reset.mjs",
     "dev:proxy": "node tooling/scripts/dev-proxy.mjs",
     "build": "turbo run build",
     "lint": "turbo run lint",
@@ -15,8 +16,8 @@
     "check:api-contract": "pnpm --filter @cognify/api-client check:contract",
     "api:test": "cd apps/api && php artisan test",
     "api:routes": "cd apps/api && php artisan route:list --path=api",
-    "dev:services": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
-    "dev:services:down": "docker compose -f infrastructure/docker/docker-compose.yml down"
+    "dev:services": "node tooling/scripts/dev-services.mjs up",
+    "dev:services:down": "node tooling/scripts/dev-services.mjs down"
   },
   "devDependencies": {
     "prettier": "^3.6.2",

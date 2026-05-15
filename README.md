@@ -47,7 +47,7 @@ APP_NAME=Cognify
 APP_ENV=local
 APP_VERSION=0.1.0
 APP_DEBUG=true
-APP_URL=http://127.0.0.1:8001
+APP_URL=http://127.0.0.1:8890
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -58,12 +58,12 @@ DB_PASSWORD=secret
 
 SESSION_DRIVER=database
 SESSION_DOMAIN=null
-SANCTUM_STATEFUL_DOMAINS=127.0.0.1:3002,localhost:3002,127.0.0.1:3001,localhost:3001,127.0.0.1:8001,localhost:8001
+SANCTUM_STATEFUL_DOMAINS=127.0.0.1:8880,localhost:8880,127.0.0.1:3001,localhost:3001,127.0.0.1:8890,localhost:8890
 
 CACHE_STORE=redis
 REDIS_CLIENT=phpredis
 REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
+REDIS_PORT=6381
 
 QUEUE_CONNECTION=database
 FILESYSTEM_DISK=local
@@ -72,7 +72,7 @@ AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=minioadmin
 AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=cognify-dev
-AWS_ENDPOINT=http://127.0.0.1:9000
+AWS_ENDPOINT=http://127.0.0.1:9002
 AWS_USE_PATH_STYLE_ENDPOINT=true
 
 AI_PROVIDER=echo
@@ -84,7 +84,7 @@ OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 Notes:
 
 - `DB_PORT=5433` matches the checked-in Docker Compose mapping.
-- `APP_URL=http://127.0.0.1:8001` matches the API serve command below.
+- `APP_URL=http://127.0.0.1:8890` matches the API serve command below.
 - `SANCTUM_STATEFUL_DOMAINS` must include the browser origin used for manual testing.
 - Use `AI_PROVIDER=echo` for local development when no OpenRouter key is available.
 
@@ -95,7 +95,7 @@ The web app currently does not require a checked-in `.env.local` for unit or com
 Optional `apps/web/.env.local`:
 
 ```dotenv
-PLAYWRIGHT_BASE_URL=http://127.0.0.1:3001
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:8880
 ```
 
 Use `PLAYWRIGHT_BASE_URL` when running Playwright against the local manual-test origin. Do not add a `NEXT_PUBLIC_API_URL` unless the web client is changed to consume it.
@@ -109,9 +109,9 @@ pnpm dev:services
 This starts:
 
 - PostgreSQL on `127.0.0.1:5433`
-- Redis on `127.0.0.1:6379`
-- MinIO API on `127.0.0.1:9000`
-- MinIO Console on `127.0.0.1:9001`
+- Redis on `127.0.0.1:6381`
+- MinIO API on `127.0.0.1:9002`
+- MinIO Console on `127.0.0.1:9003`
 
 Stop services with:
 
@@ -152,16 +152,24 @@ Start the API:
 
 ```bash
 cd apps/api
-php artisan serve --host=127.0.0.1 --port=8001
+php artisan serve --host=127.0.0.1 --port=8890
 ```
 
 In another terminal, start the web app:
 
 ```bash
-pnpm --filter @cognify/web exec next dev --hostname 127.0.0.1 --port 3002
+pnpm --filter @cognify/web exec next dev --hostname 127.0.0.1 --port 8880
 ```
 
-In a third terminal, start the same-origin development proxy:
+Or use the one-command local reset flow from the repo root:
+
+```bash
+pnpm dev:reset
+```
+
+That command waits for Docker services, runs `php artisan migrate:fresh --seed`, then starts the Laravel API and Next.js dev server together.
+
+If you still want the optional same-origin development proxy, start it in a third terminal:
 
 ```bash
 pnpm dev:proxy
@@ -170,16 +178,10 @@ pnpm dev:proxy
 Open the app:
 
 ```text
-http://127.0.0.1:3002
+http://127.0.0.1:8880
 ```
 
-The web dev server rewrites `/api/*` and `/sanctum/*` requests to `http://127.0.0.1:8001`, so login and authenticated API requests reach Laravel while the browser stays on one origin.
-
-If you want a separate same-origin proxy process, start it in a third terminal:
-
-```bash
-pnpm dev:proxy
-```
+The web dev server rewrites `/api/*` and `/sanctum/*` requests to `http://127.0.0.1:8890`, so login and authenticated API requests reach Laravel while the browser stays on one origin.
 
 Then open:
 
@@ -189,19 +191,19 @@ http://127.0.0.1:3001
 
 The proxy forwards:
 
-- page and `/_next/*` requests to `127.0.0.1:3002`
-- `/api/*` and `/sanctum/*` requests to `127.0.0.1:8001`
+- page and `/_next/*` requests to `127.0.0.1:8880`
+- `/api/*` and `/sanctum/*` requests to `127.0.0.1:8890`
 
 If you customize ports, set these optional proxy environment variables:
 
 ```bash
-COGNIFY_PROXY_PORT=3001 COGNIFY_WEB_PORT=3002 COGNIFY_API_PORT=8001 pnpm dev:proxy
+COGNIFY_PROXY_PORT=3001 COGNIFY_WEB_PORT=8880 COGNIFY_API_PORT=8890 pnpm dev:proxy
 ```
 
 For the direct Next dev server, customize the Laravel target with:
 
 ```bash
-COGNIFY_API_URL=http://127.0.0.1:8001 pnpm --filter @cognify/web exec next dev --hostname 127.0.0.1 --port 3002
+COGNIFY_API_URL=http://127.0.0.1:8890 pnpm --filter @cognify/web exec next dev --hostname 127.0.0.1 --port 8880
 ```
 
 If login shows `Invalid credentials`, first confirm the Laravel API is running on the port used by `COGNIFY_API_URL` and then run the seed verification command above. The web form uses that message for login failures, but the most common local causes are an unseeded database, the API pointing at a different `DB_PORT`, the API server not running, or the web server needing a restart after config changes.
@@ -244,10 +246,10 @@ Run `pnpm check:api-contract` after OpenAPI changes so `packages/api-client` sta
 ## Useful URLs
 
 - Web app through manual-test proxy: `http://127.0.0.1:3001`
-- Next dev server directly: `http://127.0.0.1:3002`
-- API health: `http://127.0.0.1:8001/api/health`
-- System readiness: `http://127.0.0.1:8001/api/system/status`
-- MinIO console: `http://127.0.0.1:9001`
+- Next dev server directly: `http://127.0.0.1:8880`
+- API health: `http://127.0.0.1:8890/api/health`
+- System readiness: `http://127.0.0.1:8890/api/system/status`
+- MinIO console: `http://127.0.0.1:9003`
 
 ## Development Boundaries
 
