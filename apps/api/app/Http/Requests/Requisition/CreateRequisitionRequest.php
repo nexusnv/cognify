@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Requisition;
 
 use App\Tenancy\CurrentTenant;
+use Domains\Project\States\ProjectStatus;
 use Domains\Requisition\Models\RequisitionCostCenter;
 use Domains\Requisition\Models\RequisitionDepartment;
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,7 +36,15 @@ class CreateRequisitionRequest extends FormRequest
                 'max:255',
                 Rule::exists(RequisitionDepartment::class, 'name')->where(fn ($query) => $query->where('tenant_id', $tenantId)->where('active', true)),
             ],
-            'projectId' => ['nullable', 'string', 'max:255'],
+            'projectId' => [
+                'nullable',
+                'integer',
+                Rule::exists('procurement_projects', 'id')->where(
+                    fn ($query) => $query
+                        ->where('tenant_id', $tenantId)
+                        ->whereNotIn('status', [ProjectStatus::Completed->value, ProjectStatus::Cancelled->value]),
+                ),
+            ],
             'costCenter' => [
                 'nullable',
                 'string',

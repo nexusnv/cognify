@@ -56,10 +56,15 @@ class DemoRoadmapPreviewSeeder
             [
                 'owner_id' => $admin->id,
                 'name' => 'HQ Workplace Refresh',
+                'charter' => 'Coordinate related requisitions for the workspace refresh.',
                 'status' => 'active',
                 'budget_amount' => 120000,
                 'currency' => 'USD',
-                'metadata' => ['department' => 'Operations'],
+                'department' => 'Operations',
+                'cost_center' => 'OPS-100',
+                'target_start_date' => '2026-06-01',
+                'target_completion_date' => '2026-09-30',
+                'metadata' => ['demo' => true],
             ],
         );
         $context->projects->put('workplace-refresh', $project);
@@ -154,10 +159,15 @@ class DemoRoadmapPreviewSeeder
             [
                 'owner_id' => $owner->id,
                 'name' => 'Northwind Warehouse Launch',
+                'charter' => 'Coordinate related requisitions for the workspace refresh.',
                 'status' => 'active',
                 'budget_amount' => 78000,
                 'currency' => 'USD',
-                'metadata' => ['department' => 'Operations'],
+                'department' => 'Operations',
+                'cost_center' => 'OPS-100',
+                'target_start_date' => '2026-06-01',
+                'target_completion_date' => '2026-09-30',
+                'metadata' => ['demo' => true],
             ],
         );
         $context->projects->put('warehouse-launch', $project);

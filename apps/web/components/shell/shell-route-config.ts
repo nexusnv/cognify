@@ -6,6 +6,7 @@ import {
   FileSearch,
   FileText,
   Gauge,
+  FolderKanban,
   ReceiptText,
   Scale,
   UserRound,
@@ -23,6 +24,7 @@ const canUseAudit = (permissions: IdentityPermissions) => permissions.canAccessA
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
+const PROJECT_WORKSPACE_PATH = /^\/projects\/[^/]+$/;
 
 export const shellNavGroups: ShellNavGroup[] = [
   {
@@ -34,6 +36,13 @@ export const shellNavGroups: ShellNavGroup[] = [
         label: "Requisitions",
         href: "/requisitions",
         icon: FileText,
+        implemented: true,
+        permission: canUseRequisitions,
+      },
+      {
+        label: "Projects",
+        href: "/projects",
+        icon: FolderKanban,
         implemented: true,
         permission: canUseRequisitions,
       },
@@ -102,6 +111,14 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return [{ label: "Requisitions", href: "/requisitions" }, { label: "New" }];
   }
 
+  if (normalizedPathname === "/projects") {
+    return [{ label: "Projects" }];
+  }
+
+  if (normalizedPathname === "/projects/new") {
+    return [{ label: "Projects", href: "/projects" }, { label: "New" }];
+  }
+
   const requisitionEditMatch = normalizedPathname.match(REQUISITION_EDIT_PATH);
   if (requisitionEditMatch) {
     return [
@@ -113,6 +130,10 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (REQUISITION_WORKSPACE_PATH.test(normalizedPathname)) {
     return [{ label: "Requisitions", href: "/requisitions" }, { label: "Requisition workspace" }];
+  }
+
+  if (PROJECT_WORKSPACE_PATH.test(normalizedPathname)) {
+    return [{ label: "Projects", href: "/projects" }, { label: "Project workspace" }];
   }
 
   return [{ label: "Workspace" }];

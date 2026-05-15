@@ -5,6 +5,7 @@ namespace Domains\Requisition\Models;
 use Domains\Attachment\Models\Attachment;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -108,5 +109,13 @@ class Requisition extends Model
     public function cancelledBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by_id');
+    }
+
+    /**
+     * @return BelongsTo<ProcurementProject, $this>
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(ProcurementProject::class, 'project_id');
     }
 }

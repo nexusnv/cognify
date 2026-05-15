@@ -4,8 +4,11 @@ namespace Domains\Project\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Project\States\ProjectStatus;
+use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -16,9 +19,19 @@ class ProcurementProject extends Model
         'owner_id',
         'number',
         'name',
+        'charter',
         'status',
         'budget_amount',
         'currency',
+        'department',
+        'cost_center',
+        'target_start_date',
+        'target_completion_date',
+        'cancelled_at',
+        'cancelled_by_id',
+        'cancellation_reason',
+        'completed_at',
+        'completed_by_id',
         'metadata',
     ];
 
@@ -26,6 +39,11 @@ class ProcurementProject extends Model
     {
         return [
             'budget_amount' => 'decimal:2',
+            'target_start_date' => 'date',
+            'target_completion_date' => 'date',
+            'cancelled_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'status' => ProjectStatus::class,
             'metadata' => 'array',
         ];
     }
@@ -65,5 +83,29 @@ class ProcurementProject extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * @return HasMany<Requisition, $this>
+     */
+    public function requisitions(): HasMany
+    {
+        return $this->hasMany(Requisition::class, 'project_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function completedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'completed_by_id');
     }
 }

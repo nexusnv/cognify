@@ -39,8 +39,8 @@ class ProcurementProjectSearchProvider implements SearchProvider
                 id: (string) $project->id,
                 title: $project->name,
                 subtitle: $project->number,
-                status: $project->status,
-                href: '/system',
+                status: $project->status?->value ?? (string) $project->status,
+                href: "/projects/{$project->id}",
                 updatedAt: $project->updated_at?->toISOString(),
             ));
     }
