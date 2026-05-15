@@ -38,6 +38,7 @@ class CreateRequisitionDraft
                 'delivery_location' => $data['deliveryLocation'] ?? null,
                 'currency' => strtoupper($data['currency'] ?? 'MYR'),
                 'status' => RequisitionStatus::Draft,
+                'lock_version' => 0,
             ]);
 
             $this->replaceLineItems($requisition, $data['lineItems'] ?? []);

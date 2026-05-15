@@ -18,6 +18,7 @@ export const requisitionDraftSchema = z.object({
   businessJustification: z.string().optional().default(""),
   neededByDate: z.string().optional().default(""),
   department: z.string().optional().default(""),
+  projectId: z.string().optional().default(""),
   costCenter: z.string().optional().default(""),
   deliveryLocation: z.string().optional().default(""),
   currency: z.string().optional().default("MYR"),

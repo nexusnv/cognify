@@ -1,3 +1,9 @@
+import type {
+  RequisitionIntakeOptions as GeneratedRequisitionIntakeOptions,
+  RequisitionItemSuggestion as GeneratedRequisitionItemSuggestion,
+  RequisitionTemplate as GeneratedRequisitionTemplate,
+} from "@cognify/api-client";
+
 export type RequisitionStatus = "draft" | "submitted" | "pending_approval";
 
 export type UserSummary = {
@@ -11,6 +17,16 @@ export type RequisitionPermissions = {
   canSubmit: boolean;
   canViewActivity: boolean;
 };
+
+export type RequisitionTemplateMode = "fill-empty" | "replace";
+
+export type RequisitionTemplate = Omit<GeneratedRequisitionTemplate, "defaults"> & {
+  defaults: Partial<RequisitionFormValues>;
+};
+
+export type RequisitionItemSuggestion = GeneratedRequisitionItemSuggestion;
+
+export type RequisitionIntakeOptions = GeneratedRequisitionIntakeOptions;
 
 export type RequisitionLineItem = {
   id?: string;
@@ -29,13 +45,14 @@ export type Requisition = {
   tenantId: string;
   title: string;
   status: RequisitionStatus;
+  lockVersion: number;
   businessJustification: string;
   neededByDate: string;
   department?: string;
   projectId?: string;
   costCenter?: string;
   deliveryLocation?: string;
-  currency: string;
+  currency?: string;
   estimatedTotal: number;
   requester: UserSummary;
   lineItems: RequisitionLineItem[];
@@ -60,6 +77,7 @@ export type RequisitionFormValues = {
   businessJustification: string;
   neededByDate: string;
   department: string;
+  projectId: string;
   costCenter: string;
   deliveryLocation: string;
   currency: string;

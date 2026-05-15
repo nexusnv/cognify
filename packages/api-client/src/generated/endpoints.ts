@@ -6,6 +6,7 @@
  */
 import type {
   AmbiguousTenantResponse,
+  ApplyRequisitionTemplateRequest,
   AttachmentListResponse,
   AttachmentResponse,
   AttachmentUploadRequest,
@@ -20,14 +21,18 @@ import type {
   ListGlobalSearchParams,
   ListNotificationsParams,
   ListRequisitionActivity200,
+  ListRequisitionLineItemSuggestionsParams,
   ListRequisitionsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
+  RequisitionIntakeOptionsResponse,
+  RequisitionItemSuggestionListResponse,
   RequisitionListResponse,
   RequisitionResponse,
+  RequisitionTemplateListResponse,
   SearchResponse,
   SetCurrentTenantRequest,
   SubmitRequisitionResponse,
@@ -1325,6 +1330,230 @@ export const listAuditEvents = async (
   options?: RequestInit,
 ): Promise<listAuditEventsResponse> => {
   return cognifyFetch<listAuditEventsResponse>(getListAuditEventsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary List requisition templates
+ */
+export type listRequisitionTemplatesResponse200 = {
+  data: RequisitionTemplateListResponse;
+  status: 200;
+};
+
+export type listRequisitionTemplatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionTemplatesResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionTemplatesResponseSuccess = listRequisitionTemplatesResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionTemplatesResponseError = (
+  | listRequisitionTemplatesResponse401
+  | listRequisitionTemplatesResponse403
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionTemplatesResponse =
+  | listRequisitionTemplatesResponseSuccess
+  | listRequisitionTemplatesResponseError;
+
+export const getListRequisitionTemplatesUrl = () => {
+  return `/api/requisition-templates`;
+};
+
+export const listRequisitionTemplates = async (
+  options?: RequestInit,
+): Promise<listRequisitionTemplatesResponse> => {
+  return cognifyFetch<listRequisitionTemplatesResponse>(getListRequisitionTemplatesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Apply a requisition template
+ */
+export type applyRequisitionTemplateResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type applyRequisitionTemplateResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type applyRequisitionTemplateResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type applyRequisitionTemplateResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type applyRequisitionTemplateResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type applyRequisitionTemplateResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type applyRequisitionTemplateResponseSuccess = applyRequisitionTemplateResponse200 & {
+  headers: Headers;
+};
+export type applyRequisitionTemplateResponseError = (
+  | applyRequisitionTemplateResponse401
+  | applyRequisitionTemplateResponse403
+  | applyRequisitionTemplateResponse404
+  | applyRequisitionTemplateResponse409
+  | applyRequisitionTemplateResponse422
+) & {
+  headers: Headers;
+};
+
+export type applyRequisitionTemplateResponse =
+  | applyRequisitionTemplateResponseSuccess
+  | applyRequisitionTemplateResponseError;
+
+export const getApplyRequisitionTemplateUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/apply-template`;
+};
+
+export const applyRequisitionTemplate = async (
+  requisitionId: string,
+  applyRequisitionTemplateRequest: ApplyRequisitionTemplateRequest,
+  options?: RequestInit,
+): Promise<applyRequisitionTemplateResponse> => {
+  return cognifyFetch<applyRequisitionTemplateResponse>(
+    getApplyRequisitionTemplateUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(applyRequisitionTemplateRequest),
+    },
+  );
+};
+
+/**
+ * @summary List requisition line item suggestions
+ */
+export type listRequisitionLineItemSuggestionsResponse200 = {
+  data: RequisitionItemSuggestionListResponse;
+  status: 200;
+};
+
+export type listRequisitionLineItemSuggestionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionLineItemSuggestionsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionLineItemSuggestionsResponseSuccess =
+  listRequisitionLineItemSuggestionsResponse200 & {
+    headers: Headers;
+  };
+export type listRequisitionLineItemSuggestionsResponseError = (
+  | listRequisitionLineItemSuggestionsResponse401
+  | listRequisitionLineItemSuggestionsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionLineItemSuggestionsResponse =
+  | listRequisitionLineItemSuggestionsResponseSuccess
+  | listRequisitionLineItemSuggestionsResponseError;
+
+export const getListRequisitionLineItemSuggestionsUrl = (
+  params?: ListRequisitionLineItemSuggestionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/requisition-line-item-suggestions?${stringifiedParams}`
+    : `/api/requisition-line-item-suggestions`;
+};
+
+export const listRequisitionLineItemSuggestions = async (
+  params?: ListRequisitionLineItemSuggestionsParams,
+  options?: RequestInit,
+): Promise<listRequisitionLineItemSuggestionsResponse> => {
+  return cognifyFetch<listRequisitionLineItemSuggestionsResponse>(
+    getListRequisitionLineItemSuggestionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Get requisition intake options
+ */
+export type getRequisitionIntakeOptionsResponse200 = {
+  data: RequisitionIntakeOptionsResponse;
+  status: 200;
+};
+
+export type getRequisitionIntakeOptionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRequisitionIntakeOptionsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getRequisitionIntakeOptionsResponseSuccess = getRequisitionIntakeOptionsResponse200 & {
+  headers: Headers;
+};
+export type getRequisitionIntakeOptionsResponseError = (
+  | getRequisitionIntakeOptionsResponse401
+  | getRequisitionIntakeOptionsResponse403
+) & {
+  headers: Headers;
+};
+
+export type getRequisitionIntakeOptionsResponse =
+  | getRequisitionIntakeOptionsResponseSuccess
+  | getRequisitionIntakeOptionsResponseError;
+
+export const getGetRequisitionIntakeOptionsUrl = () => {
+  return `/api/requisition-intake-options`;
+};
+
+export const getRequisitionIntakeOptions = async (
+  options?: RequestInit,
+): Promise<getRequisitionIntakeOptionsResponse> => {
+  return cognifyFetch<getRequisitionIntakeOptionsResponse>(getGetRequisitionIntakeOptionsUrl(), {
     ...options,
     method: "GET",
   });

@@ -42,4 +42,6 @@ export interface Requisition {
   updatedAt: string;
   submittedAt: RequisitionSubmittedAt;
   permissions: RequisitionPermissions;
+  /** @minimum 0 */
+  lockVersion: number;
 }

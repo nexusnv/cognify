@@ -6,10 +6,10 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Requisition\Exceptions\DraftConflictException;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class UpdateRequisitionDraft
 {
@@ -23,10 +23,24 @@ class UpdateRequisitionDraft
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): Requisition
     {
         if ($requisition->status !== RequisitionStatus::Draft) {
-            throw new ConflictHttpException('Only draft requisitions can be updated.');
+            throw new DraftConflictException('Only draft requisitions can be updated.');
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $data): Requisition {
+            $requisition = Requisition::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereKey($requisition->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($requisition->status !== RequisitionStatus::Draft) {
+                throw new DraftConflictException('The requisition is no longer a draft.');
+            }
+
+            if ((int) $data['lockVersion'] !== (int) $requisition->lock_version) {
+                throw new DraftConflictException('The draft has changed since it was loaded.');
+            }
+
             $before = [
                 'title' => $requisition->title,
                 'businessJustification' => $requisition->business_justification,
@@ -37,6 +51,7 @@ class UpdateRequisitionDraft
                 'deliveryLocation' => $requisition->delivery_location,
                 'currency' => $requisition->currency,
                 'status' => $requisition->status->value,
+                'lockVersion' => $requisition->lock_version,
                 'lineItemCount' => $requisition->lineItems()->count(),
             ];
 
@@ -57,6 +72,7 @@ class UpdateRequisitionDraft
                 'currency' => array_key_exists('currency', $data)
                     ? strtoupper($data['currency'] ?? 'MYR')
                     : $requisition->currency,
+                'lock_version' => $requisition->lock_version + 1,
             ])->save();
 
             if (array_key_exists('lineItems', $data)) {
@@ -95,6 +111,7 @@ class UpdateRequisitionDraft
                     'deliveryLocation' => $requisition->delivery_location,
                     'currency' => $requisition->currency,
                     'status' => $requisition->status->value,
+                    'lockVersion' => $requisition->lock_version,
                     'lineItemCount' => $afterLineItemCount,
                 ],
                 subjectDisplay: $requisition->number,
