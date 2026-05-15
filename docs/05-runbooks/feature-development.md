@@ -28,16 +28,16 @@ This does not mean the frontend must be finished before the backend starts. It m
 
 Keep feature work inside the established Cognify boundaries:
 
-| Path | Owns |
-| --- | --- |
-| `apps/web` | App routes, shells, workflows, feature UI, hooks, MSW handlers, product-specific composition |
-| `apps/api/Domains/*` | Business rules, actions, states, events, jobs, policies, workflow behavior |
-| `apps/api/app/*` | Laravel framework integration, tenancy, auth, audit, observability, shared infrastructure |
-| `packages/api-client` | Orval-generated client and typed client helpers |
-| `packages/ui` | Reusable shadcn/Radix primitives only, without Cognify business meaning |
-| `packages/schemas` | Stable shared schemas when a contract must be reused across apps/packages |
-| `packages/types` | Stable TypeScript contracts that are not generated from OpenAPI |
-| `packages/config` | Shared TypeScript, Tailwind, and tooling config |
+| Path                  | Owns                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `apps/web`            | App routes, shells, workflows, feature UI, hooks, MSW handlers, product-specific composition |
+| `apps/api/Domains/*`  | Business rules, actions, states, events, jobs, policies, workflow behavior                   |
+| `apps/api/app/*`      | Laravel framework integration, tenancy, auth, audit, observability, shared infrastructure    |
+| `packages/api-client` | Orval-generated client and typed client helpers                                              |
+| `packages/ui`         | Reusable shadcn/Radix primitives only, without Cognify business meaning                      |
+| `packages/schemas`    | Stable shared schemas when a contract must be reused across apps/packages                    |
+| `packages/types`      | Stable TypeScript contracts that are not generated from OpenAPI                              |
+| `packages/config`     | Shared TypeScript, Tailwind, and tooling config                                              |
 
 Do not introduce new shared packages for a feature unless there is real cross-app reuse and the package boundary has been documented.
 
@@ -45,7 +45,7 @@ Do not introduce new shared packages for a feature unless there is real cross-ap
 
 Before changing files:
 
-1. Read `AGENTS.md`, this runbook, and the domain docs relevant to the feature.
+1. Read `AGENTS.md`, `ARCHITECHTURAL.md`, this runbook, and the domain docs relevant to the feature.
 2. Inspect the existing files that own adjacent behavior.
 3. Check `git status --short --branch` and avoid overwriting unrelated work.
 4. Confirm whether the feature changes API contracts, tenant-sensitive data, permissions, queues, audit trails, or AI behavior.
