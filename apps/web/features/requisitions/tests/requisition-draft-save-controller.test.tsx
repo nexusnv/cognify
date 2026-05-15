@@ -8,6 +8,7 @@ const baseValues: RequisitionFormValues = {
   businessJustification: "Replace unsupported laptops.",
   neededByDate: "2026-06-15",
   department: "IT",
+  projectId: "Project Atlas",
   costCenter: "IT-210",
   deliveryLocation: "Kuala Lumpur",
   currency: "MYR",

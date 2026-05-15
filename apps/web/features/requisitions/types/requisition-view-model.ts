@@ -87,6 +87,7 @@ export type RequisitionFormValues = {
   businessJustification: string;
   neededByDate: string;
   department: string;
+  projectId: string;
   costCenter: string;
   deliveryLocation: string;
   currency: string;

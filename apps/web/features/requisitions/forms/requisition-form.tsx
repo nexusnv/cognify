@@ -21,6 +21,7 @@ import { useApplyRequisitionTemplate, useRequisitionTemplates } from "../hooks/u
 import { useRequisitionDraftSaveController } from "../hooks/use-requisition-draft-save-controller";
 import { useRequisitionIntakeOptions } from "../hooks/use-requisition-intake-options";
 import { useSubmitRequisition } from "../hooks/use-submit-requisition";
+import { useUnsavedChangesGuard } from "../hooks/use-unsaved-changes-guard";
 import { requisitionSubmitSchema } from "../schemas/requisition-form-schema";
 import type {
   Requisition,
@@ -45,6 +46,7 @@ const requisitionFieldIds: Record<string, string> = {
   neededByDate: "needed-by",
   currency: "currency",
   department: "department",
+  projectId: "project-id",
   costCenter: "cost-center",
   deliveryLocation: "delivery-location",
   lineItems: "line-items",
@@ -61,6 +63,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     businessJustification: initialRequisition?.businessJustification ?? "",
     neededByDate: initialRequisition?.neededByDate ?? "",
     department: initialRequisition?.department ?? "",
+    projectId: initialRequisition?.projectId ?? "",
     costCenter: initialRequisition?.costCenter ?? "",
     deliveryLocation: initialRequisition?.deliveryLocation ?? "",
     currency: initialRequisition?.currency ?? "MYR",
@@ -102,6 +105,14 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
   const lineItemErrorMessage = firstFieldError(errors, "lineItems");
   const lineItemsErrorId = hasLineItemErrors ? "line-items-error" : undefined;
   const draftHasContent = hasMeaningfulDraftContent(values);
+  const shouldWarnOnLeave =
+    canEdit &&
+    (saveController.saveState === "unsaved" ||
+      saveController.saveState === "saving" ||
+      saveController.saveState === "failed" ||
+      saveController.saveState === "conflict");
+
+  useUnsavedChangesGuard(shouldWarnOnLeave);
 
   useEffect(() => {
     if (saveController.saveState === "saved") {
@@ -592,6 +603,16 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             <h2 className="text-base font-semibold">Optional context</h2>
             <div className="grid gap-3 md:grid-cols-2">
               {renderDepartmentField()}
+              <FormField htmlFor="project-id" label="Project placeholder" error={errors.projectId?.[0]}>
+                <input
+                  id="project-id"
+                  className="min-h-11 w-full rounded-md border px-3 text-base"
+                  value={values.projectId}
+                  aria-invalid={Boolean(errors.projectId)}
+                  onChange={(event) => updateValue("projectId", event.target.value)}
+                  disabled={status !== "draft"}
+                />
+              </FormField>
               {renderCostCenterField()}
               <div className="md:col-span-2">
                 <FormField htmlFor="delivery-location" label="Delivery location" error={errors.deliveryLocation?.[0]}>
@@ -681,6 +702,7 @@ function requisitionToFormValues(requisition: Requisition): RequisitionFormValue
     businessJustification: requisition.businessJustification,
     neededByDate: requisition.neededByDate ?? "",
     department: requisition.department ?? "",
+    projectId: requisition.projectId ?? "",
     costCenter: requisition.costCenter ?? "",
     deliveryLocation: requisition.deliveryLocation ?? "",
     currency: requisition.currency,
@@ -691,11 +713,16 @@ function requisitionToFormValues(requisition: Requisition): RequisitionFormValue
 }
 
 function hasMeaningfulDraftContent(values: RequisitionFormValues): boolean {
-  if (values.title.trim() || values.businessJustification.trim() || values.neededByDate.trim()) {
+  if (values.businessJustification.trim()) {
     return true;
   }
 
-  if (values.department.trim() || values.costCenter.trim() || values.deliveryLocation.trim()) {
+  if (
+    values.department.trim() ||
+    values.projectId.trim() ||
+    values.costCenter.trim() ||
+    values.deliveryLocation.trim()
+  ) {
     return true;
   }
 
@@ -734,6 +761,7 @@ function mergeTemplateDefaults(
       businessJustification: defaults.businessJustification ?? current.businessJustification,
       neededByDate: defaults.neededByDate ?? current.neededByDate,
       department: defaults.department ?? current.department,
+      projectId: defaults.projectId ?? current.projectId,
       costCenter: defaults.costCenter ?? current.costCenter,
       deliveryLocation: defaults.deliveryLocation ?? current.deliveryLocation,
       currency: defaults.currency ?? current.currency,
@@ -747,6 +775,7 @@ function mergeTemplateDefaults(
     businessJustification: current.businessJustification || defaults.businessJustification || "",
     neededByDate: current.neededByDate || defaults.neededByDate || "",
     department: current.department || defaults.department || "",
+    projectId: current.projectId || defaults.projectId || "",
     costCenter: current.costCenter || defaults.costCenter || "",
     deliveryLocation: current.deliveryLocation || defaults.deliveryLocation || "",
     currency: current.currency || defaults.currency || "MYR",

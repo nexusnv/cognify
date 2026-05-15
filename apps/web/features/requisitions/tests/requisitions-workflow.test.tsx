@@ -233,19 +233,30 @@ describe("requisitions workflow", () => {
 
   it("applies a template and a line item suggestion before saving the draft", async () => {
     const user = userEvent.setup();
+    let createPayload: unknown;
+
+    server.use(
+      http.post("/api/requisitions", async ({ request }) => {
+        createPayload = await request.json();
+
+        return HttpResponse.json({ data: requisitionFixtures[0] }, { status: 201 });
+      }),
+    );
 
     renderWithQuery(<RequisitionCreatePage />);
 
     await user.type(screen.getByLabelText("Title"), "Template-backed requisition");
     await user.click(screen.getByRole("button", { name: "Fill empty fields from IT equipment" }));
-    expect(await screen.findByRole("dialog", { name: "Apply template?" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Apply template" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Apply template?" })).not.toBeInTheDocument();
+    });
 
     expect(
       await screen.findByDisplayValue(
         "Provision or replace equipment required for business operations.",
       ),
     ).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Project placeholder"), "Project Atlas");
 
     await user.clear(screen.getByLabelText("Item name 1"));
     await user.type(screen.getByLabelText("Item name 1"), "Lap");
@@ -256,6 +267,9 @@ describe("requisitions workflow", () => {
 
     await user.click(screen.getByRole("button", { name: "Save draft" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
+    expect(createPayload).toMatchObject({
+      projectId: "Project Atlas",
+    });
   });
 
   it("shows accessible conflict recovery when a stale save is rejected", async () => {
@@ -296,4 +310,17 @@ describe("requisitions workflow", () => {
     );
     expect(screen.getByLabelText("Title")).toHaveValue("Conflict laptop refresh updated");
   }, 10000);
+
+  it("warns before leaving when a draft has unsaved local edits", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionCreatePage />);
+
+    await user.type(screen.getByLabelText("Title"), "Unsaved draft");
+
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+  });
 });

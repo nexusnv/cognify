@@ -111,6 +111,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
               businessJustification: requisition.businessJustification,
               neededByDate: requisition.neededByDate,
               department: requisition.department ?? "",
+              projectId: requisition.projectId ?? "",
               costCenter: requisition.costCenter ?? "",
               deliveryLocation: requisition.deliveryLocation ?? "",
               currency: requisition.currency,

@@ -142,6 +142,49 @@ class RequisitionAuthoringApiTest extends TestCase
             ->assertJsonPath('data.lockVersion', 3);
     }
 
+    public function test_template_fill_empty_mode_populates_blank_placeholder_line_items(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $template = RequisitionTemplate::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'IT equipment',
+            'category' => 'it_equipment',
+            'defaults' => [
+                'lineItems' => [[
+                    'name' => 'Laptop',
+                    'quantity' => 1,
+                    'unit' => 'each',
+                    'estimatedUnitPrice' => 1800,
+                    'currency' => 'MYR',
+                ]],
+            ],
+            'active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $requisition = $this->createDraft($tenant, $user, ['lock_version' => 2]);
+        $requisition->lineItems()->create([
+            'name' => '',
+            'description' => null,
+            'quantity' => 1,
+            'unit_of_measure' => 'each',
+            'estimated_unit_price' => 0,
+            'currency' => 'MYR',
+        ]);
+
+        $this->actingAsTenant($tenant, $user)
+            ->postJson("/api/requisitions/{$requisition->id}/apply-template", [
+                'templateId' => (string) $template->id,
+                'mode' => 'fill-empty',
+                'lockVersion' => 2,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.lineItems.0.name', 'Laptop')
+            ->assertJsonPath('data.lineItems.0.quantity', 1)
+            ->assertJsonPath('data.lockVersion', 3);
+    }
+
     public function test_non_draft_requisition_cannot_receive_template_application(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');
@@ -161,6 +204,39 @@ class RequisitionAuthoringApiTest extends TestCase
                 'lockVersion' => 0,
             ])
             ->assertStatus(409);
+    }
+
+    public function test_template_application_skips_invalid_line_items_without_a_name(): void
+    {
+        [$tenant, $user] = $this->tenantUser('requester');
+
+        $template = RequisitionTemplate::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Broken template',
+            'category' => 'broken',
+            'defaults' => [
+                'lineItems' => [[
+                    'quantity' => 1,
+                    'unit' => 'each',
+                    'estimatedUnitPrice' => 1800,
+                    'currency' => 'MYR',
+                ]],
+            ],
+            'active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $requisition = $this->createDraft($tenant, $user, ['lock_version' => 1]);
+
+        $this->actingAsTenant($tenant, $user)
+            ->postJson("/api/requisitions/{$requisition->id}/apply-template", [
+                'templateId' => (string) $template->id,
+                'mode' => 'replace',
+                'lockVersion' => 1,
+            ])
+            ->assertOk()
+            ->assertJsonCount(0, 'data.lineItems')
+            ->assertJsonPath('data.lockVersion', 2);
     }
 
     public function test_suggestions_are_tenant_scoped_and_searchable(): void

@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Requisition\Models\Requisition;
+use Domains\Requisition\Models\RequisitionLineItem;
 use Domains\Requisition\Models\RequisitionTemplate;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Arr;
@@ -58,19 +59,18 @@ class ApplyRequisitionTemplate
                 'lock_version' => $requisition->lock_version + 1,
             ])->save();
 
-            if ($mode === 'replace' && is_array(Arr::get($defaults, 'lineItems'))) {
-                $requisition->lineItems()->delete();
+            $templateLineItems = Arr::get($defaults, 'lineItems');
 
-                foreach (Arr::get($defaults, 'lineItems') as $lineItem) {
-                    $requisition->lineItems()->create([
-                        'name' => $lineItem['name'],
-                        'description' => $lineItem['description'] ?? null,
-                        'quantity' => $lineItem['quantity'] ?? 1,
-                        'unit_of_measure' => $lineItem['unit'] ?? 'each',
-                        'estimated_unit_price' => $lineItem['estimatedUnitPrice'] ?? 0,
-                        'currency' => strtoupper($lineItem['currency'] ?? $requisition->currency),
-                    ]);
-                }
+            if ($mode === 'replace' && is_array($templateLineItems)) {
+                $requisition->lineItems()->delete();
+                $this->createTemplateLineItems($requisition, $templateLineItems);
+            } elseif (
+                $mode === 'fill-empty' &&
+                is_array($templateLineItems) &&
+                $this->hasBlankPlaceholderLineItems($requisition)
+            ) {
+                $requisition->lineItems()->delete();
+                $this->createTemplateLineItems($requisition, $templateLineItems);
             }
 
             $this->auditRecorder->record(new AuditEventData(
@@ -107,5 +107,47 @@ class ApplyRequisitionTemplate
         }
 
         return blank($current) ? $incoming : $current;
+    }
+
+    private function hasBlankPlaceholderLineItems(Requisition $requisition): bool
+    {
+        $lineItems = $requisition->lineItems()->get();
+
+        if ($lineItems->count() !== 1) {
+            return false;
+        }
+
+        /** @var RequisitionLineItem $lineItem */
+        $lineItem = $lineItems->first();
+
+        return blank($lineItem->name)
+            && blank($lineItem->description)
+            && (float) $lineItem->quantity === 1.0
+            && $lineItem->unit_of_measure === 'each'
+            && (float) $lineItem->estimated_unit_price === 0.0
+            && strtoupper($lineItem->currency) === 'MYR';
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $templateLineItems
+     */
+    private function createTemplateLineItems(Requisition $requisition, array $templateLineItems): void
+    {
+        foreach ($templateLineItems as $lineItem) {
+            $name = trim((string) Arr::get($lineItem, 'name', ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $requisition->lineItems()->create([
+                'name' => $name,
+                'description' => Arr::get($lineItem, 'description'),
+                'quantity' => Arr::get($lineItem, 'quantity', 1),
+                'unit_of_measure' => Arr::get($lineItem, 'unit', 'each'),
+                'estimated_unit_price' => Arr::get($lineItem, 'estimatedUnitPrice', 0),
+                'currency' => strtoupper((string) Arr::get($lineItem, 'currency', $requisition->currency)),
+            ]);
+        }
     }
 }
