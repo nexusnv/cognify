@@ -6,6 +6,7 @@ use App\Audit\AuditEvent;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Project\Models\ProcurementProject;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class UpdateProcurementProject
@@ -30,18 +31,21 @@ class UpdateProcurementProject
             'target_start_date' => $data['targetStartDate'] ?? $project->target_start_date,
             'target_completion_date' => $data['targetCompletionDate'] ?? $project->target_completion_date,
         ]);
-        $project->save();
 
-        AuditEvent::query()->create([
-            'tenant_id' => $tenant->id,
-            'actor_id' => $actor->id,
-            'event_type' => 'project.updated',
-            'action' => 'project.updated',
-            'subject_type' => ProcurementProject::class,
-            'subject_id' => $project->id,
-            'metadata' => ['name' => $project->name, 'number' => $project->number],
-            'occurred_at' => now(),
-        ]);
+        DB::transaction(function () use ($tenant, $actor, $project): void {
+            $project->save();
+
+            AuditEvent::query()->create([
+                'tenant_id' => $tenant->id,
+                'actor_id' => $actor->id,
+                'event_type' => 'project.updated',
+                'action' => 'project.updated',
+                'subject_type' => ProcurementProject::class,
+                'subject_id' => $project->id,
+                'metadata' => ['name' => $project->name, 'number' => $project->number],
+                'occurred_at' => now(),
+            ]);
+        });
 
         return $project->load(['owner', 'requisitions', 'cancelledBy', 'completedBy']);
     }

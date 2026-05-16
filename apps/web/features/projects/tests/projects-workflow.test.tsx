@@ -81,6 +81,15 @@ describe("projects workflow", () => {
     expect(screen.getAllByText("Project name is required").length).toBeGreaterThan(0);
   });
 
+  it("separates current user fetch failures from project creation permissions", async () => {
+    server.use(http.get("/api/me", () => HttpResponse.json({ message: "Unavailable" }, { status: 500 })));
+
+    render(<ProjectCreatePage />, { wrapper: TestAppProviders });
+
+    expect(await screen.findByText("Unable to load access context. Try again.")).toBeInTheDocument();
+    expect(screen.queryByText("Your role does not allow project creation.")).not.toBeInTheDocument();
+  });
+
   it("surfaces backend validation and forbidden errors in the project form", async () => {
     mockCurrentUser();
     const user = userEvent.setup();

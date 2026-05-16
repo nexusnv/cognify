@@ -7,11 +7,22 @@ import { canManageProjects } from "../utils/project-access";
 
 export function ProjectCreatePage() {
   const currentUserQuery = useCurrentUser();
-  const canCreateProject = canManageProjects(currentUserQuery.data?.data.activeRole);
 
   if (currentUserQuery.isLoading) {
     return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading access context</div>;
   }
+
+  const currentUser = currentUserQuery.data?.data;
+
+  if (currentUserQuery.isError || !currentUser) {
+    return (
+      <div className="rounded-md border p-4 text-sm text-muted-foreground">
+        Unable to load access context. Try again.
+      </div>
+    );
+  }
+
+  const canCreateProject = canManageProjects(currentUser.activeRole);
 
   return (
     <section className="space-y-5">

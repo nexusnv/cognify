@@ -39,12 +39,10 @@ class UpdateProcurementProjectRequest extends FormRequest
             $ownerId = $this->input('ownerId');
 
             if ($tenant === null || $projectId === null) {
-                if ($ownerId === null || $tenant === null) {
-                    return;
-                }
+                return;
             }
 
-            if ($ownerId !== null && $tenant !== null) {
+            if ($ownerId !== null) {
                 $belongsToTenant = User::query()
                     ->whereKey($ownerId)
                     ->whereHas('tenants', fn ($query) => $query->whereKey($tenant->id))
@@ -53,10 +51,6 @@ class UpdateProcurementProjectRequest extends FormRequest
                 if (! $belongsToTenant) {
                     $validator->errors()->add('ownerId', 'The selected owner must belong to the current tenant.');
                 }
-            }
-
-            if ($tenant === null || $projectId === null) {
-                return;
             }
 
             $project = ProcurementProject::query()

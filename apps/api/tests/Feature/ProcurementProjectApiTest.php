@@ -9,6 +9,8 @@ use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -246,6 +248,82 @@ class ProcurementProjectApiTest extends TestCase
             ->assertJsonPath('data.0.type', 'project.created');
     }
 
+    public function test_login_allows_access_to_project_endpoints(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $buyer->forceFill([
+            'email' => 'project-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $project = $this->createProject($tenant, $buyer);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'project-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/projects')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', (string) $project->id);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', (string) $project->id);
+    }
+
+    public function test_logout_revokes_access_to_project_endpoints(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $buyer->forceFill([
+            'email' => 'project-logout@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $project = $this->createProject($tenant, $buyer);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'project-logout@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertUnauthorized();
+    }
+
+    public function test_unauthenticated_requests_are_denied(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $project = $this->createProject($tenant, $buyer);
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/projects')
+            ->assertUnauthorized();
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertUnauthorized();
+    }
+
     public function test_buyer_can_link_and_unlink_visible_requisition_to_project(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -395,6 +473,29 @@ class ProcurementProjectApiTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonPath('error.code', 'validation_failed');
+    }
+
+    public function test_project_cannot_relink_requisition_from_another_project(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $sourceProject = $this->createProject($tenant, $buyer, ['status' => 'active']);
+        $targetProject = $this->createProject($tenant, $buyer, ['status' => 'active']);
+        $requisition = $this->createRequisition($tenant, $buyer, [
+            'project_id' => $sourceProject->id,
+            'status' => RequisitionStatus::Submitted,
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/projects/{$targetProject->id}/requisitions", [
+                'requisitionId' => (string) $requisition->id,
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('error.message', 'Requisition is linked to another project; unlink first.');
+
+        $this->assertDatabaseHas('requisitions', [
+            'id' => $requisition->id,
+            'project_id' => $sourceProject->id,
+        ]);
     }
 
     public function test_project_requisition_list_returns_linked_requisitions(): void

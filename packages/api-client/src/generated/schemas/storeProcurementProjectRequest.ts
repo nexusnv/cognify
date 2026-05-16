@@ -15,7 +15,7 @@ export interface StoreProcurementProjectRequest {
   charter?: string;
   ownerId: string;
   /** @pattern ^\d+(\.\d{1,2})?$ */
-  budgetAmount: string;
+  budgetAmount?: string;
   /**
    * @minLength 3
    * @maxLength 3

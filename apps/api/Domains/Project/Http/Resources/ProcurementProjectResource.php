@@ -55,6 +55,12 @@ class ProcurementProjectResource extends JsonResource
 
     private function summary(): array
     {
+        if (! $this->relationLoaded('requisitions') && ! app()->isProduction()) {
+            logger()->debug('ProcurementProjectResource rendered without eager-loaded requisitions.', [
+                'project_id' => $this->id,
+            ]);
+        }
+
         $requisitions = $this->relationLoaded('requisitions')
             ? $this->requisitions
             : Requisition::query()->where('tenant_id', $this->tenant_id)->where('project_id', $this->id)->get();

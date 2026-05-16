@@ -14,6 +14,11 @@ describe("shell route helpers", () => {
       { label: "Requisition workspace", href: "/requisitions/req-1" },
       { label: "Edit" },
     ]);
+    expect(getBreadcrumbs("/projects/project-1/edit")).toEqual([
+      { label: "Projects", href: "/projects" },
+      { label: "Project workspace", href: "/projects/project-1" },
+      { label: "Edit" },
+    ]);
     expect(getBreadcrumbs("/system")).toEqual([{ label: "System" }]);
   });
 

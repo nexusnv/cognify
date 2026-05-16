@@ -49,7 +49,13 @@ export function ProjectActionDialog({
     }
 
     setError(null);
-    await onSubmit({ reason: reason.trim() || undefined });
+    try {
+      await onSubmit({ reason: reason.trim() || undefined });
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to complete this action right now.");
+      return;
+    }
+
     setOpen(false);
     setReason("");
   }
@@ -162,5 +168,5 @@ function getFocusableElements(container: HTMLElement | null) {
     container.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     ),
-  ).filter((element) => !element.hasAttribute("disabled") && !element.getAttribute("aria-hidden"));
+  ).filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
 }

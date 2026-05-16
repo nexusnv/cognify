@@ -19,6 +19,11 @@ class ProcurementProjectPolicy
     public function view(User $user, ProcurementProject $project): bool
     {
         $currentTenant = app(CurrentTenant::class);
+
+        if (! $this->belongsToCurrentTenant($project, $currentTenant)) {
+            return false;
+        }
+
         $role = $currentTenant->roleFor($user);
 
         if ($role === null) {
@@ -43,6 +48,10 @@ class ProcurementProjectPolicy
 
     public function update(User $user, ProcurementProject $project): bool
     {
+        if (! $this->belongsToCurrentTenant($project, app(CurrentTenant::class))) {
+            return false;
+        }
+
         return $this->hasRole($user, ['buyer', 'admin']) || (int) $project->owner_id === (int) $user->id;
     }
 
@@ -53,7 +62,9 @@ class ProcurementProjectPolicy
 
     public function cancel(User $user, ProcurementProject $project): bool
     {
-        return ! $project->status->isTerminal() && $this->hasRole($user, ['buyer', 'admin']);
+        return ! $project->status->isTerminal()
+            && $this->hasRole($user, ['buyer', 'admin'])
+            && $this->update($user, $project);
     }
 
     public function linkRequisitions(User $user, ProcurementProject $project): bool
@@ -64,6 +75,13 @@ class ProcurementProjectPolicy
     public function unlinkRequisitions(User $user, ProcurementProject $project): bool
     {
         return ! $project->status->isTerminal() && $this->update($user, $project);
+    }
+
+    private function belongsToCurrentTenant(ProcurementProject $project, CurrentTenant $currentTenant): bool
+    {
+        $tenant = $currentTenant->get();
+
+        return $tenant !== null && (int) $project->tenant_id === (int) $tenant->id;
     }
 
     private function hasRole(User $user, array $roles): bool

@@ -134,30 +134,44 @@ export const projectHandlers = [
 
   http.post("/api/projects/:projectId/requisitions", async ({ params, request }) => {
     const payload = (await request.json()) as { requisitionId: string };
+    const projectId = String(params.projectId);
+    const project = projects.find((item) => item.id === projectId);
+    if (!project) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+
     const existing =
       requisitions.find((item) => item.id === payload.requisitionId) ??
       requisitionCatalog.find((item) => item.id === payload.requisitionId);
     if (!existing) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    if (existing.projectId !== null && existing.projectId !== "" && existing.projectId !== projectId) {
+      return HttpResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
-    const linked = { ...existing, projectId: String(params.projectId) };
+    const linked = { ...existing, projectId };
     requisitions = requisitions.some((item) => item.id === linked.id)
       ? requisitions.map((item) => (item.id === linked.id ? linked : item))
       : [linked, ...requisitions];
     requisitionCatalog = requisitionCatalog.map((item) => (item.id === linked.id ? linked : item));
-    refreshProjectSummary(String(params.projectId));
+    refreshProjectSummary(projectId);
     return HttpResponse.json({ data: linked }, { status: 201 });
   }),
 
   http.delete("/api/projects/:projectId/requisitions/:requisitionId", ({ params }) => {
+    const projectId = String(params.projectId);
+    const project = projects.find((item) => item.id === projectId);
+    if (!project) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+
     const existing =
       requisitions.find((item) => item.id === params.requisitionId) ??
       requisitionCatalog.find((item) => item.id === params.requisitionId);
     if (!existing) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    if (existing.projectId !== projectId) {
+      return HttpResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
     const unlinked = { ...existing, projectId: null };
     requisitions = requisitions.map((item) => (item.id === unlinked.id ? unlinked : item));
     requisitionCatalog = requisitionCatalog.map((item) => (item.id === unlinked.id ? unlinked : item));
-    refreshProjectSummary(String(params.projectId));
+    refreshProjectSummary(projectId);
     return HttpResponse.json({ data: unlinked });
   }),
 

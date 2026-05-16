@@ -118,6 +118,8 @@ class ProcurementProject extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user, ?string $role, int $tenantId): Builder
     {
+        $query->where('tenant_id', $tenantId);
+
         if ($role === null) {
             return $query->whereRaw('1 = 0');
         }

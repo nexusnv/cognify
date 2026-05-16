@@ -19,6 +19,7 @@ class ProjectActivityController extends Controller
         $this->authorize('view', $projectRecord);
 
         $events = AuditEvent::query()
+            ->with(['actor:id,name,email'])
             ->where('tenant_id', $tenant->id)
             ->where('subject_type', ProcurementProject::class)
             ->where('subject_id', $projectRecord->id)

@@ -33,6 +33,10 @@ class LinkRequisitionToProject
             throw new HttpException(409, 'Terminal requisitions cannot be linked to projects.');
         }
 
+        if ($requisition->project_id !== null && (int) $requisition->project_id !== (int) $project->id) {
+            throw new HttpException(409, 'Requisition is linked to another project; unlink first.');
+        }
+
         $requisition->forceFill(['project_id' => $project->id])->save();
 
         AuditEvent::query()->create([

@@ -95,7 +95,7 @@ export function ProjectRequisitionPipeline({
         ) : null}
       </div>
 
-      {permissions.canLinkRequisitions && availableRequisitions.length === 0 ? (
+      {permissions.canLinkRequisitions && requisitionsQuery.isSuccess && availableRequisitions.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">No unlinked requisitions are available.</p>
       ) : null}
 

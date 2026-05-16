@@ -24,6 +24,7 @@ const canUseAudit = (permissions: IdentityPermissions) => permissions.canAccessA
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
+const PROJECT_WORKSPACE_EDIT_PATH = /^\/projects\/([^/]+)\/edit$/;
 const PROJECT_WORKSPACE_PATH = /^\/projects\/[^/]+$/;
 
 export const shellNavGroups: ShellNavGroup[] = [
@@ -130,6 +131,15 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (REQUISITION_WORKSPACE_PATH.test(normalizedPathname)) {
     return [{ label: "Requisitions", href: "/requisitions" }, { label: "Requisition workspace" }];
+  }
+
+  const projectEditMatch = normalizedPathname.match(PROJECT_WORKSPACE_EDIT_PATH);
+  if (projectEditMatch) {
+    return [
+      { label: "Projects", href: "/projects" },
+      { label: "Project workspace", href: `/projects/${projectEditMatch[1]}` },
+      { label: "Edit" },
+    ];
   }
 
   if (PROJECT_WORKSPACE_PATH.test(normalizedPathname)) {

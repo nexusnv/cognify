@@ -35,6 +35,7 @@ export function useLinkProjectRequisition(projectId: string) {
       queryClient.invalidateQueries({ queryKey: projectKeys.requisitions(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: projectKeys.activity(projectId) });
     },
   });
 }
@@ -49,6 +50,7 @@ export function useUnlinkProjectRequisition(projectId: string) {
       queryClient.invalidateQueries({ queryKey: projectKeys.requisitions(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: projectKeys.activity(projectId) });
     },
   });
 }

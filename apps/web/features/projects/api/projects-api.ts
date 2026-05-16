@@ -36,7 +36,10 @@ function withActiveTenantHeader(): RequestInit | undefined {
 }
 
 export async function listProjects(query: ProjectQuery = {}) {
-  const response = await listProjectsEndpoint(query as ListProjectsParams, withActiveTenantHeader());
+  const params: ListProjectsParams = Object.fromEntries(
+    Object.entries(query).filter(([, value]) => value !== ""),
+  ) as ListProjectsParams;
+  const response = await listProjectsEndpoint(params, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return mapProjectListResponse(response.data);
 }
