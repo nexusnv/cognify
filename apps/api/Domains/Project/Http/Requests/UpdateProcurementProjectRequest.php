@@ -73,6 +73,10 @@ class UpdateProcurementProjectRequest extends FormRequest
                 return;
             }
 
+            if ($validator->errors()->has('targetStartDate') || $validator->errors()->has('targetCompletionDate')) {
+                return;
+            }
+
             if (Carbon::parse($completionDate)->lt(Carbon::parse($startDate))) {
                 $validator->errors()->add('targetCompletionDate', 'The target completion date must be on or after the target start date.');
             }

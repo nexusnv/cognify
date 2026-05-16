@@ -1739,6 +1739,9 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationFailed"
           }
@@ -4723,14 +4726,16 @@
           },
           "charter": {
             "type": "string",
-            "maxLength": 5000
+            "maxLength": 5000,
+            "nullable": true
           },
           "ownerId": {
             "type": "string"
           },
           "budgetAmount": {
             "type": "string",
-            "pattern": "^\\d+(\\.\\d{1,2})?$"
+            "pattern": "^\\d+(\\.\\d{1,2})?$",
+            "nullable": true
           },
           "currency": {
             "type": "string",
@@ -4739,11 +4744,13 @@
           },
           "department": {
             "type": "string",
-            "maxLength": 255
+            "maxLength": 255,
+            "nullable": true
           },
           "costCenter": {
             "type": "string",
-            "maxLength": 255
+            "maxLength": 255,
+            "nullable": true
           },
           "targetStartDate": {
             "type": "string",

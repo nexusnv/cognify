@@ -6,6 +6,7 @@ use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
+use RuntimeException;
 
 /**
  * @mixin Requisition
@@ -28,10 +29,17 @@ class ProjectRequisitionResource extends JsonResource
                 'name' => $requester->name,
                 'email' => $requester->email,
             ] : null,
-            'estimatedTotal' => $lineItems instanceof MissingValue
-                ? 0.0
-                : $lineItems->sum(fn ($lineItem) => (float) $lineItem->quantity * (float) $lineItem->estimated_unit_price),
+            'estimatedTotal' => $this->estimatedTotal($lineItems),
             'updatedAt' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    private function estimatedTotal(mixed $lineItems): float
+    {
+        if ($lineItems instanceof MissingValue) {
+            throw new RuntimeException('ProjectRequisitionResource requires the lineItems relation to compute estimatedTotal.');
+        }
+
+        return $lineItems->sum(fn ($lineItem) => (float) $lineItem->quantity * (float) $lineItem->estimated_unit_price);
     }
 }

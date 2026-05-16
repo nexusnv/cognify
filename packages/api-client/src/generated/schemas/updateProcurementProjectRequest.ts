@@ -11,20 +11,32 @@ export interface UpdateProcurementProjectRequest {
    * @maxLength 255
    */
   name?: string;
-  /** @maxLength 5000 */
-  charter?: string;
+  /**
+   * @maxLength 5000
+   * @nullable
+   */
+  charter?: string | null;
   ownerId?: string;
-  /** @pattern ^\d+(\.\d{1,2})?$ */
-  budgetAmount?: string;
+  /**
+   * @nullable
+   * @pattern ^\d+(\.\d{1,2})?$
+   */
+  budgetAmount?: string | null;
   /**
    * @minLength 3
    * @maxLength 3
    */
   currency?: string;
-  /** @maxLength 255 */
-  department?: string;
-  /** @maxLength 255 */
-  costCenter?: string;
+  /**
+   * @maxLength 255
+   * @nullable
+   */
+  department?: string | null;
+  /**
+   * @maxLength 255
+   * @nullable
+   */
+  costCenter?: string | null;
   /** @nullable */
   targetStartDate?: string | null;
   /** @nullable */

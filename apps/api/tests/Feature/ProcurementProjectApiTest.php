@@ -115,6 +115,50 @@ class ProcurementProjectApiTest extends TestCase
         ]);
     }
 
+    public function test_project_update_can_clear_nullable_fields(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $project = $this->createProject($tenant, $buyer, [
+            'charter' => 'Initial charter.',
+            'budget_amount' => '30000.00',
+            'department' => 'Operations',
+            'cost_center' => 'OPS-200',
+            'target_start_date' => '2026-06-15',
+            'target_completion_date' => '2026-10-15',
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/projects/{$project->id}", [
+                'charter' => null,
+                'budgetAmount' => null,
+                'department' => null,
+                'costCenter' => null,
+                'targetStartDate' => null,
+                'targetCompletionDate' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.charter', null)
+            ->assertJsonPath('data.budgetAmount', null)
+            ->assertJsonPath('data.department', null)
+            ->assertJsonPath('data.costCenter', null)
+            ->assertJsonPath('data.targetStartDate', null)
+            ->assertJsonPath('data.targetCompletionDate', null);
+    }
+
+    public function test_project_update_rejects_malformed_dates_without_after_hook_parse_failure(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $project = $this->createProject($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/projects/{$project->id}", [
+                'targetStartDate' => 'not-a-date',
+                'targetCompletionDate' => '2026-10-15',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
     public function test_project_list_is_tenant_scoped(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -200,6 +244,28 @@ class ProcurementProjectApiTest extends TestCase
             ->assertJsonPath('data.permissions.canLinkRequisitions', true);
     }
 
+    public function test_project_summary_only_counts_requisitions_visible_to_requester(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $project = $this->createProject($tenant, $otherRequester);
+
+        $this->createRequisition($tenant, $requester, [
+            'project_id' => $project->id,
+            'status' => RequisitionStatus::Draft,
+        ]);
+        $this->createRequisition($tenant, $otherRequester, [
+            'project_id' => $project->id,
+            'status' => RequisitionStatus::Draft,
+        ]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertOk()
+            ->assertJsonPath('data.summary.linkedRequisitionCount', 1)
+            ->assertJsonPath('data.summary.draftRequisitionCount', 1);
+    }
+
     public function test_completed_project_cannot_be_updated_by_buyer(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -223,6 +289,7 @@ class ProcurementProjectApiTest extends TestCase
         $this->actingAsTenant($tenant, $buyer)
             ->getJson("/api/projects/{$project->id}")
             ->assertOk()
+            ->assertJsonPath('data.permissions.canUpdate', false)
             ->assertJsonPath('data.permissions.canLinkRequisitions', false)
             ->assertJsonPath('data.permissions.canUnlinkRequisitions', false);
     }

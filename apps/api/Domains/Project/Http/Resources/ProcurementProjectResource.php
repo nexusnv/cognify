@@ -2,10 +2,13 @@
 
 namespace Domains\Project\Http\Resources;
 
+use App\Auth\TenantRole;
 use App\Models\User;
+use App\Tenancy\CurrentTenant;
 use Domains\Project\States\ProjectStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
@@ -36,9 +39,9 @@ class ProcurementProjectResource extends JsonResource
             'cancellationReason' => $this->cancellation_reason,
             'completedAt' => $this->completed_at?->toISOString(),
             'completedBy' => $this->userSummary($this->whenLoaded('completedBy')),
-            'summary' => $this->summary(),
+            'summary' => $this->summary($request),
             'permissions' => [
-                'canUpdate' => $request->user()?->can('update', $this->resource) ?? false,
+                'canUpdate' => ($request->user()?->can('update', $this->resource) ?? false) && ! $this->status->isTerminal(),
                 'canActivate' => $this->status === ProjectStatus::Draft && ($request->user()?->can('transition', $this->resource) ?? false),
                 'canHold' => $this->status === ProjectStatus::Active && ($request->user()?->can('transition', $this->resource) ?? false),
                 'canResume' => $this->status === ProjectStatus::OnHold && ($request->user()?->can('transition', $this->resource) ?? false),
@@ -53,7 +56,7 @@ class ProcurementProjectResource extends JsonResource
         ];
     }
 
-    private function summary(): array
+    private function summary(Request $request): array
     {
         if (! $this->relationLoaded('requisitions') && ! app()->isProduction()) {
             logger()->debug('ProcurementProjectResource rendered without eager-loaded requisitions.', [
@@ -65,6 +68,7 @@ class ProcurementProjectResource extends JsonResource
             ? $this->requisitions
             : Requisition::query()->where('tenant_id', $this->tenant_id)->where('project_id', $this->id)->get();
 
+        $requisitions = $this->filterVisibleRequisitions($requisitions, $request->user());
         $estimated = $requisitions->sum(fn (Requisition $r) => (float) ($r->estimated_total ?? 0));
 
         return [
@@ -77,6 +81,35 @@ class ProcurementProjectResource extends JsonResource
             'approvalPlaceholderCount' => 0,
             'awardPlaceholderCount' => 0,
         ];
+    }
+
+    /**
+     * @param EloquentCollection<int, Requisition> $requisitions
+     * @return EloquentCollection<int, Requisition>
+     */
+    private function filterVisibleRequisitions(EloquentCollection $requisitions, ?User $user): EloquentCollection
+    {
+        if (! $user instanceof User) {
+            return $requisitions->filter(fn (): bool => false);
+        }
+
+        $role = app(CurrentTenant::class)->roleFor($user);
+
+        if (in_array($role, [TenantRole::Admin->value, TenantRole::Buyer->value], true)) {
+            return $requisitions;
+        }
+
+        return $requisitions->filter(function (Requisition $requisition) use ($user, $role): bool {
+            if ($role === TenantRole::Requester->value) {
+                return (int) $requisition->requester_id === (int) $user->id;
+            }
+
+            if ($role === TenantRole::Approver->value) {
+                return $requisition->status === RequisitionStatus::Submitted;
+            }
+
+            return false;
+        });
     }
 
     /**

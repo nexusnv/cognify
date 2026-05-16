@@ -2194,6 +2194,11 @@ export type updateProjectResponse404 = {
   status: 404;
 };
 
+export type updateProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type updateProjectResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
@@ -2206,6 +2211,7 @@ export type updateProjectResponseError = (
   | updateProjectResponse401
   | updateProjectResponse403
   | updateProjectResponse404
+  | updateProjectResponse409
   | updateProjectResponse422
 ) & {
   headers: Headers;

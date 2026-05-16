@@ -22,14 +22,14 @@ class UpdateProcurementProject
 
         $project->fill([
             'name' => $data['name'] ?? $project->name,
-            'charter' => $data['charter'] ?? $project->charter,
+            'charter' => array_key_exists('charter', $data) ? $data['charter'] : $project->charter,
             'owner_id' => array_key_exists('ownerId', $data) ? (int) $data['ownerId'] : $project->owner_id,
-            'budget_amount' => $data['budgetAmount'] ?? $project->budget_amount,
+            'budget_amount' => array_key_exists('budgetAmount', $data) ? $data['budgetAmount'] : $project->budget_amount,
             'currency' => array_key_exists('currency', $data) ? strtoupper((string) $data['currency']) : $project->currency,
-            'department' => $data['department'] ?? $project->department,
-            'cost_center' => $data['costCenter'] ?? $project->cost_center,
-            'target_start_date' => $data['targetStartDate'] ?? $project->target_start_date,
-            'target_completion_date' => $data['targetCompletionDate'] ?? $project->target_completion_date,
+            'department' => array_key_exists('department', $data) ? $data['department'] : $project->department,
+            'cost_center' => array_key_exists('costCenter', $data) ? $data['costCenter'] : $project->cost_center,
+            'target_start_date' => array_key_exists('targetStartDate', $data) ? $data['targetStartDate'] : $project->target_start_date,
+            'target_completion_date' => array_key_exists('targetCompletionDate', $data) ? $data['targetCompletionDate'] : $project->target_completion_date,
         ]);
 
         DB::transaction(function () use ($tenant, $actor, $project): void {
