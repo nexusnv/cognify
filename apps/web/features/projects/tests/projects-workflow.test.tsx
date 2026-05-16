@@ -1,15 +1,26 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RightPanelProvider } from "@/components/right-panel/right-panel-provider";
 import { RightPanelRoot } from "@/components/right-panel/right-panel-root";
 import { server } from "@/tests/msw/server";
-import { projectResponseFixture } from "../mocks/project-fixtures";
+import { multiTenantIdentity } from "@/features/identity/mocks/identity-fixtures";
+import { resetIdentityMockState } from "@/features/identity/mocks/identity-handlers";
+import { resetProjectMockState } from "../mocks/project-handlers";
 import { ProjectCreatePage } from "../workflows/project-create-page";
 import { ProjectDetailPage } from "../workflows/project-detail-page";
+import { ProjectEditPage } from "../workflows/project-edit-page";
 import { ProjectListPage } from "../workflows/project-list-page";
+
+const buyerIdentity = structuredClone(multiTenantIdentity);
+buyerIdentity.activeTenant = { id: "2", name: "Northwind Sourcing" };
+buyerIdentity.activeRole = "buyer";
+
+function mockCurrentUser(identity = buyerIdentity) {
+  server.use(http.get("/api/me", () => HttpResponse.json({ data: identity })));
+}
 
 const pushMock = vi.fn();
 vi.mock("next/navigation", async (importOriginal) => {
@@ -40,33 +51,27 @@ function TestAppProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
+beforeEach(() => {
+  resetIdentityMockState();
+  resetProjectMockState();
+  window.localStorage.clear();
+  pushMock.mockReset();
+});
+
 describe("projects workflow", () => {
-  it("list displays Office refresh", async () => {
+  it("disables create project for requester roles", async () => {
     render(<ProjectListPage />, { wrapper: TestAppProviders });
 
-    expect(await screen.findByRole("heading", { name: "Projects" })).toBeInTheDocument();
-    expect(await screen.findAllByText("Office refresh")).not.toHaveLength(0);
+    expect(await screen.findByRole("button", { name: "New project" })).toBeDisabled();
   });
 
-  it("shows empty state when no projects are returned", async () => {
-    server.use(
-      http.get("/api/projects", () =>
-        HttpResponse.json({
-          data: [],
-          meta: { currentPage: 1, perPage: 15, total: 0, lastPage: 1 },
-        }),
-      ),
-    );
-
-    render(<ProjectListPage />, { wrapper: TestAppProviders });
-
-    expect(await screen.findByText("No projects yet")).toBeInTheDocument();
-  });
-
-  it("create form validates required name", async () => {
+  it("lets buyer roles reach the create form and validates required fields", async () => {
+    mockCurrentUser();
     const user = userEvent.setup();
 
     render(<ProjectCreatePage />, { wrapper: TestAppProviders });
+
+    expect(await screen.findByRole("heading", { name: "Create project" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Create project" }));
 
@@ -76,45 +81,95 @@ describe("projects workflow", () => {
     expect(screen.getAllByText("Project name is required").length).toBeGreaterThan(0);
   });
 
-  it("successful create calls generated-shaped handler", async () => {
+  it("surfaces backend validation and forbidden errors in the project form", async () => {
+    mockCurrentUser();
     const user = userEvent.setup();
-    let requestPayload: unknown = null;
 
     server.use(
-      http.post("/api/projects", async ({ request }) => {
-        requestPayload = await request.json();
-        return HttpResponse.json(projectResponseFixture, { status: 201 });
-      }),
+      http.patch("/api/projects/:projectId", () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "validation_failed",
+              message: "Validation failed",
+              details: {
+                fields: {
+                  name: ["The project name is already in use."],
+                },
+              },
+            },
+          },
+          { status: 422 },
+        ),
+      ),
     );
 
-    render(<ProjectCreatePage />, { wrapper: TestAppProviders });
+    render(<ProjectEditPage projectId="501" />, { wrapper: TestAppProviders });
 
-    await user.type(screen.getByLabelText("Project name"), "HQ relocation");
-    await user.selectOptions(screen.getByLabelText("Owner"), "1");
-    await user.type(screen.getByLabelText("Budget"), "90000");
-    await user.type(screen.getByLabelText("Currency"), "MYR");
+    expect(await screen.findByDisplayValue("Office refresh")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Create project" }));
+    await user.clear(screen.getByLabelText("Project name"));
+    await user.type(screen.getByLabelText("Project name"), "Office refresh");
+    await user.click(screen.getByRole("button", { name: "Save project" }));
 
-    expect(requestPayload).toMatchObject({
-      name: "HQ relocation",
-      ownerId: "1",
-      budgetAmount: "90000",
-      currency: "MYR",
+    expect(screen.getByRole("alert")).toHaveTextContent("Resolve the highlighted project fields");
+    expect(screen.getByRole("alert")).toHaveTextContent("The project name is already in use.");
+    expect(screen.getByLabelText("Project name")).toHaveAttribute("aria-invalid", "true");
+
+    server.use(
+      http.patch("/api/projects/:projectId", () =>
+        HttpResponse.json({ message: "Forbidden." }, { status: 403 }),
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save project" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "You do not have permission to save this project.",
+      );
     });
   });
 
-  it("renders project workspace summary and placeholders", async () => {
+  it("loads the edit workflow", async () => {
+    mockCurrentUser();
+
+    render(<ProjectEditPage projectId="501" />, { wrapper: TestAppProviders });
+
+    expect(await screen.findByRole("heading", { name: "Edit project" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Office refresh")).toBeInTheDocument();
+  });
+
+  it("links and unlinks requisitions through the project pipeline", async () => {
+    mockCurrentUser();
+    const user = userEvent.setup();
+
     render(<ProjectDetailPage projectId="501" />, { wrapper: TestAppProviders });
 
     expect(await screen.findByRole("heading", { name: "Office refresh" })).toBeInTheDocument();
-    expect(screen.getByText("PRJ-2026-000501")).toBeInTheDocument();
-    expect(screen.getByText("Budget summary")).toBeInTheDocument();
-    expect(screen.getByText("Requisition pipeline")).toBeInTheDocument();
-    expect(screen.getByText("Approval routing is not active for projects yet.")).toBeInTheDocument();
-    expect(screen.getByText("Project risks are reserved for a later governance slice.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute("href", "/projects/501/edit");
+
     expect(
-      screen.getByText("Award records will appear here after award workflows are implemented."),
+      await screen.findByRole("option", {
+        name: "REQ-2026-000010 - Returned laptop request",
+      }),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "REQ-2026-000011 - Withdrawn printer refresh" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "REQ-2026-000012 - Cancelled office furniture" })).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Link requisition"), "req-changes");
+    await user.click(screen.getByRole("button", { name: "Link requisition" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Unlink" })).toHaveLength(3);
+    });
+
+    const unlinkButtons = screen.getAllByRole("button", { name: "Unlink" });
+    await user.click(unlinkButtons[unlinkButtons.length - 1]!);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Unlink" })).toHaveLength(2);
+      expect(screen.queryByText("Returned laptop request")).not.toBeInTheDocument();
+    });
   });
 });

@@ -12,12 +12,22 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LinkRequisitionToProject
 {
+    use AuthorizesRequisitionProjectLinking;
+
     public function handle(Tenant $tenant, User $actor, ProcurementProject $project, int $requisitionId): Requisition
     {
+        if ($project->status->isTerminal()) {
+            throw new HttpException(409, 'Terminal projects cannot be linked to requisitions.');
+        }
+
         $requisition = Requisition::query()
             ->where('tenant_id', $tenant->id)
             ->whereKey($requisitionId)
             ->firstOrFail();
+
+        if ($this->canLinkOrUnlinkRequisition($tenant, $actor, $requisition) === false) {
+            throw new HttpException(403, 'You are not allowed to link this requisition to the project.');
+        }
 
         if (in_array($requisition->status, [RequisitionStatus::Withdrawn, RequisitionStatus::Cancelled], true)) {
             throw new HttpException(409, 'Terminal requisitions cannot be linked to projects.');

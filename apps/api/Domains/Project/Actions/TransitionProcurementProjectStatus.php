@@ -13,6 +13,8 @@ class TransitionProcurementProjectStatus
 {
     public function handle(Tenant $tenant, User $actor, ProcurementProject $project, ProjectStatus $next, ?string $reason = null): ProcurementProject
     {
+        $wasOnHold = $project->status === ProjectStatus::OnHold;
+
         if (! $project->status->canTransitionTo($next)) {
             throw new HttpException(409, 'Invalid project status transition.');
         }
@@ -37,7 +39,7 @@ class TransitionProcurementProjectStatus
         $project->save();
 
         $event = match ($next) {
-            ProjectStatus::Active => 'project.activated',
+            ProjectStatus::Active => $wasOnHold ? 'project.reactivated' : 'project.activated',
             ProjectStatus::OnHold => 'project.on_hold',
             ProjectStatus::Completed => 'project.completed',
             ProjectStatus::Cancelled => 'project.cancelled',

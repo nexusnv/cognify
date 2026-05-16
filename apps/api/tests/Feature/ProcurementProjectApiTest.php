@@ -127,6 +127,62 @@ class ProcurementProjectApiTest extends TestCase
             ->assertJsonMissing(['name' => 'Hidden project']);
     }
 
+    public function test_requester_index_only_returns_owned_or_visible_projects(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        [$otherTenant, $otherBuyer] = $this->tenantUser('buyer');
+        [, $anotherBuyer] = $this->tenantUser('buyer', $tenant);
+
+        $ownedProject = $this->createProject($tenant, $requester, ['name' => 'Requester owned project']);
+        $visibleProject = $this->createProject($tenant, $buyer, ['name' => 'Visible linked project']);
+        $hiddenProject = $this->createProject($tenant, $anotherBuyer, ['name' => 'Hidden project']);
+        $this->createRequisition($tenant, $requester, [
+            'project_id' => $visibleProject->id,
+            'status' => RequisitionStatus::Draft,
+        ]);
+        $this->createProject($otherTenant, $otherBuyer, ['name' => 'Cross tenant project']);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/projects');
+
+        $response->assertOk();
+
+        $names = array_column($response->json('data'), 'name');
+
+        $this->assertContains('Requester owned project', $names);
+        $this->assertContains('Visible linked project', $names);
+        $this->assertNotContains('Hidden project', $names);
+
+        $this->assertDatabaseHas('procurement_projects', [
+            'id' => $ownedProject->id,
+            'tenant_id' => $tenant->id,
+        ]);
+        $this->assertDatabaseHas('procurement_projects', [
+            'id' => $visibleProject->id,
+            'tenant_id' => $tenant->id,
+        ]);
+        $this->assertDatabaseHas('procurement_projects', [
+            'id' => $hiddenProject->id,
+            'tenant_id' => $tenant->id,
+        ]);
+    }
+
+    public function test_requester_cannot_view_project_without_visible_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $project = $this->createProject($tenant, $otherRequester, ['name' => 'Hidden workspace']);
+        $this->createRequisition($tenant, $otherRequester, [
+            'project_id' => $project->id,
+            'status' => RequisitionStatus::Draft,
+        ]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertForbidden();
+    }
+
     public function test_project_detail_includes_summary_permissions_and_owner(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -157,6 +213,18 @@ class ProcurementProjectApiTest extends TestCase
             ->assertStatus(409);
     }
 
+    public function test_terminal_project_permissions_expose_linking_as_disabled(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $project = $this->createProject($tenant, $buyer, ['status' => 'cancelled']);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/projects/{$project->id}")
+            ->assertOk()
+            ->assertJsonPath('data.permissions.canLinkRequisitions', false)
+            ->assertJsonPath('data.permissions.canUnlinkRequisitions', false);
+    }
+
     public function test_project_activity_endpoint_returns_project_events(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -181,8 +249,9 @@ class ProcurementProjectApiTest extends TestCase
     public function test_buyer_can_link_and_unlink_visible_requisition_to_project(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $requester] = $this->tenantUser('requester', $tenant);
         $project = $this->createProject($tenant, $buyer, ['status' => 'active']);
-        $requisition = $this->createRequisition($tenant, $buyer, ['status' => RequisitionStatus::Submitted]);
+        $requisition = $this->createRequisition($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/projects/{$project->id}/requisitions", [
@@ -206,6 +275,111 @@ class ProcurementProjectApiTest extends TestCase
             'id' => $requisition->id,
             'project_id' => null,
         ]);
+    }
+
+    public function test_requester_can_link_and_unlink_own_draft_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $project = $this->createProject($tenant, $requester, ['status' => 'active']);
+        $requisition = $this->createRequisition($tenant, $requester, ['status' => RequisitionStatus::Draft]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/projects/{$project->id}/requisitions", [
+                'requisitionId' => (string) $requisition->id,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.projectId', (string) $project->id);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->deleteJson("/api/projects/{$project->id}/requisitions/{$requisition->id}")
+            ->assertOk()
+            ->assertJsonPath('data.projectId', null);
+    }
+
+    public function test_requester_cannot_link_hidden_same_tenant_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $project = $this->createProject($tenant, $requester, ['status' => 'active']);
+        $hiddenRequisition = $this->createRequisition($tenant, $otherRequester, ['status' => RequisitionStatus::Draft]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/projects/{$project->id}/requisitions", [
+                'requisitionId' => (string) $hiddenRequisition->id,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_requester_cannot_link_or_unlink_own_submitted_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $project = $this->createProject($tenant, $requester, ['status' => 'active']);
+        $requisition = $this->createRequisition($tenant, $requester, ['status' => RequisitionStatus::Submitted]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/projects/{$project->id}/requisitions", [
+                'requisitionId' => (string) $requisition->id,
+            ])
+            ->assertForbidden();
+
+        $requisition->forceFill(['project_id' => $project->id])->save();
+
+        $this->actingAsTenant($tenant, $requester)
+            ->deleteJson("/api/projects/{$project->id}/requisitions/{$requisition->id}")
+            ->assertForbidden();
+    }
+
+    public function test_resuming_on_hold_project_records_reactivated_audit_event(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $project = $this->createProject($tenant, $buyer, ['status' => 'active']);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/projects/{$project->id}/hold")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/projects/{$project->id}/resume")
+            ->assertOk();
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $buyer->id,
+            'event_type' => 'project.reactivated',
+        ]);
+    }
+
+    public function test_project_completion_date_validation_uses_stored_start_date(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $project = $this->createProject($tenant, $buyer, [
+            'status' => 'draft',
+            'target_start_date' => '2026-06-01',
+            'target_completion_date' => '2026-09-30',
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/projects/{$project->id}", [
+                'targetCompletionDate' => '2026-05-31',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
+    public function test_project_list_can_sort_by_name_ascending(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $this->createProject($tenant, $buyer, ['name' => 'Zulu project']);
+        $this->createProject($tenant, $buyer, ['name' => 'Alpha project']);
+
+        $response = $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/projects?sort=name_asc');
+
+        $response->assertOk();
+
+        $names = array_column($response->json('data'), 'name');
+
+        $this->assertSame(['Alpha project', 'Zulu project'], array_slice($names, 0, 2));
     }
 
     public function test_project_cannot_link_cross_tenant_requisition(): void
@@ -254,6 +428,38 @@ class ProcurementProjectApiTest extends TestCase
             ->assertJsonPath('data.0.type', 'project')
             ->assertJsonPath('data.0.id', (string) $project->id)
             ->assertJsonPath('data.0.href', "/projects/{$project->id}");
+    }
+
+    public function test_project_search_respects_project_visibility(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $visibleProject = $this->createProject($tenant, $requester, [
+            'name' => 'Requester visible warehouse launch',
+            'status' => 'active',
+        ]);
+        $hiddenProject = $this->createProject($tenant, $otherRequester, [
+            'name' => 'Requester hidden warehouse launch',
+            'status' => 'active',
+        ]);
+        $this->createRequisition($tenant, $requester, [
+            'project_id' => $visibleProject->id,
+            'status' => RequisitionStatus::Draft,
+        ]);
+        $this->createRequisition($tenant, $otherRequester, [
+            'project_id' => $hiddenProject->id,
+            'status' => RequisitionStatus::Draft,
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=warehouse&types[]=project');
+
+        $response->assertOk();
+
+        $ids = array_column($response->json('data'), 'id');
+
+        $this->assertContains((string) $visibleProject->id, $ids);
+        $this->assertNotContains((string) $hiddenProject->id, $ids);
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self

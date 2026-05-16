@@ -75,6 +75,7 @@ export * from "./listRequisitionActivity200";
 export * from "./listRequisitionLineItemSuggestionsParams";
 export * from "./listRequisitionsParams";
 export * from "./listRequisitionsQueuePreset";
+export * from "./listRequisitionsSort";
 export * from "./loginRequest";
 export * from "./markAllNotificationsReadResponse";
 export * from "./markAllNotificationsReadResponseData";

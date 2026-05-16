@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { ProjectForm } from "../forms/project-form";
+import { canManageProjects } from "../utils/project-access";
 
 export function ProjectCreatePage() {
+  const currentUserQuery = useCurrentUser();
+  const canCreateProject = canManageProjects(currentUserQuery.data?.data.activeRole);
+
+  if (currentUserQuery.isLoading) {
+    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading access context</div>;
+  }
+
   return (
     <section className="space-y-5">
       <Link href="/projects" className="inline-flex min-h-11 items-center rounded-md border px-3 text-sm">
@@ -15,9 +24,15 @@ export function ProjectCreatePage() {
           Capture ownership, charter, and initial budget context for the workspace.
         </p>
       </div>
-      <div className="rounded-md border p-4">
-        <ProjectForm mode="create" />
-      </div>
+      {!canCreateProject ? (
+        <div className="rounded-md border p-4 text-sm text-muted-foreground">
+          Your role does not allow project creation.
+        </div>
+      ) : (
+        <div className="rounded-md border p-4">
+          <ProjectForm mode="create" />
+        </div>
+      )}
     </section>
   );
 }

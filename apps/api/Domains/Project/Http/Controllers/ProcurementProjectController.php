@@ -23,11 +23,13 @@ class ProcurementProjectController extends Controller
     {
         $this->authorize('viewAny', ProcurementProject::class);
         $tenant = $this->tenantOrAbort($currentTenant);
+        $role = $currentTenant->roleFor($request->user());
 
         $query = ProcurementProject::query()
             ->with(['owner', 'cancelledBy', 'completedBy', 'requisitions'])
-            ->where('tenant_id', $tenant->id)
-            ->latest('updated_at');
+            ->where('tenant_id', $tenant->id);
+
+        $this->applyVisibilityScope($query, $request->user(), $role, $tenant->id);
 
         $query->when($request->query('search'), function ($query, string $search): void {
             $query->where(function ($query) use ($search): void {
@@ -43,6 +45,18 @@ class ProcurementProjectController extends Controller
         $query->when($request->query('costCenter'), fn ($query, string $costCenter) => $query->where('cost_center', $costCenter));
         $query->when($request->query('updatedFrom'), fn ($query, string $date) => $query->whereDate('updated_at', '>=', $date));
         $query->when($request->query('updatedTo'), fn ($query, string $date) => $query->whereDate('updated_at', '<=', $date));
+
+        $sort = $request->query('sort', 'updated_desc');
+
+        if ($sort === 'updated_asc') {
+            $query->orderBy('updated_at')->orderBy('id');
+        } elseif ($sort === 'name_asc') {
+            $query->orderBy('name')->orderBy('id');
+        } elseif ($sort === 'name_desc') {
+            $query->orderByDesc('name')->orderByDesc('id');
+        } else {
+            $query->orderByDesc('updated_at')->orderByDesc('id');
+        }
 
         $perPage = max(1, min($request->integer('perPage', 15), 100));
         $paginator = $query->paginate($perPage);
@@ -117,6 +131,11 @@ class ProcurementProjectController extends Controller
     private function findTenantProject(CurrentTenant $currentTenant, int $id): ProcurementProject
     {
         return ProcurementProject::query()->where('tenant_id', $this->tenantOrAbort($currentTenant)->id)->findOrFail($id);
+    }
+
+    private function applyVisibilityScope($query, $user, ?string $role, int $tenantId): void
+    {
+        $query->visibleTo($user, $role, $tenantId);
     }
 
     private function tenantOrAbort(CurrentTenant $currentTenant): Tenant

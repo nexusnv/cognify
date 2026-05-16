@@ -5,6 +5,7 @@ namespace Domains\Project\Http\Requests;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\Project\Models\ProcurementProject;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -34,19 +35,52 @@ class UpdateProcurementProjectRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             $tenant = app(CurrentTenant::class)->get();
+            $projectId = $this->route('project');
             $ownerId = $this->input('ownerId');
 
-            if ($ownerId === null || $tenant === null) {
+            if ($tenant === null || $projectId === null) {
+                if ($ownerId === null || $tenant === null) {
+                    return;
+                }
+            }
+
+            if ($ownerId !== null && $tenant !== null) {
+                $belongsToTenant = User::query()
+                    ->whereKey($ownerId)
+                    ->whereHas('tenants', fn ($query) => $query->whereKey($tenant->id))
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    $validator->errors()->add('ownerId', 'The selected owner must belong to the current tenant.');
+                }
+            }
+
+            if ($tenant === null || $projectId === null) {
                 return;
             }
 
-            $belongsToTenant = User::query()
-                ->whereKey($ownerId)
-                ->whereHas('tenants', fn ($query) => $query->whereKey($tenant->id))
-                ->exists();
+            $project = ProcurementProject::query()
+                ->where('tenant_id', $tenant->id)
+                ->find($projectId);
 
-            if (! $belongsToTenant) {
-                $validator->errors()->add('ownerId', 'The selected owner must belong to the current tenant.');
+            if (! $project instanceof ProcurementProject) {
+                return;
+            }
+
+            $input = $this->all();
+            $startDate = array_key_exists('targetStartDate', $input)
+                ? ($input['targetStartDate'] ?: null)
+                : $project->target_start_date?->toDateString();
+            $completionDate = array_key_exists('targetCompletionDate', $input)
+                ? ($input['targetCompletionDate'] ?: null)
+                : $project->target_completion_date?->toDateString();
+
+            if ($startDate === null || $completionDate === null) {
+                return;
+            }
+
+            if (Carbon::parse($completionDate)->lt(Carbon::parse($startDate))) {
+                $validator->errors()->add('targetCompletionDate', 'The target completion date must be on or after the target start date.');
             }
         });
     }

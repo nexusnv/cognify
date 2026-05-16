@@ -1,19 +1,24 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { NativeSelect } from "@cognify/ui";
+import { Button, NativeSelect } from "@cognify/ui";
 import { useDataTableState } from "@/components/data-table/use-data-table-state";
+import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useProjects } from "../hooks/use-projects";
 import { ProjectsTable } from "../tables/projects-table";
+import { canManageProjects } from "../utils/project-access";
 import type { ProjectQuery, ProjectStatus } from "../types/project-view-model";
 
 export function ProjectListPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ProjectStatus | "">("");
   const [department, setDepartment] = useState("");
   const tableState = useDataTableState({ initialSort: { columnId: "name", direction: "asc" } });
+  const currentUserQuery = useCurrentUser();
+  const canCreateProject = canManageProjects(currentUserQuery.data?.data.activeRole);
 
   const query = useMemo<ProjectQuery>(
     () => ({ search, status, department }),
@@ -51,13 +56,19 @@ export function ProjectListPage() {
             Track procurement workspaces, ownership, and linked requisition flow.
           </p>
         </div>
-        <Link
-          href="/projects/new"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-foreground px-4 text-sm font-medium text-background"
+        <Button
+          type="button"
+          disabled={!canCreateProject}
+          onClick={() => {
+            if (canCreateProject) {
+              router.push("/projects/new");
+            }
+          }}
+          className="gap-2"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           New project
-        </Link>
+        </Button>
       </div>
 
       <div className="grid gap-3 rounded-md border p-3 md:grid-cols-3">

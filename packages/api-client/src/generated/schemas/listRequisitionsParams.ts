@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { RequisitionStatus } from "./requisitionStatus";
+import type { ListRequisitionsSort } from "./listRequisitionsSort";
 import type { ListRequisitionsQueuePreset } from "./listRequisitionsQueuePreset";
 
 export type ListRequisitionsParams = {
@@ -23,6 +24,7 @@ export type ListRequisitionsParams = {
   amountMax?: number;
   updatedFrom?: string;
   updatedTo?: string;
+  sort?: ListRequisitionsSort;
   queuePreset?: ListRequisitionsQueuePreset;
   neededByFrom?: string;
   neededByTo?: string;

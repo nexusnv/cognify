@@ -12,13 +12,23 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class UnlinkRequisitionFromProject
 {
+    use AuthorizesRequisitionProjectLinking;
+
     public function handle(Tenant $tenant, User $actor, ProcurementProject $project, int $requisitionId): Requisition
     {
+        if ($project->status->isTerminal()) {
+            throw new HttpException(409, 'Terminal projects cannot be unlinked from requisitions.');
+        }
+
         $requisition = Requisition::query()
             ->where('tenant_id', $tenant->id)
             ->where('project_id', $project->id)
             ->whereKey($requisitionId)
             ->firstOrFail();
+
+        if ($this->canLinkOrUnlinkRequisition($tenant, $actor, $requisition) === false) {
+            throw new HttpException(403, 'You are not allowed to unlink this requisition from the project.');
+        }
 
         if (in_array($requisition->status, [RequisitionStatus::Withdrawn, RequisitionStatus::Cancelled], true)) {
             throw new HttpException(409, 'Terminal requisitions cannot be unlinked from projects.');

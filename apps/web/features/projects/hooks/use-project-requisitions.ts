@@ -31,6 +31,7 @@ export function useLinkProjectRequisition(projectId: string) {
   return useMutation({
     mutationFn: (requisitionId: string) => addProjectRequisitionLink(projectId, requisitionId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["requisitions"] });
       queryClient.invalidateQueries({ queryKey: projectKeys.requisitions(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
@@ -44,6 +45,7 @@ export function useUnlinkProjectRequisition(projectId: string) {
   return useMutation({
     mutationFn: (requisitionId: string) => removeProjectRequisitionLink(projectId, requisitionId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["requisitions"] });
       queryClient.invalidateQueries({ queryKey: projectKeys.requisitions(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });

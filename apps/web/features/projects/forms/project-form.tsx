@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
 import { Button, NativeSelect, Textarea } from "@cognify/ui";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { FormField } from "@/components/forms/form-field";
@@ -34,6 +35,7 @@ export function ProjectForm({
   const updateMutation = useUpdateProject(project?.id ?? "");
   const currentUserQuery = useCurrentUser();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const [values, setValues] = useState<ProjectFormValues>({
     name: project?.name ?? "",
     charter: project?.charter ?? "",
@@ -46,21 +48,54 @@ export function ProjectForm({
     targetCompletionDate: project?.targetCompletionDate ?? "",
   });
 
+  useEffect(() => {
+    if (mode !== "edit" || !project) return;
+
+    setValues({
+      name: project.name,
+      charter: project.charter ?? "",
+      ownerId: project.owner.id,
+      budgetAmount: project.budgetAmount?.toFixed(2) ?? "",
+      currency: project.currency ?? "MYR",
+      department: project.department ?? "",
+      costCenter: project.costCenter ?? "",
+      targetStartDate: project.targetStartDate ?? "",
+      targetCompletionDate: project.targetCompletionDate ?? "",
+    });
+    setErrors({});
+    setFormError(null);
+  }, [mode, project]);
+
   const ownerOptions = useMemo(() => {
     const current = currentUserQuery.data?.data.user;
-    if (!current) return [];
+    const options = current
+      ? [
+          {
+            id: current.id,
+            name: current.name,
+            email: current.email,
+          },
+        ]
+      : [];
 
-    return [
-      {
-        id: current.id,
-        name: current.name,
-        email: current.email,
-      },
-    ];
-  }, [currentUserQuery.data]);
+    if (mode === "edit" && project) {
+      const existingOwner = {
+        id: project.owner.id,
+        name: project.owner.name,
+        email: project.owner.email,
+      };
+
+      if (!options.some((owner) => owner.id === existingOwner.id)) {
+        options.push(existingOwner);
+      }
+    }
+
+    return options;
+  }, [currentUserQuery.data, mode, project]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setFormError(null);
 
     const parsed = projectFormSchema.safeParse(values);
     if (!parsed.success) {
@@ -70,15 +105,54 @@ export function ProjectForm({
 
     setErrors({});
 
-    if (mode === "create") {
-      const created = await createMutation.mutateAsync(parsed.data);
-      router.push(`/projects/${created.id}`);
-      return;
-    }
+    try {
+      if (mode === "create") {
+        const created = await createMutation.mutateAsync(parsed.data);
+        router.push(`/projects/${created.id}`);
+        return;
+      }
 
-    if (!project) return;
-    await updateMutation.mutateAsync(parsed.data);
-    router.push(`/projects/${project.id}`);
+      if (!project) return;
+      await updateMutation.mutateAsync(parsed.data);
+      router.push(`/projects/${project.id}`);
+    } catch (error) {
+      const validationErrors = getApiValidationErrors(error);
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      const code = getApiErrorCode(error);
+      const status = typeof error === "object" && error !== null && "status" in error
+        ? Number((error as { status?: unknown }).status)
+        : null;
+      if (code === "forbidden" || status === 403) {
+        setFormError("You do not have permission to save this project.");
+        return;
+      }
+
+      if (code === "unauthenticated" || status === 401) {
+        setFormError("Your session expired. Sign in again to save this project.");
+        return;
+      }
+
+      if (code === "not_found" || status === 404) {
+        setFormError("This project could not be found.");
+        return;
+      }
+
+      if (code === "conflict" || code === "draft_conflict" || status === 409) {
+        setFormError("This project changed while you were editing it. Reload and try again.");
+        return;
+      }
+
+      if (code === "server_error" || code === "too_many_requests" || status === 429 || (status !== null && status >= 500)) {
+        setFormError("Unable to save project right now. Try again.");
+        return;
+      }
+
+      setFormError(getApiErrorMessage(error));
+    }
   }
 
   const summaryErrors = Object.entries(errors).flatMap(([key, messages]) =>
@@ -91,6 +165,14 @@ export function ProjectForm({
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+      {formError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
+        >
+          {formError}
+        </div>
+      ) : null}
       <FormErrorSummary
         title="Resolve the highlighted project fields before continuing."
         errors={summaryErrors}

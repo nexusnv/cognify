@@ -126,6 +126,20 @@
             }
           },
           {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "updated_desc",
+                "updated_asc",
+                "name_asc",
+                "name_desc"
+              ],
+              "default": "updated_desc"
+            }
+          },
+          {
             "name": "queuePreset",
             "in": "query",
             "schema": {

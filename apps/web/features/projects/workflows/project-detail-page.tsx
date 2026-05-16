@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { rememberRecentRecord } from "@/features/search/hooks/use-recent-records";
@@ -49,6 +50,14 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
 
   const actions = (
     <>
+      {project.permissions.canUpdate ? (
+        <Link
+          href={`/projects/${project.id}/edit`}
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+        >
+          Edit
+        </Link>
+      ) : null}
       {project.permissions.canActivate ? (
         <ProjectActionDialog
           action="activate"
@@ -186,7 +195,11 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
         summary={project.summary}
       />
 
-      <ProjectRequisitionPipeline requisitions={requisitionsQuery.data?.data ?? []} />
+      <ProjectRequisitionPipeline
+        projectId={project.id}
+        requisitions={requisitionsQuery.data?.data ?? []}
+        permissions={project.permissions}
+      />
 
       <section id="activity" className="rounded-md border p-4">
         <h2 className="text-base font-semibold">Activity</h2>
