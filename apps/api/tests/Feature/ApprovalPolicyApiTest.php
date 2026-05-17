@@ -147,6 +147,153 @@ class ApprovalPolicyApiTest extends TestCase
             ->assertJsonPath('error.code', 'validation_failed');
     }
 
+    public function test_admin_can_create_policy_version_draft(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->policyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policies/{$policy['id']}/versions", $this->versionPayload('Finance review'))
+            ->assertCreated()
+            ->assertJsonPath('data.versionNumber', 2)
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.routeTemplate.stages.0.name', 'Finance review');
+    }
+
+    public function test_non_admin_cannot_manage_policy_versions(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->policyPayload())
+            ->assertCreated()
+            ->json('data');
+        $versionId = $policy['versions'][0]['id'];
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/approval-policies/{$policy['id']}/versions", $this->versionPayload())
+            ->assertForbidden();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertForbidden();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/approval-policy-versions/{$versionId}/retire")
+            ->assertForbidden();
+    }
+
+    public function test_cross_tenant_user_cannot_publish_or_retire_policy_versions(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        [$otherTenant, $otherAdmin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->policyPayload())
+            ->assertCreated()
+            ->json('data');
+        $versionId = $policy['versions'][0]['id'];
+
+        $this->actingAsTenant($otherTenant, $otherAdmin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertNotFound();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertOk();
+
+        $this->actingAsTenant($otherTenant, $otherAdmin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/retire")
+            ->assertNotFound();
+    }
+
+    public function test_publishing_already_published_or_retired_version_returns_conflict(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->policyPayload())
+            ->assertCreated()
+            ->json('data');
+        $versionId = $policy['versions'][0]['id'];
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+
+        $nextVersion = $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policies/{$policy['id']}/versions", $this->versionPayload('Finance review'))
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$nextVersion['id']}/publish")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+    }
+
+    public function test_retiring_last_published_version_returns_policy_to_draft(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->policyPayload())
+            ->assertCreated()
+            ->json('data');
+        $versionId = $policy['versions'][0]['id'];
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/retire")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'retired');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->getJson("/api/approval-policies/{$policy['id']}")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.versions.0.status', 'retired');
+    }
+
+    public function test_retiring_already_retired_version_returns_conflict(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->policyPayload())
+            ->assertCreated()
+            ->json('data');
+        $versionId = $policy['versions'][0]['id'];
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/publish")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/retire")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policy-versions/{$versionId}/retire")
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+    }
+
     public function test_cross_tenant_policy_is_not_visible(): void
     {
         [$tenant, $admin] = $this->tenantUser('admin');
@@ -198,6 +345,40 @@ class ApprovalPolicyApiTest extends TestCase
                     'stage' => 'Manager review',
                     'dueInHours' => 48,
                     'escalateAfterHours' => 72,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function versionPayload(string $stageName = 'Manager review'): array
+    {
+        return [
+            'rules' => [
+                [
+                    'field' => 'amount',
+                    'operator' => 'gte',
+                    'value' => 5000,
+                ],
+            ],
+            'routeTemplate' => [
+                'stages' => [
+                    [
+                        'name' => $stageName,
+                        'completionRule' => 'any',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'admin'],
+                        ],
+                    ],
+                ],
+            ],
+            'slaRules' => [
+                [
+                    'stage' => $stageName,
+                    'dueInHours' => 24,
+                    'escalateAfterHours' => 48,
                 ],
             ],
         ];

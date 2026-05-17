@@ -67,7 +67,7 @@ export async function createApprovalPolicyVersionDraft(
   values: StoreApprovalPolicyVersionRequest,
 ) {
   const response = await createApprovalPolicyVersion(policyId, values, withActiveTenantHeader());
-  if (response.status !== 200) throw response.data;
+  if (response.status !== 201) throw response.data;
   return mapApprovalPolicyVersion(response.data.data);
 }
 

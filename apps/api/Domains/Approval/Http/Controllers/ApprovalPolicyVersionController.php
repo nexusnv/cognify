@@ -5,35 +5,25 @@ namespace Domains\Approval\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
+use Domains\Approval\Actions\CreateApprovalPolicyVersionDraft;
 use Domains\Approval\Actions\PublishApprovalPolicyVersion;
 use Domains\Approval\Http\Requests\StoreApprovalPolicyVersionRequest;
 use Domains\Approval\Http\Resources\ApprovalPolicyVersionResource;
 use Domains\Approval\Models\ApprovalPolicy;
 use Domains\Approval\Models\ApprovalPolicyVersion;
-use Domains\Approval\States\ApprovalPolicyVersionStatus;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ApprovalPolicyVersionController extends Controller
 {
-    public function store(StoreApprovalPolicyVersionRequest $request, CurrentTenant $currentTenant, int $approvalPolicy): ApprovalPolicyVersionResource
+    public function store(StoreApprovalPolicyVersionRequest $request, CurrentTenant $currentTenant, CreateApprovalPolicyVersionDraft $action, int $approvalPolicy): JsonResponse
     {
         $tenant = $this->tenantOrAbort($currentTenant);
         $policy = $this->findTenantPolicy($tenant, $approvalPolicy);
-        $data = $request->validated();
 
-        $version = ApprovalPolicyVersion::query()->create([
-            'approval_policy_id' => $policy->id,
-            'tenant_id' => $tenant->id,
-            'subject_type' => $policy->subject_type,
-            'version_number' => ((int) $policy->versions()->max('version_number')) + 1,
-            'status' => ApprovalPolicyVersionStatus::Draft,
-            'priority' => (int) ($data['priority'] ?? 100),
-            'rules' => $data['rules'],
-            'route_template' => $data['routeTemplate'],
-            'sla_rules' => $data['slaRules'] ?? [],
-        ]);
-
-        return new ApprovalPolicyVersionResource($version);
+        return (new ApprovalPolicyVersionResource(
+            $action->handle($tenant, $request->user(), $policy, $request->validated()),
+        ))->response()->setStatusCode(201);
     }
 
     public function publish(Request $request, CurrentTenant $currentTenant, PublishApprovalPolicyVersion $action, int $approvalPolicyVersion): ApprovalPolicyVersionResource

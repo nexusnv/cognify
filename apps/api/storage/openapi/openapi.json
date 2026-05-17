@@ -189,7 +189,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Approval policy version created",
                         "content": {
                             "application/json": {
@@ -207,6 +207,9 @@
                     },
                     "404": {
                         "description": "Not found"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/InvalidState"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationFailed"
@@ -250,6 +253,9 @@
                     },
                     "404": {
                         "description": "Not found"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/InvalidState"
                     }
                 }
             }
@@ -273,7 +279,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Approval policy version retireed",
+                        "description": "Approval policy version retired",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -290,6 +296,9 @@
                     },
                     "404": {
                         "description": "Not found"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/InvalidState"
                     }
                 }
             }

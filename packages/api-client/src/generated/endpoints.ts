@@ -285,9 +285,9 @@ export const updateApprovalPolicy = async (
 /**
  * @summary Create approval policy version draft
  */
-export type createApprovalPolicyVersionResponse200 = {
+export type createApprovalPolicyVersionResponse201 = {
   data: ApprovalPolicyVersionResponse;
-  status: 200;
+  status: 201;
 };
 
 export type createApprovalPolicyVersionResponse401 = {
@@ -305,18 +305,24 @@ export type createApprovalPolicyVersionResponse404 = {
   status: 404;
 };
 
+export type createApprovalPolicyVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type createApprovalPolicyVersionResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
 };
 
-export type createApprovalPolicyVersionResponseSuccess = createApprovalPolicyVersionResponse200 & {
+export type createApprovalPolicyVersionResponseSuccess = createApprovalPolicyVersionResponse201 & {
   headers: Headers;
 };
 export type createApprovalPolicyVersionResponseError = (
   | createApprovalPolicyVersionResponse401
   | createApprovalPolicyVersionResponse403
   | createApprovalPolicyVersionResponse404
+  | createApprovalPolicyVersionResponse409
   | createApprovalPolicyVersionResponse422
 ) & {
   headers: Headers;
@@ -369,6 +375,11 @@ export type publishApprovalPolicyVersionResponse404 = {
   status: 404;
 };
 
+export type publishApprovalPolicyVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type publishApprovalPolicyVersionResponseSuccess =
   publishApprovalPolicyVersionResponse200 & {
     headers: Headers;
@@ -377,6 +388,7 @@ export type publishApprovalPolicyVersionResponseError = (
   | publishApprovalPolicyVersionResponse401
   | publishApprovalPolicyVersionResponse403
   | publishApprovalPolicyVersionResponse404
+  | publishApprovalPolicyVersionResponse409
 ) & {
   headers: Headers;
 };
@@ -425,6 +437,11 @@ export type retireApprovalPolicyVersionResponse404 = {
   status: 404;
 };
 
+export type retireApprovalPolicyVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type retireApprovalPolicyVersionResponseSuccess = retireApprovalPolicyVersionResponse200 & {
   headers: Headers;
 };
@@ -432,6 +449,7 @@ export type retireApprovalPolicyVersionResponseError = (
   | retireApprovalPolicyVersionResponse401
   | retireApprovalPolicyVersionResponse403
   | retireApprovalPolicyVersionResponse404
+  | retireApprovalPolicyVersionResponse409
 ) & {
   headers: Headers;
 };

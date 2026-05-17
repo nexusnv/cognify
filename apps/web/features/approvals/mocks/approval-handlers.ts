@@ -78,7 +78,7 @@ export const approvalHandlers = [
     };
 
     policy.versions.unshift(version);
-    return HttpResponse.json({ data: version });
+    return HttpResponse.json({ data: version }, { status: 201 });
   }),
   http.post("/api/approval-policy-versions/:versionId/publish", ({ params }) => {
     const policy = policies.find((item) =>
