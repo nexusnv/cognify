@@ -4,7 +4,11 @@ import type { ApprovalPolicy } from "../types/approval-view-model";
 
 let policies: ApprovalPolicy[] = [structuredClone(approvalPolicyFixture)];
 
-type ApprovalPolicyPayload = Partial<ApprovalPolicy> & Pick<Partial<ApprovalPolicy["versions"][number]>, "rules" | "routeTemplate" | "slaRules">;
+type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
+  Pick<
+    Partial<ApprovalPolicy["versions"][number]>,
+    "priority" | "rules" | "routeTemplate" | "slaRules"
+  >;
 
 export function resetApprovalMockState() {
   policies = [structuredClone(approvalPolicyFixture)];
@@ -48,6 +52,34 @@ export const approvalHandlers = [
     policies[index] = { ...policies[index]!, ...body };
     return HttpResponse.json({ data: policies[index] });
   }),
+  http.post("/api/approval-policies/:policyId/versions", async ({ params, request }) => {
+    const policy = policies.find((item) => item.id === params.policyId);
+    if (!policy) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+
+    const body = (await request.json()) as ApprovalPolicyPayload;
+    const nextVersionNumber =
+      Math.max(0, ...policy.versions.map((version) => version.versionNumber)) + 1;
+    const version: ApprovalPolicy["versions"][number] = {
+      ...structuredClone(approvalPolicyFixture.versions[0]!),
+      id: `apv-${policy.id}-${nextVersionNumber}`,
+      tenantId: policy.tenantId,
+      policyId: policy.id,
+      versionNumber: nextVersionNumber,
+      status: "draft",
+      priority: body.priority ?? 100,
+      rules: body.rules ?? [],
+      routeTemplate:
+        body.routeTemplate ?? structuredClone(approvalPolicyFixture.versions[0]!.routeTemplate),
+      slaRules: body.slaRules ?? [],
+      publishedById: null,
+      publishedAt: null,
+      createdAt: new Date("2026-05-17T00:00:00.000Z").toISOString(),
+      updatedAt: new Date("2026-05-17T00:00:00.000Z").toISOString(),
+    };
+
+    policy.versions.unshift(version);
+    return HttpResponse.json({ data: version });
+  }),
   http.post("/api/approval-policy-versions/:versionId/publish", ({ params }) => {
     const policy = policies.find((item) =>
       item.versions.some((version) => version.id === params.versionId),
@@ -56,6 +88,19 @@ export const approvalHandlers = [
     if (!policy || !version) return HttpResponse.json({ message: "Not found" }, { status: 404 });
     policy.status = "active";
     version.status = "published";
+    return HttpResponse.json({ data: version });
+  }),
+  http.post("/api/approval-policy-versions/:versionId/retire", ({ params }) => {
+    const policy = policies.find((item) =>
+      item.versions.some((version) => version.id === params.versionId),
+    );
+    const version = policy?.versions.find((item) => item.id === params.versionId);
+    if (!policy || !version) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    version.status = "retired";
+    version.effectiveUntil = new Date("2026-05-17T00:00:00.000Z").toISOString();
+    if (policy.versions.every((item) => item.status !== "published")) {
+      policy.status = "draft";
+    }
     return HttpResponse.json({ data: version });
   }),
 ];

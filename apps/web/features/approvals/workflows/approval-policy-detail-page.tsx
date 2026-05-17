@@ -6,7 +6,12 @@ import { Button } from "@cognify/ui";
 import { fetchApprovalPolicy } from "../api/approvals-api";
 import { ApprovalPolicyPreview } from "../components/approval-policy-preview";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
-import { approvalPolicyKeys, usePublishApprovalPolicyVersion } from "../hooks/use-approval-policies";
+import {
+  approvalPolicyKeys,
+  useCreateApprovalPolicyVersion,
+  usePublishApprovalPolicyVersion,
+  useRetireApprovalPolicyVersion,
+} from "../hooks/use-approval-policies";
 
 export function ApprovalPolicyDetailPage({ policyId }: { policyId: string }) {
   const policyQuery = useQuery({
@@ -14,6 +19,8 @@ export function ApprovalPolicyDetailPage({ policyId }: { policyId: string }) {
     queryFn: () => fetchApprovalPolicy(policyId),
   });
   const publishMutation = usePublishApprovalPolicyVersion(policyId);
+  const createVersionMutation = useCreateApprovalPolicyVersion(policyId);
+  const retireMutation = useRetireApprovalPolicyVersion(policyId);
   const policy = policyQuery.data;
   const latestVersion = policy?.versions[0];
 
@@ -36,18 +43,36 @@ export function ApprovalPolicyDetailPage({ policyId }: { policyId: string }) {
           <h1 className="text-2xl font-semibold">{policy.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{policy.description || "No description"}</p>
         </div>
-        {latestVersion.status === "draft" ? (
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
-            disabled={publishMutation.isPending}
+            variant="outline"
+            disabled={createVersionMutation.isPending}
             onClick={async () => {
-              await publishMutation.mutateAsync(latestVersion.id);
-              toast.success("Approval policy version published");
+              await createVersionMutation.mutateAsync({
+                priority: latestVersion.priority,
+                rules: latestVersion.rules,
+                routeTemplate: latestVersion.routeTemplate,
+                slaRules: latestVersion.slaRules,
+              });
+              toast.success("Approval policy version draft created");
             }}
           >
-            Publish version
+            New version draft
           </Button>
-        ) : null}
+          {latestVersion.status === "draft" ? (
+            <Button
+              type="button"
+              disabled={publishMutation.isPending}
+              onClick={async () => {
+                await publishMutation.mutateAsync(latestVersion.id);
+                toast.success("Approval policy version published");
+              }}
+            >
+              Publish version
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="rounded-md border p-4">
@@ -56,7 +81,24 @@ export function ApprovalPolicyDetailPage({ policyId }: { policyId: string }) {
           {policy.versions.map((version) => (
             <div key={version.id} className="flex items-center justify-between rounded-md border p-3">
               <span className="text-sm font-medium">Version {version.versionNumber}</span>
-              <ApprovalStatusBadge status={version.status} />
+              <div className="flex items-center gap-2">
+                <ApprovalStatusBadge status={version.status} />
+                {version.status !== "retired" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={retireMutation.isPending}
+                    aria-label={`Retire version ${version.versionNumber}`}
+                    onClick={async () => {
+                      await retireMutation.mutateAsync(version.id);
+                      toast.success("Approval policy version retired");
+                    }}
+                  >
+                    Retire
+                  </Button>
+                ) : null}
+              </div>
             </div>
           ))}
         </div>

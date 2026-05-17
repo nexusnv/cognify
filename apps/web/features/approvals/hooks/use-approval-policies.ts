@@ -2,11 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createApprovalPolicyVersionDraft,
   createApprovalPolicyDraft,
   listApprovalPolicies,
   publishPolicyVersion,
+  retirePolicyVersion,
   updateApprovalPolicyDraft,
 } from "../api/approvals-api";
+import type { StoreApprovalPolicyVersionRequest } from "@cognify/api-client/schemas";
 import type { ApprovalPolicyFormValues } from "../types/approval-view-model";
 
 export const approvalPolicyKeys = {
@@ -49,6 +52,31 @@ export function usePublishApprovalPolicyVersion(policyId: string) {
 
   return useMutation({
     mutationFn: (versionId: string) => publishPolicyVersion(versionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: approvalPolicyKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: approvalPolicyKeys.detail(policyId) });
+    },
+  });
+}
+
+export function useCreateApprovalPolicyVersion(policyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (values: StoreApprovalPolicyVersionRequest) =>
+      createApprovalPolicyVersionDraft(policyId, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: approvalPolicyKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: approvalPolicyKeys.detail(policyId) });
+    },
+  });
+}
+
+export function useRetireApprovalPolicyVersion(policyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (versionId: string) => retirePolicyVersion(versionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: approvalPolicyKeys.lists() });
       queryClient.invalidateQueries({ queryKey: approvalPolicyKeys.detail(policyId) });
