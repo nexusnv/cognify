@@ -24,6 +24,7 @@ const canUseAudit = (permissions: IdentityPermissions) => permissions.canAccessA
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
+const APPROVAL_POLICY_WORKSPACE_PATH = /^\/approval-policies\/[^/]+$/;
 const PROJECT_WORKSPACE_EDIT_PATH = /^\/projects\/([^/]+)\/edit$/;
 const PROJECT_WORKSPACE_PATH = /^\/projects\/[^/]+$/;
 
@@ -71,6 +72,13 @@ export const shellNavGroups: ShellNavGroup[] = [
         implemented: false,
         permission: canUseAudit,
       },
+      {
+        label: "Approval policies",
+        href: "/approval-policies",
+        icon: CheckSquare,
+        implemented: true,
+        permission: canUseAudit,
+      },
     ],
   },
   {
@@ -104,6 +112,14 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return [{ label: "System" }];
   }
 
+  if (normalizedPathname === "/approval-policies") {
+    return [{ label: "Approval policies" }];
+  }
+
+  if (normalizedPathname === "/approval-policies/new") {
+    return [{ label: "Approval policies", href: "/approval-policies" }, { label: "New" }];
+  }
+
   if (normalizedPathname === "/requisitions") {
     return [{ label: "Requisitions" }];
   }
@@ -131,6 +147,10 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (REQUISITION_WORKSPACE_PATH.test(normalizedPathname)) {
     return [{ label: "Requisitions", href: "/requisitions" }, { label: "Requisition workspace" }];
+  }
+
+  if (APPROVAL_POLICY_WORKSPACE_PATH.test(normalizedPathname)) {
+    return [{ label: "Approval policies", href: "/approval-policies" }, { label: "Policy workspace" }];
   }
 
   const projectEditMatch = normalizedPathname.match(PROJECT_WORKSPACE_EDIT_PATH);

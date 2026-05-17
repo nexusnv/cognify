@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
 import { resetIdentityMockState } from "../features/identity/mocks/identity-handlers";
 import { resetNotificationMockState } from "../features/notifications/mocks/notification-handlers";
@@ -23,6 +24,7 @@ if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
   server.resetHandlers();
+  resetApprovalMockState();
   resetAttachmentMockState();
   resetRequisitionMockState();
   resetIdentityMockState();

@@ -12,6 +12,8 @@ use App\Notifications\Http\Controllers\NotificationController;
 use App\Observability\SystemStatus\Http\Controllers\SystemStatusController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
+use Domains\Approval\Http\Controllers\ApprovalPolicyController;
+use Domains\Approval\Http\Controllers\ApprovalPolicyVersionController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
@@ -50,6 +52,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
         Route::get('/system/status', [SystemStatusController::class, 'show'])->middleware('throttle:30,1');
+
+        Route::get('/approval-policies', [ApprovalPolicyController::class, 'index']);
+        Route::post('/approval-policies', [ApprovalPolicyController::class, 'store']);
+        Route::get('/approval-policies/{approvalPolicy}', [ApprovalPolicyController::class, 'show']);
+        Route::patch('/approval-policies/{approvalPolicy}', [ApprovalPolicyController::class, 'update']);
+        Route::post('/approval-policies/{approvalPolicy}/versions', [ApprovalPolicyVersionController::class, 'store']);
+        Route::post('/approval-policy-versions/{approvalPolicyVersion}/publish', [ApprovalPolicyVersionController::class, 'publish']);
+        Route::post('/approval-policy-versions/{approvalPolicyVersion}/retire', [ApprovalPolicyVersionController::class, 'retire']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
