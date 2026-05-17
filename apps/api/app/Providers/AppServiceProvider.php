@@ -7,6 +7,8 @@ use App\Audit\Policies\AuditEventPolicy;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
 use App\Tenancy\CurrentTenant;
+use Domains\Project\Models\ProcurementProject;
+use Domains\Project\Policies\ProcurementProjectPolicy;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Policies\RequisitionPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Requisition::class, RequisitionPolicy::class);
+        Gate::policy(ProcurementProject::class, ProcurementProjectPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
     }

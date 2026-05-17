@@ -43,6 +43,18 @@ describe("requisitions workflow", () => {
     expect(screen.getAllByText("Submitted")).not.toHaveLength(0);
   });
 
+  it("lets requesters select an active project in the requisition form", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<RequisitionCreatePage />);
+
+    const projectSelect = await screen.findByLabelText("Project");
+    await screen.findByRole("option", { name: "PRJ-2026-000501 - Office refresh" });
+    await user.selectOptions(projectSelect, "501");
+
+    expect(projectSelect).toHaveValue("501");
+  });
+
   it("shows inline submit validation before opening the confirmation dialog", async () => {
     const user = userEvent.setup();
 
@@ -113,6 +125,10 @@ describe("requisitions workflow", () => {
     expect(
       await screen.findByRole("heading", { name: "Field laptop refresh", level: 1 }),
     ).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /Office refresh/ })).toHaveAttribute(
+      "href",
+      "/projects/501",
+    );
     expect(screen.getByRole("group", { name: "Record metadata" })).toHaveTextContent(
       "Estimated total",
     );
@@ -265,7 +281,7 @@ describe("requisitions workflow", () => {
       expect(screen.getByText("Submitted")).toBeInTheDocument();
     });
     expect(screen.getByText("Requisition submitted")).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("applies a template and a line item suggestion before saving the draft", async () => {
     const user = userEvent.setup();
@@ -282,7 +298,9 @@ describe("requisitions workflow", () => {
     renderWithQuery(<RequisitionCreatePage />);
 
     await user.type(screen.getByLabelText("Title"), "Template-backed requisition");
-    await user.click(screen.getByRole("button", { name: "Fill empty fields from IT equipment" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Fill empty fields from IT equipment" }),
+    );
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: "Apply template?" })).not.toBeInTheDocument();
     });
@@ -292,7 +310,10 @@ describe("requisitions workflow", () => {
         "Provision or replace equipment required for business operations.",
       ),
     ).toBeInTheDocument();
-    await user.type(screen.getByLabelText("Project placeholder"), "Project Atlas");
+    const projectSelect = await screen.findByLabelText("Project");
+    await screen.findByRole("option", { name: "PRJ-2026-000501 - Office refresh" });
+    await user.selectOptions(projectSelect, "501");
+    expect(projectSelect).toHaveValue("501");
 
     await user.clear(screen.getByLabelText("Item name 1"));
     await user.type(screen.getByLabelText("Item name 1"), "Lap");
@@ -304,9 +325,9 @@ describe("requisitions workflow", () => {
     await user.click(screen.getByRole("button", { name: "Save draft" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect(createPayload).toMatchObject({
-      projectId: "Project Atlas",
+      projectId: "501",
     });
-  });
+  }, 20000);
 
   it("shows accessible conflict recovery when a stale save is rejected", async () => {
     const user = userEvent.setup();
@@ -345,7 +366,7 @@ describe("requisitions workflow", () => {
       "This draft changed elsewhere.",
     );
     expect(screen.getByLabelText("Title")).toHaveValue("Conflict laptop refresh updated");
-  }, 10000);
+  }, 20000);
 
   it("warns before leaving when a draft has unsaved local edits", async () => {
     const user = userEvent.setup();

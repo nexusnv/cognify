@@ -6,6 +6,8 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Project\Models\ProcurementProject;
+use Domains\Project\States\ProjectStatus;
 use Domains\Requisition\Exceptions\DraftConflictException;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
@@ -41,6 +43,15 @@ class UpdateRequisitionDraft
                 throw new DraftConflictException('The draft has changed since it was loaded.');
             }
 
+            $projectId = $data['projectId'] ?? null;
+            if ($projectId !== null && $projectId !== '') {
+                ProcurementProject::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->whereKey($projectId)
+                    ->whereNotIn('status', [ProjectStatus::Completed, ProjectStatus::Cancelled])
+                    ->firstOrFail();
+            }
+
             $before = [
                 'title' => $requisition->title,
                 'businessJustification' => $requisition->business_justification,
@@ -64,7 +75,7 @@ class UpdateRequisitionDraft
                     ? $data['neededByDate']
                     : $requisition->needed_by_date,
                 'department' => array_key_exists('department', $data) ? $data['department'] : $requisition->department,
-                'project_id' => array_key_exists('projectId', $data) ? $data['projectId'] : $requisition->project_id,
+                'project_id' => array_key_exists('projectId', $data) ? ($projectId ?: null) : $requisition->project_id,
                 'cost_center' => array_key_exists('costCenter', $data) ? $data['costCenter'] : $requisition->cost_center,
                 'delivery_location' => array_key_exists('deliveryLocation', $data)
                     ? $data['deliveryLocation']
@@ -117,7 +128,7 @@ class UpdateRequisitionDraft
                 subjectDisplay: $requisition->number,
             ));
 
-            return $requisition->refresh()->load(['requester', 'lineItems']);
+            return $requisition->refresh()->load(['requester', 'lineItems', 'project.owner']);
         });
     }
 }

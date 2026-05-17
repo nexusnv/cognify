@@ -91,7 +91,7 @@ function isSearchResultViewModel(value: unknown): value is SearchResultViewModel
 
   const candidate = value as Record<string, unknown>;
   return (
-    candidate.type === "requisition" &&
+    (candidate.type === "requisition" || candidate.type === "project") &&
     typeof candidate.id === "string" &&
     typeof candidate.title === "string" &&
     typeof candidate.href === "string"

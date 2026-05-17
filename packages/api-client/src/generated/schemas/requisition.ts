@@ -25,6 +25,7 @@ import type { RequisitionWithdrawalReason } from "./requisitionWithdrawalReason"
 import type { RequisitionCancelledAt } from "./requisitionCancelledAt";
 import type { RequisitionCancelledBy } from "./requisitionCancelledBy";
 import type { RequisitionCancellationReason } from "./requisitionCancellationReason";
+import type { RequisitionProjectSummaryProperty } from "./requisitionProjectSummaryProperty";
 
 export interface Requisition {
   id: string;
@@ -63,4 +64,6 @@ export interface Requisition {
   cancelledAt: RequisitionCancelledAt;
   cancelledBy: RequisitionCancelledBy;
   cancellationReason: RequisitionCancellationReason;
+  /** @nullable */
+  projectSummary?: RequisitionProjectSummaryProperty;
 }

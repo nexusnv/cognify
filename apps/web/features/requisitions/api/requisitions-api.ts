@@ -258,6 +258,17 @@ function mapRequisition(requisition: ApiRequisition): Requisition {
     neededByDate: requisition.neededByDate ?? "",
     department: requisition.department ?? undefined,
     projectId: requisition.projectId ?? undefined,
+    projectSummary: requisition.projectSummary
+      ? {
+          id: requisition.projectSummary.id,
+          number: requisition.projectSummary.number,
+          name: requisition.projectSummary.name,
+          status: requisition.projectSummary.status,
+          owner: requisition.projectSummary.owner
+            ? mapUserSummary(requisition.projectSummary.owner)
+            : null,
+        }
+      : null,
     costCenter: requisition.costCenter ?? undefined,
     deliveryLocation: requisition.deliveryLocation ?? undefined,
     currency: requisition.currency ?? undefined,

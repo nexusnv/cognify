@@ -3,6 +3,7 @@
 namespace Domains\Requisition\Http\Resources;
 
 use App\Models\User;
+use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,10 +31,11 @@ class RequisitionResource extends JsonResource
             'businessJustification' => $this->business_justification,
             'neededByDate' => $this->needed_by_date?->toDateString(),
             'department' => $this->department,
-            'projectId' => $this->project_id,
+            'projectId' => $this->project_id !== null ? (string) $this->project_id : null,
             'costCenter' => $this->cost_center,
             'deliveryLocation' => $this->delivery_location,
             'currency' => $this->currency,
+            'projectSummary' => $this->projectSummary($this->whenLoaded('project')),
             'requester' => [
                 'id' => (string) $this->requester->id,
                 'name' => $this->requester->name,
@@ -74,6 +76,21 @@ class RequisitionResource extends JsonResource
             'submittedAt' => $this->submitted_at?->toISOString(),
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
+        ];
+    }
+
+    private function projectSummary(ProcurementProject|MissingValue|null $project): ?array
+    {
+        if (! $project instanceof ProcurementProject) {
+            return null;
+        }
+
+        return [
+            'id' => (string) $project->id,
+            'number' => $project->number,
+            'name' => $project->name,
+            'status' => $project->status->value,
+            'owner' => $this->userSummary($project->relationLoaded('owner') ? $project->owner : null),
         ];
     }
 

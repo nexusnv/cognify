@@ -13,6 +13,9 @@ use App\Observability\SystemStatus\Http\Controllers\SystemStatusController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
+use Domains\Project\Http\Controllers\ProcurementProjectController;
+use Domains\Project\Http\Controllers\ProjectActivityController;
+use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
 use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
@@ -51,6 +54,20 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
         Route::get('/requisition-intake-options', RequisitionIntakeOptionsController::class);
+
+        Route::get('/projects', [ProcurementProjectController::class, 'index']);
+        Route::post('/projects', [ProcurementProjectController::class, 'store']);
+        Route::get('/projects/{project}', [ProcurementProjectController::class, 'show']);
+        Route::patch('/projects/{project}', [ProcurementProjectController::class, 'update']);
+        Route::post('/projects/{project}/activate', [ProcurementProjectController::class, 'activate']);
+        Route::post('/projects/{project}/hold', [ProcurementProjectController::class, 'hold']);
+        Route::post('/projects/{project}/resume', [ProcurementProjectController::class, 'resume']);
+        Route::post('/projects/{project}/complete', [ProcurementProjectController::class, 'complete']);
+        Route::post('/projects/{project}/cancel', [ProcurementProjectController::class, 'cancel']);
+        Route::get('/projects/{project}/activity', [ProjectActivityController::class, 'index']);
+        Route::get('/projects/{project}/requisitions', [ProjectRequisitionController::class, 'index']);
+        Route::post('/projects/{project}/requisitions', [ProjectRequisitionController::class, 'store']);
+        Route::delete('/projects/{project}/requisitions/{requisition}', [ProjectRequisitionController::class, 'destroy']);
 
         // Existing requisition routes
         Route::get('/requisitions', [RequisitionController::class, 'index']);

@@ -6,6 +6,7 @@ import { notificationHandlers } from "../../features/notifications/mocks/notific
 import { systemReadinessHandlers } from "@/features/system-readiness/mocks/system-readiness-handlers";
 import { searchHandlers } from "../../features/search/mocks/search-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
+import { projectHandlers } from "@/features/projects/mocks/project-handlers";
 
 export const handlers = [
   http.get("/api/health", () => {
@@ -15,6 +16,7 @@ export const handlers = [
     });
   }),
   ...requisitionsHandlers,
+  ...projectHandlers,
   ...searchHandlers,
   ...attachmentHandlers,
   ...identityHandlers,

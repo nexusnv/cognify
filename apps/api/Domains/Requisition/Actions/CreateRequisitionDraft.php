@@ -6,6 +6,8 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Project\Models\ProcurementProject;
+use Domains\Project\States\ProjectStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Services\RequisitionNumberGenerator;
 use Domains\Requisition\States\RequisitionStatus;
@@ -25,6 +27,15 @@ class CreateRequisitionDraft
     public function handle(Tenant $tenant, User $actor, array $data): Requisition
     {
         return DB::transaction(function () use ($tenant, $actor, $data): Requisition {
+            $projectId = $data['projectId'] ?? null;
+            if ($projectId !== null && $projectId !== '') {
+                ProcurementProject::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->whereKey($projectId)
+                    ->whereNotIn('status', [ProjectStatus::Completed, ProjectStatus::Cancelled])
+                    ->firstOrFail();
+            }
+
             $requisition = Requisition::query()->create([
                 'tenant_id' => $tenant->id,
                 'requester_id' => $actor->id,
@@ -33,7 +44,7 @@ class CreateRequisitionDraft
                 'business_justification' => $data['businessJustification'] ?? null,
                 'needed_by_date' => $data['neededByDate'] ?? null,
                 'department' => $data['department'] ?? null,
-                'project_id' => $data['projectId'] ?? null,
+                'project_id' => $projectId ?: null,
                 'cost_center' => $data['costCenter'] ?? null,
                 'delivery_location' => $data['deliveryLocation'] ?? null,
                 'currency' => strtoupper($data['currency'] ?? 'MYR'),
@@ -57,7 +68,7 @@ class CreateRequisitionDraft
                 subjectDisplay: $requisition->number,
             ));
 
-            return $requisition->load(['requester', 'lineItems']);
+            return $requisition->load(['requester', 'lineItems', 'project.owner']);
         });
     }
 

@@ -3,9 +3,11 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { NativeSelect } from "@cognify/ui";
 import { getApiValidationErrors } from "@cognify/api-client";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { FormField } from "@/components/forms/form-field";
+import { useProjects } from "@/features/projects/hooks/use-projects";
 import {
   flattenZodFieldErrors,
   focusFirstInvalidField,
@@ -93,7 +95,54 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
   const submitDraft = useSubmitRequisition();
   const templatesQuery = useRequisitionTemplates();
   const intakeOptionsQuery = useRequisitionIntakeOptions();
+  const projectsQuery = useProjects({ status: "active", perPage: 100 });
   const applyTemplateMutation = useApplyRequisitionTemplate();
+  const selectableProjects = useMemo(() => {
+    const rows = projectsQuery.data?.data ?? [];
+    const linkedProject = initialRequisition?.projectSummary;
+    if (!linkedProject) return rows;
+
+    const exists = rows.some((project) => project.id === linkedProject.id);
+    if (exists) return rows;
+
+    return [
+      ...rows,
+      {
+        id: linkedProject.id,
+        tenantId: initialRequisition?.tenantId ?? "",
+        number: linkedProject.number,
+        name: linkedProject.name,
+        charter: "",
+        status: linkedProject.status,
+        owner: linkedProject.owner ?? { id: "", name: "Unknown owner", email: "" },
+        budgetAmount: null,
+        currency: "MYR",
+        summary: {
+          estimatedRequisitionTotal: 0,
+          linkedRequisitionCount: 0,
+          draftRequisitionCount: 0,
+          submittedRequisitionCount: 0,
+          changesRequestedRequisitionCount: 0,
+          stoppedRequisitionCount: 0,
+          approvalPlaceholderCount: 0,
+          awardPlaceholderCount: 0,
+        },
+        permissions: {
+          canUpdate: false,
+          canActivate: false,
+          canHold: false,
+          canResume: false,
+          canComplete: false,
+          canCancel: false,
+          canLinkRequisitions: false,
+          canUnlinkRequisitions: false,
+          canViewActivity: false,
+        },
+        createdAt: initialRequisition?.createdAt ?? "",
+        updatedAt: initialRequisition?.updatedAt ?? "",
+      },
+    ];
+  }, [initialRequisition, projectsQuery.data?.data]);
 
   const canEdit = status === "draft";
   const errorSummary = useMemo(
@@ -621,16 +670,27 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             <h2 className="text-base font-semibold">Optional context</h2>
             <div className="grid gap-3 md:grid-cols-2">
               {renderDepartmentField()}
-              <FormField htmlFor="project-id" label="Project placeholder" error={errors.projectId?.[0]}>
-                <input
+              <FormField htmlFor="project-id" label="Project" error={errors.projectId?.[0]}>
+                <NativeSelect
                   id="project-id"
-                  className="min-h-11 w-full rounded-md border px-3 text-base"
                   value={values.projectId}
                   aria-invalid={Boolean(errors.projectId)}
                   onChange={(event) => updateValue("projectId", event.target.value)}
                   disabled={status !== "draft"}
-                />
+                >
+                  <option value="">No project</option>
+                  {selectableProjects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.number} - {project.name}
+                    </option>
+                  ))}
+                </NativeSelect>
               </FormField>
+              {projectsQuery.isError ? (
+                <p className="text-sm text-amber-700 md:col-span-2">
+                  Projects could not be loaded right now. Requisition editing remains available.
+                </p>
+              ) : null}
               {renderCostCenterField()}
               <div className="md:col-span-2">
                 <FormField htmlFor="delivery-location" label="Delivery location" error={errors.deliveryLocation?.[0]}>

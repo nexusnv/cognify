@@ -75,6 +75,14 @@ export type RequisitionLineItem = {
   estimatedLineTotal?: number;
 };
 
+export type RequisitionProjectSummary = {
+  id: string;
+  number: string;
+  name: string;
+  status: "draft" | "active" | "on_hold" | "completed" | "cancelled";
+  owner?: UserSummary | null;
+};
+
 export type Requisition = {
   id: string;
   number: string;
@@ -86,6 +94,7 @@ export type Requisition = {
   neededByDate: string;
   department?: string;
   projectId?: string;
+  projectSummary?: RequisitionProjectSummary | null;
   costCenter?: string;
   deliveryLocation?: string;
   currency?: string;

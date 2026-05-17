@@ -40,7 +40,7 @@ class RequisitionController extends Controller
 
         $query = Requisition::query()
             ->select('requisitions.*')
-            ->with(['requester', 'lineItems', 'changesRequestedBy', 'withdrawnBy', 'cancelledBy'])
+            ->with(['requester', 'lineItems', 'changesRequestedBy', 'withdrawnBy', 'cancelledBy', 'project.owner'])
             ->where('requisitions.tenant_id', $tenant->id)
             ->latest('requisitions.updated_at');
 
@@ -122,7 +122,7 @@ class RequisitionController extends Controller
 
         $this->authorize('view', $requisition);
 
-        return new RequisitionResource($requisition->load(['requester', 'lineItems', 'changesRequestedBy', 'withdrawnBy', 'cancelledBy']));
+        return new RequisitionResource($requisition->load(['requester', 'lineItems', 'changesRequestedBy', 'withdrawnBy', 'cancelledBy', 'project.owner']));
     }
 
     public function update(

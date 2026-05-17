@@ -191,6 +191,20 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           ),
         },
         { id: "needed-by", label: "Needed by", value: requisition.neededByDate },
+        {
+          id: "project",
+          label: "Project",
+          value: requisition.projectSummary ? (
+            <Link
+              href={`/projects/${requisition.projectSummary.id}`}
+              className="font-medium underline-offset-4 hover:underline"
+            >
+              {requisition.projectSummary.number} - {requisition.projectSummary.name}
+            </Link>
+          ) : (
+            "No project"
+          ),
+        },
         { id: "requester", label: "Requester", value: requisition.requester.name },
       ]}
       sections={[

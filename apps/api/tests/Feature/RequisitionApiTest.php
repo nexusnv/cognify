@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Audit\AuditEvent;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Models\RequisitionDepartment;
 use Domains\Requisition\States\RequisitionStatus;
@@ -541,6 +542,29 @@ class RequisitionApiTest extends TestCase
             ->assertJsonPath('data.0.actor.id', (string) $user->id);
     }
 
+    public function test_requisition_response_includes_project_summary(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $project = ProcurementProject::query()->create([
+            'tenant_id' => $tenant->id,
+            'owner_id' => $buyer->id,
+            'number' => 'PRJ-2026-000001',
+            'name' => 'Office refresh',
+            'status' => 'active',
+            'budget_amount' => '25000.00',
+            'currency' => 'MYR',
+        ]);
+        $requisition = $this->createDraft($tenant, $requester, ['project_id' => $project->id]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}")
+            ->assertOk()
+            ->assertJsonPath('data.projectId', (string) $project->id)
+            ->assertJsonPath('data.projectSummary.name', 'Office refresh')
+            ->assertJsonPath('data.projectSummary.number', 'PRJ-2026-000001');
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */
@@ -576,6 +600,7 @@ class RequisitionApiTest extends TestCase
             'title' => $attributes['title'] ?? 'Laptop refresh',
             'business_justification' => $attributes['business_justification'] ?? 'Replace aging laptops.',
             'needed_by_date' => $attributes['needed_by_date'] ?? '2026-07-15',
+            'project_id' => $attributes['project_id'] ?? null,
             'currency' => $attributes['currency'] ?? 'USD',
             'status' => $attributes['status'] ?? RequisitionStatus::Draft,
             'lock_version' => $attributes['lock_version'] ?? 0,

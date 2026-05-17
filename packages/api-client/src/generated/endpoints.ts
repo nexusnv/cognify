@@ -21,9 +21,11 @@ import type {
   ForgotPasswordRequest,
   HealthResponse,
   InvalidStateResponse,
+  LinkProjectRequisitionRequest,
   ListAuditEventsParams,
   ListGlobalSearchParams,
   ListNotificationsParams,
+  ListProjectsParams,
   ListRequisitionActivity200,
   ListRequisitionLineItemSuggestionsParams,
   ListRequisitionsParams,
@@ -32,6 +34,11 @@ import type {
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
+  ProcurementProjectListResponse,
+  ProcurementProjectResponse,
+  ProjectActivityListResponse,
+  ProjectRequisitionListResponse,
+  ProjectRequisitionResponse,
   ReasonedRequisitionActionRequest,
   RequestRequisitionChangesRequest,
   RequisitionIntakeOptionsResponse,
@@ -41,12 +48,15 @@ import type {
   RequisitionTemplateListResponse,
   SearchResponse,
   SetCurrentTenantRequest,
+  StoreProcurementProjectRequest,
   SubmitRequisitionResponse,
   SystemStatusResponse,
   TooManyRequestsResponse,
+  TransitionProcurementProjectRequest,
   UnauthenticatedResponse,
   UnauthorizedResponse,
   UpdateCurrentUserProfileRequest,
+  UpdateProcurementProjectRequest,
   UpdateRequisitionRequest,
   ValidationFailedResponse,
 } from "./schemas";
@@ -2006,4 +2016,780 @@ export const listRequisitionMentionCandidates = async (
       method: "GET",
     },
   );
+};
+
+/**
+ * @summary List tenant-visible procurement projects
+ */
+export type listProjectsResponse200 = {
+  data: ProcurementProjectListResponse;
+  status: 200;
+};
+
+export type listProjectsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listProjectsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listProjectsResponseSuccess = listProjectsResponse200 & {
+  headers: Headers;
+};
+export type listProjectsResponseError = (listProjectsResponse401 | listProjectsResponse403) & {
+  headers: Headers;
+};
+
+export type listProjectsResponse = listProjectsResponseSuccess | listProjectsResponseError;
+
+export const getListProjectsUrl = (params?: ListProjectsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/projects?${stringifiedParams}` : `/api/projects`;
+};
+
+export const listProjects = async (
+  params?: ListProjectsParams,
+  options?: RequestInit,
+): Promise<listProjectsResponse> => {
+  return cognifyFetch<listProjectsResponse>(getListProjectsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create procurement project
+ */
+export type createProjectResponse201 = {
+  data: ProcurementProjectResponse;
+  status: 201;
+};
+
+export type createProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createProjectResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createProjectResponseSuccess = createProjectResponse201 & {
+  headers: Headers;
+};
+export type createProjectResponseError = (
+  | createProjectResponse401
+  | createProjectResponse403
+  | createProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type createProjectResponse = createProjectResponseSuccess | createProjectResponseError;
+
+export const getCreateProjectUrl = () => {
+  return `/api/projects`;
+};
+
+export const createProject = async (
+  storeProcurementProjectRequest: StoreProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<createProjectResponse> => {
+  return cognifyFetch<createProjectResponse>(getCreateProjectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(storeProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Read project detail
+ */
+export type getProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type getProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type getProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getProjectResponseSuccess = getProjectResponse200 & {
+  headers: Headers;
+};
+export type getProjectResponseError = (
+  | getProjectResponse401
+  | getProjectResponse403
+  | getProjectResponse404
+) & {
+  headers: Headers;
+};
+
+export type getProjectResponse = getProjectResponseSuccess | getProjectResponseError;
+
+export const getGetProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}`;
+};
+
+export const getProject = async (
+  projectId: string,
+  options?: RequestInit,
+): Promise<getProjectResponse> => {
+  return cognifyFetch<getProjectResponse>(getGetProjectUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update project
+ */
+export type updateProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type updateProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updateProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateProjectResponseSuccess = updateProjectResponse200 & {
+  headers: Headers;
+};
+export type updateProjectResponseError = (
+  | updateProjectResponse401
+  | updateProjectResponse403
+  | updateProjectResponse404
+  | updateProjectResponse409
+  | updateProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateProjectResponse = updateProjectResponseSuccess | updateProjectResponseError;
+
+export const getUpdateProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}`;
+};
+
+export const updateProject = async (
+  projectId: string,
+  updateProcurementProjectRequest: UpdateProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<updateProjectResponse> => {
+  return cognifyFetch<updateProjectResponse>(getUpdateProjectUrl(projectId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Activate project
+ */
+export type activateProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type activateProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type activateProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type activateProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type activateProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type activateProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type activateProjectResponseSuccess = activateProjectResponse200 & {
+  headers: Headers;
+};
+export type activateProjectResponseError = (
+  | activateProjectResponse401
+  | activateProjectResponse403
+  | activateProjectResponse404
+  | activateProjectResponse409
+  | activateProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type activateProjectResponse = activateProjectResponseSuccess | activateProjectResponseError;
+
+export const getActivateProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/activate`;
+};
+
+export const activateProject = async (
+  projectId: string,
+  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<activateProjectResponse> => {
+  return cognifyFetch<activateProjectResponse>(getActivateProjectUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transitionProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Hold project
+ */
+export type holdProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type holdProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type holdProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type holdProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type holdProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type holdProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type holdProjectResponseSuccess = holdProjectResponse200 & {
+  headers: Headers;
+};
+export type holdProjectResponseError = (
+  | holdProjectResponse401
+  | holdProjectResponse403
+  | holdProjectResponse404
+  | holdProjectResponse409
+  | holdProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type holdProjectResponse = holdProjectResponseSuccess | holdProjectResponseError;
+
+export const getHoldProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/hold`;
+};
+
+export const holdProject = async (
+  projectId: string,
+  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<holdProjectResponse> => {
+  return cognifyFetch<holdProjectResponse>(getHoldProjectUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transitionProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Resume project
+ */
+export type resumeProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type resumeProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type resumeProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type resumeProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type resumeProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type resumeProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type resumeProjectResponseSuccess = resumeProjectResponse200 & {
+  headers: Headers;
+};
+export type resumeProjectResponseError = (
+  | resumeProjectResponse401
+  | resumeProjectResponse403
+  | resumeProjectResponse404
+  | resumeProjectResponse409
+  | resumeProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type resumeProjectResponse = resumeProjectResponseSuccess | resumeProjectResponseError;
+
+export const getResumeProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/resume`;
+};
+
+export const resumeProject = async (
+  projectId: string,
+  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<resumeProjectResponse> => {
+  return cognifyFetch<resumeProjectResponse>(getResumeProjectUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transitionProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Complete project
+ */
+export type completeProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type completeProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type completeProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type completeProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type completeProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type completeProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type completeProjectResponseSuccess = completeProjectResponse200 & {
+  headers: Headers;
+};
+export type completeProjectResponseError = (
+  | completeProjectResponse401
+  | completeProjectResponse403
+  | completeProjectResponse404
+  | completeProjectResponse409
+  | completeProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type completeProjectResponse = completeProjectResponseSuccess | completeProjectResponseError;
+
+export const getCompleteProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/complete`;
+};
+
+export const completeProject = async (
+  projectId: string,
+  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<completeProjectResponse> => {
+  return cognifyFetch<completeProjectResponse>(getCompleteProjectUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transitionProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Cancel project
+ */
+export type cancelProjectResponse200 = {
+  data: ProcurementProjectResponse;
+  status: 200;
+};
+
+export type cancelProjectResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelProjectResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelProjectResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelProjectResponseSuccess = cancelProjectResponse200 & {
+  headers: Headers;
+};
+export type cancelProjectResponseError = (
+  | cancelProjectResponse401
+  | cancelProjectResponse403
+  | cancelProjectResponse404
+  | cancelProjectResponse409
+  | cancelProjectResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelProjectResponse = cancelProjectResponseSuccess | cancelProjectResponseError;
+
+export const getCancelProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/cancel`;
+};
+
+export const cancelProject = async (
+  projectId: string,
+  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
+  options?: RequestInit,
+): Promise<cancelProjectResponse> => {
+  return cognifyFetch<cancelProjectResponse>(getCancelProjectUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transitionProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary List requisitions linked to project
+ */
+export type listProjectRequisitionsResponse200 = {
+  data: ProjectRequisitionListResponse;
+  status: 200;
+};
+
+export type listProjectRequisitionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listProjectRequisitionsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listProjectRequisitionsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listProjectRequisitionsResponseSuccess = listProjectRequisitionsResponse200 & {
+  headers: Headers;
+};
+export type listProjectRequisitionsResponseError = (
+  | listProjectRequisitionsResponse401
+  | listProjectRequisitionsResponse403
+  | listProjectRequisitionsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listProjectRequisitionsResponse =
+  | listProjectRequisitionsResponseSuccess
+  | listProjectRequisitionsResponseError;
+
+export const getListProjectRequisitionsUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/requisitions`;
+};
+
+export const listProjectRequisitions = async (
+  projectId: string,
+  options?: RequestInit,
+): Promise<listProjectRequisitionsResponse> => {
+  return cognifyFetch<listProjectRequisitionsResponse>(getListProjectRequisitionsUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Link requisition to project
+ */
+export type linkProjectRequisitionResponse201 = {
+  data: ProjectRequisitionResponse;
+  status: 201;
+};
+
+export type linkProjectRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type linkProjectRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type linkProjectRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type linkProjectRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type linkProjectRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type linkProjectRequisitionResponseSuccess = linkProjectRequisitionResponse201 & {
+  headers: Headers;
+};
+export type linkProjectRequisitionResponseError = (
+  | linkProjectRequisitionResponse401
+  | linkProjectRequisitionResponse403
+  | linkProjectRequisitionResponse404
+  | linkProjectRequisitionResponse409
+  | linkProjectRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type linkProjectRequisitionResponse =
+  | linkProjectRequisitionResponseSuccess
+  | linkProjectRequisitionResponseError;
+
+export const getLinkProjectRequisitionUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/requisitions`;
+};
+
+export const linkProjectRequisition = async (
+  projectId: string,
+  linkProjectRequisitionRequest: LinkProjectRequisitionRequest,
+  options?: RequestInit,
+): Promise<linkProjectRequisitionResponse> => {
+  return cognifyFetch<linkProjectRequisitionResponse>(getLinkProjectRequisitionUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(linkProjectRequisitionRequest),
+  });
+};
+
+/**
+ * @summary Unlink requisition from project
+ */
+export type unlinkProjectRequisitionResponse200 = {
+  data: ProjectRequisitionResponse;
+  status: 200;
+};
+
+export type unlinkProjectRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type unlinkProjectRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type unlinkProjectRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type unlinkProjectRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type unlinkProjectRequisitionResponseSuccess = unlinkProjectRequisitionResponse200 & {
+  headers: Headers;
+};
+export type unlinkProjectRequisitionResponseError = (
+  | unlinkProjectRequisitionResponse401
+  | unlinkProjectRequisitionResponse403
+  | unlinkProjectRequisitionResponse404
+  | unlinkProjectRequisitionResponse409
+) & {
+  headers: Headers;
+};
+
+export type unlinkProjectRequisitionResponse =
+  | unlinkProjectRequisitionResponseSuccess
+  | unlinkProjectRequisitionResponseError;
+
+export const getUnlinkProjectRequisitionUrl = (projectId: string, requisitionId: string) => {
+  return `/api/projects/${projectId}/requisitions/${requisitionId}`;
+};
+
+export const unlinkProjectRequisition = async (
+  projectId: string,
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<unlinkProjectRequisitionResponse> => {
+  return cognifyFetch<unlinkProjectRequisitionResponse>(
+    getUnlinkProjectRequisitionUrl(projectId, requisitionId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+/**
+ * @summary List project activity
+ */
+export type listProjectActivityResponse200 = {
+  data: ProjectActivityListResponse;
+  status: 200;
+};
+
+export type listProjectActivityResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listProjectActivityResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listProjectActivityResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listProjectActivityResponseSuccess = listProjectActivityResponse200 & {
+  headers: Headers;
+};
+export type listProjectActivityResponseError = (
+  | listProjectActivityResponse401
+  | listProjectActivityResponse403
+  | listProjectActivityResponse404
+) & {
+  headers: Headers;
+};
+
+export type listProjectActivityResponse =
+  | listProjectActivityResponseSuccess
+  | listProjectActivityResponseError;
+
+export const getListProjectActivityUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/activity`;
+};
+
+export const listProjectActivity = async (
+  projectId: string,
+  options?: RequestInit,
+): Promise<listProjectActivityResponse> => {
+  return cognifyFetch<listProjectActivityResponse>(getListProjectActivityUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
 };

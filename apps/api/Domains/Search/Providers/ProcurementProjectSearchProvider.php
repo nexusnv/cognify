@@ -28,6 +28,7 @@ class ProcurementProjectSearchProvider implements SearchProvider
             ->with('owner')
             ->where('tenant_id', $tenant->id);
 
+        $this->applyVisibility($builder, $user, $tenant);
         $this->applySearchConstraint($builder, $normalizedQuery);
         $this->applyOrdering($builder, $normalizedQuery);
 
@@ -39,10 +40,15 @@ class ProcurementProjectSearchProvider implements SearchProvider
                 id: (string) $project->id,
                 title: $project->name,
                 subtitle: $project->number,
-                status: $project->status,
-                href: '/system',
+                status: $project->status?->value ?? (string) $project->status,
+                href: "/projects/{$project->id}",
                 updatedAt: $project->updated_at?->toISOString(),
             ));
+    }
+
+    private function applyVisibility(Builder $builder, User $user, Tenant $tenant): void
+    {
+        $builder->visibleTo($user, $tenant->roleFor($user), $tenant->id);
     }
 
     private function applySearchConstraint(Builder $builder, string $query): void

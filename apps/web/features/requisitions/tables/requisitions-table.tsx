@@ -29,6 +29,22 @@ const requisitionColumns: DataTableColumn<Requisition>[] = [
     cell: (requisition) => <span className="font-medium">{requisition.title}</span>,
   },
   {
+    id: "project",
+    header: "Project",
+    widthClassName: "w-56",
+    cell: (requisition) =>
+      requisition.projectSummary ? (
+        <Link
+          href={`/projects/${requisition.projectSummary.id}`}
+          className="text-muted-foreground underline-offset-4 hover:underline"
+        >
+          {requisition.projectSummary.number}
+        </Link>
+      ) : (
+        <span className="text-muted-foreground">No project</span>
+      ),
+  },
+  {
     id: "status",
     header: "Status",
     widthClassName: "w-36",
@@ -146,6 +162,9 @@ export function RequisitionsTable({
             <span className="font-mono tabular-nums">
               {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
             </span>
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {requisition.projectSummary ? requisition.projectSummary.number : "No project"}
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>{requisition.department ?? "No department"}</span>

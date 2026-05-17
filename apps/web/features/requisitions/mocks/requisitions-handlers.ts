@@ -799,6 +799,19 @@ function buildRequisition(
     neededByDate: values.neededByDate,
     department: values.department,
     projectId: values.projectId,
+    projectSummary: values.projectId === "501"
+      ? {
+          id: "501",
+          number: "PRJ-2026-000501",
+          name: "Office refresh",
+          status: "active",
+          owner: {
+            id: "12",
+            name: "Priya Buyer",
+            email: "priya@example.test",
+          },
+        }
+      : null,
     costCenter: values.costCenter,
     deliveryLocation: values.deliveryLocation,
     currency: totals.currency,
