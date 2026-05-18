@@ -84,9 +84,12 @@ services:
       AWS_ENDPOINT: http://minio:9000
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
     depends_on:
-      - postgres
-      - redis
-      - minio
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - preview
 
@@ -95,15 +98,15 @@ services:
       context: ../..
       dockerfile: infrastructure/docker/web.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://api:8890
+        NEXT_PUBLIC_API_URL: https://${PREVIEW_DOMAIN}
     environment:
-      NEXT_PUBLIC_API_URL: http://api:8890
+      NEXT_PUBLIC_API_URL: https://${PREVIEW_DOMAIN}
     depends_on:
       - api
     labels:
       traefik.enable: "true"
       traefik.docker.network: "proxy"
-      traefik.http.routers.${PREVIEW_NAME}.rule: "Host(\`${PREVIEW_DOMAIN}\`)"
+      traefik.http.routers.${PREVIEW_NAME}.rule: 'Host(`${PREVIEW_DOMAIN}`)'
       traefik.http.routers.${PREVIEW_NAME}.entrypoints: "websecure"
       traefik.http.routers.${PREVIEW_NAME}.tls: "true"
       traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port: "3000"
