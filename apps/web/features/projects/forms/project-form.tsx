@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
 import { Button, NativeSelect, Textarea } from "@cognify/ui";
@@ -48,23 +48,7 @@ export function ProjectForm({
     targetCompletionDate: project?.targetCompletionDate ?? "",
   });
 
-  useEffect(() => {
-    if (mode !== "edit" || !project) return;
-
-    setValues({
-      name: project.name,
-      charter: project.charter ?? "",
-      ownerId: project.owner.id,
-      budgetAmount: project.budgetAmount?.toFixed(2) ?? "",
-      currency: project.currency ?? "MYR",
-      department: project.department ?? "",
-      costCenter: project.costCenter ?? "",
-      targetStartDate: project.targetStartDate ?? "",
-      targetCompletionDate: project.targetCompletionDate ?? "",
-    });
-    setErrors({});
-    setFormError(null);
-  }, [mode, project]);
+  const formKey = mode === "edit" && project ? project.id : "create";
 
   const ownerOptions = useMemo(() => {
     const current = currentUserQuery.data?.data.user;
@@ -164,7 +148,7 @@ export function ProjectForm({
   );
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
       {formError ? (
         <div
           role="alert"
