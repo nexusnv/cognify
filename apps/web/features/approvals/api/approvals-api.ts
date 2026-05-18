@@ -3,6 +3,7 @@ import {
   createApprovalPolicyVersion,
   getApprovalPolicy,
   listApprovalPolicies as listApprovalPoliciesEndpoint,
+  previewApprovalPolicy,
   publishApprovalPolicyVersion,
   retireApprovalPolicyVersion,
   updateApprovalPolicy,
@@ -11,6 +12,8 @@ import type {
   ApprovalPolicy as ApiApprovalPolicy,
   ApprovalPolicyListResponse,
   ApprovalPolicyVersion as ApiApprovalPolicyVersion,
+  ApprovalPreview as ApiApprovalPreview,
+  PreviewApprovalPolicyRequest,
   StoreApprovalPolicyRequest,
   StoreApprovalPolicyVersionRequest,
   UpdateApprovalPolicyRequest,
@@ -81,6 +84,12 @@ export async function retirePolicyVersion(versionId: string) {
   const response = await retireApprovalPolicyVersion(versionId, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return mapApprovalPolicyVersion(response.data.data);
+}
+
+export async function previewApprovalPolicyRoute(values: PreviewApprovalPolicyRequest) {
+  const response = await previewApprovalPolicy(values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalPreview;
 }
 
 export function mapApprovalPolicy(policy: ApiApprovalPolicy): ApprovalPolicy {

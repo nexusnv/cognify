@@ -10,6 +10,7 @@ import type {
   ApprovalPolicyListResponse,
   ApprovalPolicyResponse,
   ApprovalPolicyVersionResponse,
+  ApprovalPreviewResponse,
   AttachmentListResponse,
   AttachmentResponse,
   AttachmentUploadRequest,
@@ -37,6 +38,7 @@ import type {
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
+  PreviewApprovalPolicyRequest,
   ProcurementProjectListResponse,
   ProcurementProjectResponse,
   ProjectActivityListResponse,
@@ -166,6 +168,60 @@ export const createApprovalPolicy = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(storeApprovalPolicyRequest),
+  });
+};
+
+/**
+ * @summary Preview approval policy route
+ */
+export type previewApprovalPolicyResponse200 = {
+  data: ApprovalPreviewResponse;
+  status: 200;
+};
+
+export type previewApprovalPolicyResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type previewApprovalPolicyResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type previewApprovalPolicyResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type previewApprovalPolicyResponseSuccess = previewApprovalPolicyResponse200 & {
+  headers: Headers;
+};
+export type previewApprovalPolicyResponseError = (
+  | previewApprovalPolicyResponse401
+  | previewApprovalPolicyResponse403
+  | previewApprovalPolicyResponse422
+) & {
+  headers: Headers;
+};
+
+export type previewApprovalPolicyResponse =
+  | previewApprovalPolicyResponseSuccess
+  | previewApprovalPolicyResponseError;
+
+export const getPreviewApprovalPolicyUrl = () => {
+  return `/api/approval-policies/preview`;
+};
+
+export const previewApprovalPolicy = async (
+  previewApprovalPolicyRequest: PreviewApprovalPolicyRequest,
+  options?: RequestInit,
+): Promise<previewApprovalPolicyResponse> => {
+  return cognifyFetch<previewApprovalPolicyResponse>(getPreviewApprovalPolicyUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(previewApprovalPolicyRequest),
   });
 };
 
@@ -2268,6 +2324,62 @@ export const updateRequisition = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(updateRequisitionRequest),
   });
+};
+
+/**
+ * @summary Preview requisition approval route
+ */
+export type getRequisitionApprovalPreviewResponse200 = {
+  data: ApprovalPreviewResponse;
+  status: 200;
+};
+
+export type getRequisitionApprovalPreviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRequisitionApprovalPreviewResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getRequisitionApprovalPreviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getRequisitionApprovalPreviewResponseSuccess =
+  getRequisitionApprovalPreviewResponse200 & {
+    headers: Headers;
+  };
+export type getRequisitionApprovalPreviewResponseError = (
+  | getRequisitionApprovalPreviewResponse401
+  | getRequisitionApprovalPreviewResponse403
+  | getRequisitionApprovalPreviewResponse404
+) & {
+  headers: Headers;
+};
+
+export type getRequisitionApprovalPreviewResponse =
+  | getRequisitionApprovalPreviewResponseSuccess
+  | getRequisitionApprovalPreviewResponseError;
+
+export const getGetRequisitionApprovalPreviewUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/approval-preview`;
+};
+
+export const getRequisitionApprovalPreview = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<getRequisitionApprovalPreviewResponse> => {
+  return cognifyFetch<getRequisitionApprovalPreviewResponse>(
+    getGetRequisitionApprovalPreviewUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**

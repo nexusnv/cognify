@@ -1,6 +1,11 @@
 import type {
   ApprovalPolicy as ApiApprovalPolicy,
   ApprovalPolicyVersion as ApiApprovalPolicyVersion,
+  ApprovalPreview as ApiApprovalPreview,
+  ApprovalPreviewContext as ApiApprovalPreviewContext,
+  ApprovalPreviewStage as ApiApprovalPreviewStage,
+  ApprovalPreviewWarning as ApiApprovalPreviewWarning,
+  PreviewApprovalPolicyRequest,
 } from "@cognify/api-client/schemas";
 
 export type ApprovalCompletionRule = "all" | "any";
@@ -48,6 +53,12 @@ export type ApprovalPolicyVersion = Omit<
 export type ApprovalPolicy = Omit<ApiApprovalPolicy, "versions"> & {
   versions: ApprovalPolicyVersion[];
 };
+
+export type ApprovalPreview = ApiApprovalPreview;
+export type ApprovalPreviewContext = ApiApprovalPreviewContext;
+export type ApprovalPreviewStage = ApiApprovalPreviewStage;
+export type ApprovalPreviewWarning = ApiApprovalPreviewWarning;
+export type ApprovalPreviewRequest = PreviewApprovalPolicyRequest;
 
 export type ApprovalPolicyFormValues = {
   name: string;

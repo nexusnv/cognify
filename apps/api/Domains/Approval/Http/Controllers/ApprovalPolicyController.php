@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Approval\Actions\SaveApprovalPolicyDraft;
+use Domains\Approval\Actions\PreviewApprovalPolicy;
+use Domains\Approval\Data\ApprovalContextData;
+use Domains\Approval\Http\Requests\PreviewApprovalPolicyRequest;
 use Domains\Approval\Http\Requests\StoreApprovalPolicyRequest;
 use Domains\Approval\Http\Requests\UpdateApprovalPolicyRequest;
+use Domains\Approval\Http\Resources\ApprovalPreviewResource;
 use Domains\Approval\Http\Resources\ApprovalPolicyResource;
 use Domains\Approval\Models\ApprovalPolicy;
 use Illuminate\Http\JsonResponse;
@@ -50,6 +54,44 @@ class ApprovalPolicyController extends Controller
         $policy = $this->findTenantPolicy($currentTenant, $approvalPolicy);
 
         return new ApprovalPolicyResource($action->handle($this->tenantOrAbort($currentTenant), $request->user(), $request->validated(), $policy));
+    }
+
+    public function preview(
+        PreviewApprovalPolicyRequest $request,
+        CurrentTenant $currentTenant,
+        PreviewApprovalPolicy $action,
+    ): JsonResponse {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $context = ApprovalContextData::fromArray((string) $tenant->id, $request->validated('context', []));
+
+        $candidates = [[
+            'matchedPolicy' => [
+                'id' => 'preview',
+                'tenantId' => (string) $tenant->id,
+                'name' => $request->validated('policyName', 'Preview policy'),
+                'subjectType' => 'requisition',
+                'status' => 'draft',
+            ],
+            'matchedVersion' => [
+                'id' => 'preview',
+                'tenantId' => (string) $tenant->id,
+                'policyId' => 'preview',
+                'versionNumber' => 0,
+                'status' => 'draft',
+                'priority' => (int) $request->validated('priority', 100),
+                'rules' => $request->validated('rules'),
+                'routeTemplate' => $request->validated('routeTemplate'),
+                'slaRules' => $request->validated('slaRules', []),
+            ],
+            'priority' => (int) $request->validated('priority', 100),
+            'rules' => $request->validated('rules'),
+            'routeTemplate' => $request->validated('routeTemplate'),
+            'slaRules' => $request->validated('slaRules', []),
+        ]];
+
+        return (new ApprovalPreviewResource(
+            $action->handle($tenant, $request->user(), $context, $candidates),
+        ))->response();
     }
 
     private function findTenantPolicy(CurrentTenant $currentTenant, int $id): ApprovalPolicy

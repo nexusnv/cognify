@@ -18,13 +18,17 @@ function TestQueryProvider({ children }: { children: React.ReactNode }) {
 }
 
 describe("ApprovalPolicyPreview", () => {
-  it("renders policy route stages without creating approval tasks", () => {
-    render(<ApprovalPolicyPreview values={defaultApprovalPolicyValues} />);
+  it("renders live policy preview data without creating approval tasks", async () => {
+    render(<ApprovalPolicyPreview values={defaultApprovalPolicyValues} />, {
+      wrapper: TestQueryProvider,
+    });
 
-    expect(screen.getByRole("heading", { name: "Policy route preview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Approval preview" })).toBeInTheDocument();
+    expect(await screen.findByText("Standard requisition approval")).toBeInTheDocument();
     expect(screen.getByText("Manager review")).toBeInTheDocument();
-    expect(screen.getByText("Approver")).toBeInTheDocument();
-    expect(screen.getByText("This authoring preview does not create approval tasks.")).toBeInTheDocument();
+    expect(screen.getByText(/Buyer fallback/)).toBeInTheDocument();
+    expect(screen.getByText("Missing required approval context: riskClassification, vendorId")).toBeInTheDocument();
+    expect(screen.getByText("Computed preview only")).toBeInTheDocument();
   });
 
   it("shows empty stage state", () => {
@@ -36,6 +40,7 @@ describe("ApprovalPolicyPreview", () => {
           slaRules: [],
         }}
       />,
+      { wrapper: TestQueryProvider },
     );
 
     expect(screen.getByText("No approval stages configured.")).toBeInTheDocument();

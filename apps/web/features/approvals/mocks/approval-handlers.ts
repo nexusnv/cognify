@@ -1,5 +1,11 @@
 import { http, HttpResponse } from "msw";
-import { approvalPolicyFixture } from "./approval-fixtures";
+import {
+  approvalPolicyFixture,
+  approvalPreviewFixture,
+  fallbackApprovalPreviewFixture,
+  submittedRequisitionApprovalPreviewFixture,
+} from "./approval-fixtures";
+import { requisitionFixtures } from "@/features/requisitions/mocks/requisitions-fixtures";
 import type { ApprovalPolicy } from "../types/approval-view-model";
 
 let policies: ApprovalPolicy[] = [structuredClone(approvalPolicyFixture)];
@@ -20,6 +26,15 @@ export const approvalHandlers = [
     const policy = policies.find((item) => item.id === params.policyId);
     if (!policy) return HttpResponse.json({ message: "Not found" }, { status: 404 });
     return HttpResponse.json({ data: policy });
+  }),
+  http.post("/api/approval-policies/preview", async ({ request }) => {
+    const body = (await request.json()) as { context?: { requisitionId?: string } };
+    const preview =
+      body.context?.requisitionId === "req-fallback"
+        ? fallbackApprovalPreviewFixture
+        : approvalPreviewFixture;
+
+    return HttpResponse.json({ data: preview });
   }),
   http.post("/api/approval-policies", async ({ request }) => {
     const body = (await request.json()) as ApprovalPolicyPayload;
@@ -102,5 +117,17 @@ export const approvalHandlers = [
       policy.status = "draft";
     }
     return HttpResponse.json({ data: version });
+  }),
+  http.get("/api/requisitions/:requisitionId/approval-preview", ({ params }) => {
+    const requisitionStatus =
+      requisitionFixtures.find((item) => item.id === params.requisitionId)?.status ?? "draft";
+    const preview =
+      requisitionStatus === "submitted"
+        ? submittedRequisitionApprovalPreviewFixture
+        : params.requisitionId === "req-fallback"
+          ? fallbackApprovalPreviewFixture
+          : approvalPreviewFixture;
+
+    return HttpResponse.json({ data: preview });
   }),
 ];

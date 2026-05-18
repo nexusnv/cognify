@@ -5,6 +5,7 @@ import {
   createRequisition,
   getRequisition as getRequisitionEndpoint,
   getRequisitionIntakeOptions as getRequisitionIntakeOptionsEndpoint,
+  getRequisitionApprovalPreview as getRequisitionApprovalPreviewEndpoint,
   listRequisitionActivity,
   listRequisitionComments as listRequisitionCommentsEndpoint,
   listRequisitionMentionCandidates as listRequisitionMentionCandidatesEndpoint,
@@ -32,6 +33,7 @@ import type {
   RequisitionTemplate as ApiRequisitionTemplate,
   ReasonedRequisitionActionRequest as ApiReasonedRequisitionActionRequest,
   RequestRequisitionChangesRequest as ApiRequestRequisitionChangesRequest,
+  ApprovalPreview as ApiApprovalPreview,
   UserSummary as ApiUserSummary,
 } from "@cognify/api-client/schemas";
 import type {
@@ -87,6 +89,12 @@ export async function getRequisitionActivity(requisitionId: string) {
   const response = await listRequisitionActivity(requisitionId, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return response.data satisfies ListRequisitionActivity200;
+}
+
+export async function getRequisitionApprovalPreview(requisitionId: string) {
+  const response = await getRequisitionApprovalPreviewEndpoint(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalPreview;
 }
 
 export async function createRequisitionDraft(values: RequisitionFormValues) {

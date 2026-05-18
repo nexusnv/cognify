@@ -70,6 +70,46 @@
                 }
             }
         },
+        "/api/approval-policies/preview": {
+            "post": {
+                "operationId": "previewApprovalPolicy",
+                "summary": "Preview approval policy route",
+                "tags": [
+                    "Approval Policies"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreviewApprovalPolicyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Approval policy preview",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApprovalPreviewResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    }
+                }
+            }
+        },
         "/api/approval-policies/{approvalPolicy}": {
             "get": {
                 "operationId": "getApprovalPolicy",
@@ -1878,6 +1918,38 @@
                 }
             }
         },
+        "/api/requisitions/{requisitionId}/approval-preview": {
+            "get": {
+                "operationId": "getRequisitionApprovalPreview",
+                "summary": "Preview requisition approval route",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/RequisitionId"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Requisition approval preview",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApprovalPreviewResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            }
+        },
         "/api/requisitions/{requisitionId}/activity": {
             "get": {
                 "operationId": "listRequisitionActivity",
@@ -2930,6 +3002,250 @@
                     "published",
                     "retired"
                 ]
+            },
+            "ApprovalPreviewApprover": {
+                "type": "object",
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "userId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true
+            },
+            "ApprovalPreviewCondition": {
+                "type": "object",
+                "required": [
+                    "field",
+                    "operator",
+                    "value",
+                    "matched",
+                    "summary"
+                ],
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "operator": {
+                        "type": "string"
+                    },
+                    "value": {},
+                    "matched": {
+                        "type": "boolean"
+                    },
+                    "summary": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true
+            },
+            "ApprovalPreviewWarning": {
+                "type": "object",
+                "required": [
+                    "code",
+                    "message"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ApprovalPreviewStage": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "completionRule",
+                    "approvers",
+                    "fallbackApprovers",
+                    "warnings"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "completionRule": {
+                        "type": "string",
+                        "enum": [
+                            "all",
+                            "any"
+                        ]
+                    },
+                    "approvers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPreviewApprover"
+                        }
+                    },
+                    "fallbackApprovers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPreviewApprover"
+                        }
+                    },
+                    "dueAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "warnings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPreviewWarning"
+                        }
+                    }
+                }
+            },
+            "ApprovalPreview": {
+                "type": "object",
+                "required": [
+                    "matchedPolicy",
+                    "matchedVersion",
+                    "matchedConditions",
+                    "stages",
+                    "warnings",
+                    "estimatedDueAt",
+                    "createsTasks"
+                ],
+                "properties": {
+                    "matchedPolicy": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "tenantId",
+                            "name",
+                            "subjectType",
+                            "status"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "tenantId": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "subjectType": {
+                                "type": "string"
+                            },
+                            "status": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "matchedVersion": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "tenantId",
+                            "policyId",
+                            "versionNumber",
+                            "status",
+                            "priority",
+                            "rules",
+                            "routeTemplate",
+                            "slaRules"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "tenantId": {
+                                "type": "string"
+                            },
+                            "policyId": {
+                                "type": "string"
+                            },
+                            "versionNumber": {
+                                "type": "integer"
+                            },
+                            "status": {
+                                "type": "string"
+                            },
+                            "priority": {
+                                "type": "integer"
+                            },
+                            "rules": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/ApprovalPolicyRule"
+                                }
+                            },
+                            "routeTemplate": {
+                                "$ref": "#/components/schemas/ApprovalRouteTemplate"
+                            },
+                            "slaRules": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/ApprovalSlaRule"
+                                }
+                            }
+                        }
+                    },
+                    "matchedConditions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPreviewCondition"
+                        }
+                    },
+                    "stages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPreviewStage"
+                        }
+                    },
+                    "warnings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPreviewWarning"
+                        }
+                    },
+                    "estimatedDueAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "createsTasks": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "ApprovalPreviewResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ApprovalPreview"
+                    }
+                }
             },
             "ApprovalRouteApproverTemplate": {
                 "type": "object",
@@ -5091,6 +5407,78 @@
                         "items": {
                             "$ref": "#/components/schemas/ApprovalSlaRule"
                         }
+                    }
+                }
+            },
+            "ApprovalPreviewContext": {
+                "type": "object",
+                "properties": {
+                    "requisitionId": {
+                        "type": "string"
+                    },
+                    "requesterId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "department": {
+                        "type": "string"
+                    },
+                    "costCenter": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "lineItemCategories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "riskClassification": {
+                        "type": "string"
+                    },
+                    "vendorId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PreviewApprovalPolicyRequest": {
+                "type": "object",
+                "required": [
+                    "rules",
+                    "routeTemplate"
+                ],
+                "properties": {
+                    "policyName": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "rules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalPolicyRule"
+                        }
+                    },
+                    "routeTemplate": {
+                        "$ref": "#/components/schemas/ApprovalRouteTemplate"
+                    },
+                    "slaRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApprovalSlaRule"
+                        }
+                    },
+                    "context": {
+                        "$ref": "#/components/schemas/ApprovalPreviewContext"
                     }
                 }
             },

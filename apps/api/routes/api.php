@@ -14,6 +14,7 @@ use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyVersionController;
+use Domains\Approval\Http\Controllers\RequisitionApprovalController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
@@ -55,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::get('/approval-policies', [ApprovalPolicyController::class, 'index']);
         Route::post('/approval-policies', [ApprovalPolicyController::class, 'store']);
+        Route::post('/approval-policies/preview', [ApprovalPolicyController::class, 'preview']);
         Route::get('/approval-policies/{approvalPolicy}', [ApprovalPolicyController::class, 'show']);
         Route::patch('/approval-policies/{approvalPolicy}', [ApprovalPolicyController::class, 'update']);
         Route::post('/approval-policies/{approvalPolicy}/versions', [ApprovalPolicyVersionController::class, 'store']);
@@ -83,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/requisitions', [RequisitionController::class, 'index']);
         Route::post('/requisitions', [RequisitionController::class, 'store']);
         Route::get('/requisitions/{requisition}', [RequisitionController::class, 'show']);
+        Route::get('/requisitions/{requisition}/approval-preview', [RequisitionApprovalController::class, 'preview']);
         Route::patch('/requisitions/{requisition}', [RequisitionController::class, 'update']);
         Route::post('/requisitions/{requisition}/apply-template', [RequisitionController::class, 'applyTemplate']);
         Route::post('/requisitions/{requisition}/submit', [RequisitionController::class, 'submit']);

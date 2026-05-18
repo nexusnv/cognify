@@ -1,11 +1,9 @@
-import type { ApprovalRouteStage, ApprovalSlaRule } from "../types/approval-view-model";
+import type { ApprovalPreviewStage } from "../types/approval-view-model";
 
 export function ApprovalStageMap({
   stages,
-  slaRules = [],
 }: {
-  stages: ApprovalRouteStage[];
-  slaRules?: ApprovalSlaRule[];
+  stages: ApprovalPreviewStage[];
 }) {
   if (stages.length === 0) {
     return <p className="text-sm text-muted-foreground">No approval stages configured.</p>;
@@ -14,7 +12,12 @@ export function ApprovalStageMap({
   return (
     <ol className="space-y-3">
       {stages.map((stage, index) => {
-        const sla = slaRules.find((rule) => rule.stage === stage.name);
+        const approverLabels = stage.approvers
+          .map((approver) => approver.label ?? approver.role ?? approver.userId ?? approver.type)
+          .join(", ");
+        const fallbackLabels = stage.fallbackApprovers
+          .map((approver) => approver.label ?? approver.role ?? approver.userId ?? approver.type)
+          .join(", ");
         return (
           <li key={`${stage.name}-${index}`} className="rounded-md border p-3">
             <div className="flex items-center justify-between gap-3">
@@ -22,13 +25,22 @@ export function ApprovalStageMap({
               <span className="text-xs uppercase text-muted-foreground">{stage.completionRule}</span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              {stage.approvers.map((approver) => approver.label ?? approver.role ?? approver.type).join(", ")}
+              <span className="block">{approverLabels || "No approvers"}</span>
+              <span className="block">
+                Fallback: {fallbackLabels || "No fallback approver configured"}
+              </span>
             </p>
-            {sla ? (
+            {stage.dueAt ? (
               <p className="mt-2 text-xs text-muted-foreground">
-                Due in {sla.dueInHours}h
-                {sla.escalateAfterHours ? `, escalate after ${sla.escalateAfterHours}h` : ""}
+                Due at {stage.dueAt}
               </p>
+            ) : null}
+            {stage.warnings.length > 0 ? (
+              <ul className="mt-2 space-y-1 text-xs text-amber-700">
+                {stage.warnings.map((warning) => (
+                  <li key={`${stage.name}-${warning.code}`}>{warning.message}</li>
+                ))}
+              </ul>
             ) : null}
           </li>
         );

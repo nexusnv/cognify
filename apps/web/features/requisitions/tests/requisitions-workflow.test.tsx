@@ -165,7 +165,11 @@ describe("requisitions workflow", () => {
     expect(within(panel).getByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
 
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
-      "Approval readiness",
+      "Approval summary",
+    );
+    expect(await screen.findByText("Standard requisition approval")).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
+      "Standard requisition approval",
     );
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
       "Quotation readiness",

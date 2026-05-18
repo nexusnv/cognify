@@ -12,6 +12,7 @@ import { RequisitionActionDialog } from "../components/requisition-action-dialog
 import { RequisitionActivityTimeline } from "../components/requisition-activity-timeline";
 import { RequisitionComments } from "../components/requisition-comments";
 import { RequisitionCorrectionPanel } from "../components/requisition-correction-panel";
+import { RequisitionApprovalSummary } from "../components/requisition-approval-summary";
 import { RequisitionStatusBadge } from "../components/requisition-status-badge";
 import { SubmissionChecklist } from "../components/submission-checklist";
 import { useRequisition, useRequisitionActivity } from "../hooks/use-requisition";
@@ -230,13 +231,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
               lineItems: requisition.lineItems,
             }}
           />
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Approval readiness</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Required request data, evidence, and change history are in place for later approval
-              routing.
-            </p>
-          </section>
+          <RequisitionApprovalSummary requisitionId={requisition.id} />
           <section className="rounded-md border p-4">
             <h2 className="text-base font-semibold">Quotation readiness</h2>
             <p className="mt-2 text-sm text-muted-foreground">
