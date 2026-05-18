@@ -58,8 +58,8 @@ jobs:
               git clone https://github.com/${{ github.repository }} .
             fi
 
-            git fetch origin +refs/heads/*:refs/remotes/origin/* \
-              +refs/pull/${PR_NUMBER}/head:refs/remotes/origin/${PREVIEW_NAME}
+            git fetch origin '+refs/heads/*:refs/remotes/origin/*' \
+              "+refs/pull/${PR_NUMBER}/head:refs/remotes/origin/${PREVIEW_NAME}"
             git checkout -B "${PREVIEW_NAME}" "refs/remotes/origin/${PREVIEW_NAME}"
             git reset --hard "${{ github.event.pull_request.head.sha }}"
 
