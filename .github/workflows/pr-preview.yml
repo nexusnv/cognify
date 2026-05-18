@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review, closed]
 
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   preview:
     runs-on: ubuntu-latest
@@ -26,14 +30,29 @@ jobs:
           commands: |
             set -euo pipefail
 
-            PR_NUMBER=${{ github.event.pull_request.number }}
+            PR_NUMBER="${{ github.event.pull_request.number }}"
             PREVIEW_NAME="preview-${PR_NUMBER}"
-            PREVIEW_DOMAIN="pr-${PR_NUMBER}.${{ secrets.PREVIEW_BASE_DOMAIN }}"
+            PREVIEW_DOMAIN="pr-${PR_NUMBER}-preview.${{ secrets.PREVIEW_BASE_DOMAIN }}"
             COMPOSE_FILE="infrastructure/docker/docker-compose.pr-preview.yml"
-            REMOTE_PATH="${{ secrets.REMOTE_APP_PATH }}"
+            REMOTE_ROOT="${{ secrets.REMOTE_PREVIEW_ROOT }}"
+            REMOTE_PATH="${REMOTE_ROOT}/${PREVIEW_NAME}"
 
             mkdir -p "$REMOTE_PATH"
             cd "$REMOTE_PATH"
+
+            export PREVIEW_NAME
+            export PREVIEW_DOMAIN
+
+            if [ "${{ github.event.action }}" = "closed" ]; then
+              if [ -f "$COMPOSE_FILE" ]; then
+                docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" down --volumes --remove-orphans || true
+              else
+                echo "Preview compose file was not found at ${REMOTE_PATH}/${COMPOSE_FILE}; nothing to tear down."
+              fi
+
+              rm -rf "$REMOTE_PATH"
+              exit 0
+            fi
 
             if [ ! -d .git ]; then
               git clone https://github.com/${{ github.repository }} .
@@ -42,21 +61,13 @@ jobs:
             git fetch origin +refs/heads/*:refs/remotes/origin/* \
               +refs/pull/${PR_NUMBER}/head:refs/remotes/origin/${PREVIEW_NAME}
             git checkout -B "${PREVIEW_NAME}" "refs/remotes/origin/${PREVIEW_NAME}"
-            git reset --hard "${{ github.sha }}"
+            git reset --hard "${{ github.event.pull_request.head.sha }}"
 
             if ! docker network inspect proxy >/dev/null 2>&1; then
               docker network create proxy
             fi
 
-            if [ "${{ github.event.action }}" = "closed" ]; then
-              docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" down --volumes --remove-orphans || true
-              exit 0
-            fi
-
-            export PREVIEW_NAME
-            export PREVIEW_DOMAIN
-
-            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" build --pull --build-arg NEXT_PUBLIC_API_URL=http://api:8890
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" build --pull
             docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" up -d
             docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" ps
 

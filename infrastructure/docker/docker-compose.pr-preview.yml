@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -67,7 +65,7 @@ services:
     environment:
       APP_ENV: preview
       APP_DEBUG: "true"
-      APP_URL: http://api:8890
+      APP_URL: https://${PREVIEW_DOMAIN}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -98,18 +96,17 @@ services:
       context: ../..
       dockerfile: infrastructure/docker/web.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://${PREVIEW_DOMAIN}
+        COGNIFY_API_URL: http://api:8890
     environment:
-      NEXT_PUBLIC_API_URL: https://${PREVIEW_DOMAIN}
+      COGNIFY_API_URL: http://api:8890
     depends_on:
       - api
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: "proxy"
-      traefik.http.routers.${PREVIEW_NAME}.rule: 'Host(`${PREVIEW_DOMAIN}`)'
-      traefik.http.routers.${PREVIEW_NAME}.entrypoints: "websecure"
-      traefik.http.routers.${PREVIEW_NAME}.tls: "true"
-      traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port: "3000"
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_DOMAIN}`)"
+      - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=web"
+      - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
     networks:
       - preview
       - proxy
