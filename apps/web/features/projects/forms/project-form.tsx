@@ -37,6 +37,7 @@ export function ProjectForm({
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [values, setValues] = useState<ProjectFormValues>(() => initialProjectFormValues(project));
+  const formKey = mode === "edit" && project ? project.id : "create";
 
   const ownerOptions = useMemo(() => {
     const current = currentUserQuery.data?.data.user;
@@ -136,7 +137,7 @@ export function ProjectForm({
   );
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
       {formError ? (
         <div
           role="alert"

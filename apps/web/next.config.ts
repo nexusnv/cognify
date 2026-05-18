@@ -5,7 +5,7 @@ const apiUrl = process.env.COGNIFY_API_URL ?? "http://127.0.0.1:8890";
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: resolve(process.cwd(), "../.."),
+    root: resolve(__dirname, "../.."),
   },
   async rewrites() {
     return [

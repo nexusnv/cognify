@@ -208,17 +208,17 @@ Task terminal states should be immutable. Corrections should create new approval
 
 | Transition | Trigger | Guardrails | Audit event | Notification |
 | --- | --- | --- | --- | --- |
-| preview policy | Requester, buyer, or admin previews route. | Actor can view or submit the requisition; tenant ownership; policy conditions use visible fields only. | Optional `approval.policy_previewed` if durable preview logging is needed. | None by default. |
-| configure policy draft | Admin creates or edits policy. | Admin permission; valid condition/action shape; approvers/fallbacks are same-tenant users or valid role resolvers. | `approval_policy.draft_saved` | None. |
-| publish policy version | Admin publishes active policy. | Valid version, no invalid approver references, effective date not conflicting with active version. | `approval_policy.published` | Optional admin notification only if useful. |
-| route requisition | Submitted requisition is routed. | Requisition is submitted; actor/system has route permission; matching policy version exists or fallback no-approval rule applies. | `approval_instance.created`, `requisition.pending_approval` | First active approvers. |
-| activate next stage | Prior stage completes. | Sequential order, parent instance pending, stage not terminal. | `approval_stage.activated` | New stage approvers. |
-| approve task | Assigned approver or delegate approves. | Task active; actor authorized; optimistic lock/version matches; comment optional based on policy. | `approval_task.approved` | Requester/buyer on final approval; next approvers when stage advances. |
-| reject task | Assigned approver or delegate rejects. | Reason required; task active; actor authorized; lock/version matches. | `approval_task.rejected`, `requisition.rejected` | Requester, buyer, admins as configured. |
-| request changes | Assigned approver or delegate requests changes. | Reason required; requested fields optional but structured; task active; actor authorized. | `approval_task.changes_requested`, `requisition.changes_requested` | Requester. |
-| delegate task | Assignee delegates task. | Delegate is same tenant, can approve under policy, not the requester when policy forbids self-approval, within effective dates. | `approval_task.delegated` | Delegate and original assignee. |
-| escalate task | SLA job or admin-triggered escalation. | Task overdue; fallback approver exists or escalation policy defines target; idempotent job. | `approval_task.escalated` | Fallback approver, original approver, buyer/admin as configured. |
-| cancel approval | Parent requisition is withdrawn/cancelled or rerouted. | Parent transition authorized; instance pending. | `approval_instance.cancelled` | Open task assignees. |
+| preview policy | Requester, buyer, or admin previews route. | Actor can view or submit the requisition; tenant ownership; policy conditions use visible fields only. | Optional `approval.policy.previewed` if durable preview logging is needed. | None by default. |
+| configure policy draft | Admin creates or edits policy. | Admin permission; valid condition/action shape; approvers/fallbacks are same-tenant users or valid role resolvers. | `approval.policy.created`, `approval.policy.updated` | None. |
+| publish policy version | Admin publishes active policy. | Valid version, no invalid approver references, effective date not conflicting with active version. | `approval.policy.published` | Optional admin notification only if useful. |
+| route requisition | Submitted requisition is routed. | Requisition is submitted; actor/system has route permission; matching policy version exists or fallback no-approval rule applies. | `approval.instance.created`, `requisition.pending_approval` | First active approvers. |
+| activate next stage | Prior stage completes. | Sequential order, parent instance pending, stage not terminal. | `approval.stage.activated` | New stage approvers. |
+| approve task | Assigned approver or delegate approves. | Task active; actor authorized; optimistic lock/version matches; comment optional based on policy. | `approval.task.approved` | Requester/buyer on final approval; next approvers when stage advances. |
+| reject task | Assigned approver or delegate rejects. | Reason required; task active; actor authorized; lock/version matches. | `approval.task.rejected`, `requisition.rejected` | Requester, buyer, admins as configured. |
+| request changes | Assigned approver or delegate requests changes. | Reason required; requested fields optional but structured; task active; actor authorized. | `approval.task.changes_requested`, `requisition.changes_requested` | Requester. |
+| delegate task | Assignee delegates task. | Delegate is same tenant, can approve under policy, not the requester when policy forbids self-approval, within effective dates. | `approval.task.delegated` | Delegate and original assignee. |
+| escalate task | SLA job or admin-triggered escalation. | Task overdue; fallback approver exists or escalation policy defines target; idempotent job. | `approval.task.escalated` | Fallback approver, original approver, buyer/admin as configured. |
+| cancel approval | Parent requisition is withdrawn/cancelled or rerouted. | Parent transition authorized; instance pending. | `approval.instance.cancelled` | Open task assignees. |
 
 ### 6.6 Completion Rules
 
@@ -527,7 +527,7 @@ Policy routes are admin-only unless a future read-only policy viewer role is exp
 - `POST /api/requisitions/{requisitionId}/route-approval`
 - `GET /api/requisitions/{requisitionId}/approval-summary`
 
-Routing should be idempotent for an already-routed requisition when the active approval instance is still pending. It should not create duplicate active instances.
+Routing should be idempotent: when an active approval instance for the requisition is still in a pending state, return the existing pending instance (HTTP 200) and do NOT create a new instance. Only treat a duplicate route attempt as a conflict (HTTP 409) when the existing instance is in a terminal or superseded state.
 
 ### 10.3 Approval Task Routes
 
@@ -661,27 +661,27 @@ Permission rules:
 
 Approval Orchestration is compliance-sensitive. These events should be auditable:
 
-- `approval_policy.created`
-- `approval_policy.updated`
-- `approval_policy.published`
-- `approval_policy.retired`
-- `approval_policy.previewed` only if durable preview logging is enabled
-- `approval_instance.created`
-- `approval_stage.activated`
-- `approval_task.assigned`
-- `approval_task.viewed`
-- `approval_task.approved`
-- `approval_task.rejected`
-- `approval_task.changes_requested`
-- `approval_task.delegated`
-- `approval_task.escalated`
-- `approval_task.cancelled`
-- `approval_delegation.created`
-- `approval_delegation.cancelled`
-- `approval_instance.approved`
-- `approval_instance.rejected`
-- `approval_instance.changes_requested`
-- `approval_instance.cancelled`
+- `approval.policy.created`
+- `approval.policy.updated`
+- `approval.policy.published`
+- `approval.policy.retired`
+- `approval.policy.previewed` only if durable preview logging is enabled
+- `approval.instance.created`
+- `approval.stage.activated`
+- `approval.task.assigned`
+- `approval.task.viewed`
+- `approval.task.approved`
+- `approval.task.rejected`
+- `approval.task.changes_requested`
+- `approval.task.delegated`
+- `approval.task.escalated`
+- `approval.task.cancelled`
+- `approval.delegation.created`
+- `approval.delegation.cancelled`
+- `approval.instance.approved`
+- `approval.instance.rejected`
+- `approval.instance.changes_requested`
+- `approval.instance.cancelled`
 - `requisition.pending_approval`
 - `requisition.approved`
 - `requisition.rejected`
