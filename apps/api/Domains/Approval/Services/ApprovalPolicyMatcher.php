@@ -34,12 +34,13 @@ class ApprovalPolicyMatcher
         });
 
         $fallback = null;
+        $missingContextFields = [];
         foreach ($candidates as $candidate) {
             $rules = $candidate['rules'] ?? [];
 
             if ($rules === []) {
                 $fallback ??= $candidate;
-                continue;
+                break;
             }
 
             $evaluation = $this->evaluateRules($context, $rules);
@@ -53,6 +54,11 @@ class ApprovalPolicyMatcher
                     'warnings' => [],
                 ];
             }
+
+            $missingContextFields = array_values(array_unique(array_merge(
+                $missingContextFields,
+                $evaluation['missingContextFields'],
+            )));
         }
 
         $selected = $fallback ?? ($candidates[0] ?? null);
@@ -65,6 +71,15 @@ class ApprovalPolicyMatcher
                 'message' => 'No policy rules matched; using fallback policy version.',
             ];
             $matchedConditions = [];
+            if ($missingContextFields !== []) {
+                $warnings[] = [
+                    'code' => 'missing_context',
+                    'message' => sprintf(
+                        'Missing required approval context affected policy matching: %s',
+                        implode(', ', $missingContextFields),
+                    ),
+                ];
+            }
         } else {
             $evaluation = $this->evaluateRules($context, $selected['rules'] ?? []);
             $matchedConditions = $evaluation['conditions'];
@@ -86,12 +101,17 @@ class ApprovalPolicyMatcher
 
     /**
      * @param array<int, array<string, mixed>> $rules
-     * @return array{matched: bool, conditions: array<int, array<string, mixed>>}
+     * @return array{
+     *   matched: bool,
+     *   conditions: array<int, array<string, mixed>>,
+     *   missingContextFields: array<int, string>
+     * }
      */
     private function evaluateRules(ApprovalContextData $context, array $rules): array
     {
         $conditions = [];
         $matched = true;
+        $missingContextFields = [];
 
         foreach ($rules as $rule) {
             $actualValue = $this->resolveFieldValue($context, (string) ($rule['field'] ?? ''));
@@ -114,11 +134,16 @@ class ApprovalPolicyMatcher
             if (! $ruleMatched) {
                 $matched = false;
             }
+
+            if ($actualValue === null && in_array((string) ($rule['field'] ?? ''), ['riskClassification', 'vendorId'], true)) {
+                $missingContextFields[] = (string) $rule['field'];
+            }
         }
 
         return [
             'matched' => $matched,
             'conditions' => $conditions,
+            'missingContextFields' => array_values(array_unique($missingContextFields)),
         ];
     }
 

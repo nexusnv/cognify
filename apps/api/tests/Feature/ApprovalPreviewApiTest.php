@@ -179,6 +179,67 @@ class ApprovalPreviewApiTest extends TestCase
             ->assertJsonPath('data.warnings.1.message', 'Missing required approval context: riskClassification, vendorId');
     }
 
+    public function test_preview_reports_missing_context_when_fallback_policy_is_selected(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester, [
+            'department' => 'Operations',
+            'cost_center' => 'OPS-220',
+        ]);
+
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 100,
+            'rules' => [
+                ['field' => 'riskClassification', 'operator' => 'equals', 'value' => 'high'],
+                ['field' => 'vendorId', 'operator' => 'equals', 'value' => 'vendor-42'],
+            ],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Risk review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'approver', 'label' => 'Approver'],
+                        ],
+                        'fallbackApprovers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Risk review', 'dueInHours' => 24],
+            ],
+        ]);
+        $fallbackVersion = $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 1,
+            'rules' => [],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Fallback buyer review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}/approval-preview");
+
+        $response->assertOk()
+            ->assertJsonPath('data.matchedVersion.id', (string) $fallbackVersion->id)
+            ->assertJsonPath('data.warnings.0.code', 'fallback_policy')
+            ->assertJsonPath('data.warnings.1.code', 'missing_context')
+            ->assertJsonPath(
+                'data.warnings.1.message',
+                'Missing required approval context affected policy matching: riskClassification, vendorId',
+            );
+    }
+
     public function test_preview_uses_fallback_policy_when_no_rule_matches(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
