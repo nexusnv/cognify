@@ -218,6 +218,7 @@ export const approvalTaskFixtures: ApprovalTask[] = [
     lockVersion: 0,
     createdAt: "2026-05-18T00:00:00.000Z",
     updatedAt: "2026-05-18T00:00:00.000Z",
+    metadata: {},
     permissions: {
       canView: true,
       canApprove: true,

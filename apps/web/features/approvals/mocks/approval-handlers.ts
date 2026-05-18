@@ -12,7 +12,7 @@ import {
   submittedRequisitionApprovalPreviewFixture,
 } from "./approval-fixtures";
 import { requisitionFixtures } from "@/features/requisitions/mocks/requisitions-fixtures";
-import type { ApprovalPolicy } from "../types/approval-view-model";
+import type { ApprovalDelegation, ApprovalPolicy } from "../types/approval-view-model";
 
 let policies: ApprovalPolicy[] = [structuredClone(approvalPolicyFixture)];
 let tasks = structuredClone(approvalTaskFixtures);
@@ -138,11 +138,11 @@ export const approvalHandlers = [
       );
     }
 
-    const delegation = {
+    const delegation: ApprovalDelegation = {
       ...structuredClone(approvalDelegationFixtures[0]!),
       id: `delegation-${delegations.length + 1}`,
       delegateId: String(body.delegateId),
-      scope: body.scope ?? "task_specific",
+      scope: (body.scope ?? "task_specific") as ApprovalDelegation["scope"],
       startsAt: body.startsAt,
       endsAt: body.endsAt,
       reason: body.reason,

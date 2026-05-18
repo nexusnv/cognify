@@ -6,6 +6,8 @@ import type {
   ApprovalPreviewStage as ApiApprovalPreviewStage,
   ApprovalPreviewWarning as ApiApprovalPreviewWarning,
   ApprovalSummary as ApiApprovalSummary,
+  ApprovalDelegation as ApiApprovalDelegation,
+  ApprovalSlaSummary as ApiApprovalSlaSummary,
   ApprovalTask as ApiApprovalTask,
   ApprovalTaskQueueResponse as ApiApprovalTaskQueueResponse,
   PreviewApprovalPolicyRequest,
@@ -65,6 +67,8 @@ export type ApprovalPreviewRequest = PreviewApprovalPolicyRequest;
 export type ApprovalTask = ApiApprovalTask;
 export type ApprovalTaskQueueResponse = ApiApprovalTaskQueueResponse;
 export type ApprovalSummary = ApiApprovalSummary;
+export type ApprovalDelegation = ApiApprovalDelegation;
+export type ApprovalSlaSummary = ApiApprovalSlaSummary;
 export type ApprovalTaskScope =
   | "assigned_to_me"
   | "overdue"

@@ -2,11 +2,25 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Models\User;
+use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalDelegation;
+use Domains\Approval\Models\ApprovalInstance;
+use Domains\Approval\Models\ApprovalPolicy;
+use Domains\Approval\Models\ApprovalPolicyVersion;
+use Domains\Approval\Models\ApprovalStage;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\States\ApprovalDelegationStatus;
+use Domains\Approval\States\ApprovalInstanceStatus;
+use Domains\Approval\States\ApprovalPolicyStatus;
+use Domains\Approval\States\ApprovalPolicyVersionStatus;
+use Domains\Approval\States\ApprovalStageStatus;
+use Domains\Approval\States\ApprovalTaskStatus;
 use Domains\Award\Models\Award;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
+use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 
 class DemoRoadmapPreviewSeeder
@@ -26,6 +40,8 @@ class DemoRoadmapPreviewSeeder
         $tenant = $context->tenants->get('acme');
         $admin = $context->users->get('admin');
         $approver = $context->users->get('finance');
+        $buyer = $context->users->get('buyer');
+        $requester = $context->users->get('requester');
 
         $vendorRows = [
             'atlas' => ['Atlas Office Supplies', 'preferred', 'Office supplies', 'low'],
@@ -95,21 +111,47 @@ class DemoRoadmapPreviewSeeder
         );
         $context->quotations->put('northstar-office', $quotation);
 
-        $approvalTask = ApprovalTask::query()->updateOrCreate(
+        $policyVersion = $this->seedApprovalPolicy($tenant, $admin, $buyer);
+        $this->seedApprovalWorkflow(
+            context: $context,
+            key: 'security-audit-approval',
+            requisition: $context->requisitions->get('security-audit'),
+            policyVersion: $policyVersion,
+            assignee: $approver,
+            stageStatus: ApprovalStageStatus::Active,
+            taskStatus: ApprovalTaskStatus::Active,
+            assignedAt: '2026-05-18 09:00:00',
+            dueAt: self::APPROVAL_DUE_AT,
+        );
+
+        $delegation = ApprovalDelegation::query()->updateOrCreate(
             [
                 'tenant_id' => $tenant->id,
-                'subject_type' => Quotation::class,
-                'subject_id' => $quotation->id,
-                'title' => 'Finance approval for office furniture package',
+                'delegator_id' => $approver->id,
+                'delegate_id' => $buyer->id,
+                'scope' => 'task_specific',
             ],
             [
-                'approver_id' => $approver->id,
-                'status' => 'pending',
-                'due_at' => self::APPROVAL_DUE_AT,
-                'metadata' => ['stage' => 'finance'],
+                'starts_at' => '2026-05-18 00:00:00',
+                'ends_at' => '2026-05-31 23:59:59',
+                'status' => ApprovalDelegationStatus::Active,
+                'reason' => 'Demo coverage for delegated approval authority.',
+                'created_by' => $approver->id,
             ],
         );
-        $context->approvalTasks->put('office-finance', $approvalTask);
+        $this->seedApprovalWorkflow(
+            context: $context,
+            key: 'office-refresh-delegated',
+            requisition: $context->requisitions->get('office-refresh'),
+            policyVersion: $policyVersion,
+            assignee: $buyer,
+            originalAssignee: $approver,
+            stageStatus: ApprovalStageStatus::Active,
+            taskStatus: ApprovalTaskStatus::Active,
+            assignedAt: '2026-05-17 09:00:00',
+            dueAt: '2026-05-18 12:00:00',
+            metadata: ['delegationId' => (string) $delegation->id],
+        );
 
         $award = Award::query()->updateOrCreate(
             ['tenant_id' => $tenant->id, 'number' => 'AWD-2026-0001'],
@@ -198,21 +240,34 @@ class DemoRoadmapPreviewSeeder
         );
         $context->quotations->put('harbor-warehouse', $quotation);
 
-        $approvalTask = ApprovalTask::query()->updateOrCreate(
-            [
-                'tenant_id' => $tenant->id,
-                'subject_type' => Quotation::class,
-                'subject_id' => $quotation->id,
-                'title' => 'Buyer review for warehouse supply bundle',
-            ],
-            [
-                'approver_id' => $owner->id,
-                'status' => 'pending',
-                'due_at' => self::APPROVAL_DUE_AT,
-                'metadata' => ['stage' => 'buyer_review'],
-            ],
+        $policyVersion = $this->seedApprovalPolicy($tenant, $owner, $owner);
+        $this->seedApprovalWorkflow(
+            context: $context,
+            key: 'warehouse-approved',
+            requisition: $context->requisitions->get('warehouse-supplies'),
+            policyVersion: $policyVersion,
+            assignee: $owner,
+            stageStatus: ApprovalStageStatus::Completed,
+            taskStatus: ApprovalTaskStatus::Approved,
+            assignedAt: '2026-05-15 09:00:00',
+            dueAt: self::APPROVAL_DUE_AT,
+            decidedAt: self::DECIDED_AT,
+            decision: 'approved',
         );
-        $context->approvalTasks->put('warehouse-buyer-review', $approvalTask);
+        $this->seedApprovalWorkflow(
+            context: $context,
+            key: 'fleet-rejected',
+            requisition: $context->requisitions->get('fleet-maintenance'),
+            policyVersion: $policyVersion,
+            assignee: $owner,
+            stageStatus: ApprovalStageStatus::Completed,
+            taskStatus: ApprovalTaskStatus::Rejected,
+            assignedAt: '2026-05-15 09:00:00',
+            dueAt: self::APPROVAL_DUE_AT,
+            decidedAt: self::DECIDED_AT,
+            decision: 'rejected',
+            decisionReason: 'Demo rejection for budget review.',
+        );
 
         $award = Award::query()->updateOrCreate(
             ['tenant_id' => $tenant->id, 'number' => 'AWD-2026-1001'],
@@ -229,5 +284,130 @@ class DemoRoadmapPreviewSeeder
             ],
         );
         $context->awards->put('warehouse-award', $award);
+    }
+
+    private function seedApprovalPolicy(Tenant $tenant, User $actor, User $fallbackApprover): ApprovalPolicyVersion
+    {
+        $policy = ApprovalPolicy::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'name' => 'Demo requisition approval'],
+            [
+                'description' => 'Seeded approval route for the local demo workspace.',
+                'subject_type' => 'requisition',
+                'status' => ApprovalPolicyStatus::Active,
+                'created_by' => $actor->id,
+                'updated_by' => $actor->id,
+            ],
+        );
+
+        return ApprovalPolicyVersion::query()->updateOrCreate(
+            ['approval_policy_id' => $policy->id, 'version_number' => 1],
+            [
+                'tenant_id' => $tenant->id,
+                'subject_type' => 'requisition',
+                'status' => ApprovalPolicyVersionStatus::Published,
+                'priority' => 100,
+                'rules' => [['field' => 'amount', 'operator' => 'gte', 'value' => 1000]],
+                'route_template' => [
+                    'stages' => [
+                        [
+                            'name' => 'Manager review',
+                            'completionRule' => 'all',
+                            'approvers' => [['type' => 'role', 'role' => 'approver', 'label' => 'Approver']],
+                            'fallbackApprovers' => [
+                                ['type' => 'user', 'userId' => (string) $fallbackApprover->id, 'label' => $fallbackApprover->name],
+                            ],
+                        ],
+                    ],
+                ],
+                'sla_rules' => [['stage' => 'Manager review', 'durationMinutes' => 2880]],
+                'published_by' => $actor->id,
+                'published_at' => '2026-05-15 09:00:00',
+            ],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $metadata
+     */
+    private function seedApprovalWorkflow(
+        DemoSeedContext $context,
+        string $key,
+        Requisition $requisition,
+        ApprovalPolicyVersion $policyVersion,
+        User $assignee,
+        ApprovalStageStatus $stageStatus,
+        ApprovalTaskStatus $taskStatus,
+        string $assignedAt,
+        string $dueAt,
+        ?User $originalAssignee = null,
+        ?string $decidedAt = null,
+        ?string $decision = null,
+        ?string $decisionReason = null,
+        array $metadata = [],
+    ): void {
+        $completedAt = in_array($taskStatus, [ApprovalTaskStatus::Approved, ApprovalTaskStatus::Rejected, ApprovalTaskStatus::ChangesRequested], true)
+            ? $decidedAt
+            : null;
+        $instanceStatus = match ($taskStatus) {
+            ApprovalTaskStatus::Approved => ApprovalInstanceStatus::Approved,
+            ApprovalTaskStatus::Rejected => ApprovalInstanceStatus::Rejected,
+            ApprovalTaskStatus::ChangesRequested => ApprovalInstanceStatus::ChangesRequested,
+            default => ApprovalInstanceStatus::Active,
+        };
+
+        $instance = ApprovalInstance::query()->updateOrCreate(
+            [
+                'tenant_id' => $requisition->tenant_id,
+                'subject_type' => Requisition::class,
+                'subject_id' => $requisition->id,
+            ],
+            [
+                'approval_policy_version_id' => $policyVersion->id,
+                'status' => $instanceStatus,
+                'current_stage_sequence' => 1,
+                'matched_context' => ['demo' => true, 'department' => $requisition->department],
+                'matched_explanation' => ['policy' => 'Demo requisition approval'],
+                'started_at' => $assignedAt,
+                'completed_at' => $completedAt,
+                'cancelled_at' => null,
+            ],
+        );
+
+        $stage = ApprovalStage::query()->updateOrCreate(
+            ['tenant_id' => $requisition->tenant_id, 'approval_instance_id' => $instance->id, 'sequence' => 1],
+            [
+                'name' => 'Manager review',
+                'completion_rule' => 'all',
+                'status' => $stageStatus,
+                'activated_at' => $assignedAt,
+                'completed_at' => $completedAt,
+                'due_at' => $dueAt,
+            ],
+        );
+
+        $task = ApprovalTask::query()->updateOrCreate(
+            ['tenant_id' => $requisition->tenant_id, 'approval_instance_id' => $instance->id, 'approval_stage_id' => $stage->id],
+            [
+                'subject_type' => Requisition::class,
+                'subject_id' => $requisition->id,
+                'assignee_id' => $assignee->id,
+                'original_assignee_id' => ($originalAssignee ?? $assignee)->id,
+                'title' => "Approve {$requisition->number}",
+                'status' => $taskStatus,
+                'decision' => $decision,
+                'decision_reason' => $decisionReason,
+                'requested_fields' => [],
+                'decided_by_id' => $decidedAt !== null ? $assignee->id : null,
+                'assigned_at' => $assignedAt,
+                'viewed_at' => null,
+                'due_at' => $dueAt,
+                'decided_at' => $decidedAt,
+                'lock_version' => 0,
+                'metadata' => ['demo' => true, ...$metadata],
+            ],
+        );
+
+        $requisition->forceFill(['approval_instance_id' => $instance->id])->save();
+        $context->approvalTasks->put($key, $task->refresh());
     }
 }

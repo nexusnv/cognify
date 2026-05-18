@@ -51,7 +51,7 @@ class DemoSeederTest extends TestCase
             'owner_id' => $admin->id,
             'number' => 'PRJ-1001',
             'name' => 'Office relocation',
-            'status' => 'planning',
+            'status' => 'draft',
             'budget_amount' => '125000.00',
             'currency' => 'USD',
             'metadata' => [
@@ -87,11 +87,11 @@ class DemoSeederTest extends TestCase
 
         $approvalTask = ApprovalTask::query()->create([
             'tenant_id' => $tenant->id,
-            'approver_id' => $admin->id,
+            'assignee_id' => $admin->id,
             'subject_type' => Quotation::class,
             'subject_id' => $quotation->id,
             'title' => 'Approve relocation quotation',
-            'status' => 'pending',
+            'status' => 'active',
             'due_at' => now()->addDays(2),
             'metadata' => [
                 'stage' => 'finance',
@@ -180,7 +180,7 @@ class DemoSeederTest extends TestCase
             'owner_id' => null,
             'number' => 'PRJ-9999',
             'name' => 'Other tenant project',
-            'status' => 'planning',
+            'status' => 'draft',
             'budget_amount' => '1000.00',
             'currency' => 'USD',
         ]);
@@ -228,7 +228,7 @@ class DemoSeederTest extends TestCase
             'owner_id' => null,
             'number' => 'PRJ-9999',
             'name' => 'Other tenant project',
-            'status' => 'planning',
+            'status' => 'draft',
             'budget_amount' => '1000.00',
             'currency' => 'USD',
         ]);
@@ -277,10 +277,10 @@ class DemoSeederTest extends TestCase
         $this->assertSame(2, ProcurementProject::query()->count());
         $this->assertSame(2, Rfq::query()->count());
         $this->assertSame(2, Quotation::query()->count());
-        $this->assertSame(2, ApprovalTask::query()->count());
+        $this->assertSame(4, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
         $this->assertSame(2, Attachment::query()->count());
-        $this->assertSame(3, NotificationRecord::query()->count());
+        $this->assertSame(5, NotificationRecord::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
 
         $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
@@ -319,8 +319,13 @@ class DemoSeederTest extends TestCase
             'submitted_at' => '2026-05-15 09:00:00',
         ]);
         $this->assertDatabaseHas('requisitions', [
+            'number' => 'REQ-2026-1001',
+            'status' => RequisitionStatus::Approved->value,
+            'submitted_at' => '2026-05-15 09:00:00',
+        ]);
+        $this->assertDatabaseHas('requisitions', [
             'number' => 'REQ-2026-1002',
-            'status' => RequisitionStatus::PendingApproval->value,
+            'status' => RequisitionStatus::Rejected->value,
             'submitted_at' => '2026-05-15 09:00:00',
         ]);
         $this->assertDatabaseHas('vendors', ['name' => 'Atlas Office Supplies', 'status' => 'preferred']);
@@ -338,8 +343,10 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-1001', 'title' => 'Warehouse supply bundle']);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-0001', 'status' => 'received']);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-1001', 'status' => 'received']);
-        $this->assertDatabaseHas('approval_tasks', ['title' => 'Finance approval for office furniture package', 'status' => 'pending']);
-        $this->assertDatabaseHas('approval_tasks', ['title' => 'Buyer review for warehouse supply bundle', 'status' => 'pending']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-0003', 'status' => 'active']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-0001', 'status' => 'active']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-1001', 'status' => 'approved']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-1002', 'status' => 'rejected']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-1001', 'status' => 'recommended']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
@@ -362,7 +369,7 @@ class DemoSeederTest extends TestCase
             'projects' => 2,
             'rfqs' => 2,
             'quotations' => 2,
-            'approval_tasks' => 2,
+            'approval_tasks' => 4,
             'awards' => 2,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
@@ -400,11 +407,11 @@ class DemoSeederTest extends TestCase
 
         ApprovalTask::query()->create([
             'tenant_id' => $tenant->id,
-            'approver_id' => $admin->id,
+            'assignee_id' => $admin->id,
             'subject_type' => self::class,
             'subject_id' => 1,
             'title' => 'Invalid subject',
-            'status' => 'pending',
+            'status' => 'active',
         ]);
     }
 }

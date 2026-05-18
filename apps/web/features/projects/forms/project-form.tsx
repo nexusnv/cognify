@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
 import { Button, NativeSelect, Textarea } from "@cognify/ui";
@@ -36,35 +36,7 @@ export function ProjectForm({
   const currentUserQuery = useCurrentUser();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [values, setValues] = useState<ProjectFormValues>({
-    name: project?.name ?? "",
-    charter: project?.charter ?? "",
-    ownerId: project?.owner.id ?? "",
-    budgetAmount: project?.budgetAmount?.toFixed(2) ?? "",
-    currency: project?.currency ?? "MYR",
-    department: project?.department ?? "",
-    costCenter: project?.costCenter ?? "",
-    targetStartDate: project?.targetStartDate ?? "",
-    targetCompletionDate: project?.targetCompletionDate ?? "",
-  });
-
-  useEffect(() => {
-    if (mode !== "edit" || !project) return;
-
-    setValues({
-      name: project.name,
-      charter: project.charter ?? "",
-      ownerId: project.owner.id,
-      budgetAmount: project.budgetAmount?.toFixed(2) ?? "",
-      currency: project.currency ?? "MYR",
-      department: project.department ?? "",
-      costCenter: project.costCenter ?? "",
-      targetStartDate: project.targetStartDate ?? "",
-      targetCompletionDate: project.targetCompletionDate ?? "",
-    });
-    setErrors({});
-    setFormError(null);
-  }, [mode, project]);
+  const [values, setValues] = useState<ProjectFormValues>(() => initialProjectFormValues(project));
 
   const ownerOptions = useMemo(() => {
     const current = currentUserQuery.data?.data.user;
@@ -299,4 +271,18 @@ export function ProjectForm({
       </div>
     </form>
   );
+}
+
+function initialProjectFormValues(project?: ProcurementProject): ProjectFormValues {
+  return {
+    name: project?.name ?? "",
+    charter: project?.charter ?? "",
+    ownerId: project?.owner.id ?? "",
+    budgetAmount: project?.budgetAmount?.toFixed(2) ?? "",
+    currency: project?.currency ?? "MYR",
+    department: project?.department ?? "",
+    costCenter: project?.costCenter ?? "",
+    targetStartDate: project?.targetStartDate ?? "",
+    targetCompletionDate: project?.targetCompletionDate ?? "",
+  };
 }

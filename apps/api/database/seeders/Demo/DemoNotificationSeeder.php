@@ -13,6 +13,7 @@ class DemoNotificationSeeder
     {
         $this->seedAnnouncement($context, 'acme', ['admin', 'buyer']);
         $this->seedAnnouncement($context, 'northwind', ['vendor_manager']);
+        $this->seedApprovalNotifications($context);
     }
 
     /**
@@ -38,5 +39,35 @@ class DemoNotificationSeeder
                 metadata: ['demo' => true],
             ),
         );
+    }
+
+    private function seedApprovalNotifications(DemoSeedContext $context): void
+    {
+        foreach (['security-audit-approval', 'office-refresh-delegated'] as $taskKey) {
+            $task = $context->approvalTasks->get($taskKey);
+
+            if ($task === null || $task->assignee === null || $task->subject === null) {
+                continue;
+            }
+
+            NotificationRecord::query()
+                ->where('tenant_id', $task->tenant_id)
+                ->where('title', $task->title)
+                ->delete();
+
+            app(NotificationRecorder::class)->record(
+                tenant: $task->tenant,
+                recipients: collect([$task->assignee]),
+                data: new NotificationData(
+                    type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+                    title: $task->title,
+                    body: $task->subject->title ?? 'Approval task assigned.',
+                    href: "/approvals/tasks/{$task->id}",
+                    subject: $task->subject,
+                    subjectLabel: $task->subject->number ?? null,
+                    metadata: ['demo' => true, 'approvalTaskId' => (string) $task->id],
+                ),
+            );
+        }
     }
 }

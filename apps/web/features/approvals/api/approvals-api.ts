@@ -147,7 +147,7 @@ export async function approveApprovalTask(taskId: string, values: ApprovalTaskAc
 export async function listApprovalDelegations(): Promise<ApprovalDelegation[]> {
   const response = await listApprovalDelegationsEndpoint(withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
-  return response.data.data.data;
+  return response.data.data;
 }
 
 export async function fetchApprovalSlaSummary(): Promise<ApprovalSlaSummary> {
