@@ -1,5 +1,6 @@
 import type {
   ApprovalDelegation,
+  ApprovalSlaSummary,
   ApprovalSummary,
   ApprovalTask,
   ApprovalPolicy,
@@ -272,3 +273,25 @@ export const approvalDelegationFixtures: ApprovalDelegation[] = [
     updatedAt: "2026-05-19T00:00:00.000Z",
   },
 ];
+
+export const approvalSlaSummaryFixture: ApprovalSlaSummary = {
+  assigned: 3,
+  dueSoon: 1,
+  overdue: 1,
+  escalated: 1,
+  averageAgeMinutes: 90,
+  oldestPendingApproval: {
+    taskId: "task-1",
+    approvalInstanceId: "instance-1",
+    approvalStageId: "stage-1",
+    subjectType: "requisition",
+    subjectId: "req-2",
+    title: "Warehouse packing supplies",
+    status: "active",
+    ageMinutes: 180,
+    assignedAt: "2026-05-18T00:00:00.000Z",
+    dueAt: "2026-05-20T00:00:00.000Z",
+    assignee: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+    stage: { id: "stage-1", name: "Manager review", sequence: 1 },
+  },
+};

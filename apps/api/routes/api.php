@@ -15,6 +15,7 @@ use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyVersionController;
 use Domains\Approval\Http\Controllers\ApprovalDelegationController;
+use Domains\Approval\Http\Controllers\ApprovalSlaController;
 use Domains\Approval\Http\Controllers\ApprovalTaskController;
 use Domains\Approval\Http\Controllers\RequisitionApprovalController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
@@ -68,6 +69,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/approval-delegations', [ApprovalDelegationController::class, 'store']);
         Route::patch('/approval-delegations/{approvalDelegation}', [ApprovalDelegationController::class, 'update']);
         Route::post('/approval-delegations/{approvalDelegation}/cancel', [ApprovalDelegationController::class, 'cancel']);
+        Route::get('/approvals/sla-summary', [ApprovalSlaController::class, 'summary']);
+        Route::get('/approval-instances/{approvalInstance}', [ApprovalSlaController::class, 'showInstance']);
         Route::get('/approval-tasks', [ApprovalTaskController::class, 'index']);
         Route::get('/approval-tasks/{approvalTask}', [ApprovalTaskController::class, 'show']);
         Route::post('/approval-tasks/{approvalTask}/view', [ApprovalTaskController::class, 'view']);

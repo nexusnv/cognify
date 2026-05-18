@@ -6,6 +6,7 @@ import {
   delegateApprovalTask as delegateApprovalTaskEndpoint,
   getApprovalTask,
   getApprovalPolicy,
+  getApprovalSlaSummary,
   getRequisitionApprovalSummary,
   listApprovalDelegations as listApprovalDelegationsEndpoint,
   listApprovalTasks as listApprovalTasksEndpoint,
@@ -22,6 +23,7 @@ import {
 import type {
   ApprovalSummary as ApiApprovalSummary,
   ApprovalDelegation,
+  ApprovalSlaSummary,
   ApprovalTask as ApiApprovalTask,
   ApprovalTaskActionRequest,
   ApprovalTaskQueueResponse,
@@ -146,6 +148,12 @@ export async function listApprovalDelegations(): Promise<ApprovalDelegation[]> {
   const response = await listApprovalDelegationsEndpoint(withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return response.data.data.data;
+}
+
+export async function fetchApprovalSlaSummary(): Promise<ApprovalSlaSummary> {
+  const response = await getApprovalSlaSummary(withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data;
 }
 
 export async function createTaskDelegation(values: StoreApprovalDelegationRequest) {

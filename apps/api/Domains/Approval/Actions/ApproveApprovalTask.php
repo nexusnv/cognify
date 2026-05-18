@@ -13,6 +13,7 @@ use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalStage;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSlaCalculator;
 use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
@@ -29,6 +30,7 @@ class ApproveApprovalTask
         private readonly MarkRequisitionApproved $markRequisitionApproved,
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
+        private readonly ApprovalSlaCalculator $slaCalculator,
     ) {
     }
 
@@ -129,7 +131,11 @@ class ApproveApprovalTask
     private function activateStage(Tenant $tenant, User $actor, ApprovalInstance $instance, ApprovalStage $stage): void
     {
         $activatedAt = now();
-        $dueAt = $this->dueAtForStage($instance, $stage, $activatedAt);
+        $dueAt = $this->slaCalculator->calculateDueAtForStage(
+            $instance->policyVersion?->sla_rules ?? [],
+            $stage->name,
+            $activatedAt,
+        );
 
         $stage->forceFill([
             'status' => ApprovalStageStatus::Active,
@@ -181,18 +187,6 @@ class ApproveApprovalTask
             ->orderBy('sequence')
             ->lockForUpdate()
             ->first();
-    }
-
-    private function dueAtForStage(ApprovalInstance $instance, ApprovalStage $stage, \DateTimeInterface $activatedAt): ?\Illuminate\Support\Carbon
-    {
-        $version = $instance->policyVersion;
-        $slaRule = collect($version?->sla_rules ?? [])->firstWhere('stage', $stage->name);
-
-        if (! is_array($slaRule) || ! array_key_exists('dueInHours', $slaRule)) {
-            return null;
-        }
-
-        return \Illuminate\Support\Carbon::instance($activatedAt)->copy()->addHours((int) $slaRule['dueInHours']);
     }
 
     private function lockedTask(Tenant $tenant, ApprovalTask $task): ApprovalTask

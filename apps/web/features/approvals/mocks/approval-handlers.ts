@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import {
   approvalSummaryFixture,
   approvalDelegationFixtures,
+  approvalSlaSummaryFixture,
   approvalTaskFixtures,
   approvalPolicyFixture,
   approvalPreviewFixture,
@@ -110,6 +111,9 @@ export const approvalHandlers = [
   }),
   http.get("/api/approval-delegations", () => {
     return HttpResponse.json({ data: delegations });
+  }),
+  http.get("/api/approvals/sla-summary", () => {
+    return HttpResponse.json({ data: approvalSlaSummaryFixture });
   }),
   http.post("/api/approval-delegations", async ({ request }) => {
     const body = (await request.json()) as {

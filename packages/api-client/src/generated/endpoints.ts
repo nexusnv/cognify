@@ -13,6 +13,7 @@ import type {
   ApprovalPolicyResponse,
   ApprovalPolicyVersionResponse,
   ApprovalPreviewResponse,
+  ApprovalSlaSummaryResponse,
   ApprovalSummaryResponse,
   ApprovalTaskActionRequest,
   ApprovalTaskQueueResponse,
@@ -3726,6 +3727,103 @@ export const cancelApprovalDelegation = async (
       method: "POST",
     },
   );
+};
+
+/**
+ * @summary Get approval SLA summary
+ */
+export type getApprovalSlaSummaryResponse200 = {
+  data: ApprovalSlaSummaryResponse;
+  status: 200;
+};
+
+export type getApprovalSlaSummaryResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getApprovalSlaSummaryResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getApprovalSlaSummaryResponseSuccess = getApprovalSlaSummaryResponse200 & {
+  headers: Headers;
+};
+export type getApprovalSlaSummaryResponseError = (
+  | getApprovalSlaSummaryResponse401
+  | getApprovalSlaSummaryResponse403
+) & {
+  headers: Headers;
+};
+
+export type getApprovalSlaSummaryResponse =
+  | getApprovalSlaSummaryResponseSuccess
+  | getApprovalSlaSummaryResponseError;
+
+export const getGetApprovalSlaSummaryUrl = () => {
+  return `/api/approvals/sla-summary`;
+};
+
+export const getApprovalSlaSummary = async (
+  options?: RequestInit,
+): Promise<getApprovalSlaSummaryResponse> => {
+  return cognifyFetch<getApprovalSlaSummaryResponse>(getGetApprovalSlaSummaryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Get approval instance summary
+ */
+export type getApprovalInstanceResponse200 = {
+  data: ApprovalSummaryResponse;
+  status: 200;
+};
+
+export type getApprovalInstanceResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getApprovalInstanceResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getApprovalInstanceResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getApprovalInstanceResponseSuccess = getApprovalInstanceResponse200 & {
+  headers: Headers;
+};
+export type getApprovalInstanceResponseError = (
+  | getApprovalInstanceResponse401
+  | getApprovalInstanceResponse403
+  | getApprovalInstanceResponse404
+) & {
+  headers: Headers;
+};
+
+export type getApprovalInstanceResponse =
+  | getApprovalInstanceResponseSuccess
+  | getApprovalInstanceResponseError;
+
+export const getGetApprovalInstanceUrl = (approvalInstance: string) => {
+  return `/api/approval-instances/${approvalInstance}`;
+};
+
+export const getApprovalInstance = async (
+  approvalInstance: string,
+  options?: RequestInit,
+): Promise<getApprovalInstanceResponse> => {
+  return cognifyFetch<getApprovalInstanceResponse>(getGetApprovalInstanceUrl(approvalInstance), {
+    ...options,
+    method: "GET",
+  });
 };
 
 /**

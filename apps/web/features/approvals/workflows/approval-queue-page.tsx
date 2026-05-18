@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ApprovalTasksTable } from "../tables/approval-tasks-table";
+import { ApprovalSlaSummary } from "../components/approval-sla-summary";
+import { useApprovalSlaSummary } from "../hooks/use-approval-sla-summary";
 import { useApprovalTasks } from "../hooks/use-approval-tasks";
 import type { ApprovalTaskFilters, ApprovalTaskScope } from "../types/approval-view-model";
 
@@ -16,6 +18,7 @@ const scopes: Array<{ value: ApprovalTaskScope; label: string }> = [
 export function ApprovalQueuePage() {
   const [filters, setFilters] = useState<ApprovalTaskFilters>({ scope: "assigned_to_me" });
   const tasksQuery = useApprovalTasks(filters);
+  const slaSummaryQuery = useApprovalSlaSummary();
 
   return (
     <div className="space-y-6">
@@ -70,6 +73,11 @@ export function ApprovalQueuePage() {
           <FilterInput label="Updated to" type="date" value={filters.updatedTo} onChange={(updatedTo) => setFilters((current) => ({ ...current, updatedTo }))} />
         </div>
       </section>
+
+      <ApprovalSlaSummary
+        summary={slaSummaryQuery.data}
+        state={slaSummaryQuery.isLoading ? "loading" : slaSummaryQuery.isError ? "error" : "idle"}
+      />
 
       <ApprovalTasksTable
         tasks={tasksQuery.data?.data ?? []}

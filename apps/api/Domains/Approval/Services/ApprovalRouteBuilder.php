@@ -7,6 +7,11 @@ use Domains\Approval\Data\ApprovalRouteStageData;
 
 class ApprovalRouteBuilder
 {
+    public function __construct(
+        private readonly ApprovalSlaCalculator $slaCalculator,
+    ) {
+    }
+
     /**
      * @param array<string, mixed> $matchedVersion
      * @param array<int, array<string, mixed>> $matchedConditions
@@ -26,12 +31,14 @@ class ApprovalRouteBuilder
         $routeStart = now();
 
         foreach (($routeTemplate['stages'] ?? []) as $index => $stage) {
-            $slaRule = $this->findSlaRule($slaRules, (string) ($stage['name'] ?? ''));
-            $dueAt = null;
+            $dueAt = $this->slaCalculator->calculateDueAtForStage(
+                $slaRules,
+                (string) ($stage['name'] ?? ''),
+                $routeStart,
+            )?->toISOString();
             $stageWarnings = [];
 
-            if ($slaRule !== null) {
-                $dueAt = $routeStart->copy()->addHours((int) $slaRule['dueInHours'])->toISOString();
+            if ($dueAt !== null) {
                 $estimatedDueAt = $dueAt;
             } else {
                 $stageWarnings[] = [
@@ -90,20 +97,4 @@ class ApprovalRouteBuilder
             ];
         }, $approvers));
     }
-
-    /**
-     * @param array<int, array<string, mixed>> $slaRules
-     * @return array<string, mixed>|null
-     */
-    private function findSlaRule(array $slaRules, string $stageName): ?array
-    {
-        foreach ($slaRules as $slaRule) {
-            if ((string) ($slaRule['stage'] ?? '') === $stageName) {
-                return $slaRule;
-            }
-        }
-
-        return null;
-    }
-
 }

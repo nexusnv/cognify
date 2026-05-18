@@ -2953,6 +2953,74 @@
         }
       }
     },
+    "/api/approvals/sla-summary": {
+      "get": {
+        "operationId": "getApprovalSlaSummary",
+        "summary": "Get approval SLA summary",
+        "tags": [
+          "Approval SLA"
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval SLA summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalSlaSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/approval-instances/{approvalInstance}": {
+      "get": {
+        "operationId": "getApprovalInstance",
+        "summary": "Get approval instance summary",
+        "tags": [
+          "Approval SLA"
+        ],
+        "parameters": [
+          {
+            "name": "approvalInstance",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval instance identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval instance summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/approval-tasks/{approvalTask}": {
       "get": {
         "operationId": "getApprovalTask",
@@ -6941,6 +7009,148 @@
             "items": {
               "$ref": "#/components/schemas/ApprovalDelegation"
             }
+          }
+        }
+      },
+      "ApprovalSlaSummaryOldestPendingApproval": {
+        "type": "object",
+        "required": [
+          "taskId",
+          "approvalInstanceId",
+          "approvalStageId",
+          "subjectType",
+          "subjectId",
+          "title",
+          "status",
+          "ageMinutes",
+          "assignedAt",
+          "dueAt",
+          "assignee",
+          "stage"
+        ],
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "approvalInstanceId": {
+            "type": "string"
+          },
+          "approvalStageId": {
+            "type": "string"
+          },
+          "subjectType": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "ageMinutes": {
+            "type": "integer"
+          },
+          "assignedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "dueAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "assignee": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "sequence"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "sequence": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ApprovalSlaSummary": {
+        "type": "object",
+        "required": [
+          "assigned",
+          "dueSoon",
+          "overdue",
+          "escalated",
+          "averageAgeMinutes",
+          "oldestPendingApproval"
+        ],
+        "properties": {
+          "assigned": {
+            "type": "integer"
+          },
+          "dueSoon": {
+            "type": "integer"
+          },
+          "overdue": {
+            "type": "integer"
+          },
+          "escalated": {
+            "type": "integer"
+          },
+          "averageAgeMinutes": {
+            "type": "integer"
+          },
+          "oldestPendingApproval": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalSlaSummaryOldestPendingApproval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ApprovalSlaSummaryResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApprovalSlaSummary"
           }
         }
       },
