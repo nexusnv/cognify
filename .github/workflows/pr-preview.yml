@@ -1,0 +1,66 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, closed]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy PR preview stack on remote server
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: and-fm/cloudflared-ssh-action@v3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          private_key_filename: ${{ secrets.SSH_PRIVATE_KEY_FILENAME }}
+          private_key_value: ${{ secrets.SSH_PRIVATE_KEY_VALUE }}
+          port: ${{ secrets.SSH_PORT }}
+          service_token_id: ${{ secrets.SERVICE_TOKEN_ID }}
+          service_token_secret: ${{ secrets.SERVICE_TOKEN_SECRET }}
+          commands: |
+            set -euo pipefail
+
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            PREVIEW_NAME="preview-${PR_NUMBER}"
+            PREVIEW_DOMAIN="pr-${PR_NUMBER}.${{ secrets.PREVIEW_BASE_DOMAIN }}"
+            COMPOSE_FILE="infrastructure/docker/docker-compose.pr-preview.yml"
+            REMOTE_PATH="${{ secrets.REMOTE_APP_PATH }}"
+
+            mkdir -p "$REMOTE_PATH"
+            cd "$REMOTE_PATH"
+
+            if [ ! -d .git ]; then
+              git clone https://github.com/${{ github.repository }} .
+            fi
+
+            git fetch origin +refs/heads/*:refs/remotes/origin/* \
+              +refs/pull/${PR_NUMBER}/head:refs/remotes/origin/${PREVIEW_NAME}
+            git checkout -B "${PREVIEW_NAME}" "refs/remotes/origin/${PREVIEW_NAME}"
+            git reset --hard "${{ github.sha }}"
+
+            if ! docker network inspect proxy >/dev/null 2>&1; then
+              docker network create proxy
+            fi
+
+            if [ "${{ github.event.action }}" = "closed" ]; then
+              docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" down --volumes --remove-orphans || true
+              exit 0
+            fi
+
+            export PREVIEW_NAME
+            export PREVIEW_DOMAIN
+
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" build --pull --build-arg NEXT_PUBLIC_API_URL=http://api:8890
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" up -d
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" ps
+
+      - name: Skip preview deploy for forked PRs
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "Forked PR detected; preview deployment is skipped because secrets are not available."

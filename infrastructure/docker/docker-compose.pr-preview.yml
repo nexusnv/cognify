@@ -1,0 +1,122 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: cognify_preview
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cognify_preview"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preview
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preview
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preview
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BUCKET: cognify-preview
+    volumes:
+      - ./minio/init-bucket.sh:/init-bucket.sh:ro
+    entrypoint: ["/bin/sh", "/init-bucket.sh"]
+    networks:
+      - preview
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/api.Dockerfile
+    environment:
+      APP_ENV: preview
+      APP_DEBUG: "true"
+      APP_URL: http://api:8890
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: cognify_preview
+      DB_USERNAME: postgres
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ""
+      FILESYSTEM_DRIVER: s3
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_BUCKET: cognify-preview
+      AWS_ENDPOINT: http://minio:9000
+      AWS_USE_PATH_STYLE_ENDPOINT: "true"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - preview
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://api:8890
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8890
+    depends_on:
+      - api
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      traefik.http.routers.${PREVIEW_NAME}.rule: "Host(\`${PREVIEW_DOMAIN}\`)"
+      traefik.http.routers.${PREVIEW_NAME}.entrypoints: "websecure"
+      traefik.http.routers.${PREVIEW_NAME}.tls: "true"
+      traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port: "3000"
+    networks:
+      - preview
+      - proxy
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+
+networks:
+  preview:
+  proxy:
+    external: true
