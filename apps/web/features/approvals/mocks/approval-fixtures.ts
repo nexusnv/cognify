@@ -140,6 +140,40 @@ export const fallbackApprovalPreviewFixture: ApprovalPreview = {
   estimatedDueAt: "2026-05-20T00:00:00.000Z",
 };
 
+export const parallelAllApprovalPreviewFixture: ApprovalPreview = {
+  ...approvalPreviewFixture,
+  stages: [
+    {
+      name: "Joint review",
+      completionRule: "all",
+      approvers: [
+        { type: "user", userId: "user-2", label: "Priya Buyer" },
+        { type: "user", userId: "user-3", label: "Finance approver" },
+      ],
+      fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+      dueAt: "2026-05-19T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+};
+
+export const parallelAnyApprovalPreviewFixture: ApprovalPreview = {
+  ...approvalPreviewFixture,
+  stages: [
+    {
+      name: "Either buyer review",
+      completionRule: "any",
+      approvers: [
+        { type: "user", userId: "user-2", label: "Priya Buyer" },
+        { type: "user", userId: "user-4", label: "Backup buyer" },
+      ],
+      fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+      dueAt: "2026-05-19T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+};
+
 export const approvalTaskFixtures: ApprovalTask[] = [
   {
     id: "task-1",

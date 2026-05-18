@@ -180,7 +180,7 @@ class ApprovalTaskApiTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_multi_approver_stage_creates_only_first_resolved_task(): void
+    public function test_all_parallel_group_requires_every_task_to_approve(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
         [, $firstApprover] = $this->tenantUser('approver', $tenant);
@@ -191,19 +191,87 @@ class ApprovalTaskApiTest extends TestCase
         $this->actingAsTenant($tenant, $requester)
             ->postJson("/api/requisitions/{$requisition->id}/route-approval")
             ->assertOk()
-            ->assertJsonCount(1, 'data.tasks')
+            ->assertJsonCount(2, 'data.tasks')
             ->assertJsonPath('data.tasks.0.assignee.id', (string) $firstApprover->id);
 
-        $this->assertSame(1, ApprovalTask::query()->count());
+        $this->assertSame(2, ApprovalTask::query()->count());
         $this->assertDatabaseHas('approval_tasks', [
             'tenant_id' => $tenant->id,
             'assignee_id' => $firstApprover->id,
             'status' => 'active',
         ]);
-        $this->assertDatabaseMissing('approval_tasks', [
+        $this->assertDatabaseHas('approval_tasks', [
             'tenant_id' => $tenant->id,
             'assignee_id' => $secondApprover->id,
+            'status' => 'active',
         ]);
+
+        $firstTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $secondTask = ApprovalTask::query()->where('assignee_id', $secondApprover->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$firstTask->id}/approve", ['lockVersion' => $firstTask->lock_version])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertSame(RequisitionStatus::PendingApproval, $requisition->refresh()->status);
+        $this->assertSame('active', $secondTask->refresh()->status->value);
+
+        $this->actingAsTenant($tenant, $secondApprover)
+            ->postJson("/api/approval-tasks/{$secondTask->id}/approve", ['lockVersion' => $secondTask->lock_version])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertSame(RequisitionStatus::Approved, $requisition->refresh()->status);
+    }
+
+    public function test_any_parallel_group_completes_when_one_task_approves(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedPolicyVersionWithApprovers($tenant, $requester, [$firstApprover, $secondApprover], 'any');
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval")
+            ->assertOk()
+            ->assertJsonCount(2, 'data.tasks');
+
+        $firstTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$firstTask->id}/approve", ['lockVersion' => $firstTask->lock_version])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertSame(RequisitionStatus::Approved, $requisition->refresh()->status);
+    }
+
+    public function test_any_parallel_group_closes_sibling_tasks_after_completion(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedPolicyVersionWithApprovers($tenant, $requester, [$firstApprover, $secondApprover], 'any');
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval")
+            ->assertOk();
+
+        $firstTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $secondTask = ApprovalTask::query()->where('assignee_id', $secondApprover->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$firstTask->id}/approve", ['lockVersion' => $firstTask->lock_version])
+            ->assertOk();
+
+        $secondTask->refresh();
+
+        $this->assertSame('cancelled', $secondTask->status->value);
+        $this->assertSame((string) $firstTask->id, $secondTask->metadata['cancelledByTaskId'] ?? null);
+        $this->assertSame('parallel_any_completed', $secondTask->metadata['cancelledReason'] ?? null);
     }
 
     public function test_later_sequential_stage_is_blocked_until_prior_stage_completes(): void
@@ -382,7 +450,12 @@ class ApprovalTaskApiTest extends TestCase
     /**
      * @param array<int, User> $approvers
      */
-    private function createPublishedPolicyVersionWithApprovers(Tenant $tenant, User $actor, array $approvers): ApprovalPolicyVersion
+    private function createPublishedPolicyVersionWithApprovers(
+        Tenant $tenant,
+        User $actor,
+        array $approvers,
+        string $completionRule = 'all',
+    ): ApprovalPolicyVersion
     {
         $policy = ApprovalPolicy::query()->create([
             'tenant_id' => $tenant->id,
@@ -406,7 +479,7 @@ class ApprovalTaskApiTest extends TestCase
                 'stages' => [
                     [
                         'name' => 'Manager review',
-                        'completionRule' => 'all',
+                        'completionRule' => $completionRule,
                         'approvers' => array_map(
                             fn (User $approver): array => ['type' => 'user', 'userId' => (string) $approver->id, 'label' => $approver->name],
                             $approvers,

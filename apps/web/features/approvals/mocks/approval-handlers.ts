@@ -5,6 +5,8 @@ import {
   approvalPolicyFixture,
   approvalPreviewFixture,
   fallbackApprovalPreviewFixture,
+  parallelAllApprovalPreviewFixture,
+  parallelAnyApprovalPreviewFixture,
   submittedRequisitionApprovalPreviewFixture,
 } from "./approval-fixtures";
 import { requisitionFixtures } from "@/features/requisitions/mocks/requisitions-fixtures";
@@ -111,10 +113,7 @@ export const approvalHandlers = [
   }),
   http.post("/api/approval-policies/preview", async ({ request }) => {
     const body = (await request.json()) as { context?: { requisitionId?: string } };
-    const preview =
-      body.context?.requisitionId === "req-fallback"
-        ? fallbackApprovalPreviewFixture
-        : approvalPreviewFixture;
+    const preview = previewForRequisition(body.context?.requisitionId);
 
     return HttpResponse.json({ data: preview });
   }),
@@ -206,9 +205,7 @@ export const approvalHandlers = [
     const preview =
       requisitionStatus === "submitted"
         ? submittedRequisitionApprovalPreviewFixture
-        : params.requisitionId === "req-fallback"
-          ? fallbackApprovalPreviewFixture
-          : approvalPreviewFixture;
+        : previewForRequisition(String(params.requisitionId));
 
     return HttpResponse.json({ data: preview });
   }),
@@ -220,3 +217,19 @@ export const approvalHandlers = [
     return HttpResponse.json({ data: null });
   }),
 ];
+
+function previewForRequisition(requisitionId?: string) {
+  if (requisitionId === "req-parallel-all") {
+    return parallelAllApprovalPreviewFixture;
+  }
+
+  if (requisitionId === "req-parallel-any") {
+    return parallelAnyApprovalPreviewFixture;
+  }
+
+  if (requisitionId === "req-fallback") {
+    return fallbackApprovalPreviewFixture;
+  }
+
+  return approvalPreviewFixture;
+}

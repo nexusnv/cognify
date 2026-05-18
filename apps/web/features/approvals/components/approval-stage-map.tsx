@@ -24,7 +24,8 @@ export function ApprovalStageMap({
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">{stage.name}</h3>
               <span className="text-xs uppercase text-muted-foreground">
-                {isActionable ? stage.completionRule : "blocked"}
+                <span>{stage.completionRule}</span>
+                {!isActionable ? <span> · blocked</span> : null}
               </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">

@@ -46,11 +46,12 @@ class ApproveApprovalTask
             ])->save();
 
             $stage = $task->stage()->lockForUpdate()->firstOrFail();
-            $remainingActiveTasks = $stage->tasks()
-                ->where('status', ApprovalTaskStatus::Active)
-                ->count();
 
-            if ($remainingActiveTasks === 0) {
+            if ($this->stageShouldComplete($stage, $task)) {
+                if ($stage->completion_rule === 'any') {
+                    $this->cancelSiblingTasks($stage, $task);
+                }
+
                 $stage->forceFill([
                     'status' => ApprovalStageStatus::Completed,
                     'completed_at' => now(),
@@ -88,6 +89,39 @@ class ApproveApprovalTask
 
             return $task->refresh()->load(['assignee', 'stage', 'instance', 'subject']);
         });
+    }
+
+    private function stageShouldComplete(ApprovalStage $stage, ApprovalTask $decidingTask): bool
+    {
+        if ($stage->completion_rule === 'any') {
+            return true;
+        }
+
+        return $stage->tasks()
+            ->whereKeyNot($decidingTask->id)
+            ->where('status', ApprovalTaskStatus::Active)
+            ->doesntExist();
+    }
+
+    private function cancelSiblingTasks(ApprovalStage $stage, ApprovalTask $decidingTask): void
+    {
+        $siblings = $stage->tasks()
+            ->whereKeyNot($decidingTask->id)
+            ->whereIn('status', [ApprovalTaskStatus::Active, ApprovalTaskStatus::Blocked])
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($siblings as $sibling) {
+            $metadata = $sibling->metadata ?? [];
+            $metadata['cancelledByTaskId'] = (string) $decidingTask->id;
+            $metadata['cancelledReason'] = 'parallel_any_completed';
+
+            $sibling->forceFill([
+                'status' => ApprovalTaskStatus::Cancelled,
+                'metadata' => $metadata,
+                'lock_version' => $sibling->lock_version + 1,
+            ])->save();
+        }
     }
 
     private function activateStage(Tenant $tenant, User $actor, ApprovalInstance $instance, ApprovalStage $stage): void
