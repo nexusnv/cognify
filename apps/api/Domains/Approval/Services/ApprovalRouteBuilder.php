@@ -68,7 +68,7 @@ class ApprovalRouteBuilder
 
         return [
             'stages' => $stages,
-            'warnings' => array_values(array_merge($warnings, $this->contextWarnings($context, $matchedConditions))),
+            'warnings' => array_values($warnings),
             'estimatedDueAt' => $estimatedDueAt,
         ];
     }
@@ -106,37 +106,4 @@ class ApprovalRouteBuilder
         return null;
     }
 
-    /**
-     * @param array<int, array<string, mixed>> $matchedConditions
-     * @return array<int, array<string, string>>
-     */
-    private function contextWarnings(ApprovalContextData $context, array $matchedConditions): array
-    {
-        $missing = $context->missingRequiredContext($this->requiredContextFields($matchedConditions));
-
-        if ($missing === []) {
-            return [];
-        }
-
-        return [[
-            'code' => 'missing_context',
-            'message' => sprintf('Missing required approval context: %s', implode(', ', $missing)),
-        ]];
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $matchedConditions
-     * @return array<int, string>
-     */
-    private function requiredContextFields(array $matchedConditions): array
-    {
-        return array_values(array_unique(array_filter(array_map(
-            static fn (array $condition): ?string => in_array(
-                $condition['field'] ?? null,
-                ['riskClassification', 'vendorId'],
-                true,
-            ) ? (string) $condition['field'] : null,
-            $matchedConditions,
-        ))));
-    }
 }

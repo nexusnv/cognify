@@ -266,6 +266,72 @@ class ApprovalPreviewApiTest extends TestCase
             );
     }
 
+    public function test_preview_reports_missing_context_from_lower_priority_unmatched_policy(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester, [
+            'department' => 'Operations',
+            'cost_center' => 'OPS-220',
+        ]);
+
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 100,
+            'rules' => [
+                ['field' => 'amount', 'operator' => 'gte', 'value' => 50000],
+            ],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Executive review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'admin', 'label' => 'Executive approver'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Executive review', 'dueInHours' => 48],
+            ],
+        ]);
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 10,
+            'rules' => [
+                ['field' => 'riskClassification', 'operator' => 'equals', 'value' => 'high'],
+                ['field' => 'vendorId', 'operator' => 'equals', 'value' => 'vendor-42'],
+            ],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Risk review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'approver', 'label' => 'Approver'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Risk review', 'dueInHours' => 24],
+            ],
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}/approval-preview");
+
+        $warnings = $response->json('data.warnings');
+        $missingWarnings = array_values(array_filter(
+            $warnings,
+            static fn (array $warning): bool => ($warning['code'] ?? null) === 'missing_context',
+        ));
+
+        $response->assertOk()
+            ->assertJsonPath('data.matchedPolicy.name', 'Standard requisition approval')
+            ->assertJsonPath('data.warnings.0.code', 'fallback_policy')
+            ->assertJsonPath('data.warnings.1.code', 'missing_context');
+        $this->assertCount(1, $missingWarnings);
+    }
+
     public function test_preview_matches_array_valued_equals_rules_regardless_of_order(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

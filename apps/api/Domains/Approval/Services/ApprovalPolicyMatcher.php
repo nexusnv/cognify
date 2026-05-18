@@ -71,15 +71,6 @@ class ApprovalPolicyMatcher
                 'message' => 'No policy rules matched; using fallback policy version.',
             ];
             $matchedConditions = [];
-            if ($missingContextFields !== []) {
-                $warnings[] = [
-                    'code' => 'missing_context',
-                    'message' => sprintf(
-                        'Missing required approval context affected policy matching: %s',
-                        implode(', ', $missingContextFields),
-                    ),
-                ];
-            }
         } else {
             $evaluation = $this->evaluateRules($context, $selected['rules'] ?? []);
             $matchedConditions = $evaluation['conditions'];
@@ -87,15 +78,16 @@ class ApprovalPolicyMatcher
                 'code' => 'fallback_policy',
                 'message' => 'No policy rules matched; using the highest priority policy version.',
             ];
-            if ($evaluation['missingContextFields'] !== []) {
-                $warnings[] = [
-                    'code' => 'missing_context',
-                    'message' => sprintf(
-                        'Missing required approval context affected policy matching: %s',
-                        implode(', ', $evaluation['missingContextFields']),
-                    ),
-                ];
-            }
+        }
+
+        if ($missingContextFields !== []) {
+            $warnings[] = [
+                'code' => 'missing_context',
+                'message' => sprintf(
+                    'Missing required approval context affected policy matching: %s',
+                    implode(', ', $missingContextFields),
+                ),
+            ];
         }
 
         return [
