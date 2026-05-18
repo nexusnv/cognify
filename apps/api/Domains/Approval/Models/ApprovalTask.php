@@ -4,6 +4,7 @@ namespace Domains\Approval\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\States\ApprovalTaskStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -14,19 +15,38 @@ class ApprovalTask extends Model
 {
     protected $fillable = [
         'tenant_id',
-        'approver_id',
+        'approval_instance_id',
+        'approval_stage_id',
         'subject_type',
         'subject_id',
+        'assignee_id',
+        'original_assignee_id',
         'title',
         'status',
+        'decision',
+        'decision_reason',
+        'requested_fields',
+        'decided_by_id',
+        'delegated_from_task_id',
+        'escalated_from_task_id',
+        'assigned_at',
+        'viewed_at',
         'due_at',
+        'decided_at',
+        'lock_version',
         'metadata',
     ];
 
     protected function casts(): array
     {
         return [
+            'status' => ApprovalTaskStatus::class,
+            'requested_fields' => 'array',
+            'assigned_at' => 'datetime',
+            'viewed_at' => 'datetime',
             'due_at' => 'datetime',
+            'decided_at' => 'datetime',
+            'lock_version' => 'integer',
             'metadata' => 'array',
         ];
     }
@@ -35,15 +55,15 @@ class ApprovalTask extends Model
     {
         static::saving(function (self $task): void {
             DB::transaction(function () use ($task): void {
-                if ($task->approver_id !== null && ($task->isDirty('approver_id') || $task->isDirty('tenant_id'))) {
+                if ($task->assignee_id !== null && ($task->isDirty('assignee_id') || $task->isDirty('tenant_id'))) {
                     $belongsToTenant = User::query()
-                        ->whereKey($task->approver_id)
+                        ->whereKey($task->assignee_id)
                         ->whereHas('tenants', fn ($query) => $query->whereKey($task->tenant_id))
                         ->lockForUpdate()
                         ->exists();
 
                     if (! $belongsToTenant) {
-                        throw new InvalidArgumentException('Approval task approver must belong to the same tenant.');
+                        throw new InvalidArgumentException('Approval task assignee must belong to the same tenant.');
                     }
                 }
 
@@ -83,9 +103,41 @@ class ApprovalTask extends Model
     /**
      * @return BelongsTo<User, $this>
      */
-    public function approver(): BelongsTo
+    public function instance(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_id');
+        return $this->belongsTo(ApprovalInstance::class, 'approval_instance_id');
+    }
+
+    /**
+     * @return BelongsTo<ApprovalStage, $this>
+     */
+    public function stage(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalStage::class, 'approval_stage_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function originalAssignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'original_assignee_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function decidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'decided_by_id');
     }
 
     /**

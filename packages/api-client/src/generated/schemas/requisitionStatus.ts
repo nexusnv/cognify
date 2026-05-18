@@ -15,4 +15,6 @@ export const RequisitionStatus = {
   changes_requested: "changes_requested",
   withdrawn: "withdrawn",
   cancelled: "cancelled",
+  approved: "approved",
+  rejected: "rejected",
 } as const;

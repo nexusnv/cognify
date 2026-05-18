@@ -5,6 +5,9 @@ import type {
   ApprovalPreviewContext as ApiApprovalPreviewContext,
   ApprovalPreviewStage as ApiApprovalPreviewStage,
   ApprovalPreviewWarning as ApiApprovalPreviewWarning,
+  ApprovalSummary as ApiApprovalSummary,
+  ApprovalTask as ApiApprovalTask,
+  ApprovalTaskQueueResponse as ApiApprovalTaskQueueResponse,
   PreviewApprovalPolicyRequest,
 } from "@cognify/api-client/schemas";
 
@@ -59,6 +62,30 @@ export type ApprovalPreviewContext = ApiApprovalPreviewContext;
 export type ApprovalPreviewStage = ApiApprovalPreviewStage;
 export type ApprovalPreviewWarning = ApiApprovalPreviewWarning;
 export type ApprovalPreviewRequest = PreviewApprovalPolicyRequest;
+export type ApprovalTask = ApiApprovalTask;
+export type ApprovalTaskQueueResponse = ApiApprovalTaskQueueResponse;
+export type ApprovalSummary = ApiApprovalSummary;
+export type ApprovalTaskScope =
+  | "assigned_to_me"
+  | "overdue"
+  | "due_soon"
+  | "completed_by_me"
+  | "all";
+
+export type ApprovalTaskFilters = {
+  scope?: ApprovalTaskScope;
+  status?: string;
+  dueFrom?: string;
+  dueTo?: string;
+  requesterId?: string;
+  department?: string;
+  costCenter?: string;
+  projectId?: string;
+  amountMin?: number;
+  amountMax?: number;
+  updatedFrom?: string;
+  updatedTo?: string;
+};
 
 export type ApprovalPolicyFormValues = {
   name: string;

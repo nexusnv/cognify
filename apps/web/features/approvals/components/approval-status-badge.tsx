@@ -4,7 +4,14 @@ import type { ApprovalPolicyStatus, ApprovalPolicyVersionStatus } from "../types
 export function ApprovalStatusBadge({
   status,
 }: {
-  status: ApprovalPolicyStatus | ApprovalPolicyVersionStatus;
+  status: ApprovalPolicyStatus | ApprovalPolicyVersionStatus | string;
 }) {
-  return <Badge variant={status === "active" || status === "published" ? "default" : "secondary"}>{status}</Badge>;
+  const positive = ["active", "published", "approved"].includes(status);
+  const destructive = ["rejected", "cancelled", "changes_requested"].includes(status);
+
+  return (
+    <Badge variant={positive ? "default" : destructive ? "destructive" : "secondary"}>
+      {status.replaceAll("_", " ")}
+    </Badge>
+  );
 }

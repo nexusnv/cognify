@@ -176,6 +176,22 @@ describe("requisitions workflow", () => {
     );
   });
 
+  it("shows live approval summary and task entry point for pending approvals", async () => {
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-2" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Warehouse packing supplies", level: 1 }),
+    ).toBeInTheDocument();
+    const sidebar = screen.getByRole("complementary", { name: "Record sidebar" });
+    expect(sidebar).toHaveTextContent("Approval summary");
+    expect(await within(sidebar).findByText("Manager review")).toBeInTheDocument();
+    expect(sidebar).toHaveTextContent("Priya Buyer");
+    expect(within(sidebar).getByRole("link", { name: "Open my approval task" })).toHaveAttribute(
+      "href",
+      "/approvals/tasks/task-1",
+    );
+  });
+
   it("shows correction guidance and resubmits a change-requested requisition", async () => {
     const user = userEvent.setup();
 

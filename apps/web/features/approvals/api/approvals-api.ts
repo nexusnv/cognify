@@ -1,19 +1,34 @@
 import {
   createApprovalPolicy,
   createApprovalPolicyVersion,
+  approveApprovalTask as approveApprovalTaskEndpoint,
+  getApprovalTask,
   getApprovalPolicy,
+  getRequisitionApprovalSummary,
+  listApprovalTasks as listApprovalTasksEndpoint,
   listApprovalPolicies as listApprovalPoliciesEndpoint,
   previewApprovalPolicy,
   publishApprovalPolicyVersion,
+  rejectApprovalTask as rejectApprovalTaskEndpoint,
+  requestApprovalChanges,
+  routeRequisitionForApproval,
   retireApprovalPolicyVersion,
   updateApprovalPolicy,
+  viewApprovalTask,
 } from "@cognify/api-client/endpoints";
 import type {
+  ApprovalSummary as ApiApprovalSummary,
+  ApprovalTask as ApiApprovalTask,
+  ApprovalTaskActionRequest,
+  ApprovalTaskQueueResponse,
   ApprovalPolicy as ApiApprovalPolicy,
   ApprovalPolicyListResponse,
   ApprovalPolicyVersion as ApiApprovalPolicyVersion,
   ApprovalPreview as ApiApprovalPreview,
+  ListApprovalTasksParams,
   PreviewApprovalPolicyRequest,
+  RejectApprovalTaskRequest,
+  RequestApprovalChangesRequest,
   StoreApprovalPolicyRequest,
   StoreApprovalPolicyVersionRequest,
   UpdateApprovalPolicyRequest,
@@ -21,6 +36,8 @@ import type {
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import type {
   ApprovalPolicy,
+  ApprovalSummary,
+  ApprovalTaskFilters,
   ApprovalPolicyFormValues,
   ApprovalPolicyVersion,
 } from "../types/approval-view-model";
@@ -90,6 +107,62 @@ export async function previewApprovalPolicyRoute(values: PreviewApprovalPolicyRe
   const response = await previewApprovalPolicy(values, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return response.data.data as ApiApprovalPreview;
+}
+
+export async function listApprovalTasks(filters: ApprovalTaskFilters = {}) {
+  const response = await listApprovalTasksEndpoint(
+    filters as ListApprovalTasksParams,
+    withActiveTenantHeader(),
+  );
+  if (response.status !== 200) throw response.data;
+  return response.data as ApprovalTaskQueueResponse;
+}
+
+export async function fetchApprovalTask(taskId: string) {
+  const response = await getApprovalTask(taskId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalTask;
+}
+
+export async function markApprovalTaskViewed(taskId: string) {
+  const response = await viewApprovalTask(taskId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalTask;
+}
+
+export async function approveApprovalTask(taskId: string, values: ApprovalTaskActionRequest) {
+  const response = await approveApprovalTaskEndpoint(taskId, values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalTask;
+}
+
+export async function rejectApprovalTask(taskId: string, values: RejectApprovalTaskRequest) {
+  const response = await rejectApprovalTaskEndpoint(taskId, values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalTask;
+}
+
+export async function requestApprovalTaskChanges(
+  taskId: string,
+  values: RequestApprovalChangesRequest,
+) {
+  const response = await requestApprovalChanges(taskId, values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalTask;
+}
+
+export async function routeRequisitionApproval(requisitionId: string) {
+  const response = await routeRequisitionForApproval(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data;
+}
+
+export async function fetchRequisitionApprovalSummary(
+  requisitionId: string,
+): Promise<ApprovalSummary | null> {
+  const response = await getRequisitionApprovalSummary(requisitionId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalSummary | null;
 }
 
 export function mapApprovalPolicy(policy: ApiApprovalPolicy): ApprovalPolicy {

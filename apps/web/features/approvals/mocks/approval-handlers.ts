@@ -1,5 +1,7 @@
 import { http, HttpResponse } from "msw";
 import {
+  approvalSummaryFixture,
+  approvalTaskFixtures,
   approvalPolicyFixture,
   approvalPreviewFixture,
   fallbackApprovalPreviewFixture,
@@ -9,6 +11,7 @@ import { requisitionFixtures } from "@/features/requisitions/mocks/requisitions-
 import type { ApprovalPolicy } from "../types/approval-view-model";
 
 let policies: ApprovalPolicy[] = [structuredClone(approvalPolicyFixture)];
+let tasks = structuredClone(approvalTaskFixtures);
 
 type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
   Pick<
@@ -18,9 +21,88 @@ type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
 
 export function resetApprovalMockState() {
   policies = [structuredClone(approvalPolicyFixture)];
+  tasks = structuredClone(approvalTaskFixtures);
 }
 
 export const approvalHandlers = [
+  http.get("/api/approval-tasks", ({ request }) => {
+    const url = new URL(request.url);
+    const scope = url.searchParams.get("scope");
+    const status = url.searchParams.get("status");
+    const data = tasks.filter((task) => {
+      const matchesStatus = !status || task.status === status;
+      const matchesScope =
+        !scope ||
+        scope === "all" ||
+        scope === "assigned_to_me" ||
+        (scope === "completed_by_me" && task.decidedBy?.id === "user-2") ||
+        (scope === "overdue" && task.dueAt !== null && task.dueAt < "2026-05-18") ||
+        (scope === "due_soon" && task.status === "active");
+
+      return matchesStatus && matchesScope;
+    });
+
+    return HttpResponse.json({
+      data,
+      meta: { currentPage: 1, perPage: 20, total: data.length, lastPage: 1 },
+    });
+  }),
+  http.get("/api/approval-tasks/:taskId", ({ params }) => {
+    const task = tasks.find((item) => item.id === params.taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    return HttpResponse.json({ data: task });
+  }),
+  http.post("/api/approval-tasks/:taskId/view", ({ params }) => {
+    const task = tasks.find((item) => item.id === params.taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    task.viewedAt = "2026-05-18T01:00:00.000Z";
+    return HttpResponse.json({ data: task });
+  }),
+  http.post("/api/approval-tasks/:taskId/approve", async ({ params, request }) => {
+    const task = tasks.find((item) => item.id === params.taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    const body = (await request.json()) as { lockVersion: number };
+    if (body.lockVersion !== task.lockVersion) {
+      return HttpResponse.json({ error: { code: "conflict" } }, { status: 409 });
+    }
+    task.status = "approved";
+    task.decision = "approved";
+    task.decidedBy = task.assignee;
+    task.decidedAt = "2026-05-18T01:00:00.000Z";
+    task.lockVersion += 1;
+    task.permissions = { canView: true, canApprove: false, canReject: false, canRequestChanges: false };
+    return HttpResponse.json({ data: task });
+  }),
+  http.post("/api/approval-tasks/:taskId/reject", async ({ params, request }) => {
+    const task = tasks.find((item) => item.id === params.taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    const body = (await request.json()) as { lockVersion: number; reason?: string };
+    if (!body.reason) return HttpResponse.json({ error: { code: "validation_failed" } }, { status: 422 });
+    if (body.lockVersion !== task.lockVersion) {
+      return HttpResponse.json({ error: { code: "conflict" } }, { status: 409 });
+    }
+    task.status = "rejected";
+    task.decision = "rejected";
+    task.decisionReason = body.reason;
+    task.decidedBy = task.assignee;
+    task.lockVersion += 1;
+    return HttpResponse.json({ data: task });
+  }),
+  http.post("/api/approval-tasks/:taskId/request-changes", async ({ params, request }) => {
+    const task = tasks.find((item) => item.id === params.taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    const body = (await request.json()) as { lockVersion: number; reason?: string; requestedFields?: string[] };
+    if (!body.reason) return HttpResponse.json({ error: { code: "validation_failed" } }, { status: 422 });
+    if (body.lockVersion !== task.lockVersion) {
+      return HttpResponse.json({ error: { code: "conflict" } }, { status: 409 });
+    }
+    task.status = "changes_requested";
+    task.decision = "changes_requested";
+    task.decisionReason = body.reason;
+    task.requestedFields = body.requestedFields ?? [];
+    task.lockVersion += 1;
+    return HttpResponse.json({ data: task });
+  }),
   http.get("/api/approval-policies", () => HttpResponse.json({ data: policies })),
   http.get("/api/approval-policies/:policyId", ({ params }) => {
     const policy = policies.find((item) => item.id === params.policyId);
@@ -129,5 +211,12 @@ export const approvalHandlers = [
           : approvalPreviewFixture;
 
     return HttpResponse.json({ data: preview });
+  }),
+  http.get("/api/requisitions/:requisitionId/approval-summary", ({ params }) => {
+    if (params.requisitionId === "req-2") {
+      return HttpResponse.json({ data: approvalSummaryFixture });
+    }
+
+    return HttpResponse.json({ data: null });
   }),
 ];

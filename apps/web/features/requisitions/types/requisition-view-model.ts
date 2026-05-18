@@ -9,6 +9,8 @@ export type RequisitionStatus =
   | "submitted"
   | "pending_approval"
   | "changes_requested"
+  | "approved"
+  | "rejected"
   | "withdrawn"
   | "cancelled";
 
@@ -108,6 +110,12 @@ export type Requisition = {
   changesRequestedBy?: UserSummary | null;
   changeRequestReason?: string | null;
   changeRequestFields?: string[];
+  approvedAt?: string | null;
+  approvedBy?: UserSummary | null;
+  rejectedAt?: string | null;
+  rejectedBy?: UserSummary | null;
+  rejectionReason?: string | null;
+  approvalInstanceId?: string | null;
   withdrawnAt?: string | null;
   withdrawnBy?: UserSummary | null;
   withdrawalReason?: string | null;

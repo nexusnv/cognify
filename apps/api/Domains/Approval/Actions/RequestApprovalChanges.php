@@ -1,0 +1,88 @@
+<?php
+
+namespace Domains\Approval\Actions;
+
+use App\Audit\AuditEventData;
+use App\Audit\AuditRecorder;
+use App\Models\User;
+use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\States\ApprovalInstanceStatus;
+use Domains\Approval\States\ApprovalStageStatus;
+use Domains\Approval\States\ApprovalTaskStatus;
+use Domains\Requisition\Models\Requisition;
+use Domains\Requisition\States\RequisitionStatus;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+
+class RequestApprovalChanges
+{
+    public function __construct(private readonly AuditRecorder $auditRecorder)
+    {
+    }
+
+    /**
+     * @param array<int, string> $requestedFields
+     */
+    public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion, string $reason, array $requestedFields = []): ApprovalTask
+    {
+        return DB::transaction(function () use ($tenant, $actor, $task, $lockVersion, $reason, $requestedFields): ApprovalTask {
+            $task = ApprovalTask::query()->where('tenant_id', $tenant->id)->whereKey($task->id)->lockForUpdate()->firstOrFail();
+
+            if ((int) $task->assignee_id !== (int) $actor->id) {
+                throw new AuthorizationException('Only the assigned approver can act on this task.');
+            }
+
+            if ($task->lock_version !== $lockVersion || $task->status !== ApprovalTaskStatus::Active) {
+                throw new ConflictHttpException('Approval task has changed. Refresh before trying again.');
+            }
+
+            $task->forceFill([
+                'status' => ApprovalTaskStatus::ChangesRequested,
+                'decision' => 'changes_requested',
+                'decision_reason' => $reason,
+                'requested_fields' => $requestedFields,
+                'decided_by_id' => $actor->id,
+                'decided_at' => now(),
+                'lock_version' => $task->lock_version + 1,
+            ])->save();
+
+            $task->stage()->update([
+                'status' => ApprovalStageStatus::Completed,
+                'completed_at' => now(),
+            ]);
+            $instance = $task->instance()->lockForUpdate()->firstOrFail();
+            $instance->forceFill([
+                'status' => ApprovalInstanceStatus::ChangesRequested,
+                'completed_at' => now(),
+            ])->save();
+            $task->instance->tasks()
+                ->where('id', '!=', $task->id)
+                ->where('status', ApprovalTaskStatus::Active)
+                ->update(['status' => ApprovalTaskStatus::Cancelled]);
+
+            $subject = $task->subject;
+            if ($subject instanceof Requisition) {
+                $subject->forceFill([
+                    'status' => RequisitionStatus::ChangesRequested,
+                    'approval_instance_id' => $instance->id,
+                    'changes_requested_at' => now(),
+                    'changes_requested_by_id' => $actor->id,
+                    'change_request_reason' => $reason,
+                    'change_request_fields' => $requestedFields,
+                ])->save();
+            }
+
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $tenant,
+                actor: $actor,
+                action: 'approval_task.changes_requested',
+                subject: $task->subject,
+                metadata: ['approvalTaskId' => (string) $task->id],
+            ));
+
+            return $task->refresh()->load(['assignee', 'stage', 'instance', 'subject']);
+        });
+    }
+}

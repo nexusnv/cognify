@@ -26,6 +26,12 @@ import type { RequisitionCancelledAt } from "./requisitionCancelledAt";
 import type { RequisitionCancelledBy } from "./requisitionCancelledBy";
 import type { RequisitionCancellationReason } from "./requisitionCancellationReason";
 import type { RequisitionProjectSummaryProperty } from "./requisitionProjectSummaryProperty";
+import type { RequisitionApprovedAt } from "./requisitionApprovedAt";
+import type { RequisitionRejectedAt } from "./requisitionRejectedAt";
+import type { RequisitionApprovedBy } from "./requisitionApprovedBy";
+import type { RequisitionRejectedBy } from "./requisitionRejectedBy";
+import type { RequisitionRejectionReason } from "./requisitionRejectionReason";
+import type { RequisitionApprovalInstanceId } from "./requisitionApprovalInstanceId";
 
 export interface Requisition {
   id: string;
@@ -66,4 +72,10 @@ export interface Requisition {
   cancellationReason: RequisitionCancellationReason;
   /** @nullable */
   projectSummary?: RequisitionProjectSummaryProperty;
+  approvedAt: RequisitionApprovedAt;
+  rejectedAt: RequisitionRejectedAt;
+  approvedBy: RequisitionApprovedBy;
+  rejectedBy: RequisitionRejectedBy;
+  rejectionReason: RequisitionRejectionReason;
+  approvalInstanceId: RequisitionApprovalInstanceId;
 }

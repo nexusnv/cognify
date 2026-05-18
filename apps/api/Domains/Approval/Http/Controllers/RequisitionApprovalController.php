@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Approval\Actions\PreviewApprovalPolicy;
+use Domains\Approval\Actions\RouteRequisitionForApproval;
 use Domains\Approval\Data\ApprovalContextData;
+use Domains\Approval\Http\Resources\ApprovalSummaryResource;
 use Domains\Approval\Http\Resources\ApprovalPreviewResource;
+use Domains\Approval\Http\Resources\ApprovalTaskResource;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalPolicyVersion;
+use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +37,52 @@ class RequisitionApprovalController extends Controller
         return (new ApprovalPreviewResource(
             $action->handle($tenant, $request->user(), $context, $candidates),
         ))->response();
+    }
+
+    public function route(
+        CurrentTenant $currentTenant,
+        RouteRequisitionForApproval $action,
+        int $requisition,
+    ): JsonResponse {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $requisition = $this->findTenantRequisition($tenant, $requisition);
+
+        $this->authorize('view', $requisition);
+
+        $instance = $action->handle($tenant, request()->user(), $requisition);
+
+        return response()->json([
+            'data' => [
+                'instance' => (new ApprovalSummaryResource($instance->load(['stages', 'tasks.assignee', 'tasks.decidedBy'])))->resolve(),
+                'tasks' => ApprovalTaskResource::collection($instance->tasks()->with(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject.requester', 'subject.lineItems'])->get())->resolve(),
+            ],
+        ]);
+    }
+
+    public function summary(CurrentTenant $currentTenant, int $requisition): JsonResponse
+    {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $requisition = $this->findTenantRequisition($tenant, $requisition);
+
+        $this->authorize('view', $requisition);
+
+        $instance = ApprovalInstance::query()
+            ->with(['stages', 'tasks.assignee', 'tasks.decidedBy'])
+            ->where('tenant_id', $tenant->id)
+            ->where('subject_type', Requisition::class)
+            ->where('subject_id', $requisition->id)
+            ->whereIn('status', [
+                ApprovalInstanceStatus::Active,
+                ApprovalInstanceStatus::Approved,
+                ApprovalInstanceStatus::Rejected,
+                ApprovalInstanceStatus::ChangesRequested,
+            ])
+            ->latest('id')
+            ->first();
+
+        return response()->json([
+            'data' => $instance !== null ? (new ApprovalSummaryResource($instance))->resolve() : null,
+        ]);
     }
 
     /**

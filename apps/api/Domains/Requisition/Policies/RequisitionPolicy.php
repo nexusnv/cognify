@@ -33,7 +33,13 @@ class RequisitionPolicy
         }
 
         if (in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value], true)) {
-            return $requisition->status === RequisitionStatus::Submitted;
+            return in_array($requisition->status, [
+                RequisitionStatus::Submitted,
+                RequisitionStatus::PendingApproval,
+                RequisitionStatus::ChangesRequested,
+                RequisitionStatus::Approved,
+                RequisitionStatus::Rejected,
+            ], true);
         }
 
         return false;
@@ -57,7 +63,7 @@ class RequisitionPolicy
 
         return $this->view($user, $requisition)
             && in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value, TenantRole::Admin->value], true)
-            && $requisition->status === RequisitionStatus::Submitted;
+            && in_array($requisition->status, [RequisitionStatus::Submitted, RequisitionStatus::PendingApproval], true);
     }
 
     public function resubmit(User $user, Requisition $requisition): bool

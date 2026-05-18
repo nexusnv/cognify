@@ -14,6 +14,7 @@ use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyVersionController;
+use Domains\Approval\Http\Controllers\ApprovalTaskController;
 use Domains\Approval\Http\Controllers\RequisitionApprovalController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
@@ -62,6 +63,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/approval-policies/{approvalPolicy}/versions', [ApprovalPolicyVersionController::class, 'store']);
         Route::post('/approval-policy-versions/{approvalPolicyVersion}/publish', [ApprovalPolicyVersionController::class, 'publish']);
         Route::post('/approval-policy-versions/{approvalPolicyVersion}/retire', [ApprovalPolicyVersionController::class, 'retire']);
+        Route::get('/approval-tasks', [ApprovalTaskController::class, 'index']);
+        Route::get('/approval-tasks/{approvalTask}', [ApprovalTaskController::class, 'show']);
+        Route::post('/approval-tasks/{approvalTask}/view', [ApprovalTaskController::class, 'view']);
+        Route::post('/approval-tasks/{approvalTask}/approve', [ApprovalTaskController::class, 'approve']);
+        Route::post('/approval-tasks/{approvalTask}/reject', [ApprovalTaskController::class, 'reject']);
+        Route::post('/approval-tasks/{approvalTask}/request-changes', [ApprovalTaskController::class, 'requestChanges']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
@@ -86,6 +93,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/requisitions', [RequisitionController::class, 'store']);
         Route::get('/requisitions/{requisition}', [RequisitionController::class, 'show']);
         Route::get('/requisitions/{requisition}/approval-preview', [RequisitionApprovalController::class, 'preview']);
+        Route::post('/requisitions/{requisition}/route-approval', [RequisitionApprovalController::class, 'route']);
+        Route::get('/requisitions/{requisition}/approval-summary', [RequisitionApprovalController::class, 'summary']);
         Route::patch('/requisitions/{requisition}', [RequisitionController::class, 'update']);
         Route::post('/requisitions/{requisition}/apply-template', [RequisitionController::class, 'applyTemplate']);
         Route::post('/requisitions/{requisition}/submit', [RequisitionController::class, 'submit']);

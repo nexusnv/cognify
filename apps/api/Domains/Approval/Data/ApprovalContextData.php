@@ -100,6 +100,26 @@ final class ApprovalContextData
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'tenantId' => $this->tenantId,
+            'requisitionId' => $this->requisitionId,
+            'requesterId' => $this->requesterId,
+            'amount' => $this->amount,
+            'currency' => $this->currency,
+            'department' => $this->department,
+            'costCenter' => $this->costCenter,
+            'projectId' => $this->projectId,
+            'lineItemCategories' => $this->lineItemCategories,
+            'riskClassification' => $this->riskClassification,
+            'vendorId' => $this->vendorId,
+        ];
+    }
+
+    /**
      * @return array<int, string>
      */
     private static function lineItemCategories(Requisition $requisition): array
