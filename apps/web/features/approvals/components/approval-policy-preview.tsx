@@ -122,8 +122,11 @@ export function ApprovalPolicyPreview({
           </div>
           {data.matchedConditions.length > 0 ? (
             <ul className="space-y-2">
-              {data.matchedConditions.map((condition) => (
-                <li key={`${condition.field}-${condition.operator}`} className="text-xs text-muted-foreground">
+              {data.matchedConditions.map((condition, index) => (
+                <li
+                  key={`${condition.field}-${condition.operator}-${index}`}
+                  className="text-xs text-muted-foreground"
+                >
                   <span className="block font-medium text-foreground">{condition.summary}</span>
                 </li>
               ))}

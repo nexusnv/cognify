@@ -3,11 +3,14 @@
 namespace Domains\Approval\Http\Requests;
 
 use App\Tenancy\CurrentTenant;
+use Domains\Approval\Http\Requests\Concerns\ValidatesApprovalPolicyRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreApprovalPolicyRequest extends FormRequest
 {
+    use ValidatesApprovalPolicyRules;
+
     public function authorize(): bool
     {
         return app(CurrentTenant::class)->roleFor($this->user()) === 'admin';

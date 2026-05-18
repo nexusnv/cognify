@@ -87,6 +87,15 @@ class ApprovalPolicyMatcher
                 'code' => 'fallback_policy',
                 'message' => 'No policy rules matched; using the highest priority policy version.',
             ];
+            if ($evaluation['missingContextFields'] !== []) {
+                $warnings[] = [
+                    'code' => 'missing_context',
+                    'message' => sprintf(
+                        'Missing required approval context affected policy matching: %s',
+                        implode(', ', $evaluation['missingContextFields']),
+                    ),
+                ];
+            }
         }
 
         return [
@@ -175,12 +184,16 @@ class ApprovalPolicyMatcher
      */
     private function equals(mixed $actualValue, mixed $expectedValue): bool
     {
+        if (is_array($actualValue) && is_array($expectedValue)) {
+            return $this->normalizeStringSet($actualValue) === $this->normalizeStringSet($expectedValue);
+        }
+
         if (is_array($actualValue)) {
-            return in_array($expectedValue, $actualValue, true);
+            return in_array((string) $expectedValue, $this->normalizeStringSet($actualValue), true);
         }
 
         if (is_array($expectedValue)) {
-            return in_array($actualValue, $expectedValue, true);
+            return in_array((string) $actualValue, $this->normalizeStringSet($expectedValue), true);
         }
 
         return $actualValue === $expectedValue || (string) $actualValue === (string) $expectedValue;
@@ -234,5 +247,17 @@ class ApprovalPolicyMatcher
         }
 
         return (string) $value;
+    }
+
+    /**
+     * @param array<int, mixed> $values
+     * @return array<int, string>
+     */
+    private function normalizeStringSet(array $values): array
+    {
+        $normalized = array_map(static fn (mixed $value): string => trim((string) $value), $values);
+        sort($normalized);
+
+        return array_values($normalized);
     }
 }

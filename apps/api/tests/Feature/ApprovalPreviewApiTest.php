@@ -176,10 +176,10 @@ class ApprovalPreviewApiTest extends TestCase
             ->assertJsonPath('data.createsTasks', false)
             ->assertJsonPath('data.warnings.0.code', 'fallback_policy')
             ->assertJsonPath('data.warnings.1.code', 'missing_context')
-            ->assertJsonPath('data.warnings.1.message', 'Missing required approval context: riskClassification, vendorId');
+            ->assertJsonPath('data.warnings.1.message', 'Missing required approval context affected policy matching: riskClassification, vendorId');
     }
 
-    public function test_preview_reports_missing_context_when_fallback_policy_is_selected(): void
+    public function test_preview_reports_missing_context_when_highest_policy_is_only_available_match(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
         $requisition = $this->createRequisition($tenant, $requester, [
@@ -211,19 +211,45 @@ class ApprovalPreviewApiTest extends TestCase
                 ['stage' => 'Risk review', 'dueInHours' => 24],
             ],
         ]);
-        $fallbackVersion = $this->createPublishedPolicyVersion($tenant, $requester, [
-            'priority' => 1,
-            'rules' => [],
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}/approval-preview");
+
+        $response->assertOk()
+            ->assertJsonPath('data.warnings.0.code', 'fallback_policy')
+            ->assertJsonPath('data.warnings.1.code', 'missing_context')
+            ->assertJsonPath(
+                'data.warnings.1.message',
+                'Missing required approval context affected policy matching: riskClassification, vendorId',
+            );
+    }
+
+    public function test_preview_reports_missing_context_when_no_ruleless_fallback_exists(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester, [
+            'department' => 'Operations',
+            'cost_center' => 'OPS-220',
+        ]);
+
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 100,
+            'rules' => [
+                ['field' => 'riskClassification', 'operator' => 'equals', 'value' => 'high'],
+            ],
             'route_template' => [
                 'stages' => [
                     [
-                        'name' => 'Fallback buyer review',
+                        'name' => 'Risk review',
                         'completionRule' => 'all',
                         'approvers' => [
-                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                            ['type' => 'role', 'role' => 'approver', 'label' => 'Approver'],
                         ],
                     ],
                 ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Risk review', 'dueInHours' => 24],
             ],
         ]);
 
@@ -231,13 +257,62 @@ class ApprovalPreviewApiTest extends TestCase
             ->getJson("/api/requisitions/{$requisition->id}/approval-preview");
 
         $response->assertOk()
-            ->assertJsonPath('data.matchedVersion.id', (string) $fallbackVersion->id)
+            ->assertJsonPath('data.matchedPolicy.name', 'Standard requisition approval')
             ->assertJsonPath('data.warnings.0.code', 'fallback_policy')
             ->assertJsonPath('data.warnings.1.code', 'missing_context')
             ->assertJsonPath(
                 'data.warnings.1.message',
-                'Missing required approval context affected policy matching: riskClassification, vendorId',
+                'Missing required approval context affected policy matching: riskClassification',
             );
+    }
+
+    public function test_preview_matches_array_valued_equals_rules_regardless_of_order(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester, [
+            'department' => 'Operations',
+            'cost_center' => 'OPS-220',
+        ]);
+        $requisition->lineItems()->create([
+            'name' => 'Dock',
+            'description' => 'USB-C dock',
+            'quantity' => '1.0000',
+            'unit_of_measure' => 'each',
+            'estimated_unit_price' => '500.00',
+            'currency' => 'MYR',
+        ]);
+
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'rules' => [
+                [
+                    'field' => 'lineItemCategories',
+                    'operator' => 'equals',
+                    'value' => ['Dock', 'Developer laptop'],
+                ],
+            ],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Operations review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'approver', 'label' => 'Approver'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Operations review', 'dueInHours' => 12],
+            ],
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}/approval-preview");
+
+        $response->assertOk()
+            ->assertJsonPath('data.matchedConditions.0.field', 'lineItemCategories')
+            ->assertJsonPath('data.matchedConditions.0.matched', true)
+            ->assertJsonCount(0, 'data.warnings');
     }
 
     public function test_preview_uses_fallback_policy_when_no_rule_matches(): void

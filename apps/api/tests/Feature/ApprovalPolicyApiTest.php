@@ -147,6 +147,28 @@ class ApprovalPolicyApiTest extends TestCase
             ->assertJsonPath('error.code', 'validation_failed');
     }
 
+    public function test_policy_creation_rejects_reversed_between_bounds(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', [
+                ...$this->policyPayload(),
+                'rules' => [
+                    [
+                        'field' => 'amount',
+                        'operator' => 'between',
+                        'value' => [5000, 1000],
+                    ],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonPath('error.details.fields', [
+                'rules.0.value' => ['Between bounds must contain exactly two numeric values in ascending order.'],
+            ]);
+    }
+
     public function test_admin_can_create_policy_version_draft(): void
     {
         [$tenant, $admin] = $this->tenantUser('admin');
