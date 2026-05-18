@@ -57,6 +57,14 @@ class RequisitionPolicy
         return $this->update($user, $requisition);
     }
 
+    public function routeApproval(User $user, Requisition $requisition): bool
+    {
+        $role = app(CurrentTenant::class)->roleFor($user);
+
+        return in_array($requisition->status, [RequisitionStatus::Submitted], true)
+            && ($role === TenantRole::Admin->value || $requisition->requester_id === $user->id);
+    }
+
     public function requestChanges(User $user, Requisition $requisition): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);

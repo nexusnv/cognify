@@ -47,7 +47,7 @@ class RequisitionApprovalController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $requisition = $this->findTenantRequisition($tenant, $requisition);
 
-        $this->authorize('view', $requisition);
+        $this->authorize('routeApproval', $requisition);
 
         $instance = $action->handle($tenant, request()->user(), $requisition);
 

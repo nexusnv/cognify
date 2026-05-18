@@ -10,17 +10,18 @@ use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
+use Domains\Requisition\Actions\RequestRequisitionChanges;
 use Domains\Requisition\Models\Requisition;
-use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RequestApprovalChanges
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly RequestRequisitionChanges $requestRequisitionChanges,
+    ) {}
 
     /**
      * @param array<int, string> $requestedFields
@@ -64,14 +65,11 @@ class RequestApprovalChanges
 
             $subject = $task->subject;
             if ($subject instanceof Requisition) {
-                $subject->forceFill([
-                    'status' => RequisitionStatus::ChangesRequested,
-                    'approval_instance_id' => $instance->id,
-                    'changes_requested_at' => now(),
-                    'changes_requested_by_id' => $actor->id,
-                    'change_request_reason' => $reason,
-                    'change_request_fields' => $requestedFields,
-                ])->save();
+                $this->requestRequisitionChanges->handle($tenant, $actor, $subject, [
+                    'reason' => $reason,
+                    'requestedFields' => $requestedFields,
+                    'approvalInstanceId' => $instance->id,
+                ]);
             }
 
             $this->auditRecorder->record(new AuditEventData(

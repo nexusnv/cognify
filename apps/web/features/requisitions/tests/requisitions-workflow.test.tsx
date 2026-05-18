@@ -192,6 +192,39 @@ describe("requisitions workflow", () => {
     );
   });
 
+  it("shows an approval preview error state when preview loading fails", async () => {
+    server.use(
+      http.get("/api/requisitions/req-preview-error/approval-summary", () => {
+        return HttpResponse.json({ data: null });
+      }),
+      http.get("/api/requisitions/req-preview-error/approval-preview", () => {
+        return HttpResponse.json(
+          { error: { code: "server_error", message: "Preview unavailable" } },
+          { status: 500 },
+        );
+      }),
+      http.get("/api/requisitions/req-preview-error", () => {
+        return HttpResponse.json({ data: { ...requisitionFixtures[0], id: "req-preview-error" } });
+      }),
+      http.get("/api/requisitions/req-preview-error/activity", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+      http.get("/api/requisitions/req-preview-error/attachments", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+      http.get("/api/requisitions/req-preview-error/comments", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-preview-error" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Field laptop refresh", level: 1 }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Approval route preview could not be loaded.")).toBeInTheDocument();
+  });
+
   it("shows correction guidance and resubmits a change-requested requisition", async () => {
     const user = userEvent.setup();
 

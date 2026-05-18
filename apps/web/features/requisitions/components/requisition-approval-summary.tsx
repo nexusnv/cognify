@@ -87,6 +87,15 @@ export function RequisitionApprovalSummary({ requisitionId }: { requisitionId: s
     );
   }
 
+  if (previewQuery.isError) {
+    return (
+      <section className="rounded-md border border-red-300 bg-red-50 p-4">
+        <h2 className="text-base font-semibold text-red-900">Approval summary</h2>
+        <p className="mt-2 text-sm text-red-900">Approval route preview could not be loaded.</p>
+      </section>
+    );
+  }
+
   if (previewQuery.isLoading || !previewQuery.data) {
     return (
       <section className="rounded-md border p-4">

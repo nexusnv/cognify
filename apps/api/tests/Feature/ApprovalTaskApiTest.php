@@ -50,6 +50,22 @@ class ApprovalTaskApiTest extends TestCase
         ]);
     }
 
+    public function test_buyer_cannot_route_requester_requisition_for_approval(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedPolicyVersion($tenant, $requester, $approver);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval")
+            ->assertForbidden();
+
+        $this->assertSame(RequisitionStatus::Submitted, $requisition->refresh()->status);
+        $this->assertDatabaseCount('approval_instances', 0);
+    }
+
     public function test_approver_can_approve_assigned_task(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -117,6 +133,11 @@ class ApprovalTaskApiTest extends TestCase
 
         $this->assertSame(RequisitionStatus::ChangesRequested, $requisition->refresh()->status);
         $this->assertSame('Please attach the supplier quote.', $requisition->change_request_reason);
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $approver->id,
+            'event_type' => 'requisition.changes_requested',
+        ]);
     }
 
     public function test_stale_task_action_returns_conflict(): void

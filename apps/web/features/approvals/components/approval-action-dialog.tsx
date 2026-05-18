@@ -35,20 +35,24 @@ export function ApprovalActionDialog({
     }
 
     setError(null);
-    await onSubmit({
-      lockVersion,
-      reason: reason.trim() || undefined,
-      requestedFields:
-        action === "request-changes"
-          ? requestedFields
-              .split(",")
-              .map((field) => field.trim())
-              .filter(Boolean)
-          : undefined,
-    });
-    setOpen(false);
-    setReason("");
-    setRequestedFields("");
+    try {
+      await onSubmit({
+        lockVersion,
+        reason: reason.trim() || undefined,
+        requestedFields:
+          action === "request-changes"
+            ? requestedFields
+                .split(",")
+                .map((field) => field.trim())
+                .filter(Boolean)
+            : undefined,
+      });
+      setOpen(false);
+      setReason("");
+      setRequestedFields("");
+    } catch (caught) {
+      setError(errorMessage(caught));
+    }
   }
 
   return (
@@ -91,13 +95,13 @@ export function ApprovalActionDialog({
                     />
                   </label>
                 ) : null}
-                {error ? <p className="text-sm text-red-700">{error}</p> : null}
               </div>
             ) : (
               <p className="mt-2 text-sm text-muted-foreground">
                 This records your approval decision for the assigned task.
               </p>
             )}
+            {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
@@ -115,4 +119,40 @@ export function ApprovalActionDialog({
       )}
     </>
   );
+}
+
+function errorMessage(caught: unknown): string {
+  const directMessage = apiErrorMessage(caught);
+  if (directMessage) {
+    return directMessage;
+  }
+
+  if (caught && typeof caught === "object" && "data" in caught) {
+    const wrappedMessage = apiErrorMessage(caught.data);
+    if (wrappedMessage) {
+      return wrappedMessage;
+    }
+  }
+
+  if (caught instanceof Error) {
+    return caught.message;
+  }
+
+  return "Approval action could not be completed. Refresh and try again.";
+}
+
+function apiErrorMessage(value: unknown): string | null {
+  if (
+    value &&
+    typeof value === "object" &&
+    "error" in value &&
+    value.error &&
+    typeof value.error === "object" &&
+    "message" in value.error &&
+    typeof value.error.message === "string"
+  ) {
+    return value.error.message;
+  }
+
+  return null;
 }
