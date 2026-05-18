@@ -93,12 +93,7 @@ export const approvalPreviewFixture: ApprovalPreview = {
       warnings: [],
     },
   ],
-  warnings: [
-    {
-      code: "missing_context",
-      message: "Missing required approval context: riskClassification, vendorId",
-    },
-  ],
+  warnings: [],
   estimatedDueAt: "2026-05-19T00:00:00.000Z",
   createsTasks: false,
 };

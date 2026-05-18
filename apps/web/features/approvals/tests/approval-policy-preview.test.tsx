@@ -27,8 +27,8 @@ describe("ApprovalPolicyPreview", () => {
     expect(await screen.findByText("Standard requisition approval")).toBeInTheDocument();
     expect(screen.getByText("Manager review")).toBeInTheDocument();
     expect(screen.getByText(/Buyer fallback/)).toBeInTheDocument();
-    expect(screen.getByText("Missing required approval context: riskClassification, vendorId")).toBeInTheDocument();
     expect(screen.getByText("Computed preview only")).toBeInTheDocument();
+    expect(screen.queryByText("Preview warnings")).not.toBeInTheDocument();
   });
 
   it("shows empty stage state", () => {

@@ -403,5 +403,10 @@ describe("requisitions workflow", () => {
     expect(
       screen.getByDisplayValue("Replace unsupported devices for the buyer team."),
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Approval summary")).toBeInTheDocument();
+      expect(screen.getByText("Standard requisition approval")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Computed preview only")).toBeInTheDocument();
   });
 });

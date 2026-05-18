@@ -79,18 +79,21 @@ final class ApprovalContextData
     }
 
     /**
+     * @param array<int, string> $requiredFields
      * @return array<int, string>
      */
-    public function missingRequiredContext(): array
+    public function missingRequiredContext(array $requiredFields = []): array
     {
         $missing = [];
 
-        if ($this->riskClassification === null) {
-            $missing[] = 'riskClassification';
-        }
+        foreach (array_values(array_unique($requiredFields)) as $field) {
+            if (! in_array($field, ['riskClassification', 'vendorId'], true)) {
+                continue;
+            }
 
-        if ($this->vendorId === null) {
-            $missing[] = 'vendorId';
+            if ($this->{$field} === null) {
+                $missing[] = $field;
+            }
         }
 
         return $missing;

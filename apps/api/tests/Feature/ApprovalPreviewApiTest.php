@@ -55,6 +55,7 @@ class ApprovalPreviewApiTest extends TestCase
             ->assertJsonPath('data.matchedPolicy.subjectType', 'requisition')
             ->assertJsonPath('data.matchedVersion.versionNumber', 1)
             ->assertJsonPath('data.matchedConditions.0.field', 'amount')
+            ->assertJsonCount(0, 'data.warnings')
             ->assertJsonStructure([
                 'data' => [
                     'matchedPolicy' => [
@@ -144,15 +145,38 @@ class ApprovalPreviewApiTest extends TestCase
             'department' => null,
             'cost_center' => null,
         ]);
-        $this->createPublishedPolicyVersion($tenant, $requester);
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'rules' => [
+                ['field' => 'riskClassification', 'operator' => 'equals', 'value' => 'high'],
+                ['field' => 'vendorId', 'operator' => 'equals', 'value' => 'vendor-42'],
+            ],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Risk review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'approver', 'label' => 'Approver'],
+                        ],
+                        'fallbackApprovers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Risk review', 'dueInHours' => 24],
+            ],
+        ]);
 
         $response = $this->actingAsTenant($tenant, $requester)
             ->getJson("/api/requisitions/{$requisition->id}/approval-preview");
 
         $response->assertOk()
             ->assertJsonPath('data.createsTasks', false)
-            ->assertJsonPath('data.warnings.0.code', 'missing_context')
-            ->assertJsonPath('data.warnings.0.message', 'Missing required approval context: riskClassification, vendorId');
+            ->assertJsonPath('data.warnings.0.code', 'fallback_policy')
+            ->assertJsonPath('data.warnings.1.code', 'missing_context')
+            ->assertJsonPath('data.warnings.1.message', 'Missing required approval context: riskClassification, vendorId');
     }
 
     public function test_preview_uses_fallback_policy_when_no_rule_matches(): void
