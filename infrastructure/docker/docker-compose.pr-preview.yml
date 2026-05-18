@@ -66,13 +66,16 @@ services:
       APP_ENV: preview
       APP_DEBUG: "true"
       APP_URL: https://${PREVIEW_DOMAIN}
+      SANCTUM_STATEFUL_DOMAINS: ${PREVIEW_DOMAIN},127.0.0.1:8880,localhost:8880,127.0.0.1:8890,localhost:8890
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_DATABASE: cognify_preview
       DB_USERNAME: postgres
       DB_PASSWORD: secret
+      REDIS_CLIENT: predis
       REDIS_HOST: redis
+      REDIS_PORT: "6379"
       REDIS_PASSWORD: ""
       FILESYSTEM_DRIVER: s3
       AWS_ACCESS_KEY_ID: minioadmin
