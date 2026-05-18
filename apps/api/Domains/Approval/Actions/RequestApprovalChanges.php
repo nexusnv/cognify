@@ -6,7 +6,9 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
@@ -33,6 +35,26 @@ class RequestApprovalChanges
 
             if ((int) $task->assignee_id !== (int) $actor->id) {
                 throw new AuthorizationException('Only the assigned approver can act on this task.');
+            }
+
+            if ((int) $task->original_assignee_id !== (int) $task->assignee_id) {
+                $delegationId = data_get($task->metadata, 'delegationId');
+
+                $delegation = ApprovalDelegation::query()
+                    ->whereKey($delegationId)
+                    ->where('tenant_id', $task->tenant_id)
+                    ->where('delegator_id', $task->original_assignee_id)
+                    ->where('delegate_id', $actor->id)
+                    ->where('status', ApprovalDelegationStatus::Active)
+                    ->where('starts_at', '<=', now())
+                    ->where(function ($query): void {
+                        $query->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+                    })
+                    ->exists();
+
+                if (! $delegation) {
+                    throw new AuthorizationException('This delegated task is no longer actionable.');
+                }
             }
 
             if ($task->lock_version !== $lockVersion || $task->status !== ApprovalTaskStatus::Active) {

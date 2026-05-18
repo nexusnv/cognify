@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import {
   approvalSummaryFixture,
+  approvalDelegationFixtures,
   approvalTaskFixtures,
   approvalPolicyFixture,
   approvalPreviewFixture,
@@ -14,6 +15,7 @@ import type { ApprovalPolicy } from "../types/approval-view-model";
 
 let policies: ApprovalPolicy[] = [structuredClone(approvalPolicyFixture)];
 let tasks = structuredClone(approvalTaskFixtures);
+let delegations = structuredClone(approvalDelegationFixtures);
 
 type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
   Pick<
@@ -24,6 +26,7 @@ type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
 export function resetApprovalMockState() {
   policies = [structuredClone(approvalPolicyFixture)];
   tasks = structuredClone(approvalTaskFixtures);
+  delegations = structuredClone(approvalDelegationFixtures);
 }
 
 export const approvalHandlers = [
@@ -103,6 +106,67 @@ export const approvalHandlers = [
     task.decisionReason = body.reason;
     task.requestedFields = body.requestedFields ?? [];
     task.lockVersion += 1;
+    return HttpResponse.json({ data: task });
+  }),
+  http.get("/api/approval-delegations", () => {
+    return HttpResponse.json({ data: delegations });
+  }),
+  http.post("/api/approval-delegations", async ({ request }) => {
+    const body = (await request.json()) as {
+      delegateId?: number;
+      scope?: string;
+      startsAt?: string;
+      endsAt?: string;
+      reason?: string;
+    };
+
+    if (!body.delegateId || !body.startsAt || !body.endsAt || !body.reason) {
+      return HttpResponse.json(
+        { error: { code: "validation_failed", message: "Delegate, effective dates, and reason are required." } },
+        { status: 422 },
+      );
+    }
+
+    if (body.delegateId === 999) {
+      return HttpResponse.json(
+        { error: { code: "validation_failed", message: "The selected delegate is outside this tenant." } },
+        { status: 422 },
+      );
+    }
+
+    const delegation = {
+      ...structuredClone(approvalDelegationFixtures[0]!),
+      id: `delegation-${delegations.length + 1}`,
+      delegateId: String(body.delegateId),
+      scope: body.scope ?? "task_specific",
+      startsAt: body.startsAt,
+      endsAt: body.endsAt,
+      reason: body.reason,
+    };
+
+    delegations.push(delegation);
+    return HttpResponse.json({ data: delegation }, { status: 201 });
+  }),
+  http.post("/api/approval-tasks/:taskId/delegate", async ({ params, request }) => {
+    const task = tasks.find((item) => item.id === params.taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    const body = (await request.json()) as { approvalDelegationId?: number; lockVersion?: number };
+    if (body.lockVersion !== task.lockVersion) {
+      return HttpResponse.json({ error: { code: "conflict" } }, { status: 409 });
+    }
+    const delegation = delegations.find((item) => item.id === String(body.approvalDelegationId));
+    if (!delegation) {
+      return HttpResponse.json(
+        { error: { code: "validation_failed", message: "The selected delegation is not active." } },
+        { status: 422 },
+      );
+    }
+
+    task.originalAssignee = task.assignee;
+    task.assignee = delegation.delegate;
+    task.lockVersion += 1;
+    task.metadata = { ...(task.metadata ?? {}), delegationId: delegation.id };
+
     return HttpResponse.json({ data: task });
   }),
   http.get("/api/approval-policies", () => HttpResponse.json({ data: policies })),

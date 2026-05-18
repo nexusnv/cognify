@@ -8,9 +8,12 @@ use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Approval\Actions\ApproveApprovalTask;
+use Domains\Approval\Actions\DelegateApprovalTask;
 use Domains\Approval\Actions\RejectApprovalTask;
 use Domains\Approval\Actions\RequestApprovalChanges;
+use Domains\Approval\Http\Requests\DelegateApprovalTaskRequest;
 use Domains\Approval\Http\Resources\ApprovalTaskResource;
+use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\States\ApprovalTaskStatus;
 use Domains\Requisition\Models\Requisition;
@@ -161,6 +164,19 @@ class ApprovalTaskController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
 
         return new ApprovalTaskResource($action->handle($tenant, $request->user(), $this->findTenantTask($tenant, $approvalTask), (int) $validated['lockVersion'], $validated['reason'], $validated['requestedFields'] ?? []));
+    }
+
+    public function delegate(DelegateApprovalTaskRequest $request, CurrentTenant $currentTenant, DelegateApprovalTask $action, int $approvalTask): ApprovalTaskResource
+    {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $validated = $request->validated();
+        $task = $this->findTenantTask($tenant, $approvalTask);
+        $delegation = ApprovalDelegation::query()
+            ->with(['delegate', 'delegator'])
+            ->where('tenant_id', $tenant->id)
+            ->findOrFail((int) $validated['approvalDelegationId']);
+
+        return new ApprovalTaskResource($action->handle($tenant, $request->user(), $task, $delegation, (int) $validated['lockVersion']));
     }
 
     private function findTenantTask(Tenant $tenant, int $id): ApprovalTask

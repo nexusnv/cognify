@@ -19,6 +19,7 @@ import type { ApprovalTaskDecidedAt } from "./approvalTaskDecidedAt";
 import type { ApprovalTaskCreatedAt } from "./approvalTaskCreatedAt";
 import type { ApprovalTaskUpdatedAt } from "./approvalTaskUpdatedAt";
 import type { ApprovalTaskPermissions } from "./approvalTaskPermissions";
+import type { ApprovalTaskMetadata } from "./approvalTaskMetadata";
 
 export interface ApprovalTask {
   id: string;
@@ -44,4 +45,5 @@ export interface ApprovalTask {
   createdAt: ApprovalTaskCreatedAt;
   updatedAt: ApprovalTaskUpdatedAt;
   permissions: ApprovalTaskPermissions;
+  metadata: ApprovalTaskMetadata;
 }

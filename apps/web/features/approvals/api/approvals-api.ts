@@ -1,10 +1,13 @@
 import {
   createApprovalPolicy,
   createApprovalPolicyVersion,
+  createApprovalDelegation,
   approveApprovalTask as approveApprovalTaskEndpoint,
+  delegateApprovalTask as delegateApprovalTaskEndpoint,
   getApprovalTask,
   getApprovalPolicy,
   getRequisitionApprovalSummary,
+  listApprovalDelegations as listApprovalDelegationsEndpoint,
   listApprovalTasks as listApprovalTasksEndpoint,
   listApprovalPolicies as listApprovalPoliciesEndpoint,
   previewApprovalPolicy,
@@ -18,6 +21,7 @@ import {
 } from "@cognify/api-client/endpoints";
 import type {
   ApprovalSummary as ApiApprovalSummary,
+  ApprovalDelegation,
   ApprovalTask as ApiApprovalTask,
   ApprovalTaskActionRequest,
   ApprovalTaskQueueResponse,
@@ -25,11 +29,13 @@ import type {
   ApprovalPolicyListResponse,
   ApprovalPolicyVersion as ApiApprovalPolicyVersion,
   ApprovalPreview as ApiApprovalPreview,
+  DelegateApprovalTaskRequest,
   ListApprovalTasksParams,
   PreviewApprovalPolicyRequest,
   RejectApprovalTaskRequest,
   RequestApprovalChangesRequest,
   StoreApprovalPolicyRequest,
+  StoreApprovalDelegationRequest,
   StoreApprovalPolicyVersionRequest,
   UpdateApprovalPolicyRequest,
 } from "@cognify/api-client/schemas";
@@ -132,6 +138,24 @@ export async function markApprovalTaskViewed(taskId: string) {
 
 export async function approveApprovalTask(taskId: string, values: ApprovalTaskActionRequest) {
   const response = await approveApprovalTaskEndpoint(taskId, values, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data as ApiApprovalTask;
+}
+
+export async function listApprovalDelegations(): Promise<ApprovalDelegation[]> {
+  const response = await listApprovalDelegationsEndpoint(withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data.data;
+}
+
+export async function createTaskDelegation(values: StoreApprovalDelegationRequest) {
+  const response = await createApprovalDelegation(values, withActiveTenantHeader());
+  if (response.status !== 201) throw response.data;
+  return response.data.data as ApprovalDelegation;
+}
+
+export async function delegateApprovalTask(taskId: string, values: DelegateApprovalTaskRequest) {
+  const response = await delegateApprovalTaskEndpoint(taskId, values, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return response.data.data as ApiApprovalTask;
 }

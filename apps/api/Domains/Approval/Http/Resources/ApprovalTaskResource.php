@@ -5,7 +5,9 @@ namespace Domains\Approval\Http\Resources;
 use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
+use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -67,11 +69,12 @@ class ApprovalTaskResource extends JsonResource
             'lockVersion' => $this->lock_version,
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
+            'metadata' => $this->metadata ?? [],
             'permissions' => [
                 'canView' => $this->canViewTask($request),
-                'canApprove' => $this->status->value === 'active' && (int) $this->assignee_id === (int) $request->user()?->id,
-                'canReject' => $this->status->value === 'active' && (int) $this->assignee_id === (int) $request->user()?->id,
-                'canRequestChanges' => $this->status->value === 'active' && (int) $this->assignee_id === (int) $request->user()?->id,
+                'canApprove' => $this->isActionableBy($request),
+                'canReject' => $this->isActionableBy($request),
+                'canRequestChanges' => $this->isActionableBy($request),
             ],
         ];
     }
@@ -117,5 +120,32 @@ class ApprovalTaskResource extends JsonResource
 
         return (int) $this->assignee_id === (int) $user->id
             || (int) $this->original_assignee_id === (int) $user->id;
+    }
+
+    private function isActionableBy(Request $request): bool
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User || $this->status->value !== 'active' || (int) $this->assignee_id !== (int) $user->id) {
+            return false;
+        }
+
+        if ((int) $this->original_assignee_id === (int) $this->assignee_id) {
+            return true;
+        }
+
+        $delegationId = data_get($this->metadata, 'delegationId');
+
+        return ApprovalDelegation::query()
+            ->whereKey($delegationId)
+            ->where('tenant_id', $this->tenant_id)
+            ->where('delegator_id', $this->original_assignee_id)
+            ->where('delegate_id', $user->id)
+            ->where('status', ApprovalDelegationStatus::Active)
+            ->where('starts_at', '<=', now())
+            ->where(function ($query): void {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+            })
+            ->exists();
     }
 }

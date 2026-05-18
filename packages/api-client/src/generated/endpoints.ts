@@ -7,6 +7,8 @@
 import type {
   AmbiguousTenantResponse,
   ApplyRequisitionTemplateRequest,
+  ApprovalDelegationListResponse,
+  ApprovalDelegationResponse,
   ApprovalPolicyListResponse,
   ApprovalPolicyResponse,
   ApprovalPolicyVersionResponse,
@@ -25,6 +27,7 @@ import type {
   CreateCollaborationCommentRequest,
   CreateRequisitionRequest,
   CurrentUserResponse,
+  DelegateApprovalTaskRequest,
   ForbiddenResponse,
   ForgotPasswordRequest,
   HealthResponse,
@@ -61,6 +64,7 @@ import type {
   RouteRequisitionApprovalResponse,
   SearchResponse,
   SetCurrentTenantRequest,
+  StoreApprovalDelegationRequest,
   StoreApprovalPolicyRequest,
   StoreApprovalPolicyVersionRequest,
   StoreProcurementProjectRequest,
@@ -3507,6 +3511,224 @@ export const listApprovalTasks = async (
 };
 
 /**
+ * @summary List approval delegations
+ */
+export type listApprovalDelegationsResponse200 = {
+  data: ApprovalDelegationListResponse;
+  status: 200;
+};
+
+export type listApprovalDelegationsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApprovalDelegationsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listApprovalDelegationsResponseSuccess = listApprovalDelegationsResponse200 & {
+  headers: Headers;
+};
+export type listApprovalDelegationsResponseError = (
+  | listApprovalDelegationsResponse401
+  | listApprovalDelegationsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listApprovalDelegationsResponse =
+  | listApprovalDelegationsResponseSuccess
+  | listApprovalDelegationsResponseError;
+
+export const getListApprovalDelegationsUrl = () => {
+  return `/api/approval-delegations`;
+};
+
+export const listApprovalDelegations = async (
+  options?: RequestInit,
+): Promise<listApprovalDelegationsResponse> => {
+  return cognifyFetch<listApprovalDelegationsResponse>(getListApprovalDelegationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create approval delegation
+ */
+export type createApprovalDelegationResponse201 = {
+  data: ApprovalDelegationResponse;
+  status: 201;
+};
+
+export type createApprovalDelegationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createApprovalDelegationResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createApprovalDelegationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createApprovalDelegationResponseSuccess = createApprovalDelegationResponse201 & {
+  headers: Headers;
+};
+export type createApprovalDelegationResponseError = (
+  | createApprovalDelegationResponse401
+  | createApprovalDelegationResponse403
+  | createApprovalDelegationResponse422
+) & {
+  headers: Headers;
+};
+
+export type createApprovalDelegationResponse =
+  | createApprovalDelegationResponseSuccess
+  | createApprovalDelegationResponseError;
+
+export const getCreateApprovalDelegationUrl = () => {
+  return `/api/approval-delegations`;
+};
+
+export const createApprovalDelegation = async (
+  storeApprovalDelegationRequest: StoreApprovalDelegationRequest,
+  options?: RequestInit,
+): Promise<createApprovalDelegationResponse> => {
+  return cognifyFetch<createApprovalDelegationResponse>(getCreateApprovalDelegationUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(storeApprovalDelegationRequest),
+  });
+};
+
+/**
+ * @summary Update approval delegation
+ */
+export type updateApprovalDelegationResponse200 = {
+  data: ApprovalDelegationResponse;
+  status: 200;
+};
+
+export type updateApprovalDelegationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateApprovalDelegationResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type updateApprovalDelegationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateApprovalDelegationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateApprovalDelegationResponseSuccess = updateApprovalDelegationResponse200 & {
+  headers: Headers;
+};
+export type updateApprovalDelegationResponseError = (
+  | updateApprovalDelegationResponse401
+  | updateApprovalDelegationResponse403
+  | updateApprovalDelegationResponse404
+  | updateApprovalDelegationResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateApprovalDelegationResponse =
+  | updateApprovalDelegationResponseSuccess
+  | updateApprovalDelegationResponseError;
+
+export const getUpdateApprovalDelegationUrl = (approvalDelegation: string) => {
+  return `/api/approval-delegations/${approvalDelegation}`;
+};
+
+export const updateApprovalDelegation = async (
+  approvalDelegation: string,
+  storeApprovalDelegationRequest: StoreApprovalDelegationRequest,
+  options?: RequestInit,
+): Promise<updateApprovalDelegationResponse> => {
+  return cognifyFetch<updateApprovalDelegationResponse>(
+    getUpdateApprovalDelegationUrl(approvalDelegation),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(storeApprovalDelegationRequest),
+    },
+  );
+};
+
+/**
+ * @summary Cancel approval delegation
+ */
+export type cancelApprovalDelegationResponse200 = {
+  data: ApprovalDelegationResponse;
+  status: 200;
+};
+
+export type cancelApprovalDelegationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelApprovalDelegationResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type cancelApprovalDelegationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelApprovalDelegationResponseSuccess = cancelApprovalDelegationResponse200 & {
+  headers: Headers;
+};
+export type cancelApprovalDelegationResponseError = (
+  | cancelApprovalDelegationResponse401
+  | cancelApprovalDelegationResponse403
+  | cancelApprovalDelegationResponse404
+) & {
+  headers: Headers;
+};
+
+export type cancelApprovalDelegationResponse =
+  | cancelApprovalDelegationResponseSuccess
+  | cancelApprovalDelegationResponseError;
+
+export const getCancelApprovalDelegationUrl = (approvalDelegation: string) => {
+  return `/api/approval-delegations/${approvalDelegation}/cancel`;
+};
+
+export const cancelApprovalDelegation = async (
+  approvalDelegation: string,
+  options?: RequestInit,
+): Promise<cancelApprovalDelegationResponse> => {
+  return cognifyFetch<cancelApprovalDelegationResponse>(
+    getCancelApprovalDelegationUrl(approvalDelegation),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
  * @summary Get approval task detail
  */
 export type getApprovalTaskResponse200 = {
@@ -3806,5 +4028,72 @@ export const requestApprovalChanges = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(requestApprovalChangesRequest),
+  });
+};
+
+/**
+ * @summary Delegate approval task
+ */
+export type delegateApprovalTaskResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type delegateApprovalTaskResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type delegateApprovalTaskResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type delegateApprovalTaskResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type delegateApprovalTaskResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type delegateApprovalTaskResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type delegateApprovalTaskResponseSuccess = delegateApprovalTaskResponse200 & {
+  headers: Headers;
+};
+export type delegateApprovalTaskResponseError = (
+  | delegateApprovalTaskResponse401
+  | delegateApprovalTaskResponse403
+  | delegateApprovalTaskResponse404
+  | delegateApprovalTaskResponse409
+  | delegateApprovalTaskResponse422
+) & {
+  headers: Headers;
+};
+
+export type delegateApprovalTaskResponse =
+  | delegateApprovalTaskResponseSuccess
+  | delegateApprovalTaskResponseError;
+
+export const getDelegateApprovalTaskUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/delegate`;
+};
+
+export const delegateApprovalTask = async (
+  approvalTask: string,
+  delegateApprovalTaskRequest: DelegateApprovalTaskRequest,
+  options?: RequestInit,
+): Promise<delegateApprovalTaskResponse> => {
+  return cognifyFetch<delegateApprovalTaskResponse>(getDelegateApprovalTaskUrl(approvalTask), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(delegateApprovalTaskRequest),
   });
 };

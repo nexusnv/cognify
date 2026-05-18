@@ -1,4 +1,5 @@
 import type {
+  ApprovalDelegation,
   ApprovalSummary,
   ApprovalTask,
   ApprovalPolicy,
@@ -252,3 +253,22 @@ export const approvalSummaryFixture: ApprovalSummary = {
   startedAt: "2026-05-18T00:00:00.000Z",
   completedAt: null,
 };
+
+export const approvalDelegationFixtures: ApprovalDelegation[] = [
+  {
+    id: "delegation-1",
+    tenantId: "tenant-1",
+    delegatorId: "user-2",
+    delegateId: "3",
+    scope: "task_specific",
+    startsAt: "2026-05-19T00:00:00.000Z",
+    endsAt: "2026-05-20T00:00:00.000Z",
+    status: "active",
+    reason: "Covering a meeting.",
+    delegator: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+    delegate: { id: "3", name: "Finance approver", email: "finance.approver@acme.test" },
+    createdById: "user-2",
+    createdAt: "2026-05-19T00:00:00.000Z",
+    updatedAt: "2026-05-19T00:00:00.000Z",
+  },
+];

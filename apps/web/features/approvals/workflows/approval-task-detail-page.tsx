@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { toast } from "sonner";
 import { ApprovalActionDialog } from "../components/approval-action-dialog";
+import { ApprovalDelegationDialog } from "../components/approval-delegation-dialog";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
 import { useApprovalTaskActions } from "../hooks/use-approval-task-actions";
 import { useApprovalTask } from "../hooks/use-approval-tasks";
@@ -90,6 +91,7 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
                 );
               }}
             />
+            <ApprovalDelegationDialog taskId={task.id} lockVersion={task.lockVersion} />
           </div>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">

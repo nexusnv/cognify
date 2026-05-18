@@ -2793,6 +2793,166 @@
         }
       }
     },
+    "/api/approval-delegations": {
+      "get": {
+        "operationId": "listApprovalDelegations",
+        "summary": "List approval delegations",
+        "tags": [
+          "Approval Delegations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval delegations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDelegationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApprovalDelegation",
+        "summary": "Create approval delegation",
+        "tags": [
+          "Approval Delegations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreApprovalDelegationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Approval delegation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDelegationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/approval-delegations/{approvalDelegation}": {
+      "patch": {
+        "operationId": "updateApprovalDelegation",
+        "summary": "Update approval delegation",
+        "tags": [
+          "Approval Delegations"
+        ],
+        "parameters": [
+          {
+            "name": "approvalDelegation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval delegation identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreApprovalDelegationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval delegation updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDelegationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/approval-delegations/{approvalDelegation}/cancel": {
+      "post": {
+        "operationId": "cancelApprovalDelegation",
+        "summary": "Cancel approval delegation",
+        "tags": [
+          "Approval Delegations"
+        ],
+        "parameters": [
+          {
+            "name": "approvalDelegation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval delegation identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval delegation cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDelegationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/approval-tasks/{approvalTask}": {
       "get": {
         "operationId": "getApprovalTask",
@@ -3020,6 +3180,63 @@
         "responses": {
           "200": {
             "description": "Approval task updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalTaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/approval-tasks/{approvalTask}/delegate": {
+      "post": {
+        "operationId": "delegateApprovalTask",
+        "summary": "Delegate approval task",
+        "tags": [
+          "Approval Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "approvalTask",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval task identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelegateApprovalTaskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval task delegated",
             "content": {
               "application/json": {
                 "schema": {
@@ -6593,6 +6810,194 @@
           }
         }
       },
+      "ApprovalDelegation": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "delegatorId",
+          "delegateId",
+          "scope",
+          "startsAt",
+          "endsAt",
+          "status",
+          "reason",
+          "delegator",
+          "delegate",
+          "createdById",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "delegatorId": {
+            "type": "string"
+          },
+          "delegateId": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "task_specific",
+              "category",
+              "department",
+              "cost_center",
+              "project",
+              "all"
+            ]
+          },
+          "startsAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "expired"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "delegator": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delegate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdById": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ApprovalDelegationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApprovalDelegation"
+          }
+        }
+      },
+      "ApprovalDelegationListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalDelegation"
+            }
+          }
+        }
+      },
+      "StoreApprovalDelegationRequest": {
+        "type": "object",
+        "required": [
+          "delegateId",
+          "scope",
+          "startsAt",
+          "endsAt",
+          "reason"
+        ],
+        "properties": {
+          "delegateId": {
+            "type": "integer"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "task_specific",
+              "category",
+              "department",
+              "cost_center",
+              "project",
+              "all"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3
+          }
+        }
+      },
+      "DelegateApprovalTaskRequest": {
+        "type": "object",
+        "required": [
+          "approvalDelegationId",
+          "lockVersion"
+        ],
+        "properties": {
+          "approvalDelegationId": {
+            "type": "integer"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
       "ApprovalTaskSubject": {
         "type": "object",
         "required": [
@@ -6751,6 +7156,7 @@
           "lockVersion",
           "createdAt",
           "updatedAt",
+          "metadata",
           "permissions"
         ],
         "properties": {
@@ -6881,6 +7287,10 @@
           },
           "permissions": {
             "$ref": "#/components/schemas/ApprovalTaskPermissions"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
