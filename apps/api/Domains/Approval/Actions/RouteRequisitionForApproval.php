@@ -128,42 +128,40 @@ class RouteRequisitionForApproval
      */
     private function createStageTasks(Tenant $tenant, User $actor, Requisition $requisition, ApprovalInstance $instance, ApprovalStage $stage, array $stageData): void
     {
-        $assignees = $this->resolveApprovers($tenant, $stageData['approvers'] ?? []);
+        $assignee = $this->resolveApprovers($tenant, $stageData['approvers'] ?? [])->first();
 
-        if ($assignees->isEmpty()) {
-            $assignees = $this->resolveApprovers($tenant, $stageData['fallbackApprovers'] ?? []);
+        if ($assignee === null) {
+            $assignee = $this->resolveApprovers($tenant, $stageData['fallbackApprovers'] ?? [])->first();
         }
 
-        if ($assignees->isEmpty()) {
+        if (! $assignee instanceof User) {
             throw new ConflictHttpException('Approval route did not resolve any active approvers.');
         }
 
-        foreach ($assignees as $assignee) {
-            $task = ApprovalTask::query()->create([
-                'tenant_id' => $tenant->id,
-                'approval_instance_id' => $instance->id,
-                'approval_stage_id' => $stage->id,
-                'subject_type' => Requisition::class,
-                'subject_id' => $requisition->id,
-                'assignee_id' => $assignee->id,
-                'original_assignee_id' => $assignee->id,
-                'title' => sprintf('Approve %s', $requisition->number),
-                'status' => ApprovalTaskStatus::Active,
-                'assigned_at' => now(),
-                'due_at' => $stage->due_at,
-                'metadata' => ['stageName' => $stage->name],
-            ]);
+        $task = ApprovalTask::query()->create([
+            'tenant_id' => $tenant->id,
+            'approval_instance_id' => $instance->id,
+            'approval_stage_id' => $stage->id,
+            'subject_type' => Requisition::class,
+            'subject_id' => $requisition->id,
+            'assignee_id' => $assignee->id,
+            'original_assignee_id' => $assignee->id,
+            'title' => sprintf('Approve %s', $requisition->number),
+            'status' => ApprovalTaskStatus::Active,
+            'assigned_at' => now(),
+            'due_at' => $stage->due_at,
+            'metadata' => ['stageName' => $stage->name],
+        ]);
 
-            $this->notificationRecorder->record($tenant, [$assignee], new NotificationData(
-                type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
-                title: 'Approval task assigned',
-                body: $requisition->title,
-                href: "/approvals/tasks/{$task->id}",
-                subject: $requisition,
-                subjectLabel: $requisition->number,
-                actor: $actor,
-            ));
-        }
+        $this->notificationRecorder->record($tenant, [$assignee], new NotificationData(
+            type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+            title: 'Approval task assigned',
+            body: $requisition->title,
+            href: "/approvals/tasks/{$task->id}",
+            subject: $requisition,
+            subjectLabel: $requisition->number,
+            actor: $actor,
+        ));
     }
 
     /**

@@ -2,7 +2,9 @@
 
 namespace Domains\Approval\Http\Resources;
 
+use App\Auth\TenantRole;
 use App\Models\User;
+use App\Tenancy\CurrentTenant;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
@@ -63,7 +65,7 @@ class ApprovalTaskResource extends JsonResource
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
             'permissions' => [
-                'canView' => (int) $this->assignee_id === (int) $request->user()?->id,
+                'canView' => $this->canViewTask($request),
                 'canApprove' => $this->status->value === 'active' && (int) $this->assignee_id === (int) $request->user()?->id,
                 'canReject' => $this->status->value === 'active' && (int) $this->assignee_id === (int) $request->user()?->id,
                 'canRequestChanges' => $this->status->value === 'active' && (int) $this->assignee_id === (int) $request->user()?->id,
@@ -94,5 +96,23 @@ class ApprovalTaskResource extends JsonResource
             'name' => $user->name,
             'email' => $user->email,
         ];
+    }
+
+    private function canViewTask(Request $request): bool
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $role = app(CurrentTenant::class)->roleFor($user);
+
+        if (in_array($role, [TenantRole::Admin->value, TenantRole::Buyer->value], true)) {
+            return true;
+        }
+
+        return (int) $this->assignee_id === (int) $user->id
+            || (int) $this->original_assignee_id === (int) $user->id;
     }
 }

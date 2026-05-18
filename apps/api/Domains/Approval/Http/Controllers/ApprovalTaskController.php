@@ -4,6 +4,7 @@ namespace Domains\Approval\Http\Controllers;
 
 use App\Auth\TenantRole;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Approval\Actions\ApproveApprovalTask;
@@ -111,9 +112,14 @@ class ApprovalTaskController extends Controller
         ]);
     }
 
-    public function show(CurrentTenant $currentTenant, int $approvalTask): ApprovalTaskResource
+    public function show(Request $request, CurrentTenant $currentTenant, int $approvalTask): ApprovalTaskResource
     {
-        return new ApprovalTaskResource($this->findTenantTask($this->tenantOrAbort($currentTenant), $approvalTask));
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $task = $this->findTenantTask($tenant, $approvalTask);
+
+        abort_unless($this->canViewTask($request->user(), $currentTenant, $task), 403);
+
+        return new ApprovalTaskResource($task);
     }
 
     public function view(Request $request, CurrentTenant $currentTenant, int $approvalTask): ApprovalTaskResource
@@ -168,5 +174,17 @@ class ApprovalTaskController extends Controller
     private function tenantOrAbort(CurrentTenant $currentTenant): Tenant
     {
         return $currentTenant->get();
+    }
+
+    private function canViewTask(User $user, CurrentTenant $currentTenant, ApprovalTask $task): bool
+    {
+        $role = $currentTenant->roleFor($user);
+
+        if (in_array($role, [TenantRole::Admin->value, TenantRole::Buyer->value], true)) {
+            return true;
+        }
+
+        return (int) $task->assignee_id === (int) $user->id
+            || (int) $task->original_assignee_id === (int) $user->id;
     }
 }

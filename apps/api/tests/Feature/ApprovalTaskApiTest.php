@@ -146,6 +146,45 @@ class ApprovalTaskApiTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_different_same_tenant_approver_cannot_view_task_detail(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $otherApprover] = $this->tenantUser('approver', $tenant);
+        $this->routeRequisition($tenant, $requester, $firstApprover);
+        $task = ApprovalTask::query()->firstOrFail();
+
+        $this->actingAsTenant($tenant, $otherApprover)
+            ->getJson("/api/approval-tasks/{$task->id}")
+            ->assertForbidden();
+    }
+
+    public function test_multi_approver_stage_creates_only_first_resolved_task(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedPolicyVersionWithApprovers($tenant, $requester, [$firstApprover, $secondApprover]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.tasks')
+            ->assertJsonPath('data.tasks.0.assignee.id', (string) $firstApprover->id);
+
+        $this->assertSame(1, ApprovalTask::query()->count());
+        $this->assertDatabaseHas('approval_tasks', [
+            'tenant_id' => $tenant->id,
+            'assignee_id' => $firstApprover->id,
+            'status' => 'active',
+        ]);
+        $this->assertDatabaseMissing('approval_tasks', [
+            'tenant_id' => $tenant->id,
+            'assignee_id' => $secondApprover->id,
+        ]);
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */
@@ -236,6 +275,50 @@ class ApprovalTaskApiTest extends TestCase
                         'approvers' => [
                             ['type' => 'user', 'userId' => (string) $approver->id, 'label' => $approver->name],
                         ],
+                        'fallbackApprovers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [['stage' => 'Manager review', 'dueInHours' => 48]],
+            'published_by' => $actor->id,
+            'published_at' => now(),
+        ]);
+    }
+
+    /**
+     * @param array<int, User> $approvers
+     */
+    private function createPublishedPolicyVersionWithApprovers(Tenant $tenant, User $actor, array $approvers): ApprovalPolicyVersion
+    {
+        $policy = ApprovalPolicy::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Multi approver requisition approval',
+            'description' => 'Default requisition approval route.',
+            'subject_type' => 'requisition',
+            'status' => ApprovalPolicyStatus::Active,
+            'created_by' => $actor->id,
+            'updated_by' => $actor->id,
+        ]);
+
+        return ApprovalPolicyVersion::query()->create([
+            'approval_policy_id' => $policy->id,
+            'tenant_id' => $tenant->id,
+            'subject_type' => 'requisition',
+            'version_number' => 1,
+            'status' => ApprovalPolicyVersionStatus::Published,
+            'priority' => 100,
+            'rules' => [['field' => 'amount', 'operator' => 'gte', 'value' => 1000]],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Manager review',
+                        'completionRule' => 'all',
+                        'approvers' => array_map(
+                            fn (User $approver): array => ['type' => 'user', 'userId' => (string) $approver->id, 'label' => $approver->name],
+                            $approvers,
+                        ),
                         'fallbackApprovers' => [
                             ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
                         ],
