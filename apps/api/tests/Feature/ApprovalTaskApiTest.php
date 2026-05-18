@@ -206,6 +206,77 @@ class ApprovalTaskApiTest extends TestCase
         ]);
     }
 
+    public function test_later_sequential_stage_is_blocked_until_prior_stage_completes(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedSequentialPolicyVersion($tenant, $requester, $firstApprover, $secondApprover);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval");
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data.tasks')
+            ->assertJsonPath('data.tasks.0.status', 'active')
+            ->assertJsonPath('data.tasks.1.status', 'blocked');
+
+        $firstTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $secondTask = ApprovalTask::query()->where('assignee_id', $secondApprover->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $secondApprover)
+            ->postJson("/api/approval-tasks/{$secondTask->id}/approve", ['lockVersion' => $secondTask->lock_version])
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$firstTask->id}/approve", ['lockVersion' => $firstTask->lock_version])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertSame('active', $secondTask->refresh()->status->value);
+        $this->assertNotNull($secondTask->stage->refresh()->activated_at);
+        $this->assertNotNull($secondTask->due_at);
+        $this->assertSame(RequisitionStatus::PendingApproval, $requisition->refresh()->status);
+
+        $this->actingAsTenant($tenant, $secondApprover)
+            ->postJson("/api/approval-tasks/{$secondTask->id}/approve", ['lockVersion' => $secondTask->refresh()->lock_version])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertSame(RequisitionStatus::Approved, $requisition->refresh()->status);
+    }
+
+    public function test_stage_activation_notifies_next_approver(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedSequentialPolicyVersion($tenant, $requester, $firstApprover, $secondApprover);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval")
+            ->assertOk();
+
+        $firstTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $secondTask = ApprovalTask::query()->where('assignee_id', $secondApprover->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$firstTask->id}/approve", ['lockVersion' => $firstTask->lock_version])
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $secondApprover->id,
+            'type' => 'approval.task_assigned',
+            'title' => 'Approval task assigned',
+            'body' => $requisition->title,
+            'href' => "/approvals/tasks/{$secondTask->id}",
+        ]);
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */
@@ -347,6 +418,63 @@ class ApprovalTaskApiTest extends TestCase
                 ],
             ],
             'sla_rules' => [['stage' => 'Manager review', 'dueInHours' => 48]],
+            'published_by' => $actor->id,
+            'published_at' => now(),
+        ]);
+    }
+
+    private function createPublishedSequentialPolicyVersion(
+        Tenant $tenant,
+        User $actor,
+        User $firstApprover,
+        User $secondApprover,
+    ): ApprovalPolicyVersion {
+        $policy = ApprovalPolicy::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Sequential requisition approval',
+            'description' => 'Sequential route with two stages.',
+            'subject_type' => 'requisition',
+            'status' => ApprovalPolicyStatus::Active,
+            'created_by' => $actor->id,
+            'updated_by' => $actor->id,
+        ]);
+
+        return ApprovalPolicyVersion::query()->create([
+            'approval_policy_id' => $policy->id,
+            'tenant_id' => $tenant->id,
+            'subject_type' => 'requisition',
+            'version_number' => 1,
+            'status' => ApprovalPolicyVersionStatus::Published,
+            'priority' => 100,
+            'rules' => [['field' => 'amount', 'operator' => 'gte', 'value' => 1000]],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Manager review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'user', 'userId' => (string) $firstApprover->id, 'label' => $firstApprover->name],
+                        ],
+                        'fallbackApprovers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                    [
+                        'name' => 'Finance review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'user', 'userId' => (string) $secondApprover->id, 'label' => $secondApprover->name],
+                        ],
+                        'fallbackApprovers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Manager review', 'dueInHours' => 24],
+                ['stage' => 'Finance review', 'dueInHours' => 48],
+            ],
             'published_by' => $actor->id,
             'published_at' => now(),
         ]);

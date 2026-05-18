@@ -12,6 +12,7 @@ export function ApprovalStageMap({
   return (
     <ol className="space-y-3">
       {stages.map((stage, index) => {
+        const isActionable = index === 0;
         const approverLabels = stage.approvers
           .map((approver) => approver.label ?? approver.role ?? approver.userId ?? approver.type)
           .join(", ");
@@ -22,7 +23,9 @@ export function ApprovalStageMap({
           <li key={`${stage.name}-${index}`} className="rounded-md border p-3">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">{stage.name}</h3>
-              <span className="text-xs uppercase text-muted-foreground">{stage.completionRule}</span>
+              <span className="text-xs uppercase text-muted-foreground">
+                {isActionable ? stage.completionRule : "blocked"}
+              </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               <span className="block">{approverLabels || "No approvers"}</span>
@@ -30,6 +33,11 @@ export function ApprovalStageMap({
                 Fallback: {fallbackLabels || "No fallback approver configured"}
               </span>
             </p>
+            {!isActionable ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Blocked until the prior stage completes.
+              </p>
+            ) : null}
             {stage.dueAt ? (
               <p className="mt-2 text-xs text-muted-foreground">
                 Due at {stage.dueAt}

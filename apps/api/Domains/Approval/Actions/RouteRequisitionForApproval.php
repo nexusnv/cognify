@@ -94,20 +94,19 @@ class RouteRequisitionForApproval
 
             foreach ($route['stages'] as $index => $stageData) {
                 $sequence = $index + 1;
+                $isActive = $sequence === 1;
                 $stage = ApprovalStage::query()->create([
                     'tenant_id' => $tenant->id,
                     'approval_instance_id' => $instance->id,
                     'sequence' => $sequence,
                     'name' => $stageData['name'],
                     'completion_rule' => $stageData['completionRule'],
-                    'status' => $sequence === 1 ? ApprovalStageStatus::Active : ApprovalStageStatus::Pending,
-                    'activated_at' => $sequence === 1 ? now() : null,
-                    'due_at' => $stageData['dueAt'] ?? null,
+                    'status' => $isActive ? ApprovalStageStatus::Active : ApprovalStageStatus::Blocked,
+                    'activated_at' => $isActive ? now() : null,
+                    'due_at' => $isActive ? ($stageData['dueAt'] ?? null) : null,
                 ]);
 
-                if ($sequence === 1) {
-                    $this->createStageTasks($tenant, $actor, $requisition, $instance, $stage, $stageData);
-                }
+                $this->createStageTasks($tenant, $actor, $requisition, $instance, $stage, $stageData, $isActive);
             }
 
             $this->markPendingApproval->handle($requisition, $instance, $actor);
@@ -126,7 +125,15 @@ class RouteRequisitionForApproval
     /**
      * @param array<string, mixed> $stageData
      */
-    private function createStageTasks(Tenant $tenant, User $actor, Requisition $requisition, ApprovalInstance $instance, ApprovalStage $stage, array $stageData): void
+    private function createStageTasks(
+        Tenant $tenant,
+        User $actor,
+        Requisition $requisition,
+        ApprovalInstance $instance,
+        ApprovalStage $stage,
+        array $stageData,
+        bool $isActive,
+    ): void
     {
         $assignee = $this->resolveApprovers($tenant, $stageData['approvers'] ?? [])->first();
 
@@ -147,21 +154,23 @@ class RouteRequisitionForApproval
             'assignee_id' => $assignee->id,
             'original_assignee_id' => $assignee->id,
             'title' => sprintf('Approve %s', $requisition->number),
-            'status' => ApprovalTaskStatus::Active,
-            'assigned_at' => now(),
-            'due_at' => $stage->due_at,
+            'status' => $isActive ? ApprovalTaskStatus::Active : ApprovalTaskStatus::Blocked,
+            'assigned_at' => $isActive ? now() : null,
+            'due_at' => $isActive ? $stage->due_at : null,
             'metadata' => ['stageName' => $stage->name],
         ]);
 
-        $this->notificationRecorder->record($tenant, [$assignee], new NotificationData(
-            type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
-            title: 'Approval task assigned',
-            body: $requisition->title,
-            href: "/approvals/tasks/{$task->id}",
-            subject: $requisition,
-            subjectLabel: $requisition->number,
-            actor: $actor,
-        ));
+        if ($isActive) {
+            $this->notificationRecorder->record($tenant, [$assignee], new NotificationData(
+                type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+                title: 'Approval task assigned',
+                body: $requisition->title,
+                href: "/approvals/tasks/{$task->id}",
+                subject: $requisition,
+                subjectLabel: $requisition->number,
+                actor: $actor,
+            ));
+        }
     }
 
     /**

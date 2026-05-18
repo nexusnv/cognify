@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { ApprovalStageMap } from "../components/approval-stage-map";
 import { ApprovalPolicyPreview } from "../components/approval-policy-preview";
 import { defaultApprovalPolicyValues } from "../schemas/approval-policy-schema";
 import { ApprovalPolicyDetailPage } from "../workflows/approval-policy-detail-page";
@@ -44,6 +45,35 @@ describe("ApprovalPolicyPreview", () => {
     );
 
     expect(screen.getByText("No approval stages configured.")).toBeInTheDocument();
+  });
+
+  it("shows later stages as blocked and non-actionable", () => {
+    render(
+      <ApprovalStageMap
+        stages={[
+          {
+            name: "Manager review",
+            completionRule: "all",
+            approvers: [{ type: "role", role: "approver", label: "Approver" }],
+            fallbackApprovers: [{ type: "role", role: "buyer", label: "Buyer fallback" }],
+            dueAt: "2026-05-19T00:00:00.000Z",
+            warnings: [],
+          },
+          {
+            name: "Finance review",
+            completionRule: "all",
+            approvers: [{ type: "role", role: "approver", label: "Finance approver" }],
+            fallbackApprovers: [{ type: "role", role: "buyer", label: "Buyer fallback" }],
+            dueAt: null,
+            warnings: [],
+          },
+        ] as never}
+      />,
+    );
+
+    expect(screen.getByText("Finance review")).toBeInTheDocument();
+    expect(screen.getByText("blocked")).toBeInTheDocument();
+    expect(screen.getByText("Blocked until the prior stage completes.")).toBeInTheDocument();
   });
 
   it("creates and retires policy versions through the detail workflow", async () => {

@@ -3,6 +3,7 @@
 namespace Domains\Approval\Http\Resources;
 
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -31,8 +32,11 @@ class ApprovalSummaryResource extends JsonResource
                 'name' => $currentStage->name,
                 'status' => $currentStage->status->value,
                 'completionRule' => $currentStage->completion_rule,
+                'activatedAt' => $currentStage->activated_at?->toISOString(),
+                'completedAt' => $currentStage->completed_at?->toISOString(),
                 'dueAt' => $currentStage->due_at?->toISOString(),
                 'isOverdue' => $currentStage->due_at !== null && $currentStage->due_at->isPast(),
+                'isActionable' => $currentStage->status === ApprovalStageStatus::Active,
             ] : null,
             'activeApprovers' => $activeTasks->map(fn ($task): array => [
                 'id' => (string) $task->assignee->id,

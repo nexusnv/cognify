@@ -5,8 +5,12 @@ namespace Domains\Approval\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use App\Notifications\NotificationData;
+use App\Notifications\NotificationPreferenceDefaults;
+use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\Approval\Models\ApprovalStage;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
@@ -22,6 +26,7 @@ class ApproveApprovalTask
     public function __construct(
         private readonly MarkRequisitionApproved $markRequisitionApproved,
         private readonly AuditRecorder $auditRecorder,
+        private readonly NotificationRecorder $notificationRecorder,
     ) {
     }
 
@@ -52,14 +57,24 @@ class ApproveApprovalTask
                 ])->save();
 
                 $instance = $task->instance()->lockForUpdate()->firstOrFail();
-                $instance->forceFill([
-                    'status' => ApprovalInstanceStatus::Approved,
-                    'completed_at' => now(),
-                ])->save();
+                $nextStage = $this->nextBlockedStage($instance, $stage);
 
-                $subject = $task->subject;
-                if ($subject instanceof Requisition) {
-                    $this->markRequisitionApproved->handle($subject, $instance, $actor);
+                if ($nextStage instanceof ApprovalStage) {
+                    $this->activateStage($tenant, $actor, $instance, $nextStage);
+
+                    $instance->forceFill([
+                        'current_stage_sequence' => $nextStage->sequence,
+                    ])->save();
+                } else {
+                    $instance->forceFill([
+                        'status' => ApprovalInstanceStatus::Approved,
+                        'completed_at' => now(),
+                    ])->save();
+
+                    $subject = $task->subject;
+                    if ($subject instanceof Requisition) {
+                        $this->markRequisitionApproved->handle($subject, $instance, $actor);
+                    }
                 }
             }
 
@@ -73,6 +88,75 @@ class ApproveApprovalTask
 
             return $task->refresh()->load(['assignee', 'stage', 'instance', 'subject']);
         });
+    }
+
+    private function activateStage(Tenant $tenant, User $actor, ApprovalInstance $instance, ApprovalStage $stage): void
+    {
+        $activatedAt = now();
+        $dueAt = $this->dueAtForStage($instance, $stage, $activatedAt);
+
+        $stage->forceFill([
+            'status' => ApprovalStageStatus::Active,
+            'activated_at' => $activatedAt,
+            'due_at' => $dueAt,
+        ])->save();
+
+        $tasks = $stage->tasks()->lockForUpdate()->get();
+
+        foreach ($tasks as $task) {
+            $task->forceFill([
+                'status' => ApprovalTaskStatus::Active,
+                'assigned_at' => $activatedAt,
+                'due_at' => $dueAt,
+                'lock_version' => $task->lock_version + 1,
+            ])->save();
+        }
+
+        $this->auditRecorder->record(new AuditEventData(
+            tenant: $tenant,
+            actor: $actor,
+            action: 'approval_stage.activated',
+            subject: $instance->subject,
+            metadata: [
+                'approvalInstanceId' => (string) $instance->id,
+                'approvalStageId' => (string) $stage->id,
+            ],
+        ));
+
+        $recipients = $tasks->map->assignee->filter()->unique('id')->values();
+        if ($recipients->isNotEmpty()) {
+            $this->notificationRecorder->record($tenant, $recipients, new NotificationData(
+                type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+                title: 'Approval task assigned',
+                body: $instance->subject?->title ?? 'Approval task',
+                href: "/approvals/tasks/{$tasks->first()?->id}",
+                subject: $instance->subject,
+                subjectLabel: $instance->subject instanceof Requisition ? $instance->subject->number : null,
+                actor: $actor,
+            ));
+        }
+    }
+
+    private function nextBlockedStage(ApprovalInstance $instance, ApprovalStage $currentStage): ?ApprovalStage
+    {
+        return $instance->stages()
+            ->where('sequence', '>', $currentStage->sequence)
+            ->whereIn('status', [ApprovalStageStatus::Blocked, ApprovalStageStatus::Pending])
+            ->orderBy('sequence')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    private function dueAtForStage(ApprovalInstance $instance, ApprovalStage $stage, \DateTimeInterface $activatedAt): ?\Illuminate\Support\Carbon
+    {
+        $version = $instance->policyVersion;
+        $slaRule = collect($version?->sla_rules ?? [])->firstWhere('stage', $stage->name);
+
+        if (! is_array($slaRule) || ! array_key_exists('dueInHours', $slaRule)) {
+            return null;
+        }
+
+        return \Illuminate\Support\Carbon::instance($activatedAt)->copy()->addHours((int) $slaRule['dueInHours']);
     }
 
     private function lockedTask(Tenant $tenant, ApprovalTask $task): ApprovalTask
