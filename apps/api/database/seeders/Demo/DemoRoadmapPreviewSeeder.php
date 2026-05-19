@@ -20,6 +20,9 @@ use Domains\Award\Models\Award;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\SourcingIntakeReview;
+use Domains\Quotation\States\SourcingIntakeStatus;
+use Domains\Quotation\States\SourcingPath;
 use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 
@@ -170,6 +173,16 @@ class DemoRoadmapPreviewSeeder
             ],
         );
         $context->awards->put('office-award', $award);
+
+        $this->seedSourcingIntakeReview(
+            context: $context,
+            key: 'laptop-open-intake',
+            requisition: $context->requisitions->get('laptops'),
+            status: SourcingIntakeStatus::Open,
+            category: 'IT Hardware',
+            subcategory: 'Laptops',
+            targetDecisionDate: '2026-05-23',
+        );
     }
 
     private function seedNorthwindPreview(DemoSeedContext $context): void
@@ -286,6 +299,62 @@ class DemoRoadmapPreviewSeeder
             ],
         );
         $context->awards->put('warehouse-award', $award);
+
+        $this->seedSourcingIntakeReview(
+            context: $context,
+            key: 'warehouse-ready-intake',
+            requisition: $context->requisitions->get('warehouse-supplies'),
+            status: SourcingIntakeStatus::ReadyForRfq,
+            assignedBuyer: $owner,
+            sourcingPath: SourcingPath::NeedsRfq,
+            category: 'Warehouse supplies',
+            subcategory: 'Shelving and safety',
+            targetDecisionDate: '2026-05-21',
+            decisionReason: 'Competitive quotes are required for regional warehouse supply availability.',
+            claimedAt: '2026-05-19 09:00:00',
+            decidedAt: '2026-05-19 11:00:00',
+        );
+    }
+
+    private function seedSourcingIntakeReview(
+        DemoSeedContext $context,
+        string $key,
+        Requisition $requisition,
+        SourcingIntakeStatus $status,
+        ?User $assignedBuyer = null,
+        ?SourcingPath $sourcingPath = null,
+        ?string $category = null,
+        ?string $subcategory = null,
+        ?string $targetDecisionDate = null,
+        ?string $decisionReason = null,
+        ?string $claimedAt = null,
+        ?string $decidedAt = null,
+    ): void {
+        $review = SourcingIntakeReview::query()->updateOrCreate(
+            ['tenant_id' => $requisition->tenant_id, 'requisition_id' => $requisition->id],
+            [
+                'project_id' => $requisition->project_id,
+                'assigned_buyer_id' => $assignedBuyer?->id,
+                'status' => $status,
+                'sourcing_path' => $sourcingPath,
+                'category' => $category,
+                'subcategory' => $subcategory,
+                'urgency' => $status === SourcingIntakeStatus::Open ? 'standard' : 'urgent',
+                'complexity' => $status === SourcingIntakeStatus::Open ? 'medium' : 'low',
+                'target_decision_date' => $targetDecisionDate,
+                'checklist' => [
+                    ['key' => 'specification_complete', 'label' => 'Specification complete', 'complete' => $status !== SourcingIntakeStatus::Open],
+                    ['key' => 'budget_clear', 'label' => 'Budget clear', 'complete' => true],
+                    ['key' => 'line_items_complete', 'label' => 'Line items complete', 'complete' => true],
+                ],
+                'internal_notes' => 'Seeded sourcing intake review for the local demo workspace.',
+                'decision_reason' => $decisionReason,
+                'claimed_at' => $claimedAt,
+                'decided_at' => $decidedAt,
+            ],
+        );
+
+        $context->sourcingIntakeReviews->put($key, $review->refresh());
     }
 
     private function seedApprovalPolicy(Tenant $tenant, User $actor, User $fallbackApprover): ApprovalPolicyVersion

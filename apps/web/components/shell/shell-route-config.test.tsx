@@ -19,6 +19,11 @@ describe("shell route helpers", () => {
       { label: "Project workspace", href: "/projects/project-1" },
       { label: "Edit" },
     ]);
+    expect(getBreadcrumbs("/sourcing/intake")).toEqual([{ label: "Sourcing intake" }]);
+    expect(getBreadcrumbs("/sourcing/intake/review-1")).toEqual([
+      { label: "Sourcing intake", href: "/sourcing/intake" },
+      { label: "Intake review" },
+    ]);
     expect(getBreadcrumbs("/system")).toEqual([{ label: "System" }]);
   });
 
@@ -36,6 +41,7 @@ describe("shell route helpers", () => {
     expect(labels).toContain("Account");
     expect(labels).not.toContain("Audit");
     expect(labels).not.toContain("System");
+    expect(labels).not.toContain("Sourcing intake");
   });
 
   it("shows the System nav item for admin permissions", () => {
@@ -46,5 +52,15 @@ describe("shell route helpers", () => {
     const labels = groups.flatMap((group) => group.items.map((item) => item.label));
 
     expect(labels).toContain("System");
+  });
+
+  it("shows sourcing intake only for sourcing permissions", () => {
+    const groups = getVisibleNavGroups(shellNavGroups, {
+      ...requesterIdentity.permissions,
+      canManageSourcingIntake: true,
+    });
+    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
+
+    expect(labels).toContain("Sourcing intake");
   });
 });

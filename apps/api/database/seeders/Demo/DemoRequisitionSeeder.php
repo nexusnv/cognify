@@ -72,7 +72,7 @@ class DemoRequisitionSeeder
                 'requester',
                 'REQ-2026-0002',
                 'Engineering laptop refresh',
-                RequisitionStatus::Draft,
+                RequisitionStatus::Submitted,
                 'Engineering',
                 'CC-ENG-220',
                 [

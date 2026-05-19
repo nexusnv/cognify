@@ -3354,6 +3354,465 @@
           }
         }
       }
+    },
+    "/api/sourcing/intake-reviews": {
+      "get": {
+        "operationId": "listSourcingIntakeReviews",
+        "summary": "List sourcing intake reviews",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "preset",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "unassigned",
+                "mine",
+                "needs_clarification",
+                "ready_for_rfq",
+                "closed"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SourcingIntakeStatus"
+            }
+          },
+          {
+            "name": "assignedBuyer",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "updated_desc",
+                "target_date_asc",
+                "needed_by_asc",
+                "amount_desc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/sourcing/intake-reviews/{review}": {
+      "get": {
+        "operationId": "getSourcingIntakeReview",
+        "summary": "Read sourcing intake review",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "review",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateSourcingIntakeReview",
+        "summary": "Update sourcing intake review",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "review",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcingIntakeReviewUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/requisitions/{requisition}/sourcing-intake": {
+      "post": {
+        "operationId": "createRequisitionSourcingIntake",
+        "summary": "Create or reveal sourcing intake for requisition",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "requisition",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Existing sourcing intake review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Sourcing intake review created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      }
+    },
+    "/api/sourcing/intake-reviews/{review}/claim": {
+      "post": {
+        "operationId": "claimSourcingIntakeReview",
+        "summary": "Claim sourcing intake review",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "review",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review claimed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      }
+    },
+    "/api/sourcing/intake-reviews/{review}/reassign": {
+      "post": {
+        "operationId": "reassignSourcingIntakeReview",
+        "summary": "Reassign sourcing intake review",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "review",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcingIntakeReviewReassignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review reassigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/sourcing/intake-reviews/{review}/decision": {
+      "post": {
+        "operationId": "recordSourcingIntakeReviewDecision",
+        "summary": "Record sourcing intake decision",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "review",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcingIntakeReviewDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/sourcing/intake-reviews/{review}/close": {
+      "post": {
+        "operationId": "closeSourcingIntakeReview",
+        "summary": "Close sourcing intake review",
+        "tags": [
+          "Sourcing"
+        ],
+        "parameters": [
+          {
+            "name": "review",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcingIntakeReviewCloseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sourcing intake review closed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcingIntakeReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4734,7 +5193,8 @@
           "canViewSubmittedRequisitions",
           "canUpdateOwnDraftRequisition",
           "canSubmitOwnDraftRequisition",
-          "canAccessAdmin"
+          "canAccessAdmin",
+          "canManageSourcingIntake"
         ],
         "properties": {
           "canCreateRequisition": {
@@ -4750,6 +5210,9 @@
             "type": "boolean"
           },
           "canAccessAdmin": {
+            "type": "boolean"
+          },
+          "canManageSourcingIntake": {
             "type": "boolean"
           }
         }
@@ -7969,6 +8432,556 @@
               "null"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "SourcingIntakeStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "in_review",
+          "clarification_requested",
+          "ready_for_rfq",
+          "direct_award_recorded",
+          "closed"
+        ]
+      },
+      "SourcingPath": {
+        "type": "string",
+        "enum": [
+          "needs_rfq",
+          "needs_clarification",
+          "direct_award",
+          "no_sourcing_required"
+        ]
+      },
+      "SourcingIntakeReviewPermissions": {
+        "type": "object",
+        "required": [
+          "canClaim",
+          "canReassign",
+          "canUpdate",
+          "canRecordDecision",
+          "canClose",
+          "canCreateRfq"
+        ],
+        "properties": {
+          "canClaim": {
+            "type": "boolean"
+          },
+          "canReassign": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canRecordDecision": {
+            "type": "boolean"
+          },
+          "canClose": {
+            "type": "boolean"
+          },
+          "canCreateRfq": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SourcingIntakeReview": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "status",
+          "sourcingPath",
+          "category",
+          "subcategory",
+          "urgency",
+          "complexity",
+          "targetDecisionDate",
+          "checklist",
+          "internalNotes",
+          "decisionReason",
+          "clarificationMessage",
+          "assignedBuyer",
+          "requisition",
+          "project",
+          "permissions",
+          "claimedAt",
+          "decidedAt",
+          "closedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SourcingIntakeStatus"
+          },
+          "sourcingPath": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SourcingPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subcategory": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "urgency": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "standard",
+                  "urgent"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "complexity": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetDecisionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcingIntakeChecklistItem"
+            }
+          },
+          "internalNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clarificationMessage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assignedBuyer": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requisition": {
+            "$ref": "#/components/schemas/SourcingIntakeReviewRequisition"
+          },
+          "project": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SourcingIntakeReviewProject"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/SourcingIntakeReviewPermissions"
+          },
+          "claimedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "SourcingIntakeReviewProjectSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProcurementProjectStatus"
+          }
+        }
+      },
+      "SourcingIntakeReviewResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SourcingIntakeReview"
+          }
+        }
+      },
+      "SourcingIntakeReviewListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcingIntakeReview"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "currentPage",
+              "perPage",
+              "total",
+              "statusCounts"
+            ],
+            "properties": {
+              "currentPage": {
+                "type": "integer"
+              },
+              "perPage": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "lastPage": {
+                "type": "integer"
+              },
+              "statusCounts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SourcingIntakeReviewUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "subcategory": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "urgency": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "standard",
+                  "urgent"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "complexity": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetDecisionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcingIntakeChecklistItem"
+            }
+          },
+          "internalNotes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 5000
+          }
+        }
+      },
+      "SourcingIntakeReviewDecisionRequest": {
+        "type": "object",
+        "required": [
+          "sourcingPath",
+          "decisionReason"
+        ],
+        "properties": {
+          "sourcingPath": {
+            "$ref": "#/components/schemas/SourcingPath"
+          },
+          "decisionReason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000
+          },
+          "clarificationMessage": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 5000
+          },
+          "clarificationFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SourcingIntakeReviewReassignRequest": {
+        "type": "object",
+        "required": [
+          "buyerId"
+        ],
+        "properties": {
+          "buyerId": {
+            "type": "string"
+          }
+        }
+      },
+      "SourcingIntakeReviewCloseRequest": {
+        "type": "object",
+        "required": [
+          "sourcingPath",
+          "decisionReason"
+        ],
+        "properties": {
+          "sourcingPath": {
+            "type": "string",
+            "enum": [
+              "no_sourcing_required"
+            ]
+          },
+          "decisionReason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000
+          }
+        }
+      },
+      "SourcingIntakeChecklistItem": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "complete"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "complete": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SourcingIntakeReviewRequisition": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "status",
+          "estimatedTotal",
+          "currency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "requester": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "department": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "neededByDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "estimatedTotal": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SourcingIntakeReviewProject": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
           }
         }
       }

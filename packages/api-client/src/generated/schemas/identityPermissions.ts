@@ -11,4 +11,5 @@ export interface IdentityPermissions {
   canUpdateOwnDraftRequisition: boolean;
   canSubmitOwnDraftRequisition: boolean;
   canAccessAdmin: boolean;
+  canManageSourcingIntake: boolean;
 }

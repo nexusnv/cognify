@@ -343,6 +343,8 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-1001', 'title' => 'Warehouse supply bundle']);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-0001', 'status' => 'received']);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-1001', 'status' => 'received']);
+        $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => 'open', 'category' => 'IT Hardware']);
+        $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => 'ready_for_rfq', 'sourcing_path' => 'needs_rfq']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-0003', 'status' => 'active']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-0001', 'status' => 'active']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-1001', 'status' => 'approved']);
@@ -369,6 +371,7 @@ class DemoSeederTest extends TestCase
             'projects' => 2,
             'rfqs' => 2,
             'quotations' => 2,
+            'sourcing_intake_reviews' => 2,
             'approval_tasks' => 4,
             'awards' => 2,
         ], $run->metadata);

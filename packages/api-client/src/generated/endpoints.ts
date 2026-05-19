@@ -43,6 +43,7 @@ import type {
   ListRequisitionActivity200,
   ListRequisitionLineItemSuggestionsParams,
   ListRequisitionsParams,
+  ListSourcingIntakeReviewsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
   NotFoundResponse,
@@ -66,6 +67,12 @@ import type {
   RouteRequisitionApprovalResponse,
   SearchResponse,
   SetCurrentTenantRequest,
+  SourcingIntakeReviewCloseRequest,
+  SourcingIntakeReviewDecisionRequest,
+  SourcingIntakeReviewListResponse,
+  SourcingIntakeReviewReassignRequest,
+  SourcingIntakeReviewResponse,
+  SourcingIntakeReviewUpdateRequest,
   StoreApprovalDelegationRequest,
   StoreApprovalPolicyRequest,
   StoreApprovalPolicyVersionRequest,
@@ -4237,5 +4244,521 @@ export const delegateApprovalTask = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(delegateApprovalTaskRequest),
+  });
+};
+
+/**
+ * @summary List sourcing intake reviews
+ */
+export type listSourcingIntakeReviewsResponse200 = {
+  data: SourcingIntakeReviewListResponse;
+  status: 200;
+};
+
+export type listSourcingIntakeReviewsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listSourcingIntakeReviewsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listSourcingIntakeReviewsResponseSuccess = listSourcingIntakeReviewsResponse200 & {
+  headers: Headers;
+};
+export type listSourcingIntakeReviewsResponseError = (
+  | listSourcingIntakeReviewsResponse401
+  | listSourcingIntakeReviewsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listSourcingIntakeReviewsResponse =
+  | listSourcingIntakeReviewsResponseSuccess
+  | listSourcingIntakeReviewsResponseError;
+
+export const getListSourcingIntakeReviewsUrl = (params?: ListSourcingIntakeReviewsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/sourcing/intake-reviews?${stringifiedParams}`
+    : `/api/sourcing/intake-reviews`;
+};
+
+export const listSourcingIntakeReviews = async (
+  params?: ListSourcingIntakeReviewsParams,
+  options?: RequestInit,
+): Promise<listSourcingIntakeReviewsResponse> => {
+  return cognifyFetch<listSourcingIntakeReviewsResponse>(getListSourcingIntakeReviewsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Read sourcing intake review
+ */
+export type getSourcingIntakeReviewResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type getSourcingIntakeReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getSourcingIntakeReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type getSourcingIntakeReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getSourcingIntakeReviewResponseSuccess = getSourcingIntakeReviewResponse200 & {
+  headers: Headers;
+};
+export type getSourcingIntakeReviewResponseError = (
+  | getSourcingIntakeReviewResponse401
+  | getSourcingIntakeReviewResponse403
+  | getSourcingIntakeReviewResponse404
+) & {
+  headers: Headers;
+};
+
+export type getSourcingIntakeReviewResponse =
+  | getSourcingIntakeReviewResponseSuccess
+  | getSourcingIntakeReviewResponseError;
+
+export const getGetSourcingIntakeReviewUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}`;
+};
+
+export const getSourcingIntakeReview = async (
+  review: string,
+  options?: RequestInit,
+): Promise<getSourcingIntakeReviewResponse> => {
+  return cognifyFetch<getSourcingIntakeReviewResponse>(getGetSourcingIntakeReviewUrl(review), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update sourcing intake review
+ */
+export type updateSourcingIntakeReviewResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type updateSourcingIntakeReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateSourcingIntakeReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateSourcingIntakeReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateSourcingIntakeReviewResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updateSourcingIntakeReviewResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateSourcingIntakeReviewResponseSuccess = updateSourcingIntakeReviewResponse200 & {
+  headers: Headers;
+};
+export type updateSourcingIntakeReviewResponseError = (
+  | updateSourcingIntakeReviewResponse401
+  | updateSourcingIntakeReviewResponse403
+  | updateSourcingIntakeReviewResponse404
+  | updateSourcingIntakeReviewResponse409
+  | updateSourcingIntakeReviewResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateSourcingIntakeReviewResponse =
+  | updateSourcingIntakeReviewResponseSuccess
+  | updateSourcingIntakeReviewResponseError;
+
+export const getUpdateSourcingIntakeReviewUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}`;
+};
+
+export const updateSourcingIntakeReview = async (
+  review: string,
+  sourcingIntakeReviewUpdateRequest: SourcingIntakeReviewUpdateRequest,
+  options?: RequestInit,
+): Promise<updateSourcingIntakeReviewResponse> => {
+  return cognifyFetch<updateSourcingIntakeReviewResponse>(
+    getUpdateSourcingIntakeReviewUrl(review),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(sourcingIntakeReviewUpdateRequest),
+    },
+  );
+};
+
+/**
+ * @summary Create or reveal sourcing intake for requisition
+ */
+export type createRequisitionSourcingIntakeResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type createRequisitionSourcingIntakeResponse201 = {
+  data: SourcingIntakeReviewResponse;
+  status: 201;
+};
+
+export type createRequisitionSourcingIntakeResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRequisitionSourcingIntakeResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createRequisitionSourcingIntakeResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createRequisitionSourcingIntakeResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createRequisitionSourcingIntakeResponseSuccess = (
+  | createRequisitionSourcingIntakeResponse200
+  | createRequisitionSourcingIntakeResponse201
+) & {
+  headers: Headers;
+};
+export type createRequisitionSourcingIntakeResponseError = (
+  | createRequisitionSourcingIntakeResponse401
+  | createRequisitionSourcingIntakeResponse403
+  | createRequisitionSourcingIntakeResponse404
+  | createRequisitionSourcingIntakeResponse409
+) & {
+  headers: Headers;
+};
+
+export type createRequisitionSourcingIntakeResponse =
+  | createRequisitionSourcingIntakeResponseSuccess
+  | createRequisitionSourcingIntakeResponseError;
+
+export const getCreateRequisitionSourcingIntakeUrl = (requisition: string) => {
+  return `/api/requisitions/${requisition}/sourcing-intake`;
+};
+
+export const createRequisitionSourcingIntake = async (
+  requisition: string,
+  options?: RequestInit,
+): Promise<createRequisitionSourcingIntakeResponse> => {
+  return cognifyFetch<createRequisitionSourcingIntakeResponse>(
+    getCreateRequisitionSourcingIntakeUrl(requisition),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Claim sourcing intake review
+ */
+export type claimSourcingIntakeReviewResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type claimSourcingIntakeReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type claimSourcingIntakeReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type claimSourcingIntakeReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type claimSourcingIntakeReviewResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type claimSourcingIntakeReviewResponseSuccess = claimSourcingIntakeReviewResponse200 & {
+  headers: Headers;
+};
+export type claimSourcingIntakeReviewResponseError = (
+  | claimSourcingIntakeReviewResponse401
+  | claimSourcingIntakeReviewResponse403
+  | claimSourcingIntakeReviewResponse404
+  | claimSourcingIntakeReviewResponse409
+) & {
+  headers: Headers;
+};
+
+export type claimSourcingIntakeReviewResponse =
+  | claimSourcingIntakeReviewResponseSuccess
+  | claimSourcingIntakeReviewResponseError;
+
+export const getClaimSourcingIntakeReviewUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}/claim`;
+};
+
+export const claimSourcingIntakeReview = async (
+  review: string,
+  options?: RequestInit,
+): Promise<claimSourcingIntakeReviewResponse> => {
+  return cognifyFetch<claimSourcingIntakeReviewResponse>(getClaimSourcingIntakeReviewUrl(review), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Reassign sourcing intake review
+ */
+export type reassignSourcingIntakeReviewResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type reassignSourcingIntakeReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type reassignSourcingIntakeReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type reassignSourcingIntakeReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type reassignSourcingIntakeReviewResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type reassignSourcingIntakeReviewResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type reassignSourcingIntakeReviewResponseSuccess =
+  reassignSourcingIntakeReviewResponse200 & {
+    headers: Headers;
+  };
+export type reassignSourcingIntakeReviewResponseError = (
+  | reassignSourcingIntakeReviewResponse401
+  | reassignSourcingIntakeReviewResponse403
+  | reassignSourcingIntakeReviewResponse404
+  | reassignSourcingIntakeReviewResponse409
+  | reassignSourcingIntakeReviewResponse422
+) & {
+  headers: Headers;
+};
+
+export type reassignSourcingIntakeReviewResponse =
+  | reassignSourcingIntakeReviewResponseSuccess
+  | reassignSourcingIntakeReviewResponseError;
+
+export const getReassignSourcingIntakeReviewUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}/reassign`;
+};
+
+export const reassignSourcingIntakeReview = async (
+  review: string,
+  sourcingIntakeReviewReassignRequest: SourcingIntakeReviewReassignRequest,
+  options?: RequestInit,
+): Promise<reassignSourcingIntakeReviewResponse> => {
+  return cognifyFetch<reassignSourcingIntakeReviewResponse>(
+    getReassignSourcingIntakeReviewUrl(review),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(sourcingIntakeReviewReassignRequest),
+    },
+  );
+};
+
+/**
+ * @summary Record sourcing intake decision
+ */
+export type recordSourcingIntakeReviewDecisionResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type recordSourcingIntakeReviewDecisionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordSourcingIntakeReviewDecisionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type recordSourcingIntakeReviewDecisionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordSourcingIntakeReviewDecisionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type recordSourcingIntakeReviewDecisionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type recordSourcingIntakeReviewDecisionResponseSuccess =
+  recordSourcingIntakeReviewDecisionResponse200 & {
+    headers: Headers;
+  };
+export type recordSourcingIntakeReviewDecisionResponseError = (
+  | recordSourcingIntakeReviewDecisionResponse401
+  | recordSourcingIntakeReviewDecisionResponse403
+  | recordSourcingIntakeReviewDecisionResponse404
+  | recordSourcingIntakeReviewDecisionResponse409
+  | recordSourcingIntakeReviewDecisionResponse422
+) & {
+  headers: Headers;
+};
+
+export type recordSourcingIntakeReviewDecisionResponse =
+  | recordSourcingIntakeReviewDecisionResponseSuccess
+  | recordSourcingIntakeReviewDecisionResponseError;
+
+export const getRecordSourcingIntakeReviewDecisionUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}/decision`;
+};
+
+export const recordSourcingIntakeReviewDecision = async (
+  review: string,
+  sourcingIntakeReviewDecisionRequest: SourcingIntakeReviewDecisionRequest,
+  options?: RequestInit,
+): Promise<recordSourcingIntakeReviewDecisionResponse> => {
+  return cognifyFetch<recordSourcingIntakeReviewDecisionResponse>(
+    getRecordSourcingIntakeReviewDecisionUrl(review),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(sourcingIntakeReviewDecisionRequest),
+    },
+  );
+};
+
+/**
+ * @summary Close sourcing intake review
+ */
+export type closeSourcingIntakeReviewResponse200 = {
+  data: SourcingIntakeReviewResponse;
+  status: 200;
+};
+
+export type closeSourcingIntakeReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type closeSourcingIntakeReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type closeSourcingIntakeReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type closeSourcingIntakeReviewResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type closeSourcingIntakeReviewResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type closeSourcingIntakeReviewResponseSuccess = closeSourcingIntakeReviewResponse200 & {
+  headers: Headers;
+};
+export type closeSourcingIntakeReviewResponseError = (
+  | closeSourcingIntakeReviewResponse401
+  | closeSourcingIntakeReviewResponse403
+  | closeSourcingIntakeReviewResponse404
+  | closeSourcingIntakeReviewResponse409
+  | closeSourcingIntakeReviewResponse422
+) & {
+  headers: Headers;
+};
+
+export type closeSourcingIntakeReviewResponse =
+  | closeSourcingIntakeReviewResponseSuccess
+  | closeSourcingIntakeReviewResponseError;
+
+export const getCloseSourcingIntakeReviewUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}/close`;
+};
+
+export const closeSourcingIntakeReview = async (
+  review: string,
+  sourcingIntakeReviewCloseRequest: SourcingIntakeReviewCloseRequest,
+  options?: RequestInit,
+): Promise<closeSourcingIntakeReviewResponse> => {
+  return cognifyFetch<closeSourcingIntakeReviewResponse>(getCloseSourcingIntakeReviewUrl(review), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sourcingIntakeReviewCloseRequest),
   });
 };

@@ -256,6 +256,7 @@ class IdentityApiTest extends TestCase
                 'canUpdateOwnDraftRequisition' => true,
                 'canSubmitOwnDraftRequisition' => true,
                 'canAccessAdmin' => false,
+                'canManageSourcingIntake' => false,
             ],
             TenantRole::Buyer->value => [
                 'canCreateRequisition' => false,
@@ -263,6 +264,7 @@ class IdentityApiTest extends TestCase
                 'canUpdateOwnDraftRequisition' => false,
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
+                'canManageSourcingIntake' => true,
             ],
             TenantRole::Approver->value => [
                 'canCreateRequisition' => false,
@@ -270,6 +272,7 @@ class IdentityApiTest extends TestCase
                 'canUpdateOwnDraftRequisition' => false,
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
+                'canManageSourcingIntake' => false,
             ],
             TenantRole::Admin->value => [
                 'canCreateRequisition' => true,
@@ -277,6 +280,7 @@ class IdentityApiTest extends TestCase
                 'canUpdateOwnDraftRequisition' => true,
                 'canSubmitOwnDraftRequisition' => true,
                 'canAccessAdmin' => true,
+                'canManageSourcingIntake' => true,
             ],
         ];
 
@@ -300,14 +304,17 @@ class IdentityApiTest extends TestCase
             ]],
             ['role' => TenantRole::Buyer, 'email' => 'buyer@example.com', 'assertions' => [
                 'canViewSubmittedRequisitions' => true,
+                'canManageSourcingIntake' => true,
                 'canAccessAdmin' => false,
             ]],
             ['role' => TenantRole::Approver, 'email' => 'approver@example.com', 'assertions' => [
                 'canViewSubmittedRequisitions' => true,
+                'canManageSourcingIntake' => false,
                 'canAccessAdmin' => false,
             ]],
             ['role' => TenantRole::Admin, 'email' => 'admin@example.com', 'assertions' => [
                 'canCreateRequisition' => true,
+                'canManageSourcingIntake' => true,
                 'canAccessAdmin' => true,
             ]],
         ];

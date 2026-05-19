@@ -20,6 +20,7 @@ use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
+use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
 use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
@@ -80,6 +81,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/approval-tasks/{approvalTask}/request-changes', [ApprovalTaskController::class, 'requestChanges']);
         Route::post('/approval-tasks/{approvalTask}/delegate', [ApprovalTaskController::class, 'delegate']);
 
+        Route::get('/sourcing/intake-reviews', [SourcingIntakeReviewController::class, 'index']);
+        Route::get('/sourcing/intake-reviews/{review}', [SourcingIntakeReviewController::class, 'show']);
+        Route::post('/sourcing/intake-reviews/{review}/claim', [SourcingIntakeReviewController::class, 'claim']);
+        Route::post('/sourcing/intake-reviews/{review}/reassign', [SourcingIntakeReviewController::class, 'reassign']);
+        Route::patch('/sourcing/intake-reviews/{review}', [SourcingIntakeReviewController::class, 'update']);
+        Route::post('/sourcing/intake-reviews/{review}/decision', [SourcingIntakeReviewController::class, 'decision']);
+        Route::post('/sourcing/intake-reviews/{review}/close', [SourcingIntakeReviewController::class, 'close']);
+
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
         Route::get('/requisition-intake-options', RequisitionIntakeOptionsController::class);
@@ -102,6 +111,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/requisitions', [RequisitionController::class, 'index']);
         Route::post('/requisitions', [RequisitionController::class, 'store']);
         Route::get('/requisitions/{requisition}', [RequisitionController::class, 'show']);
+        Route::post('/requisitions/{requisition}/sourcing-intake', [SourcingIntakeReviewController::class, 'storeForRequisition']);
         Route::get('/requisitions/{requisition}/approval-preview', [RequisitionApprovalController::class, 'preview']);
         Route::post('/requisitions/{requisition}/route-approval', [RequisitionApprovalController::class, 'route']);
         Route::get('/requisitions/{requisition}/approval-summary', [RequisitionApprovalController::class, 'summary']);
