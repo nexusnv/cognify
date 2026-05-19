@@ -71,7 +71,6 @@ export const rfqDraftFixture = {
   permissions: {
     canUpdate: true,
     canCancel: true,
-    canInviteVendors: false,
+    canInviteVendors: true,
   },
 } satisfies Rfq;
-
