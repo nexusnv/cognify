@@ -52,7 +52,7 @@ class SourcingIntakeReviewResource extends JsonResource
                     SourcingIntakeStatus::ReadyForRfq,
                     SourcingIntakeStatus::DirectAwardRecorded,
                 ], true),
-                'canCreateRfq' => false,
+                'canCreateRfq' => $status === SourcingIntakeStatus::ReadyForRfq,
             ],
         ];
     }
