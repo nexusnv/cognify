@@ -11,6 +11,14 @@ import { AppShell } from "./app-shell";
 import DashboardLayout from "../../app/(dashboard)/layout";
 
 let mockPathname = "/dashboard";
+const router = {
+  push: vi.fn(),
+  replace: vi.fn(),
+  refresh: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  prefetch: vi.fn(),
+};
 
 if (typeof window !== "undefined" && !window.ResizeObserver) {
   class ResizeObserver {
@@ -29,14 +37,7 @@ if (typeof window !== "undefined" && !Element.prototype.scrollIntoView) {
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    refresh: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-  }),
+  useRouter: () => router,
 }));
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -65,6 +66,7 @@ async function expectIdentityLoaded() {
 describe("app shell", () => {
   beforeEach(() => {
     mockPathname = "/dashboard";
+    router.replace.mockReset();
   });
 
   afterEach(() => {
@@ -85,9 +87,25 @@ describe("app shell", () => {
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Dashboard");
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeEnabled();
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");
+  });
+
+  it("signs out from the shell header and returns to login", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    await user.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(router.replace).toHaveBeenCalledWith("/login");
   });
 
   it("opens the command palette from the shell header", async () => {
@@ -195,9 +213,10 @@ describe("app shell", () => {
 
     await expectIdentityLoaded();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("System");
-    expect(
-      await screen.findByRole("link", { name: "System" }),
-    ).toHaveAttribute("aria-current", "page");
+    expect(await screen.findByRole("link", { name: "System" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Local demo");
   });
 

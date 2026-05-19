@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Auth\TenantRole;
 use App\Auth\Permissions\TenantPermissionResolver;
+use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,7 +68,7 @@ class IdentityApiTest extends TestCase
             'password' => Hash::make('password123'),
         ])->tenants()->attach($tenant->id, ['role' => TenantRole::Requester->value]);
 
-        $login = $this->withHeader('Origin', 'http://localhost:3000')
+        $login = $this->withHeader('Origin', 'http://localhost:8880')
             ->postJson('/api/auth/login', [
                 'email' => 'test@example.com',
                 'password' => 'password123',
@@ -91,20 +91,20 @@ class IdentityApiTest extends TestCase
             'password' => Hash::make('password123'),
         ])->tenants()->attach($tenant->id, ['role' => TenantRole::Requester->value]);
 
-        $this->withHeader('Origin', 'http://localhost:3000')
+        $this->withHeader('Origin', 'http://localhost:8880')
             ->postJson('/api/auth/login', [
                 'email' => 'test@example.com',
                 'password' => 'password123',
             ])
             ->assertNoContent();
 
-        $this->withHeader('Origin', 'http://localhost:3000')
+        $this->withHeader('Origin', 'http://localhost:8880')
             ->postJson('/api/auth/logout')
             ->assertNoContent();
 
         Auth::forgetGuards();
 
-        $this->withHeader('Origin', 'http://localhost:3000')
+        $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
             ->getJson('/api/me')
             ->assertStatus(401);
@@ -127,7 +127,7 @@ class IdentityApiTest extends TestCase
             ->assertJsonPath('data.activeRole', TenantRole::Buyer->value);
     }
 
-    public function test_multi_tenant_user_without_tenant_header_receives_ambiguous_tenant_error(): void
+    public function test_multi_tenant_user_without_tenant_header_receives_memberships_without_active_tenant(): void
     {
         $acme = Tenant::create(['name' => 'Acme Procurement']);
         $northwind = Tenant::create(['name' => 'Northwind Sourcing']);
@@ -138,9 +138,10 @@ class IdentityApiTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('/api/me');
 
-        $response->assertStatus(400);
-        $response->assertJsonPath('error.code', 'ambiguous_tenant');
-        $response->assertJsonPath('error.message', 'X-Tenant-Id header is required for users with multiple tenants.');
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.activeTenant', null);
+        $response->assertJsonPath('data.activeRole', null);
+        $response->assertJsonCount(2, 'data.tenants');
     }
 
     public function test_current_tenant_rejects_non_member_tenant(): void

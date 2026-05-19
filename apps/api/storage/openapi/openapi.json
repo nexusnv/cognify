@@ -681,9 +681,6 @@
               }
             }
           },
-          "400": {
-            "$ref": "#/components/responses/AmbiguousTenant"
-          },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
           },
