@@ -1,0 +1,65 @@
+name: Main Preview
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: main-preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy main preview stack on remote server
+        uses: and-fm/cloudflared-ssh-action@v3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          private_key_filename: ${{ secrets.SSH_PRIVATE_KEY_FILENAME }}
+          private_key_value: ${{ secrets.SSH_PRIVATE_KEY_VALUE }}
+          port: ${{ secrets.SSH_PORT }}
+          service_token_id: ${{ secrets.SERVICE_TOKEN_ID }}
+          service_token_secret: ${{ secrets.SERVICE_TOKEN_SECRET }}
+          commands: |
+            set -euo pipefail
+
+            PREVIEW_NAME="main-preview"
+            PREVIEW_DOMAIN="main-preview.nexusnv.net"
+            COMPOSE_FILE="infrastructure/docker/docker-compose.pr-preview.yml"
+            REMOTE_ROOT="${{ secrets.REMOTE_PREVIEW_ROOT }}"
+            REMOTE_PATH="${REMOTE_ROOT}/${PREVIEW_NAME}"
+
+            mkdir -p "$REMOTE_PATH"
+            cd "$REMOTE_PATH"
+
+            export PREVIEW_NAME
+            export PREVIEW_DOMAIN
+
+            if [ -f "$COMPOSE_FILE" ]; then
+              docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" down --volumes --remove-orphans || true
+            else
+              echo "Main preview compose file was not found at ${REMOTE_PATH}/${COMPOSE_FILE}; continuing with fresh deployment."
+            fi
+
+            if [ ! -d .git ]; then
+              git clone https://github.com/${{ github.repository }} .
+            fi
+
+            git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+            git checkout -B main-preview refs/remotes/origin/main
+            git reset --hard "${{ github.sha }}"
+
+            if ! docker network inspect proxy >/dev/null 2>&1; then
+              docker network create proxy
+            fi
+
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" build --pull
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" up -d
+            docker compose --project-name "$PREVIEW_NAME" -f "$COMPOSE_FILE" ps
