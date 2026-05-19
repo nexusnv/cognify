@@ -35,6 +35,7 @@ class RfqDraftApiTest extends TestCase
             ->assertJsonPath('data.requisition.id', (string) $review->requisition_id)
             ->assertJsonPath('data.permissions.canUpdate', true)
             ->assertJsonPath('data.permissions.canCancel', true)
+            ->assertJsonPath('data.permissions.canInviteVendors', true)
             ->json('data.id');
 
         $this->actingAsTenant($tenant, $buyer)
@@ -164,7 +165,8 @@ class RfqDraftApiTest extends TestCase
             ->postJson("/api/rfqs/{$rfq->id}/cancel", ['cancelReason' => 'Sourcing consolidated into a project RFQ.'])
             ->assertOk()
             ->assertJsonPath('data.status', 'cancelled')
-            ->assertJsonPath('data.permissions.canUpdate', false);
+            ->assertJsonPath('data.permissions.canUpdate', false)
+            ->assertJsonPath('data.permissions.canInviteVendors', false);
 
         $this->actingAsTenant($tenant, $buyer)
             ->getJson("/api/rfqs/{$rfq->id}")
