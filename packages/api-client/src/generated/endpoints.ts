@@ -64,6 +64,9 @@ import type {
   RequisitionListResponse,
   RequisitionResponse,
   RequisitionTemplateListResponse,
+  RfqCancelRequest,
+  RfqResponse,
+  RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
   SearchResponse,
   SetCurrentTenantRequest,
@@ -4760,5 +4763,250 @@ export const closeSourcingIntakeReview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(sourcingIntakeReviewCloseRequest),
+  });
+};
+
+/**
+ * @summary Create or reveal RFQ draft from sourcing intake review
+ */
+export type createSourcingIntakeRfqResponse200 = {
+  data: RfqResponse;
+  status: 200;
+};
+
+export type createSourcingIntakeRfqResponse201 = {
+  data: RfqResponse;
+  status: 201;
+};
+
+export type createSourcingIntakeRfqResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createSourcingIntakeRfqResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createSourcingIntakeRfqResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createSourcingIntakeRfqResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createSourcingIntakeRfqResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createSourcingIntakeRfqResponseSuccess = (
+  | createSourcingIntakeRfqResponse200
+  | createSourcingIntakeRfqResponse201
+) & {
+  headers: Headers;
+};
+export type createSourcingIntakeRfqResponseError = (
+  | createSourcingIntakeRfqResponse401
+  | createSourcingIntakeRfqResponse403
+  | createSourcingIntakeRfqResponse404
+  | createSourcingIntakeRfqResponse409
+  | createSourcingIntakeRfqResponse422
+) & {
+  headers: Headers;
+};
+
+export type createSourcingIntakeRfqResponse =
+  | createSourcingIntakeRfqResponseSuccess
+  | createSourcingIntakeRfqResponseError;
+
+export const getCreateSourcingIntakeRfqUrl = (review: string) => {
+  return `/api/sourcing/intake-reviews/${review}/rfq`;
+};
+
+export const createSourcingIntakeRfq = async (
+  review: string,
+  options?: RequestInit,
+): Promise<createSourcingIntakeRfqResponse> => {
+  return cognifyFetch<createSourcingIntakeRfqResponse>(getCreateSourcingIntakeRfqUrl(review), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Read RFQ draft
+ */
+export type getRfqResponse200 = {
+  data: RfqResponse;
+  status: 200;
+};
+
+export type getRfqResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRfqResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type getRfqResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getRfqResponseSuccess = getRfqResponse200 & {
+  headers: Headers;
+};
+export type getRfqResponseError = (getRfqResponse401 | getRfqResponse403 | getRfqResponse404) & {
+  headers: Headers;
+};
+
+export type getRfqResponse = getRfqResponseSuccess | getRfqResponseError;
+
+export const getGetRfqUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}`;
+};
+
+export const getRfq = async (rfq: string, options?: RequestInit): Promise<getRfqResponse> => {
+  return cognifyFetch<getRfqResponse>(getGetRfqUrl(rfq), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update RFQ draft
+ */
+export type updateRfqDraftResponse200 = {
+  data: RfqResponse;
+  status: 200;
+};
+
+export type updateRfqDraftResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateRfqDraftResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateRfqDraftResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateRfqDraftResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updateRfqDraftResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateRfqDraftResponseSuccess = updateRfqDraftResponse200 & {
+  headers: Headers;
+};
+export type updateRfqDraftResponseError = (
+  | updateRfqDraftResponse401
+  | updateRfqDraftResponse403
+  | updateRfqDraftResponse404
+  | updateRfqDraftResponse409
+  | updateRfqDraftResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateRfqDraftResponse = updateRfqDraftResponseSuccess | updateRfqDraftResponseError;
+
+export const getUpdateRfqDraftUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}`;
+};
+
+export const updateRfqDraft = async (
+  rfq: string,
+  rfqUpdateRequest: RfqUpdateRequest,
+  options?: RequestInit,
+): Promise<updateRfqDraftResponse> => {
+  return cognifyFetch<updateRfqDraftResponse>(getUpdateRfqDraftUrl(rfq), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(rfqUpdateRequest),
+  });
+};
+
+/**
+ * @summary Cancel RFQ draft
+ */
+export type cancelRfqDraftResponse200 = {
+  data: RfqResponse;
+  status: 200;
+};
+
+export type cancelRfqDraftResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelRfqDraftResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelRfqDraftResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelRfqDraftResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelRfqDraftResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelRfqDraftResponseSuccess = cancelRfqDraftResponse200 & {
+  headers: Headers;
+};
+export type cancelRfqDraftResponseError = (
+  | cancelRfqDraftResponse401
+  | cancelRfqDraftResponse403
+  | cancelRfqDraftResponse404
+  | cancelRfqDraftResponse409
+  | cancelRfqDraftResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelRfqDraftResponse = cancelRfqDraftResponseSuccess | cancelRfqDraftResponseError;
+
+export const getCancelRfqDraftUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/cancel`;
+};
+
+export const cancelRfqDraft = async (
+  rfq: string,
+  rfqCancelRequest: RfqCancelRequest,
+  options?: RequestInit,
+): Promise<cancelRfqDraftResponse> => {
+  return cognifyFetch<cancelRfqDraftResponse>(getCancelRfqDraftUrl(rfq), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(rfqCancelRequest),
   });
 };
