@@ -39,6 +39,29 @@ class ApprovalDelegationController extends Controller
         ]);
     }
 
+    public function candidates(Request $request, CurrentTenant $currentTenant): JsonResponse
+    {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $role = $currentTenant->roleFor($request->user());
+
+        abort_unless(in_array($role, ['admin', 'approver'], true), 403);
+
+        $users = $tenant->users()
+            ->whereKeyNot($request->user()->id)
+            ->orderBy('name')
+            ->limit(100)
+            ->get()
+            ->map(fn ($user): array => [
+                'id' => (string) $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ])
+            ->values()
+            ->all();
+
+        return response()->json(['data' => $users]);
+    }
+
     public function store(StoreApprovalDelegationRequest $request, CurrentTenant $currentTenant, CreateApprovalDelegation $action): JsonResponse
     {
         $delegation = $action->handle($this->tenantOrAbort($currentTenant), $request->user(), $request->validated());

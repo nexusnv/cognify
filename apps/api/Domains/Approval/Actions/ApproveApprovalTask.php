@@ -31,8 +31,7 @@ class ApproveApprovalTask
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
         private readonly ApprovalSlaCalculator $slaCalculator,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion): ApprovalTask
     {
@@ -165,13 +164,17 @@ class ApproveApprovalTask
             ],
         ));
 
-        $recipients = $tasks->map->assignee->filter()->unique('id')->values();
-        if ($recipients->isNotEmpty()) {
-            $this->notificationRecorder->record($tenant, $recipients, new NotificationData(
+        foreach ($tasks as $task) {
+            $assignee = $task->assignee;
+            if ($assignee === null) {
+                continue;
+            }
+
+            $this->notificationRecorder->record($tenant, collect([$assignee]), new NotificationData(
                 type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
                 title: 'Approval task assigned',
                 body: $instance->subject?->title ?? 'Approval task',
-                href: "/approvals/tasks/{$tasks->first()?->id}",
+                href: "/approvals/tasks/{$task->id}",
                 subject: $instance->subject,
                 subjectLabel: $instance->subject instanceof Requisition ? $instance->subject->number : null,
                 actor: $actor,

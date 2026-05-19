@@ -153,6 +153,26 @@ class ApprovalTaskApiTest extends TestCase
             ->assertJsonPath('error.code', 'conflict');
     }
 
+    public function test_approval_tasks_requires_authentication(): void
+    {
+        $this->getJson('/api/approval-tasks')
+            ->assertStatus(401)
+            ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
+    public function test_approval_tasks_requires_valid_tenant_membership(): void
+    {
+        [$tenant, $user] = $this->tenantUser('approver');
+        $otherTenant = Tenant::query()->create(['name' => fake()->company()]);
+
+        Sanctum::actingAs($user);
+
+        $this->withHeader('X-Tenant-Id', (string) $otherTenant->id)
+            ->getJson('/api/approval-tasks')
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'forbidden');
+    }
+
     public function test_cross_tenant_user_cannot_act_on_task(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -448,15 +468,14 @@ class ApprovalTaskApiTest extends TestCase
     }
 
     /**
-     * @param array<int, User> $approvers
+     * @param  array<int, User>  $approvers
      */
     private function createPublishedPolicyVersionWithApprovers(
         Tenant $tenant,
         User $actor,
         array $approvers,
         string $completionRule = 'all',
-    ): ApprovalPolicyVersion
-    {
+    ): ApprovalPolicyVersion {
         $policy = ApprovalPolicy::query()->create([
             'tenant_id' => $tenant->id,
             'name' => 'Multi approver requisition approval',

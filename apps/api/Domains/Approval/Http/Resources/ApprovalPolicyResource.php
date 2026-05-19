@@ -2,11 +2,12 @@
 
 namespace Domains\Approval\Http\Resources;
 
+use Domains\Approval\Models\ApprovalPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \Domains\Approval\Models\ApprovalPolicy
+ * @mixin ApprovalPolicy
  */
 class ApprovalPolicyResource extends JsonResource
 {
@@ -19,7 +20,7 @@ class ApprovalPolicyResource extends JsonResource
             'description' => $this->description,
             'subjectType' => $this->subject_type,
             'status' => $this->status->value,
-            'versions' => ApprovalPolicyVersionResource::collection($this->whenLoaded('versions'))->resolve(),
+            'versions' => ApprovalPolicyVersionResource::collection($this->whenLoaded('versions')),
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
         ];

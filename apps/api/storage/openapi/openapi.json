@@ -2858,6 +2858,33 @@
         }
       }
     },
+    "/api/approval-delegations/delegate-candidates": {
+      "get": {
+        "operationId": "listApprovalDelegationCandidates",
+        "summary": "List approval delegation candidates",
+        "tags": [
+          "Approval Delegations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval delegation candidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDelegationCandidateListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
     "/api/approval-delegations/{approvalDelegation}": {
       "patch": {
         "operationId": "updateApprovalDelegation",
@@ -6995,6 +7022,20 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/ApprovalDelegation"
+          }
+        }
+      },
+      "ApprovalDelegationCandidateListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummary"
+            }
           }
         }
       },

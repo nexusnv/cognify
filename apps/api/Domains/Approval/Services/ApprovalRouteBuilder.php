@@ -9,13 +9,12 @@ class ApprovalRouteBuilder
 {
     public function __construct(
         private readonly ApprovalSlaCalculator $slaCalculator,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $matchedVersion
-     * @param array<int, array<string, mixed>> $matchedConditions
-     * @param array<int, array<string, string>> $warnings
+     * @param  array<string, mixed>  $matchedVersion
+     * @param  array<int, array<string, mixed>>  $matchedConditions
+     * @param  array<int, array<string, string>>  $warnings
      * @return array{
      *   stages: array<int, array<string, mixed>>,
      *   warnings: array<int, array<string, string>>,
@@ -81,12 +80,14 @@ class ApprovalRouteBuilder
     }
 
     /**
-     * @param array<int, mixed> $approvers
+     * @param  array<int, mixed>  $approvers
      * @return array<int, array<string, mixed>>
      */
     private function normalizeApprovers(array $approvers): array
     {
         return array_values(array_map(function (mixed $approver): array {
+            $approver = is_array($approver) ? $approver : [];
+
             return [
                 'type' => (string) ($approver['type'] ?? 'role'),
                 'role' => isset($approver['role']) ? (string) $approver['role'] : null,

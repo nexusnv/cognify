@@ -21,7 +21,10 @@ class EscalateOverdueApprovalTasksJob implements ShouldQueue
     {
         Tenant::query()
             ->orderBy('id')
-            ->pluck('id')
-            ->each(fn (int $tenantId) => $action->handle(Tenant::query()->findOrFail($tenantId)));
+            ->chunkById(200, function ($tenants) use ($action): void {
+                foreach ($tenants as $tenant) {
+                    $action->handle($tenant);
+                }
+            });
     }
 }

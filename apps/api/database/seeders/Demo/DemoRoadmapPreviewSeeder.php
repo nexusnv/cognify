@@ -26,7 +26,9 @@ use Domains\Vendor\Models\Vendor;
 class DemoRoadmapPreviewSeeder
 {
     private const RFQ_DUE_AT = '2026-05-29 12:00:00';
+
     private const APPROVAL_DUE_AT = '2026-05-22 12:00:00';
+
     private const DECIDED_AT = '2026-05-20 12:00:00';
 
     public function run(DemoSeedContext $context): void
@@ -319,7 +321,7 @@ class DemoRoadmapPreviewSeeder
                         ],
                     ],
                 ],
-                'sla_rules' => [['stage' => 'Manager review', 'durationMinutes' => 2880]],
+                'sla_rules' => [['stage' => 'Manager review', 'dueInHours' => 48]],
                 'published_by' => $actor->id,
                 'published_at' => '2026-05-15 09:00:00',
             ],
@@ -327,7 +329,7 @@ class DemoRoadmapPreviewSeeder
     }
 
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     private function seedApprovalWorkflow(
         DemoSeedContext $context,

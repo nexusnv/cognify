@@ -51,22 +51,36 @@ test.describe("approval orchestration critical path", () => {
     await expect(dialog.getByLabel("Requested fields")).toHaveValue("attachments");
   });
 
+  test("@p1-approval unauthorized user cannot act on another approver task", async ({ page }) => {
+    await signIn(page, "buyer@example.com");
+    await page.goto("/approvals");
+    await expect(page.getByRole("heading", { name: "Approvals" })).toBeVisible();
+    const taskUrl = await page
+      .getByRole("row")
+      .filter({ hasText: "HQ workplace refresh" })
+      .first()
+      .getByRole("link", { name: "Open" })
+      .getAttribute("href");
+
+    expect(taskUrl).toBeTruthy();
+    await resetSession(page);
+
+    await signIn(page, "test@example.com");
+    await page.goto(taskUrl!);
+
+    await expect(page.getByText("Approval task could not be loaded.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
+  });
+
   test("@p1-approval delegate can act on delegated task", async ({ page }) => {
     await signIn(page, "buyer@example.com");
     await openApprovalTask(page, "HQ workplace refresh");
 
     await expect(page.getByText("Buyer User")).toBeVisible();
+    await expect(page.getByText("Approver User")).toBeVisible();
     await page.getByRole("button", { name: "Approve" }).click();
     await page.getByRole("dialog", { name: "Approve task?" }).getByRole("button", { name: "Confirm approval" }).click();
     await expect(page.getByText("Approval recorded")).toBeVisible();
-  });
-
-  test("@p1-approval unauthorized user cannot act on another approver task", async ({ page }) => {
-    await signIn(page, "test@example.com");
-    await page.goto("/approvals/tasks/1");
-
-    await expect(page.getByText("Approval task could not be loaded.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
   });
 });
 

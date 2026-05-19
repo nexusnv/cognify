@@ -21,8 +21,7 @@ class EscalateOverdueApprovalTasks
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant): int
     {
@@ -171,14 +170,18 @@ class EscalateOverdueApprovalTasks
     }
 
     /**
-     * @param array<int, mixed> $stages
+     * @param  array<int, mixed>  $stages
      * @return array<string, mixed>
      */
     private function stageTemplateFor(array $stages, string $stageName): array
     {
         foreach ($stages as $stage) {
+            if (! is_array($stage)) {
+                continue;
+            }
+
             if ((string) ($stage['name'] ?? '') === $stageName) {
-                return is_array($stage) ? $stage : [];
+                return $stage;
             }
         }
 
@@ -186,7 +189,7 @@ class EscalateOverdueApprovalTasks
     }
 
     /**
-     * @param array<string, mixed> $stageTemplate
+     * @param  array<string, mixed>  $stageTemplate
      */
     private function fallbackAssigneeForTask(Tenant $tenant, ApprovalTask $task, array $stageTemplate): ?User
     {
@@ -208,6 +211,7 @@ class EscalateOverdueApprovalTasks
 
                 if (($approver['type'] ?? null) === 'user' && isset($approver['userId'])) {
                     $user = $tenant->users()->whereKey((int) $approver['userId'])->first();
+
                     return $user instanceof User ? collect([$user]) : collect();
                 }
 

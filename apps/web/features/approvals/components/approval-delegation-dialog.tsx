@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button, NativeSelect, Textarea } from "@cognify/ui";
-import { useCreateApprovalDelegation, useDelegateApprovalTask } from "../hooks/use-approval-delegations";
+import {
+  useApprovalDelegationCandidates,
+  useCreateApprovalDelegation,
+  useDelegateApprovalTask,
+} from "../hooks/use-approval-delegations";
 
 type ApprovalDelegationDialogProps = {
   taskId: string;
@@ -17,21 +21,20 @@ export function ApprovalDelegationDialog({
 }: ApprovalDelegationDialogProps) {
   const [open, setOpen] = useState(false);
   const [delegateId, setDelegateId] = useState("");
-  const [startsAt, setStartsAt] = useState(todayDateInputValue());
-  const [endsAt, setEndsAt] = useState(tomorrowDateInputValue());
+  const [startsAt, setStartsAt] = useState(() => todayDateInputValue());
+  const [endsAt, setEndsAt] = useState(() => tomorrowDateInputValue());
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const candidatesQuery = useApprovalDelegationCandidates();
   const createDelegation = useCreateApprovalDelegation();
   const delegateTask = useDelegateApprovalTask(taskId);
   const pending = isPending || createDelegation.isPending || delegateTask.isPending;
-  const delegateOptions = useMemo(
-    () => [
-      { id: "2", label: "Priya Buyer" },
-      { id: "3", label: "Finance approver" },
-      { id: "4", label: "Backup buyer" },
-    ],
-    [],
-  );
+  const delegateOptions = (candidatesQuery.data ?? [])
+    .filter((candidate, index, candidates) => candidates.findIndex((item) => item.id === candidate.id) === index)
+    .map((candidate) => ({
+      id: candidate.id,
+      label: candidate.name,
+    }));
 
   async function handleSubmit() {
     if (!delegateId || !startsAt || !endsAt || !reason.trim()) {
@@ -140,11 +143,14 @@ export function ApprovalDelegationDialog({
 }
 
 function todayDateInputValue(): string {
-  return new Date("2026-05-19T00:00:00.000Z").toISOString().slice(0, 10);
+  return new Date().toISOString().slice(0, 10);
 }
 
 function tomorrowDateInputValue(): string {
-  return new Date("2026-05-20T00:00:00.000Z").toISOString().slice(0, 10);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return tomorrow.toISOString().slice(0, 10);
 }
 
 function dateInputToIso(value: string): string {

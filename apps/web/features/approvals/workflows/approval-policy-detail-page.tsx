@@ -22,7 +22,10 @@ export function ApprovalPolicyDetailPage({ policyId }: { policyId: string }) {
   const createVersionMutation = useCreateApprovalPolicyVersion(policyId);
   const retireMutation = useRetireApprovalPolicyVersion(policyId);
   const policy = policyQuery.data;
-  const latestVersion = policy?.versions[0];
+  const latestVersion = policy?.versions.reduce(
+    (latest, version) => (version.versionNumber > latest.versionNumber ? version : latest),
+    policy.versions[0],
+  );
 
   if (policyQuery.isLoading) {
     return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading approval policy</div>;

@@ -7,6 +7,7 @@
 import type {
   AmbiguousTenantResponse,
   ApplyRequisitionTemplateRequest,
+  ApprovalDelegationCandidateListResponse,
   ApprovalDelegationListResponse,
   ApprovalDelegationResponse,
   ApprovalPolicyListResponse,
@@ -3608,6 +3609,55 @@ export const createApprovalDelegation = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(storeApprovalDelegationRequest),
   });
+};
+
+/**
+ * @summary List approval delegation candidates
+ */
+export type listApprovalDelegationCandidatesResponse200 = {
+  data: ApprovalDelegationCandidateListResponse;
+  status: 200;
+};
+
+export type listApprovalDelegationCandidatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApprovalDelegationCandidatesResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listApprovalDelegationCandidatesResponseSuccess =
+  listApprovalDelegationCandidatesResponse200 & {
+    headers: Headers;
+  };
+export type listApprovalDelegationCandidatesResponseError = (
+  | listApprovalDelegationCandidatesResponse401
+  | listApprovalDelegationCandidatesResponse403
+) & {
+  headers: Headers;
+};
+
+export type listApprovalDelegationCandidatesResponse =
+  | listApprovalDelegationCandidatesResponseSuccess
+  | listApprovalDelegationCandidatesResponseError;
+
+export const getListApprovalDelegationCandidatesUrl = () => {
+  return `/api/approval-delegations/delegate-candidates`;
+};
+
+export const listApprovalDelegationCandidates = async (
+  options?: RequestInit,
+): Promise<listApprovalDelegationCandidatesResponse> => {
+  return cognifyFetch<listApprovalDelegationCandidatesResponse>(
+    getListApprovalDelegationCandidatesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**

@@ -10,8 +10,14 @@ class StoreApprovalDelegationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $tenant = app(CurrentTenant::class);
-        $role = $tenant->roleFor($this->user());
+        $tenant = app(CurrentTenant::class)->get();
+        $user = $this->user();
+
+        if ($tenant === null || $user === null) {
+            return false;
+        }
+
+        $role = $tenant->roleFor($user);
 
         return in_array($role, ['admin', 'approver'], true);
     }

@@ -8,6 +8,7 @@ import {
   getApprovalPolicy,
   getApprovalSlaSummary,
   getRequisitionApprovalSummary,
+  listApprovalDelegationCandidates as listApprovalDelegationCandidatesEndpoint,
   listApprovalDelegations as listApprovalDelegationsEndpoint,
   listApprovalTasks as listApprovalTasksEndpoint,
   listApprovalPolicies as listApprovalPoliciesEndpoint,
@@ -40,6 +41,7 @@ import type {
   StoreApprovalDelegationRequest,
   StoreApprovalPolicyVersionRequest,
   UpdateApprovalPolicyRequest,
+  UserSummary,
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import type {
@@ -146,6 +148,12 @@ export async function approveApprovalTask(taskId: string, values: ApprovalTaskAc
 
 export async function listApprovalDelegations(): Promise<ApprovalDelegation[]> {
   const response = await listApprovalDelegationsEndpoint(withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data;
+}
+
+export async function listApprovalDelegationCandidates(): Promise<UserSummary[]> {
+  const response = await listApprovalDelegationCandidatesEndpoint(withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
   return response.data.data;
 }

@@ -40,6 +40,9 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         <Metric label="Stage" value={task.stage.name ?? "Current stage"} />
         <Metric label="Assignee" value={task.assignee?.name ?? "Unassigned"} />
         <Metric label="Due" value={formatDate(task.dueAt)} />
+        {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
+          <Metric label="Delegated from" value={task.originalAssignee.name} />
+        ) : null}
         <Metric label="Requester" value={task.subject.requester?.name ?? "Unknown"} />
         <Metric label="Department" value={task.subject.department ?? "Unassigned"} />
         <Metric label="Cost center" value={task.subject.costCenter ?? "Unassigned"} />

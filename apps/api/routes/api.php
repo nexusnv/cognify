@@ -1,23 +1,21 @@
 <?php
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Route;
+use App\Audit\Http\Controllers\AuditEventController;
 use App\Auth\Http\Controllers\AuthenticatedSessionController;
 use App\Auth\Http\Controllers\CurrentTenantController;
 use App\Auth\Http\Controllers\CurrentUserController;
 use App\Auth\Http\Controllers\UserProfileController;
-use App\Audit\Http\Controllers\AuditEventController;
 use App\Http\Middleware\ResolveCurrentTenant;
 use App\Notifications\Http\Controllers\NotificationController;
 use App\Observability\SystemStatus\Http\Controllers\SystemStatusController;
-use Domains\Attachment\Http\Controllers\AttachmentFileController;
-use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
+use Domains\Approval\Http\Controllers\ApprovalDelegationController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyController;
 use Domains\Approval\Http\Controllers\ApprovalPolicyVersionController;
-use Domains\Approval\Http\Controllers\ApprovalDelegationController;
 use Domains\Approval\Http\Controllers\ApprovalSlaController;
 use Domains\Approval\Http\Controllers\ApprovalTaskController;
 use Domains\Approval\Http\Controllers\RequisitionApprovalController;
+use Domains\Attachment\Http\Controllers\AttachmentFileController;
+use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
@@ -28,6 +26,8 @@ use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
 use Domains\Requisition\Http\Controllers\RequisitionItemSuggestionController;
 use Domains\Requisition\Http\Controllers\RequisitionTemplateController;
 use Domains\Search\Http\Controllers\SearchController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/health', static function (): JsonResponse {
     return response()->json([
@@ -66,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/approval-policy-versions/{approvalPolicyVersion}/publish', [ApprovalPolicyVersionController::class, 'publish']);
         Route::post('/approval-policy-versions/{approvalPolicyVersion}/retire', [ApprovalPolicyVersionController::class, 'retire']);
         Route::get('/approval-delegations', [ApprovalDelegationController::class, 'index']);
+        Route::get('/approval-delegations/delegate-candidates', [ApprovalDelegationController::class, 'candidates']);
         Route::post('/approval-delegations', [ApprovalDelegationController::class, 'store']);
         Route::patch('/approval-delegations/{approvalDelegation}', [ApprovalDelegationController::class, 'update']);
         Route::post('/approval-delegations/{approvalDelegation}/cancel', [ApprovalDelegationController::class, 'cancel']);

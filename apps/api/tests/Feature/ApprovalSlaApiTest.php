@@ -188,6 +188,13 @@ class ApprovalSlaApiTest extends TestCase
             ->assertJsonPath('data.oldestPendingApproval.taskId', (string) $dueSoonTask->id);
     }
 
+    public function test_sla_summary_requires_authentication(): void
+    {
+        $this->getJson('/api/approvals/sla-summary')
+            ->assertStatus(401)
+            ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
     public function test_admin_can_view_tenant_sla_summary_but_cross_tenant_data_is_excluded(): void
     {
         [$tenant, $admin] = $this->tenantUser('admin');
@@ -286,8 +293,8 @@ class ApprovalSlaApiTest extends TestCase
     }
 
     /**
-     * @param array<int, User>|null $stageApprovers
-     * @param array<int, array<string, mixed>> $slaRules
+     * @param  array<int, User>|null  $stageApprovers
+     * @param  array<int, array<string, mixed>>  $slaRules
      */
     private function createPublishedPolicyVersion(
         Tenant $tenant,

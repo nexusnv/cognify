@@ -9,7 +9,6 @@ use Domains\Approval\Models\ApprovalPolicyVersion;
 use Domains\Approval\States\ApprovalPolicyStatus;
 use Domains\Approval\States\ApprovalPolicyVersionStatus;
 use Domains\Requisition\Models\Requisition;
-use Domains\Requisition\Models\RequisitionLineItem;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -426,6 +425,64 @@ class ApprovalPreviewApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.matchedVersion.id', (string) $fallbackVersion->id)
             ->assertJsonPath('data.stages.0.name', 'Fallback buyer review');
+    }
+
+    public function test_preview_continues_past_ruleless_fallback_to_later_matching_policy(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester, [
+            'department' => 'Operations',
+            'cost_center' => 'OPS-220',
+        ]);
+        $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 100,
+            'rules' => [],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Fallback buyer review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'buyer', 'label' => 'Buyer fallback'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $matchingVersion = $this->createPublishedPolicyVersion($tenant, $requester, [
+            'priority' => 50,
+            'rules' => [
+                ['field' => 'department', 'operator' => 'equals', 'value' => 'Operations'],
+            ],
+            'route_template' => [
+                'stages' => [
+                    [
+                        'name' => 'Operations review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'approver', 'label' => 'Approver'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/requisitions/{$requisition->id}/approval-preview")
+            ->assertOk()
+            ->assertJsonPath('data.matchedVersion.id', (string) $matchingVersion->id)
+            ->assertJsonPath('data.stages.0.name', 'Operations review');
+    }
+
+    public function test_preview_requires_authentication(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $requisition = $this->createRequisition($tenant, $requester);
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/requisitions/{$requisition->id}/approval-preview")
+            ->assertStatus(401)
+            ->assertJsonPath('error.code', 'unauthenticated');
     }
 
     /**

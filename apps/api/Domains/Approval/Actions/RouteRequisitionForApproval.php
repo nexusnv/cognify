@@ -23,6 +23,7 @@ use Domains\Approval\States\ApprovalTaskStatus;
 use Domains\Requisition\Actions\MarkRequisitionPendingApproval;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -34,8 +35,7 @@ class RouteRequisitionForApproval
         private readonly MarkRequisitionPendingApproval $markPendingApproval,
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition): ApprovalInstance
     {
@@ -123,7 +123,7 @@ class RouteRequisitionForApproval
     }
 
     /**
-     * @param array<string, mixed> $stageData
+     * @param  array<string, mixed>  $stageData
      */
     private function createStageTasks(
         Tenant $tenant,
@@ -133,12 +133,17 @@ class RouteRequisitionForApproval
         ApprovalStage $stage,
         array $stageData,
         bool $isActive,
-    ): void
-    {
+    ): void {
         $assignees = $this->resolveApprovers($tenant, $stageData['approvers'] ?? []);
 
+        $fallbackApprovers = $stageData['fallbackApprovers'] ?? [];
+
         if ($assignees->isEmpty()) {
-            $assignees = $this->resolveApprovers($tenant, $stageData['fallbackApprovers'] ?? []);
+            $assignees = $this->resolveApprovers($tenant, $fallbackApprovers);
+        }
+
+        if ($assignees->isEmpty() && $fallbackApprovers === []) {
+            $assignees = $tenant->users()->wherePivot('role', TenantRole::Approver->value)->get();
         }
 
         if ($assignees->isEmpty()) {
@@ -176,8 +181,8 @@ class RouteRequisitionForApproval
     }
 
     /**
-     * @param array<int, array<string, mixed>> $approvers
-     * @return \Illuminate\Support\Collection<int, User>
+     * @param  array<int, array<string, mixed>>  $approvers
+     * @return Collection<int, User>
      */
     private function resolveApprovers(Tenant $tenant, array $approvers)
     {
@@ -194,10 +199,6 @@ class RouteRequisitionForApproval
             if (($approver['type'] ?? null) === 'role' && isset($approver['role'])) {
                 $users = $users->merge($tenant->users()->wherePivot('role', (string) $approver['role'])->get());
             }
-        }
-
-        if ($users->isEmpty()) {
-            $users = $tenant->users()->wherePivot('role', TenantRole::Approver->value)->get();
         }
 
         return $users->unique('id')->values();

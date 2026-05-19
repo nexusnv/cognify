@@ -15,12 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class CreateApprovalDelegation
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array{delegateId:int,scope:string,startsAt:string,endsAt:string,reason:string} $data
+     * @param  array{delegateId:int,scope:string,startsAt:string,endsAt:string,reason:string}  $data
      */
     public function handle(Tenant $tenant, User $actor, array $data, ?ApprovalDelegation $delegation = null): ApprovalDelegation
     {
@@ -47,6 +45,12 @@ class CreateApprovalDelegation
             if ($endsAt->lessThanOrEqualTo(now())) {
                 throw ValidationException::withMessages([
                     'endsAt' => ['The end date must be in the future.'],
+                ]);
+            }
+
+            if ((int) $data['delegateId'] === (int) $actor->id) {
+                throw ValidationException::withMessages([
+                    'delegateId' => ['You cannot delegate to yourself.'],
                 ]);
             }
 

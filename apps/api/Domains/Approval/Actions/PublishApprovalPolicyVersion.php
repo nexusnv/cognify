@@ -28,6 +28,15 @@ class PublishApprovalPolicyVersion
             $version->load('policy');
             $now = now();
 
+            $retiredPolicyIds = ApprovalPolicyVersion::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('subject_type', $version->subject_type)
+                ->where('status', ApprovalPolicyVersionStatus::Published->value)
+                ->where('id', '!=', $version->id)
+                ->pluck('approval_policy_id')
+                ->unique()
+                ->values();
+
             ApprovalPolicyVersion::query()
                 ->where('tenant_id', $tenant->id)
                 ->where('subject_type', $version->subject_type)
@@ -38,6 +47,18 @@ class PublishApprovalPolicyVersion
                     'effective_until' => $now,
                     'updated_at' => $now,
                 ]);
+
+            if ($retiredPolicyIds->isNotEmpty()) {
+                ApprovalPolicy::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->whereIn('id', $retiredPolicyIds)
+                    ->where('status', ApprovalPolicyStatus::Active->value)
+                    ->update([
+                        'status' => ApprovalPolicyStatus::Draft->value,
+                        'updated_by' => $actor->id,
+                        'updated_at' => $now,
+                    ]);
+            }
 
             $version->forceFill([
                 'status' => ApprovalPolicyVersionStatus::Published,

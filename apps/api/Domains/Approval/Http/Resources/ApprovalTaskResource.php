@@ -8,6 +8,7 @@ use App\Tenancy\CurrentTenant;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\States\ApprovalDelegationStatus;
+use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -24,6 +25,7 @@ class ApprovalTaskResource extends JsonResource
     {
         $subject = $this->whenLoaded('subject');
         $requisition = $subject instanceof Requisition ? $subject : null;
+        $isActionable = $this->isActionableBy($request);
 
         return [
             'id' => (string) $this->id,
@@ -60,7 +62,7 @@ class ApprovalTaskResource extends JsonResource
                 'activatedAt' => $this->stage?->activated_at?->toISOString(),
                 'completedAt' => $this->stage?->completed_at?->toISOString(),
                 'dueAt' => $this->stage?->due_at?->toISOString(),
-                'isActionable' => $this->stage?->status === \Domains\Approval\States\ApprovalStageStatus::Active,
+                'isActionable' => $this->stage?->status === ApprovalStageStatus::Active,
             ],
             'assignedAt' => $this->assigned_at?->toISOString(),
             'viewedAt' => $this->viewed_at?->toISOString(),
@@ -72,9 +74,9 @@ class ApprovalTaskResource extends JsonResource
             'metadata' => $this->metadata ?? [],
             'permissions' => [
                 'canView' => $this->canViewTask($request),
-                'canApprove' => $this->isActionableBy($request),
-                'canReject' => $this->isActionableBy($request),
-                'canRequestChanges' => $this->isActionableBy($request),
+                'canApprove' => $isActionable,
+                'canReject' => $isActionable,
+                'canRequestChanges' => $isActionable,
             ],
         ];
     }

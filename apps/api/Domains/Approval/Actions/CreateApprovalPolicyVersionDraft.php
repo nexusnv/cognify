@@ -14,7 +14,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 class CreateApprovalPolicyVersionDraft
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, ApprovalPolicy $policy, array $data): ApprovalPolicyVersion
     {
@@ -22,18 +22,27 @@ class CreateApprovalPolicyVersionDraft
             abort(404);
         }
 
-        if ($policy->status === ApprovalPolicyStatus::Archived) {
-            throw new ConflictHttpException('Archived approval policies cannot receive new versions.');
-        }
-
         return DB::transaction(function () use ($tenant, $actor, $policy, $data): ApprovalPolicyVersion {
-            $policy->refresh();
+            $lockedPolicy = ApprovalPolicy::query()
+                ->whereKey($policy->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ((int) $lockedPolicy->tenant_id !== (int) $tenant->id) {
+                abort(404);
+            }
+
+            if ($lockedPolicy->status === ApprovalPolicyStatus::Archived) {
+                throw new ConflictHttpException('Archived approval policies cannot receive new versions.');
+            }
+
+            $nextVersionNumber = ((int) $lockedPolicy->versions()->lockForUpdate()->max('version_number')) + 1;
 
             $version = ApprovalPolicyVersion::query()->create([
-                'approval_policy_id' => $policy->id,
+                'approval_policy_id' => $lockedPolicy->id,
                 'tenant_id' => $tenant->id,
-                'subject_type' => $policy->subject_type,
-                'version_number' => ((int) $policy->versions()->lockForUpdate()->max('version_number')) + 1,
+                'subject_type' => $lockedPolicy->subject_type,
+                'version_number' => $nextVersionNumber,
                 'status' => ApprovalPolicyVersionStatus::Draft,
                 'priority' => (int) ($data['priority'] ?? 100),
                 'rules' => $data['rules'],
@@ -41,7 +50,7 @@ class CreateApprovalPolicyVersionDraft
                 'sla_rules' => $data['slaRules'] ?? [],
             ]);
 
-            $policy->forceFill(['updated_by' => $actor->id])->save();
+            $lockedPolicy->forceFill(['updated_by' => $actor->id])->save();
 
             return $version;
         });

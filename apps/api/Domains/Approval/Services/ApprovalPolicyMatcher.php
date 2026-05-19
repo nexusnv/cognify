@@ -7,7 +7,7 @@ use Domains\Approval\Data\ApprovalContextData;
 class ApprovalPolicyMatcher
 {
     /**
-     * @param array<int, array<string, mixed>> $candidates
+     * @param  array<int, array<string, mixed>>  $candidates
      * @return array{
      *   matchedPolicy: array<string, mixed>,
      *   matchedVersion: array<string, mixed>,
@@ -40,7 +40,8 @@ class ApprovalPolicyMatcher
 
             if ($rules === []) {
                 $fallback ??= $candidate;
-                break;
+
+                continue;
             }
 
             $evaluation = $this->evaluateRules($context, $rules);
@@ -101,7 +102,7 @@ class ApprovalPolicyMatcher
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rules
+     * @param  array<int, array<string, mixed>>  $rules
      * @return array{
      *   matched: bool,
      *   conditions: array<int, array<string, mixed>>,
@@ -148,10 +149,6 @@ class ApprovalPolicyMatcher
         ];
     }
 
-    /**
-     * @param mixed $actualValue
-     * @param mixed $expectedValue
-     */
     private function evaluateRule(mixed $actualValue, string $operator, mixed $expectedValue): bool
     {
         return match ($operator) {
@@ -170,10 +167,6 @@ class ApprovalPolicyMatcher
         };
     }
 
-    /**
-     * @param mixed $actualValue
-     * @param mixed $expectedValue
-     */
     private function equals(mixed $actualValue, mixed $expectedValue): bool
     {
         if (is_array($actualValue) && is_array($expectedValue)) {
@@ -191,10 +184,6 @@ class ApprovalPolicyMatcher
         return $actualValue === $expectedValue || (string) $actualValue === (string) $expectedValue;
     }
 
-    /**
-     * @param mixed $actualValue
-     * @param mixed $expectedValue
-     */
     private function inSet(mixed $actualValue, mixed $expectedValue): bool
     {
         $expectedValues = is_array($expectedValue) ? $expectedValue : [$expectedValue];
@@ -242,7 +231,7 @@ class ApprovalPolicyMatcher
     }
 
     /**
-     * @param array<int, mixed> $values
+     * @param  array<int, mixed>  $values
      * @return array<int, string>
      */
     private function normalizeStringSet(array $values): array

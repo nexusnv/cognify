@@ -8,8 +8,8 @@ use App\Tenancy\Tenant;
 use Domains\Approval\Actions\PreviewApprovalPolicy;
 use Domains\Approval\Actions\RouteRequisitionForApproval;
 use Domains\Approval\Data\ApprovalContextData;
-use Domains\Approval\Http\Resources\ApprovalSummaryResource;
 use Domains\Approval\Http\Resources\ApprovalPreviewResource;
+use Domains\Approval\Http\Resources\ApprovalSummaryResource;
 use Domains\Approval\Http\Resources\ApprovalTaskResource;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalPolicyVersion;
@@ -50,11 +50,21 @@ class RequisitionApprovalController extends Controller
         $this->authorize('routeApproval', $requisition);
 
         $instance = $action->handle($tenant, request()->user(), $requisition);
+        $instance->load([
+            'stages',
+            'tasks.assignee',
+            'tasks.originalAssignee',
+            'tasks.decidedBy',
+            'tasks.stage',
+            'tasks.instance',
+            'tasks.subject.requester',
+            'tasks.subject.lineItems',
+        ]);
 
         return response()->json([
             'data' => [
-                'instance' => (new ApprovalSummaryResource($instance->load(['stages', 'tasks.assignee', 'tasks.decidedBy'])))->resolve(),
-                'tasks' => ApprovalTaskResource::collection($instance->tasks()->with(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject.requester', 'subject.lineItems'])->get())->resolve(),
+                'instance' => (new ApprovalSummaryResource($instance))->resolve(),
+                'tasks' => ApprovalTaskResource::collection($instance->tasks)->resolve(),
             ],
         ]);
     }

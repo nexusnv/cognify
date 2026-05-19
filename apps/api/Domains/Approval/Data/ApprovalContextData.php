@@ -3,11 +3,12 @@
 namespace Domains\Approval\Data;
 
 use Domains\Requisition\Models\Requisition;
+use InvalidArgumentException;
 
 final class ApprovalContextData
 {
     /**
-     * @param array<int, string> $lineItemCategories
+     * @param  array<int, string>  $lineItemCategories
      */
     public function __construct(
         public readonly string $tenantId,
@@ -21,8 +22,7 @@ final class ApprovalContextData
         public readonly array $lineItemCategories,
         public readonly ?string $riskClassification,
         public readonly ?string $vendorId,
-    ) {
-    }
+    ) {}
 
     public static function fromRequisition(Requisition $requisition): self
     {
@@ -52,7 +52,7 @@ final class ApprovalContextData
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public static function fromArray(string $tenantId, array $context): self
     {
@@ -79,19 +79,39 @@ final class ApprovalContextData
     }
 
     /**
-     * @param array<int, string> $requiredFields
+     * @param  array<int, string>  $requiredFields
      * @return array<int, string>
      */
     public function missingRequiredContext(array $requiredFields = []): array
     {
         $missing = [];
+        $supportedFields = array_flip([
+            'tenantId',
+            'requisitionId',
+            'requesterId',
+            'amount',
+            'currency',
+            'department',
+            'costCenter',
+            'projectId',
+            'lineItemCategories',
+            'riskClassification',
+            'vendorId',
+        ]);
 
         foreach (array_values(array_unique($requiredFields)) as $field) {
-            if (! in_array($field, ['riskClassification', 'vendorId'], true)) {
+            if (! isset($supportedFields[$field])) {
+                throw new InvalidArgumentException("Unsupported approval context field [{$field}].");
+            }
+
+            $value = $this->{$field};
+            if ($value === null || $value === '') {
+                $missing[] = $field;
+
                 continue;
             }
 
-            if ($this->{$field} === null) {
+            if (is_array($value) && $value === []) {
                 $missing[] = $field;
             }
         }

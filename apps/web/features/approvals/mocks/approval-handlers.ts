@@ -112,6 +112,15 @@ export const approvalHandlers = [
   http.get("/api/approval-delegations", () => {
     return HttpResponse.json({ data: delegations });
   }),
+  http.get("/api/approval-delegations/delegate-candidates", () => {
+    return HttpResponse.json({
+      data: [
+        { id: "2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+        { id: "3", name: "Finance approver", email: "finance.approver@acme.test" },
+        { id: "4", name: "Backup buyer", email: "backup.buyer@acme.test" },
+      ],
+    });
+  }),
   http.get("/api/approvals/sla-summary", () => {
     return HttpResponse.json({ data: approvalSlaSummaryFixture });
   }),

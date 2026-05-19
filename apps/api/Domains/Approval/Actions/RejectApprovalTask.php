@@ -23,8 +23,7 @@ class RejectApprovalTask
     public function __construct(
         private readonly MarkRequisitionRejected $markRequisitionRejected,
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion, string $reason): ApprovalTask
     {
@@ -47,6 +46,11 @@ class RejectApprovalTask
                 'completed_at' => now(),
             ]);
             $instance = $task->instance()->lockForUpdate()->firstOrFail();
+
+            if ($instance->status !== ApprovalInstanceStatus::Active) {
+                throw new ConflictHttpException('Approval instance is no longer active.');
+            }
+
             $instance->forceFill([
                 'status' => ApprovalInstanceStatus::Rejected,
                 'completed_at' => now(),

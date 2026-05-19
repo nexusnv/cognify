@@ -38,12 +38,14 @@ class ApprovalSummaryResource extends JsonResource
                 'isOverdue' => $currentStage->due_at !== null && $currentStage->due_at->isPast(),
                 'isActionable' => $currentStage->status === ApprovalStageStatus::Active,
             ] : null,
-            'activeApprovers' => $activeTasks->map(fn ($task): array => [
-                'id' => (string) $task->assignee->id,
-                'name' => $task->assignee->name,
-                'email' => $task->assignee->email,
-                'taskId' => (string) $task->id,
-            ])->values()->all(),
+            'activeApprovers' => $activeTasks
+                ->filter(fn ($task): bool => $task->assignee !== null)
+                ->map(fn ($task): array => [
+                    'id' => (string) $task->assignee->id,
+                    'name' => $task->assignee->name,
+                    'email' => $task->assignee->email,
+                    'taskId' => (string) $task->id,
+                ])->values()->all(),
             'completedDecisions' => $completedTasks->map(fn ($task): array => [
                 'taskId' => (string) $task->id,
                 'decision' => $task->decision,

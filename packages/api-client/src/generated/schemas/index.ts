@@ -14,6 +14,7 @@ export * from "./apiErrorErrorDetails";
 export * from "./apiErrorErrorRequestId";
 export * from "./applyRequisitionTemplateRequest";
 export * from "./approvalDelegation";
+export * from "./approvalDelegationCandidateListResponse";
 export * from "./approvalDelegationCreatedAt";
 export * from "./approvalDelegationCreatedById";
 export * from "./approvalDelegationDelegate";

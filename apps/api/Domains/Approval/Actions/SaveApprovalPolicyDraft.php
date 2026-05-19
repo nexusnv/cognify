@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class SaveApprovalPolicyDraft
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, array $data, ?ApprovalPolicy $policy = null): ApprovalPolicy
     {
@@ -25,6 +25,10 @@ class SaveApprovalPolicyDraft
                 'created_by' => $actor->id,
                 'status' => ApprovalPolicyStatus::Draft,
             ]);
+
+            if ((int) $policy->tenant_id !== (int) $tenant->id) {
+                abort(404);
+            }
 
             $policy->fill([
                 'name' => $data['name'] ?? $policy->name,
@@ -76,7 +80,7 @@ class SaveApprovalPolicyDraft
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     private function hasVersionPayload(array $data): bool
     {

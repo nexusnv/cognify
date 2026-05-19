@@ -23,11 +23,12 @@ return new class extends Migration
             $table->index('subject_type');
             $table->index('status');
             $table->index(['tenant_id', 'subject_type', 'status']);
+            $table->unique(['id', 'tenant_id']);
         });
 
         Schema::create('approval_policy_versions', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('approval_policy_id')->constrained('approval_policies')->cascadeOnDelete();
+            $table->foreignId('approval_policy_id');
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('subject_type');
             $table->unsignedInteger('version_number');
@@ -49,6 +50,10 @@ return new class extends Migration
             $table->index(['tenant_id', 'status']);
             $table->index(['tenant_id', 'approval_policy_id', 'status']);
             $table->index(['tenant_id', 'subject_type', 'status', 'priority']);
+            $table->foreign(['approval_policy_id', 'tenant_id'])
+                ->references(['id', 'tenant_id'])
+                ->on('approval_policies')
+                ->cascadeOnDelete();
         });
     }
 

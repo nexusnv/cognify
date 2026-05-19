@@ -58,6 +58,49 @@ class ApprovalDelegationApiTest extends TestCase
         ]);
     }
 
+    public function test_approver_cannot_delegate_to_self(): void
+    {
+        [$tenant, $approver] = $this->tenantUser('approver');
+
+        $this->actingAsTenant($tenant, $approver)
+            ->postJson('/api/approval-delegations', [
+                'delegateId' => $approver->id,
+                'scope' => 'all',
+                'startsAt' => now()->toISOString(),
+                'endsAt' => now()->addDay()->toISOString(),
+                'reason' => 'No-op coverage.',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonPath('error.details.fields.delegateId.0', 'You cannot delegate to yourself.');
+    }
+
+    public function test_approval_delegations_requires_authentication(): void
+    {
+        $this->getJson('/api/approval-delegations')
+            ->assertStatus(401)
+            ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
+    public function test_approver_can_list_delegate_candidates_without_self(): void
+    {
+        [$tenant, $approver] = $this->tenantUser('approver');
+        [, $delegate] = $this->tenantUser('buyer', $tenant);
+
+        $response = $this->actingAsTenant($tenant, $approver)
+            ->getJson('/api/approval-delegations/delegate-candidates')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', (string) $delegate->id)
+            ->assertJsonPath('data.0.name', $delegate->name);
+
+        $this->assertNotContains(
+            (string) $approver->id,
+            collect($response->json('data'))
+                ->pluck('id')
+                ->all(),
+        );
+    }
+
     public function test_delegate_can_act_on_delegated_task(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

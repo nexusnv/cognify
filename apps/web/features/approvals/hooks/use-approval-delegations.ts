@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DelegateApprovalTaskRequest, StoreApprovalDelegationRequest } from "@cognify/api-client/schemas";
 import {
+  listApprovalDelegationCandidates,
   createTaskDelegation,
   delegateApprovalTask,
   listApprovalDelegations,
@@ -12,6 +13,13 @@ export function useApprovalDelegations() {
   return useQuery({
     queryKey: ["approval-delegations"],
     queryFn: listApprovalDelegations,
+  });
+}
+
+export function useApprovalDelegationCandidates() {
+  return useQuery({
+    queryKey: ["approval-delegations", "delegate-candidates"],
+    queryFn: listApprovalDelegationCandidates,
   });
 }
 

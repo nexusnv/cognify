@@ -26,7 +26,7 @@ class RequestApprovalChanges
     ) {}
 
     /**
-     * @param array<int, string> $requestedFields
+     * @param  array<int, string>  $requestedFields
      */
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion, string $reason, array $requestedFields = []): ApprovalTask
     {
@@ -76,6 +76,11 @@ class RequestApprovalChanges
                 'completed_at' => now(),
             ]);
             $instance = $task->instance()->lockForUpdate()->firstOrFail();
+
+            if ($instance->status !== ApprovalInstanceStatus::Active) {
+                throw new ConflictHttpException('Approval instance is no longer active.');
+            }
+
             $instance->forceFill([
                 'status' => ApprovalInstanceStatus::ChangesRequested,
                 'completed_at' => now(),
