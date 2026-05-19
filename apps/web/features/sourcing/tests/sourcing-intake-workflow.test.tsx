@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RightPanelProvider } from "@/components/right-panel/right-panel-provider";
 import { RightPanelRoot } from "@/components/right-panel/right-panel-root";
 import { server } from "@/tests/msw/server";
@@ -10,6 +10,18 @@ import { resetIdentityMockState } from "@/features/identity/mocks/identity-handl
 import { resetSourcingMockState } from "../mocks/sourcing-handlers";
 import { SourcingIntakeDetailPage } from "../workflows/sourcing-intake-detail-page";
 import { SourcingIntakeListPage } from "../workflows/sourcing-intake-list-page";
+
+const router = {
+  push: vi.fn(),
+};
+
+vi.mock("next/navigation", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/navigation")>();
+  return {
+    ...actual,
+    useRouter: () => router,
+  };
+});
 
 function TestAppProviders({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -33,6 +45,8 @@ beforeEach(() => {
   resetIdentityMockState();
   resetSourcingMockState();
   window.localStorage.clear();
+  window.localStorage.setItem("cognify.activeTenantId", "1");
+  router.push.mockReset();
 });
 
 describe("sourcing intake workflow", () => {
@@ -82,8 +96,27 @@ describe("sourcing intake workflow", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Ready for RFQ")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Create RFQ" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Create RFQ" })).toBeEnabled();
     });
+  });
+
+  it("shows an error when RFQ creation is forbidden", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post("/api/sourcing/intake-reviews/:reviewId/rfq", () =>
+        HttpResponse.json({ error: { code: "forbidden", message: "No access" } }, { status: 403 }),
+      ),
+    );
+
+    render(<SourcingIntakeDetailPage reviewId="sourcing-4" />, { wrapper: TestAppProviders });
+
+    expect(await screen.findByRole("button", { name: "Create RFQ" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Create RFQ" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "RFQ draft could not be created. Refresh and try again.",
+    );
+    expect(router.push).not.toHaveBeenCalled();
   });
 
   it("shows load error states", async () => {
