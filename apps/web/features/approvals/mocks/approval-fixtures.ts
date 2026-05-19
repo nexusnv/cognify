@@ -1,0 +1,298 @@
+import type {
+  ApprovalDelegation,
+  ApprovalSlaSummary,
+  ApprovalSummary,
+  ApprovalTask,
+  ApprovalPolicy,
+  ApprovalPreview,
+  ApprovalPreviewContext,
+} from "../types/approval-view-model";
+
+export const approvalPolicyFixture: ApprovalPolicy = {
+  id: "ap-100",
+  tenantId: "2",
+  name: "Standard requisition approval",
+  description: "Default requisition approval route.",
+  subjectType: "requisition",
+  status: "draft",
+  versions: [
+    {
+      id: "apv-100",
+      tenantId: "2",
+      policyId: "ap-100",
+      versionNumber: 1,
+      status: "draft",
+      priority: 100,
+      effectiveFrom: null,
+      effectiveUntil: null,
+      rules: [{ field: "amount", operator: "gte", value: 1000 }],
+      routeTemplate: {
+        stages: [
+          {
+            name: "Manager review",
+            completionRule: "all",
+            approvers: [{ type: "role", role: "approver", label: "Approver" }],
+          },
+        ],
+      },
+      slaRules: [{ stage: "Manager review", dueInHours: 48, escalateAfterHours: 72 }],
+      publishedById: null,
+      publishedAt: null,
+      createdAt: "2026-05-17T00:00:00.000000Z",
+      updatedAt: "2026-05-17T00:00:00.000000Z",
+    },
+  ],
+  createdAt: "2026-05-17T00:00:00.000000Z",
+  updatedAt: "2026-05-17T00:00:00.000000Z",
+};
+
+export const approvalPreviewContextFixture: ApprovalPreviewContext = {
+  requisitionId: "req-2",
+  requesterId: "user-1",
+  amount: 3400,
+  currency: "MYR",
+  department: "Operations",
+  costCenter: "OPS-220",
+  projectId: undefined,
+  lineItemCategories: ["Packing box bundle"],
+  riskClassification: "medium",
+  vendorId: "vendor-1",
+};
+
+export const approvalPreviewFixture: ApprovalPreview = {
+  matchedPolicy: {
+    id: approvalPolicyFixture.id,
+    tenantId: approvalPolicyFixture.tenantId,
+    name: approvalPolicyFixture.name,
+    subjectType: approvalPolicyFixture.subjectType,
+    status: approvalPolicyFixture.status,
+  },
+  matchedVersion: {
+    id: approvalPolicyFixture.versions[0].id,
+    tenantId: approvalPolicyFixture.tenantId,
+    policyId: approvalPolicyFixture.id,
+    versionNumber: approvalPolicyFixture.versions[0].versionNumber,
+    status: approvalPolicyFixture.versions[0].status,
+    priority: approvalPolicyFixture.versions[0].priority,
+    rules: approvalPolicyFixture.versions[0].rules,
+    routeTemplate: approvalPolicyFixture.versions[0].routeTemplate,
+    slaRules: approvalPolicyFixture.versions[0].slaRules,
+  },
+  matchedConditions: [
+    {
+      field: "amount",
+      operator: "gte",
+      value: 1000,
+      matched: true,
+      summary: "amount gte 1000 matched",
+    },
+  ],
+  stages: [
+    {
+      name: "Manager review",
+      completionRule: "all",
+      approvers: [{ type: "role", role: "approver", label: "Approver" }],
+      fallbackApprovers: [{ type: "role", role: "buyer", label: "Buyer fallback" }],
+      dueAt: "2026-05-19T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+  warnings: [],
+  estimatedDueAt: "2026-05-19T00:00:00.000Z",
+  createsTasks: false,
+};
+
+export const submittedRequisitionApprovalPreviewFixture: ApprovalPreview = {
+  ...approvalPreviewFixture,
+  matchedConditions: [
+    {
+      field: "department",
+      operator: "equals",
+      value: "Operations",
+      matched: true,
+      summary: "department equals Operations matched",
+    },
+  ],
+  warnings: [],
+};
+
+export const fallbackApprovalPreviewFixture: ApprovalPreview = {
+  ...approvalPreviewFixture,
+  matchedPolicy: {
+    ...approvalPreviewFixture.matchedPolicy,
+    id: "ap-fallback",
+    name: "Fallback buyer review",
+  },
+  matchedVersion: {
+    ...approvalPreviewFixture.matchedVersion,
+    id: "apv-fallback",
+    versionNumber: 2,
+  },
+  stages: [
+    {
+      name: "Fallback buyer review",
+      completionRule: "all",
+      approvers: [{ type: "role", role: "buyer", label: "Buyer fallback" }],
+      fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+      dueAt: "2026-05-20T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+  warnings: [],
+  estimatedDueAt: "2026-05-20T00:00:00.000Z",
+};
+
+export const parallelAllApprovalPreviewFixture: ApprovalPreview = {
+  ...approvalPreviewFixture,
+  stages: [
+    {
+      name: "Joint review",
+      completionRule: "all",
+      approvers: [
+        { type: "user", userId: "user-2", label: "Priya Buyer" },
+        { type: "user", userId: "user-3", label: "Finance approver" },
+      ],
+      fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+      dueAt: "2026-05-19T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+};
+
+export const parallelAnyApprovalPreviewFixture: ApprovalPreview = {
+  ...approvalPreviewFixture,
+  stages: [
+    {
+      name: "Either buyer review",
+      completionRule: "any",
+      approvers: [
+        { type: "user", userId: "user-2", label: "Priya Buyer" },
+        { type: "user", userId: "user-4", label: "Backup buyer" },
+      ],
+      fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+      dueAt: "2026-05-19T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+};
+
+export const approvalTaskFixtures: ApprovalTask[] = [
+  {
+    id: "task-1",
+    tenantId: "tenant-1",
+    instanceId: "instance-1",
+    stageId: "stage-1",
+    subject: {
+      type: "requisition",
+      id: "req-2",
+      number: "REQ-2026-000002",
+      title: "Warehouse packing supplies",
+      status: "pending_approval",
+      requester: { id: "user-1", name: "Maya Tan", email: "maya.tan@acme.test" },
+      department: "Operations",
+      costCenter: "OPS-220",
+      projectId: null,
+      amount: 3400,
+      currency: "MYR",
+    },
+    title: "Approve REQ-2026-000002",
+    status: "active",
+    decision: null,
+    decisionReason: null,
+    requestedFields: [],
+    assignee: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+    originalAssignee: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+    decidedBy: null,
+    stage: {
+      id: "stage-1",
+      name: "Manager review",
+      sequence: 1,
+      status: "active",
+      completionRule: "all",
+      dueAt: "2026-05-20T00:00:00.000Z",
+    },
+    assignedAt: "2026-05-18T00:00:00.000Z",
+    viewedAt: null,
+    dueAt: "2026-05-20T00:00:00.000Z",
+    decidedAt: null,
+    lockVersion: 0,
+    createdAt: "2026-05-18T00:00:00.000Z",
+    updatedAt: "2026-05-18T00:00:00.000Z",
+    metadata: {},
+    permissions: {
+      canView: true,
+      canApprove: true,
+      canReject: true,
+      canRequestChanges: true,
+    },
+  },
+];
+
+export const approvalSummaryFixture: ApprovalSummary = {
+  instanceId: "instance-1",
+  status: "active",
+  currentStage: {
+    id: "stage-1",
+    sequence: 1,
+    name: "Manager review",
+    status: "active",
+    completionRule: "all",
+    dueAt: "2026-05-20T00:00:00.000Z",
+    isOverdue: false,
+  },
+  activeApprovers: [
+    {
+      id: "user-2",
+      name: "Priya Buyer",
+      email: "priya.buyer@acme.test",
+      taskId: "task-1",
+    },
+  ],
+  completedDecisions: [],
+  dueAt: "2026-05-20T00:00:00.000Z",
+  isOverdue: false,
+  currentUserTaskId: "task-1",
+  startedAt: "2026-05-18T00:00:00.000Z",
+  completedAt: null,
+};
+
+export const approvalDelegationFixtures: ApprovalDelegation[] = [
+  {
+    id: "delegation-1",
+    tenantId: "tenant-1",
+    delegatorId: "user-2",
+    delegateId: "3",
+    scope: "task_specific",
+    startsAt: "2026-05-19T00:00:00.000Z",
+    endsAt: "2026-05-20T00:00:00.000Z",
+    status: "active",
+    reason: "Covering a meeting.",
+    delegator: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+    delegate: { id: "3", name: "Finance approver", email: "finance.approver@acme.test" },
+    createdById: "user-2",
+    createdAt: "2026-05-19T00:00:00.000Z",
+    updatedAt: "2026-05-19T00:00:00.000Z",
+  },
+];
+
+export const approvalSlaSummaryFixture: ApprovalSlaSummary = {
+  assigned: 3,
+  dueSoon: 1,
+  overdue: 1,
+  escalated: 1,
+  averageAgeMinutes: 90,
+  oldestPendingApproval: {
+    taskId: "task-1",
+    approvalInstanceId: "instance-1",
+    approvalStageId: "stage-1",
+    subjectType: "requisition",
+    subjectId: "req-2",
+    title: "Warehouse packing supplies",
+    status: "active",
+    ageMinutes: 180,
+    assignedAt: "2026-05-18T00:00:00.000Z",
+    dueAt: "2026-05-20T00:00:00.000Z",
+    assignee: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+    stage: { id: "stage-1", name: "Manager review", sequence: 1 },
+  },
+};

@@ -165,11 +165,64 @@ describe("requisitions workflow", () => {
     expect(within(panel).getByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
 
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
-      "Approval readiness",
+      "Approval summary",
+    );
+    expect(await screen.findByText("Standard requisition approval")).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
+      "Standard requisition approval",
     );
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
       "Quotation readiness",
     );
+  });
+
+  it("shows live approval summary and task entry point for pending approvals", async () => {
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-2" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Warehouse packing supplies", level: 1 }),
+    ).toBeInTheDocument();
+    const sidebar = screen.getByRole("complementary", { name: "Record sidebar" });
+    expect(sidebar).toHaveTextContent("Approval summary");
+    expect(await within(sidebar).findByText("Manager review")).toBeInTheDocument();
+    expect(sidebar).toHaveTextContent("Priya Buyer");
+    expect(within(sidebar).getByRole("link", { name: "Open my approval task" })).toHaveAttribute(
+      "href",
+      "/approvals/tasks/task-1",
+    );
+  });
+
+  it("shows an approval preview error state when preview loading fails", async () => {
+    server.use(
+      http.get("/api/requisitions/req-preview-error/approval-summary", () => {
+        return HttpResponse.json({ data: null });
+      }),
+      http.get("/api/requisitions/req-preview-error/approval-preview", () => {
+        return HttpResponse.json(
+          { error: { code: "server_error", message: "Preview unavailable" } },
+          { status: 500 },
+        );
+      }),
+      http.get("/api/requisitions/req-preview-error", () => {
+        return HttpResponse.json({ data: { ...requisitionFixtures[0], id: "req-preview-error" } });
+      }),
+      http.get("/api/requisitions/req-preview-error/activity", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+      http.get("/api/requisitions/req-preview-error/attachments", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+      http.get("/api/requisitions/req-preview-error/comments", () => {
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    renderWithQuery(<RequisitionDetailPage requisitionId="req-preview-error" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Field laptop refresh", level: 1 }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Approval route preview could not be loaded.")).toBeInTheDocument();
   });
 
   it("shows correction guidance and resubmits a change-requested requisition", async () => {
@@ -399,5 +452,10 @@ describe("requisitions workflow", () => {
     expect(
       screen.getByDisplayValue("Replace unsupported devices for the buyer team."),
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Approval summary")).toBeInTheDocument();
+      expect(screen.getByText("Standard requisition approval")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Computed preview only")).toBeInTheDocument();
   });
 });

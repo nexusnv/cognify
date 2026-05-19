@@ -7,6 +7,18 @@
 import type {
   AmbiguousTenantResponse,
   ApplyRequisitionTemplateRequest,
+  ApprovalDelegationCandidateListResponse,
+  ApprovalDelegationListResponse,
+  ApprovalDelegationResponse,
+  ApprovalPolicyListResponse,
+  ApprovalPolicyResponse,
+  ApprovalPolicyVersionResponse,
+  ApprovalPreviewResponse,
+  ApprovalSlaSummaryResponse,
+  ApprovalSummaryResponse,
+  ApprovalTaskActionRequest,
+  ApprovalTaskQueueResponse,
+  ApprovalTaskResponse,
   AttachmentListResponse,
   AttachmentResponse,
   AttachmentUploadRequest,
@@ -17,11 +29,13 @@ import type {
   CreateCollaborationCommentRequest,
   CreateRequisitionRequest,
   CurrentUserResponse,
+  DelegateApprovalTaskRequest,
   ForbiddenResponse,
   ForgotPasswordRequest,
   HealthResponse,
   InvalidStateResponse,
   LinkProjectRequisitionRequest,
+  ListApprovalTasksParams,
   ListAuditEventsParams,
   ListGlobalSearchParams,
   ListNotificationsParams,
@@ -34,20 +48,27 @@ import type {
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
+  PreviewApprovalPolicyRequest,
   ProcurementProjectListResponse,
   ProcurementProjectResponse,
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
   ReasonedRequisitionActionRequest,
+  RejectApprovalTaskRequest,
+  RequestApprovalChangesRequest,
   RequestRequisitionChangesRequest,
   RequisitionIntakeOptionsResponse,
   RequisitionItemSuggestionListResponse,
   RequisitionListResponse,
   RequisitionResponse,
   RequisitionTemplateListResponse,
+  RouteRequisitionApprovalResponse,
   SearchResponse,
   SetCurrentTenantRequest,
+  StoreApprovalDelegationRequest,
+  StoreApprovalPolicyRequest,
+  StoreApprovalPolicyVersionRequest,
   StoreProcurementProjectRequest,
   SubmitRequisitionResponse,
   SystemStatusResponse,
@@ -55,6 +76,7 @@ import type {
   TransitionProcurementProjectRequest,
   UnauthenticatedResponse,
   UnauthorizedResponse,
+  UpdateApprovalPolicyRequest,
   UpdateCurrentUserProfileRequest,
   UpdateProcurementProjectRequest,
   UpdateRequisitionRequest,
@@ -65,541 +87,566 @@ import { cognifyFetch } from "../client";
 import { buildFormData } from "../form-data";
 
 /**
- * @summary Health check
+ * @summary List approval policies
  */
-export type getHealthResponse200 = {
-  data: HealthResponse;
+export type listApprovalPoliciesResponse200 = {
+  data: ApprovalPolicyListResponse;
   status: 200;
 };
 
-export type getHealthResponseSuccess = getHealthResponse200 & {
-  headers: Headers;
-};
-export type getHealthResponse = getHealthResponseSuccess;
-
-export const getGetHealthUrl = () => {
-  return `/api/health`;
-};
-
-export const getHealth = async (options?: RequestInit): Promise<getHealthResponse> => {
-  return cognifyFetch<getHealthResponse>(getGetHealthUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary Get system readiness status
- */
-export type getSystemStatusResponse200 = {
-  data: SystemStatusResponse;
-  status: 200;
-};
-
-export type getSystemStatusResponse400 = {
-  data: AmbiguousTenantResponse;
-  status: 400;
-};
-
-export type getSystemStatusResponse401 = {
+export type listApprovalPoliciesResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type getSystemStatusResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type getSystemStatusResponseSuccess = getSystemStatusResponse200 & {
-  headers: Headers;
-};
-export type getSystemStatusResponseError = (
-  | getSystemStatusResponse400
-  | getSystemStatusResponse401
-  | getSystemStatusResponse403
-) & {
-  headers: Headers;
-};
-
-export type getSystemStatusResponse = getSystemStatusResponseSuccess | getSystemStatusResponseError;
-
-export const getGetSystemStatusUrl = () => {
-  return `/api/system/status`;
-};
-
-export const getSystemStatus = async (options?: RequestInit): Promise<getSystemStatusResponse> => {
-  return cognifyFetch<getSystemStatusResponse>(getGetSystemStatusUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary List tenant-visible requisitions
- */
-export type listRequisitionsResponse200 = {
-  data: RequisitionListResponse;
-  status: 200;
-};
-
-export type listRequisitionsResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listRequisitionsResponse403 = {
+export type listApprovalPoliciesResponse403 = {
   data: UnauthorizedResponse;
   status: 403;
 };
 
-export type listRequisitionsResponseSuccess = listRequisitionsResponse200 & {
+export type listApprovalPoliciesResponseSuccess = listApprovalPoliciesResponse200 & {
   headers: Headers;
 };
-export type listRequisitionsResponseError = (
-  | listRequisitionsResponse401
-  | listRequisitionsResponse403
+export type listApprovalPoliciesResponseError = (
+  | listApprovalPoliciesResponse401
+  | listApprovalPoliciesResponse403
 ) & {
   headers: Headers;
 };
 
-export type listRequisitionsResponse =
-  | listRequisitionsResponseSuccess
-  | listRequisitionsResponseError;
+export type listApprovalPoliciesResponse =
+  | listApprovalPoliciesResponseSuccess
+  | listApprovalPoliciesResponseError;
 
-export const getListRequisitionsUrl = (params?: ListRequisitionsParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/requisitions?${stringifiedParams}`
-    : `/api/requisitions`;
+export const getListApprovalPoliciesUrl = () => {
+  return `/api/approval-policies`;
 };
 
-export const listRequisitions = async (
-  params?: ListRequisitionsParams,
+export const listApprovalPolicies = async (
   options?: RequestInit,
-): Promise<listRequisitionsResponse> => {
-  return cognifyFetch<listRequisitionsResponse>(getListRequisitionsUrl(params), {
+): Promise<listApprovalPoliciesResponse> => {
+  return cognifyFetch<listApprovalPoliciesResponse>(getListApprovalPoliciesUrl(), {
     ...options,
     method: "GET",
   });
 };
 
 /**
- * @summary Create a draft requisition
+ * @summary Create approval policy draft
  */
-export type createRequisitionResponse201 = {
-  data: RequisitionResponse;
+export type createApprovalPolicyResponse201 = {
+  data: ApprovalPolicyResponse;
   status: 201;
 };
 
-export type createRequisitionResponse401 = {
+export type createApprovalPolicyResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type createRequisitionResponse403 = {
+export type createApprovalPolicyResponse403 = {
   data: UnauthorizedResponse;
   status: 403;
 };
 
-export type createRequisitionResponse422 = {
+export type createApprovalPolicyResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
 };
 
-export type createRequisitionResponseSuccess = createRequisitionResponse201 & {
+export type createApprovalPolicyResponseSuccess = createApprovalPolicyResponse201 & {
   headers: Headers;
 };
-export type createRequisitionResponseError = (
-  | createRequisitionResponse401
-  | createRequisitionResponse403
-  | createRequisitionResponse422
+export type createApprovalPolicyResponseError = (
+  | createApprovalPolicyResponse401
+  | createApprovalPolicyResponse403
+  | createApprovalPolicyResponse422
 ) & {
   headers: Headers;
 };
 
-export type createRequisitionResponse =
-  | createRequisitionResponseSuccess
-  | createRequisitionResponseError;
+export type createApprovalPolicyResponse =
+  | createApprovalPolicyResponseSuccess
+  | createApprovalPolicyResponseError;
 
-export const getCreateRequisitionUrl = () => {
-  return `/api/requisitions`;
+export const getCreateApprovalPolicyUrl = () => {
+  return `/api/approval-policies`;
 };
 
-export const createRequisition = async (
-  createRequisitionRequest: CreateRequisitionRequest,
+export const createApprovalPolicy = async (
+  storeApprovalPolicyRequest: StoreApprovalPolicyRequest,
   options?: RequestInit,
-): Promise<createRequisitionResponse> => {
-  return cognifyFetch<createRequisitionResponse>(getCreateRequisitionUrl(), {
+): Promise<createApprovalPolicyResponse> => {
+  return cognifyFetch<createApprovalPolicyResponse>(getCreateApprovalPolicyUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createRequisitionRequest),
+    body: JSON.stringify(storeApprovalPolicyRequest),
   });
 };
 
 /**
- * @summary Read requisition detail
+ * @summary Preview approval policy route
  */
-export type getRequisitionResponse200 = {
-  data: RequisitionResponse;
+export type previewApprovalPolicyResponse200 = {
+  data: ApprovalPreviewResponse;
   status: 200;
 };
 
-export type getRequisitionResponse401 = {
+export type previewApprovalPolicyResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type getRequisitionResponse403 = {
+export type previewApprovalPolicyResponse403 = {
   data: UnauthorizedResponse;
   status: 403;
 };
 
-export type getRequisitionResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
+export type previewApprovalPolicyResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
 };
 
-export type getRequisitionResponseSuccess = getRequisitionResponse200 & {
+export type previewApprovalPolicyResponseSuccess = previewApprovalPolicyResponse200 & {
   headers: Headers;
 };
-export type getRequisitionResponseError = (
-  | getRequisitionResponse401
-  | getRequisitionResponse403
-  | getRequisitionResponse404
+export type previewApprovalPolicyResponseError = (
+  | previewApprovalPolicyResponse401
+  | previewApprovalPolicyResponse403
+  | previewApprovalPolicyResponse422
 ) & {
   headers: Headers;
 };
 
-export type getRequisitionResponse = getRequisitionResponseSuccess | getRequisitionResponseError;
+export type previewApprovalPolicyResponse =
+  | previewApprovalPolicyResponseSuccess
+  | previewApprovalPolicyResponseError;
 
-export const getGetRequisitionUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}`;
+export const getPreviewApprovalPolicyUrl = () => {
+  return `/api/approval-policies/preview`;
 };
 
-export const getRequisition = async (
-  requisitionId: string,
+export const previewApprovalPolicy = async (
+  previewApprovalPolicyRequest: PreviewApprovalPolicyRequest,
   options?: RequestInit,
-): Promise<getRequisitionResponse> => {
-  return cognifyFetch<getRequisitionResponse>(getGetRequisitionUrl(requisitionId), {
+): Promise<previewApprovalPolicyResponse> => {
+  return cognifyFetch<previewApprovalPolicyResponse>(getPreviewApprovalPolicyUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(previewApprovalPolicyRequest),
+  });
+};
+
+/**
+ * @summary Get approval policy
+ */
+export type getApprovalPolicyResponse200 = {
+  data: ApprovalPolicyResponse;
+  status: 200;
+};
+
+export type getApprovalPolicyResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getApprovalPolicyResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getApprovalPolicyResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type getApprovalPolicyResponseSuccess = getApprovalPolicyResponse200 & {
+  headers: Headers;
+};
+export type getApprovalPolicyResponseError = (
+  | getApprovalPolicyResponse401
+  | getApprovalPolicyResponse403
+  | getApprovalPolicyResponse404
+) & {
+  headers: Headers;
+};
+
+export type getApprovalPolicyResponse =
+  | getApprovalPolicyResponseSuccess
+  | getApprovalPolicyResponseError;
+
+export const getGetApprovalPolicyUrl = (approvalPolicy: string) => {
+  return `/api/approval-policies/${approvalPolicy}`;
+};
+
+export const getApprovalPolicy = async (
+  approvalPolicy: string,
+  options?: RequestInit,
+): Promise<getApprovalPolicyResponse> => {
+  return cognifyFetch<getApprovalPolicyResponse>(getGetApprovalPolicyUrl(approvalPolicy), {
     ...options,
     method: "GET",
   });
 };
 
 /**
- * @summary Update a draft requisition
+ * @summary Update approval policy draft
  */
-export type updateRequisitionResponse200 = {
-  data: RequisitionResponse;
+export type updateApprovalPolicyResponse200 = {
+  data: ApprovalPolicyResponse;
   status: 200;
 };
 
-export type updateRequisitionResponse401 = {
+export type updateApprovalPolicyResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type updateRequisitionResponse403 = {
+export type updateApprovalPolicyResponse403 = {
   data: UnauthorizedResponse;
   status: 403;
 };
 
-export type updateRequisitionResponse404 = {
-  data: NotFoundResponse;
+export type updateApprovalPolicyResponse404 = {
+  data: void;
   status: 404;
 };
 
-export type updateRequisitionResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type updateRequisitionResponse422 = {
+export type updateApprovalPolicyResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
 };
 
-export type updateRequisitionResponseSuccess = updateRequisitionResponse200 & {
+export type updateApprovalPolicyResponseSuccess = updateApprovalPolicyResponse200 & {
   headers: Headers;
 };
-export type updateRequisitionResponseError = (
-  | updateRequisitionResponse401
-  | updateRequisitionResponse403
-  | updateRequisitionResponse404
-  | updateRequisitionResponse409
-  | updateRequisitionResponse422
+export type updateApprovalPolicyResponseError = (
+  | updateApprovalPolicyResponse401
+  | updateApprovalPolicyResponse403
+  | updateApprovalPolicyResponse404
+  | updateApprovalPolicyResponse422
 ) & {
   headers: Headers;
 };
 
-export type updateRequisitionResponse =
-  | updateRequisitionResponseSuccess
-  | updateRequisitionResponseError;
+export type updateApprovalPolicyResponse =
+  | updateApprovalPolicyResponseSuccess
+  | updateApprovalPolicyResponseError;
 
-export const getUpdateRequisitionUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}`;
+export const getUpdateApprovalPolicyUrl = (approvalPolicy: string) => {
+  return `/api/approval-policies/${approvalPolicy}`;
 };
 
-export const updateRequisition = async (
-  requisitionId: string,
-  updateRequisitionRequest: UpdateRequisitionRequest,
+export const updateApprovalPolicy = async (
+  approvalPolicy: string,
+  updateApprovalPolicyRequest: UpdateApprovalPolicyRequest,
   options?: RequestInit,
-): Promise<updateRequisitionResponse> => {
-  return cognifyFetch<updateRequisitionResponse>(getUpdateRequisitionUrl(requisitionId), {
+): Promise<updateApprovalPolicyResponse> => {
+  return cognifyFetch<updateApprovalPolicyResponse>(getUpdateApprovalPolicyUrl(approvalPolicy), {
     ...options,
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateRequisitionRequest),
+    body: JSON.stringify(updateApprovalPolicyRequest),
   });
 };
 
 /**
- * @summary Submit a draft requisition
+ * @summary Create approval policy version draft
  */
-export type submitRequisitionResponse200 = {
-  data: SubmitRequisitionResponse;
-  status: 200;
+export type createApprovalPolicyVersionResponse201 = {
+  data: ApprovalPolicyVersionResponse;
+  status: 201;
 };
 
-export type submitRequisitionResponse401 = {
+export type createApprovalPolicyVersionResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type submitRequisitionResponse403 = {
+export type createApprovalPolicyVersionResponse403 = {
   data: UnauthorizedResponse;
   status: 403;
 };
 
-export type submitRequisitionResponse404 = {
-  data: NotFoundResponse;
+export type createApprovalPolicyVersionResponse404 = {
+  data: void;
   status: 404;
 };
 
-export type submitRequisitionResponse409 = {
+export type createApprovalPolicyVersionResponse409 = {
   data: InvalidStateResponse;
   status: 409;
 };
 
-export type submitRequisitionResponse422 = {
+export type createApprovalPolicyVersionResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
 };
 
-export type submitRequisitionResponseSuccess = submitRequisitionResponse200 & {
+export type createApprovalPolicyVersionResponseSuccess = createApprovalPolicyVersionResponse201 & {
   headers: Headers;
 };
-export type submitRequisitionResponseError = (
-  | submitRequisitionResponse401
-  | submitRequisitionResponse403
-  | submitRequisitionResponse404
-  | submitRequisitionResponse409
-  | submitRequisitionResponse422
+export type createApprovalPolicyVersionResponseError = (
+  | createApprovalPolicyVersionResponse401
+  | createApprovalPolicyVersionResponse403
+  | createApprovalPolicyVersionResponse404
+  | createApprovalPolicyVersionResponse409
+  | createApprovalPolicyVersionResponse422
 ) & {
   headers: Headers;
 };
 
-export type submitRequisitionResponse =
-  | submitRequisitionResponseSuccess
-  | submitRequisitionResponseError;
+export type createApprovalPolicyVersionResponse =
+  | createApprovalPolicyVersionResponseSuccess
+  | createApprovalPolicyVersionResponseError;
 
-export const getSubmitRequisitionUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/submit`;
+export const getCreateApprovalPolicyVersionUrl = (approvalPolicy: string) => {
+  return `/api/approval-policies/${approvalPolicy}/versions`;
 };
 
-export const submitRequisition = async (
-  requisitionId: string,
+export const createApprovalPolicyVersion = async (
+  approvalPolicy: string,
+  storeApprovalPolicyVersionRequest: StoreApprovalPolicyVersionRequest,
   options?: RequestInit,
-): Promise<submitRequisitionResponse> => {
-  return cognifyFetch<submitRequisitionResponse>(getSubmitRequisitionUrl(requisitionId), {
+): Promise<createApprovalPolicyVersionResponse> => {
+  return cognifyFetch<createApprovalPolicyVersionResponse>(
+    getCreateApprovalPolicyVersionUrl(approvalPolicy),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(storeApprovalPolicyVersionRequest),
+    },
+  );
+};
+
+/**
+ * @summary Publish approval policy version
+ */
+export type publishApprovalPolicyVersionResponse200 = {
+  data: ApprovalPolicyVersionResponse;
+  status: 200;
+};
+
+export type publishApprovalPolicyVersionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type publishApprovalPolicyVersionResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type publishApprovalPolicyVersionResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type publishApprovalPolicyVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type publishApprovalPolicyVersionResponseSuccess =
+  publishApprovalPolicyVersionResponse200 & {
+    headers: Headers;
+  };
+export type publishApprovalPolicyVersionResponseError = (
+  | publishApprovalPolicyVersionResponse401
+  | publishApprovalPolicyVersionResponse403
+  | publishApprovalPolicyVersionResponse404
+  | publishApprovalPolicyVersionResponse409
+) & {
+  headers: Headers;
+};
+
+export type publishApprovalPolicyVersionResponse =
+  | publishApprovalPolicyVersionResponseSuccess
+  | publishApprovalPolicyVersionResponseError;
+
+export const getPublishApprovalPolicyVersionUrl = (approvalPolicyVersion: string) => {
+  return `/api/approval-policy-versions/${approvalPolicyVersion}/publish`;
+};
+
+export const publishApprovalPolicyVersion = async (
+  approvalPolicyVersion: string,
+  options?: RequestInit,
+): Promise<publishApprovalPolicyVersionResponse> => {
+  return cognifyFetch<publishApprovalPolicyVersionResponse>(
+    getPublishApprovalPolicyVersionUrl(approvalPolicyVersion),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Retire approval policy version
+ */
+export type retireApprovalPolicyVersionResponse200 = {
+  data: ApprovalPolicyVersionResponse;
+  status: 200;
+};
+
+export type retireApprovalPolicyVersionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type retireApprovalPolicyVersionResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type retireApprovalPolicyVersionResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type retireApprovalPolicyVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type retireApprovalPolicyVersionResponseSuccess = retireApprovalPolicyVersionResponse200 & {
+  headers: Headers;
+};
+export type retireApprovalPolicyVersionResponseError = (
+  | retireApprovalPolicyVersionResponse401
+  | retireApprovalPolicyVersionResponse403
+  | retireApprovalPolicyVersionResponse404
+  | retireApprovalPolicyVersionResponse409
+) & {
+  headers: Headers;
+};
+
+export type retireApprovalPolicyVersionResponse =
+  | retireApprovalPolicyVersionResponseSuccess
+  | retireApprovalPolicyVersionResponseError;
+
+export const getRetireApprovalPolicyVersionUrl = (approvalPolicyVersion: string) => {
+  return `/api/approval-policy-versions/${approvalPolicyVersion}/retire`;
+};
+
+export const retireApprovalPolicyVersion = async (
+  approvalPolicyVersion: string,
+  options?: RequestInit,
+): Promise<retireApprovalPolicyVersionResponse> => {
+  return cognifyFetch<retireApprovalPolicyVersionResponse>(
+    getRetireApprovalPolicyVersionUrl(approvalPolicyVersion),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Delete an attachment
+ */
+export type deleteAttachmentResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type deleteAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type deleteAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type deleteAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type deleteAttachmentResponseSuccess = deleteAttachmentResponse204 & {
+  headers: Headers;
+};
+export type deleteAttachmentResponseError = (
+  | deleteAttachmentResponse401
+  | deleteAttachmentResponse403
+  | deleteAttachmentResponse404
+) & {
+  headers: Headers;
+};
+
+export type deleteAttachmentResponse =
+  | deleteAttachmentResponseSuccess
+  | deleteAttachmentResponseError;
+
+export const getDeleteAttachmentUrl = (attachmentId: string) => {
+  return `/api/attachments/${attachmentId}`;
+};
+
+export const deleteAttachment = async (
+  attachmentId: string,
+  options?: RequestInit,
+): Promise<deleteAttachmentResponse> => {
+  return cognifyFetch<deleteAttachmentResponse>(getDeleteAttachmentUrl(attachmentId), {
     ...options,
-    method: "POST",
+    method: "DELETE",
   });
 };
 
 /**
- * @summary Read requisition activity timeline
+ * @summary Download an attachment
  */
-export type listRequisitionActivityResponse200 = {
-  data: ListRequisitionActivity200;
+export type downloadAttachmentResponse200 = {
+  data: Blob;
   status: 200;
 };
 
-export type listRequisitionActivityResponse401 = {
+export type downloadAttachmentResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type listRequisitionActivityResponse403 = {
+export type downloadAttachmentResponse403 = {
   data: UnauthorizedResponse;
   status: 403;
 };
 
-export type listRequisitionActivityResponse404 = {
+export type downloadAttachmentResponse404 = {
   data: NotFoundResponse;
   status: 404;
 };
 
-export type listRequisitionActivityResponseSuccess = listRequisitionActivityResponse200 & {
+export type downloadAttachmentResponseSuccess = downloadAttachmentResponse200 & {
   headers: Headers;
 };
-export type listRequisitionActivityResponseError = (
-  | listRequisitionActivityResponse401
-  | listRequisitionActivityResponse403
-  | listRequisitionActivityResponse404
+export type downloadAttachmentResponseError = (
+  | downloadAttachmentResponse401
+  | downloadAttachmentResponse403
+  | downloadAttachmentResponse404
 ) & {
   headers: Headers;
 };
 
-export type listRequisitionActivityResponse =
-  | listRequisitionActivityResponseSuccess
-  | listRequisitionActivityResponseError;
+export type downloadAttachmentResponse =
+  | downloadAttachmentResponseSuccess
+  | downloadAttachmentResponseError;
 
-export const getListRequisitionActivityUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/activity`;
+export const getDownloadAttachmentUrl = (attachmentId: string) => {
+  return `/api/attachments/${attachmentId}/download`;
 };
 
-export const listRequisitionActivity = async (
-  requisitionId: string,
+export const downloadAttachment = async (
+  attachmentId: string,
   options?: RequestInit,
-): Promise<listRequisitionActivityResponse> => {
-  return cognifyFetch<listRequisitionActivityResponse>(
-    getListRequisitionActivityUrl(requisitionId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary List requisition attachments
- */
-export type listRequisitionAttachmentsResponse200 = {
-  data: AttachmentListResponse;
-  status: 200;
-};
-
-export type listRequisitionAttachmentsResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listRequisitionAttachmentsResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type listRequisitionAttachmentsResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type listRequisitionAttachmentsResponseSuccess = listRequisitionAttachmentsResponse200 & {
-  headers: Headers;
-};
-export type listRequisitionAttachmentsResponseError = (
-  | listRequisitionAttachmentsResponse401
-  | listRequisitionAttachmentsResponse403
-  | listRequisitionAttachmentsResponse404
-) & {
-  headers: Headers;
-};
-
-export type listRequisitionAttachmentsResponse =
-  | listRequisitionAttachmentsResponseSuccess
-  | listRequisitionAttachmentsResponseError;
-
-export const getListRequisitionAttachmentsUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/attachments`;
-};
-
-export const listRequisitionAttachments = async (
-  requisitionId: string,
-  options?: RequestInit,
-): Promise<listRequisitionAttachmentsResponse> => {
-  return cognifyFetch<listRequisitionAttachmentsResponse>(
-    getListRequisitionAttachmentsUrl(requisitionId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Upload a requisition attachment
- */
-export type uploadRequisitionAttachmentResponse201 = {
-  data: AttachmentResponse;
-  status: 201;
-};
-
-export type uploadRequisitionAttachmentResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type uploadRequisitionAttachmentResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type uploadRequisitionAttachmentResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type uploadRequisitionAttachmentResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type uploadRequisitionAttachmentResponseSuccess = uploadRequisitionAttachmentResponse201 & {
-  headers: Headers;
-};
-export type uploadRequisitionAttachmentResponseError = (
-  | uploadRequisitionAttachmentResponse401
-  | uploadRequisitionAttachmentResponse403
-  | uploadRequisitionAttachmentResponse404
-  | uploadRequisitionAttachmentResponse422
-) & {
-  headers: Headers;
-};
-
-export type uploadRequisitionAttachmentResponse =
-  | uploadRequisitionAttachmentResponseSuccess
-  | uploadRequisitionAttachmentResponseError;
-
-export const getUploadRequisitionAttachmentUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/attachments`;
-};
-
-export const uploadRequisitionAttachment = async (
-  requisitionId: string,
-  attachmentUploadRequest: AttachmentUploadRequest,
-  options?: RequestInit,
-): Promise<uploadRequisitionAttachmentResponse> => {
-  const formData = buildFormData(attachmentUploadRequest);
-  return cognifyFetch<uploadRequisitionAttachmentResponse>(
-    getUploadRequisitionAttachmentUrl(requisitionId),
-    {
-      ...options,
-      method: "POST",
-      body: formData,
-    },
-  );
+): Promise<downloadAttachmentResponse> => {
+  return cognifyFetch<downloadAttachmentResponse>(getDownloadAttachmentUrl(attachmentId), {
+    ...options,
+    method: "GET",
+  });
 };
 
 /**
@@ -661,106 +708,110 @@ export const previewAttachment = async (
 };
 
 /**
- * @summary Download an attachment
+ * @summary List tenant audit events
  */
-export type downloadAttachmentResponse200 = {
-  data: Blob;
+export type listAuditEventsResponse200 = {
+  data: AuditEventListResponse;
   status: 200;
 };
 
-export type downloadAttachmentResponse401 = {
+export type listAuditEventsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listAuditEventsResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type downloadAttachmentResponse403 = {
-  data: UnauthorizedResponse;
+export type listAuditEventsResponse403 = {
+  data: ForbiddenResponse;
   status: 403;
 };
 
-export type downloadAttachmentResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
+export type listAuditEventsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
 };
 
-export type downloadAttachmentResponseSuccess = downloadAttachmentResponse200 & {
+export type listAuditEventsResponseSuccess = listAuditEventsResponse200 & {
   headers: Headers;
 };
-export type downloadAttachmentResponseError = (
-  | downloadAttachmentResponse401
-  | downloadAttachmentResponse403
-  | downloadAttachmentResponse404
+export type listAuditEventsResponseError = (
+  | listAuditEventsResponse400
+  | listAuditEventsResponse401
+  | listAuditEventsResponse403
+  | listAuditEventsResponse422
 ) & {
   headers: Headers;
 };
 
-export type downloadAttachmentResponse =
-  | downloadAttachmentResponseSuccess
-  | downloadAttachmentResponseError;
+export type listAuditEventsResponse = listAuditEventsResponseSuccess | listAuditEventsResponseError;
 
-export const getDownloadAttachmentUrl = (attachmentId: string) => {
-  return `/api/attachments/${attachmentId}/download`;
+export const getListAuditEventsUrl = (params?: ListAuditEventsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/audit/events?${stringifiedParams}`
+    : `/api/audit/events`;
 };
 
-export const downloadAttachment = async (
-  attachmentId: string,
+export const listAuditEvents = async (
+  params?: ListAuditEventsParams,
   options?: RequestInit,
-): Promise<downloadAttachmentResponse> => {
-  return cognifyFetch<downloadAttachmentResponse>(getDownloadAttachmentUrl(attachmentId), {
+): Promise<listAuditEventsResponse> => {
+  return cognifyFetch<listAuditEventsResponse>(getListAuditEventsUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
 /**
- * @summary Delete an attachment
+ * @summary Request a password reset email
  */
-export type deleteAttachmentResponse204 = {
+export type requestPasswordResetResponse204 = {
   data: void;
   status: 204;
 };
 
-export type deleteAttachmentResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
+export type requestPasswordResetResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
 };
 
-export type deleteAttachmentResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type deleteAttachmentResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type deleteAttachmentResponseSuccess = deleteAttachmentResponse204 & {
+export type requestPasswordResetResponseSuccess = requestPasswordResetResponse204 & {
   headers: Headers;
 };
-export type deleteAttachmentResponseError = (
-  | deleteAttachmentResponse401
-  | deleteAttachmentResponse403
-  | deleteAttachmentResponse404
-) & {
+export type requestPasswordResetResponseError = requestPasswordResetResponse422 & {
   headers: Headers;
 };
 
-export type deleteAttachmentResponse =
-  | deleteAttachmentResponseSuccess
-  | deleteAttachmentResponseError;
+export type requestPasswordResetResponse =
+  | requestPasswordResetResponseSuccess
+  | requestPasswordResetResponseError;
 
-export const getDeleteAttachmentUrl = (attachmentId: string) => {
-  return `/api/attachments/${attachmentId}`;
+export const getRequestPasswordResetUrl = () => {
+  return `/api/auth/forgot-password`;
 };
 
-export const deleteAttachment = async (
-  attachmentId: string,
+export const requestPasswordReset = async (
+  forgotPasswordRequest: ForgotPasswordRequest,
   options?: RequestInit,
-): Promise<deleteAttachmentResponse> => {
-  return cognifyFetch<deleteAttachmentResponse>(getDeleteAttachmentUrl(attachmentId), {
+): Promise<requestPasswordResetResponse> => {
+  return cognifyFetch<requestPasswordResetResponse>(getRequestPasswordResetUrl(), {
     ...options,
-    method: "DELETE",
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(forgotPasswordRequest),
   });
 };
 
@@ -836,42 +887,26 @@ export const logout = async (options?: RequestInit): Promise<logoutResponse> => 
 };
 
 /**
- * @summary Request a password reset email
+ * @summary Health check
  */
-export type requestPasswordResetResponse204 = {
-  data: void;
-  status: 204;
+export type getHealthResponse200 = {
+  data: HealthResponse;
+  status: 200;
 };
 
-export type requestPasswordResetResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type requestPasswordResetResponseSuccess = requestPasswordResetResponse204 & {
+export type getHealthResponseSuccess = getHealthResponse200 & {
   headers: Headers;
 };
-export type requestPasswordResetResponseError = requestPasswordResetResponse422 & {
-  headers: Headers;
+export type getHealthResponse = getHealthResponseSuccess;
+
+export const getGetHealthUrl = () => {
+  return `/api/health`;
 };
 
-export type requestPasswordResetResponse =
-  | requestPasswordResetResponseSuccess
-  | requestPasswordResetResponseError;
-
-export const getRequestPasswordResetUrl = () => {
-  return `/api/auth/forgot-password`;
-};
-
-export const requestPasswordReset = async (
-  forgotPasswordRequest: ForgotPasswordRequest,
-  options?: RequestInit,
-): Promise<requestPasswordResetResponse> => {
-  return cognifyFetch<requestPasswordResetResponse>(getRequestPasswordResetUrl(), {
+export const getHealth = async (options?: RequestInit): Promise<getHealthResponse> => {
+  return cognifyFetch<getHealthResponse>(getGetHealthUrl(), {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(forgotPasswordRequest),
+    method: "GET",
   });
 };
 
@@ -917,89 +952,6 @@ export const getGetCurrentUserUrl = () => {
 
 export const getCurrentUser = async (options?: RequestInit): Promise<getCurrentUserResponse> => {
   return cognifyFetch<getCurrentUserResponse>(getGetCurrentUserUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary Search tenant-visible requisitions and roadmap preview records
- */
-export type listGlobalSearchResponse200 = {
-  data: SearchResponse;
-  status: 200;
-};
-
-export type listGlobalSearchResponse400 = {
-  data: AmbiguousTenantResponse;
-  status: 400;
-};
-
-export type listGlobalSearchResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listGlobalSearchResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type listGlobalSearchResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type listGlobalSearchResponse429 = {
-  data: TooManyRequestsResponse;
-  status: 429;
-};
-
-export type listGlobalSearchResponseSuccess = listGlobalSearchResponse200 & {
-  headers: Headers;
-};
-export type listGlobalSearchResponseError = (
-  | listGlobalSearchResponse400
-  | listGlobalSearchResponse401
-  | listGlobalSearchResponse403
-  | listGlobalSearchResponse422
-  | listGlobalSearchResponse429
-) & {
-  headers: Headers;
-};
-
-export type listGlobalSearchResponse =
-  | listGlobalSearchResponseSuccess
-  | listGlobalSearchResponseError;
-
-export const getListGlobalSearchUrl = (params: ListGlobalSearchParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["types"];
-
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? "null" : v.toString());
-      });
-      return;
-    }
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/search?${stringifiedParams}` : `/api/search`;
-};
-
-export const listGlobalSearch = async (
-  params: ListGlobalSearchParams,
-  options?: RequestInit,
-): Promise<listGlobalSearchResponse> => {
-  return cognifyFetch<listGlobalSearchResponse>(getListGlobalSearchUrl(params), {
     ...options,
     method: "GET",
   });
@@ -1126,6 +1078,54 @@ export const listNotifications = async (
   });
 };
 
+export type markAllNotificationsReadResponse200 = {
+  data: MarkAllNotificationsReadResponse;
+  status: 200;
+};
+
+export type markAllNotificationsReadResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type markAllNotificationsReadResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markAllNotificationsReadResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type markAllNotificationsReadResponseSuccess = markAllNotificationsReadResponse200 & {
+  headers: Headers;
+};
+export type markAllNotificationsReadResponseError = (
+  | markAllNotificationsReadResponse400
+  | markAllNotificationsReadResponse401
+  | markAllNotificationsReadResponse403
+) & {
+  headers: Headers;
+};
+
+export type markAllNotificationsReadResponse =
+  | markAllNotificationsReadResponseSuccess
+  | markAllNotificationsReadResponseError;
+
+export const getMarkAllNotificationsReadUrl = () => {
+  return `/api/notifications/read-all`;
+};
+
+export const markAllNotificationsRead = async (
+  options?: RequestInit,
+): Promise<markAllNotificationsReadResponse> => {
+  return cognifyFetch<markAllNotificationsReadResponse>(getMarkAllNotificationsReadUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
 export type markNotificationReadResponse200 = {
   data: NotificationResponse;
   status: 200;
@@ -1179,843 +1179,6 @@ export const markNotificationRead = async (
     ...options,
     method: "POST",
   });
-};
-
-export type markAllNotificationsReadResponse200 = {
-  data: MarkAllNotificationsReadResponse;
-  status: 200;
-};
-
-export type markAllNotificationsReadResponse400 = {
-  data: AmbiguousTenantResponse;
-  status: 400;
-};
-
-export type markAllNotificationsReadResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type markAllNotificationsReadResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type markAllNotificationsReadResponseSuccess = markAllNotificationsReadResponse200 & {
-  headers: Headers;
-};
-export type markAllNotificationsReadResponseError = (
-  | markAllNotificationsReadResponse400
-  | markAllNotificationsReadResponse401
-  | markAllNotificationsReadResponse403
-) & {
-  headers: Headers;
-};
-
-export type markAllNotificationsReadResponse =
-  | markAllNotificationsReadResponseSuccess
-  | markAllNotificationsReadResponseError;
-
-export const getMarkAllNotificationsReadUrl = () => {
-  return `/api/notifications/read-all`;
-};
-
-export const markAllNotificationsRead = async (
-  options?: RequestInit,
-): Promise<markAllNotificationsReadResponse> => {
-  return cognifyFetch<markAllNotificationsReadResponse>(getMarkAllNotificationsReadUrl(), {
-    ...options,
-    method: "POST",
-  });
-};
-
-/**
- * @summary Validate selected tenant context
- */
-export type setCurrentTenantResponse200 = {
-  data: CurrentUserResponse;
-  status: 200;
-};
-
-export type setCurrentTenantResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type setCurrentTenantResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type setCurrentTenantResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type setCurrentTenantResponseSuccess = setCurrentTenantResponse200 & {
-  headers: Headers;
-};
-export type setCurrentTenantResponseError = (
-  | setCurrentTenantResponse401
-  | setCurrentTenantResponse403
-  | setCurrentTenantResponse422
-) & {
-  headers: Headers;
-};
-
-export type setCurrentTenantResponse =
-  | setCurrentTenantResponseSuccess
-  | setCurrentTenantResponseError;
-
-export const getSetCurrentTenantUrl = () => {
-  return `/api/tenants/current`;
-};
-
-export const setCurrentTenant = async (
-  setCurrentTenantRequest: SetCurrentTenantRequest,
-  options?: RequestInit,
-): Promise<setCurrentTenantResponse> => {
-  return cognifyFetch<setCurrentTenantResponse>(getSetCurrentTenantUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(setCurrentTenantRequest),
-  });
-};
-
-/**
- * @summary List tenant audit events
- */
-export type listAuditEventsResponse200 = {
-  data: AuditEventListResponse;
-  status: 200;
-};
-
-export type listAuditEventsResponse400 = {
-  data: AmbiguousTenantResponse;
-  status: 400;
-};
-
-export type listAuditEventsResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listAuditEventsResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type listAuditEventsResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type listAuditEventsResponseSuccess = listAuditEventsResponse200 & {
-  headers: Headers;
-};
-export type listAuditEventsResponseError = (
-  | listAuditEventsResponse400
-  | listAuditEventsResponse401
-  | listAuditEventsResponse403
-  | listAuditEventsResponse422
-) & {
-  headers: Headers;
-};
-
-export type listAuditEventsResponse = listAuditEventsResponseSuccess | listAuditEventsResponseError;
-
-export const getListAuditEventsUrl = (params?: ListAuditEventsParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/audit/events?${stringifiedParams}`
-    : `/api/audit/events`;
-};
-
-export const listAuditEvents = async (
-  params?: ListAuditEventsParams,
-  options?: RequestInit,
-): Promise<listAuditEventsResponse> => {
-  return cognifyFetch<listAuditEventsResponse>(getListAuditEventsUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary List requisition templates
- */
-export type listRequisitionTemplatesResponse200 = {
-  data: RequisitionTemplateListResponse;
-  status: 200;
-};
-
-export type listRequisitionTemplatesResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listRequisitionTemplatesResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type listRequisitionTemplatesResponseSuccess = listRequisitionTemplatesResponse200 & {
-  headers: Headers;
-};
-export type listRequisitionTemplatesResponseError = (
-  | listRequisitionTemplatesResponse401
-  | listRequisitionTemplatesResponse403
-) & {
-  headers: Headers;
-};
-
-export type listRequisitionTemplatesResponse =
-  | listRequisitionTemplatesResponseSuccess
-  | listRequisitionTemplatesResponseError;
-
-export const getListRequisitionTemplatesUrl = () => {
-  return `/api/requisition-templates`;
-};
-
-export const listRequisitionTemplates = async (
-  options?: RequestInit,
-): Promise<listRequisitionTemplatesResponse> => {
-  return cognifyFetch<listRequisitionTemplatesResponse>(getListRequisitionTemplatesUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary Apply a requisition template
- */
-export type applyRequisitionTemplateResponse200 = {
-  data: RequisitionResponse;
-  status: 200;
-};
-
-export type applyRequisitionTemplateResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type applyRequisitionTemplateResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type applyRequisitionTemplateResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type applyRequisitionTemplateResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type applyRequisitionTemplateResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type applyRequisitionTemplateResponseSuccess = applyRequisitionTemplateResponse200 & {
-  headers: Headers;
-};
-export type applyRequisitionTemplateResponseError = (
-  | applyRequisitionTemplateResponse401
-  | applyRequisitionTemplateResponse403
-  | applyRequisitionTemplateResponse404
-  | applyRequisitionTemplateResponse409
-  | applyRequisitionTemplateResponse422
-) & {
-  headers: Headers;
-};
-
-export type applyRequisitionTemplateResponse =
-  | applyRequisitionTemplateResponseSuccess
-  | applyRequisitionTemplateResponseError;
-
-export const getApplyRequisitionTemplateUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/apply-template`;
-};
-
-export const applyRequisitionTemplate = async (
-  requisitionId: string,
-  applyRequisitionTemplateRequest: ApplyRequisitionTemplateRequest,
-  options?: RequestInit,
-): Promise<applyRequisitionTemplateResponse> => {
-  return cognifyFetch<applyRequisitionTemplateResponse>(
-    getApplyRequisitionTemplateUrl(requisitionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(applyRequisitionTemplateRequest),
-    },
-  );
-};
-
-/**
- * @summary List requisition line item suggestions
- */
-export type listRequisitionLineItemSuggestionsResponse200 = {
-  data: RequisitionItemSuggestionListResponse;
-  status: 200;
-};
-
-export type listRequisitionLineItemSuggestionsResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listRequisitionLineItemSuggestionsResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type listRequisitionLineItemSuggestionsResponseSuccess =
-  listRequisitionLineItemSuggestionsResponse200 & {
-    headers: Headers;
-  };
-export type listRequisitionLineItemSuggestionsResponseError = (
-  | listRequisitionLineItemSuggestionsResponse401
-  | listRequisitionLineItemSuggestionsResponse403
-) & {
-  headers: Headers;
-};
-
-export type listRequisitionLineItemSuggestionsResponse =
-  | listRequisitionLineItemSuggestionsResponseSuccess
-  | listRequisitionLineItemSuggestionsResponseError;
-
-export const getListRequisitionLineItemSuggestionsUrl = (
-  params?: ListRequisitionLineItemSuggestionsParams,
-) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/requisition-line-item-suggestions?${stringifiedParams}`
-    : `/api/requisition-line-item-suggestions`;
-};
-
-export const listRequisitionLineItemSuggestions = async (
-  params?: ListRequisitionLineItemSuggestionsParams,
-  options?: RequestInit,
-): Promise<listRequisitionLineItemSuggestionsResponse> => {
-  return cognifyFetch<listRequisitionLineItemSuggestionsResponse>(
-    getListRequisitionLineItemSuggestionsUrl(params),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Get requisition intake options
- */
-export type getRequisitionIntakeOptionsResponse200 = {
-  data: RequisitionIntakeOptionsResponse;
-  status: 200;
-};
-
-export type getRequisitionIntakeOptionsResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type getRequisitionIntakeOptionsResponse403 = {
-  data: UnauthorizedResponse;
-  status: 403;
-};
-
-export type getRequisitionIntakeOptionsResponseSuccess = getRequisitionIntakeOptionsResponse200 & {
-  headers: Headers;
-};
-export type getRequisitionIntakeOptionsResponseError = (
-  | getRequisitionIntakeOptionsResponse401
-  | getRequisitionIntakeOptionsResponse403
-) & {
-  headers: Headers;
-};
-
-export type getRequisitionIntakeOptionsResponse =
-  | getRequisitionIntakeOptionsResponseSuccess
-  | getRequisitionIntakeOptionsResponseError;
-
-export const getGetRequisitionIntakeOptionsUrl = () => {
-  return `/api/requisition-intake-options`;
-};
-
-export const getRequisitionIntakeOptions = async (
-  options?: RequestInit,
-): Promise<getRequisitionIntakeOptionsResponse> => {
-  return cognifyFetch<getRequisitionIntakeOptionsResponse>(getGetRequisitionIntakeOptionsUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary Request changes for a submitted requisition
- */
-export type requestRequisitionChangesResponse200 = {
-  data: RequisitionResponse;
-  status: 200;
-};
-
-export type requestRequisitionChangesResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type requestRequisitionChangesResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type requestRequisitionChangesResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type requestRequisitionChangesResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type requestRequisitionChangesResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type requestRequisitionChangesResponseSuccess = requestRequisitionChangesResponse200 & {
-  headers: Headers;
-};
-export type requestRequisitionChangesResponseError = (
-  | requestRequisitionChangesResponse401
-  | requestRequisitionChangesResponse403
-  | requestRequisitionChangesResponse404
-  | requestRequisitionChangesResponse409
-  | requestRequisitionChangesResponse422
-) & {
-  headers: Headers;
-};
-
-export type requestRequisitionChangesResponse =
-  | requestRequisitionChangesResponseSuccess
-  | requestRequisitionChangesResponseError;
-
-export const getRequestRequisitionChangesUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/request-changes`;
-};
-
-export const requestRequisitionChanges = async (
-  requisitionId: string,
-  requestRequisitionChangesRequest: RequestRequisitionChangesRequest,
-  options?: RequestInit,
-): Promise<requestRequisitionChangesResponse> => {
-  return cognifyFetch<requestRequisitionChangesResponse>(
-    getRequestRequisitionChangesUrl(requisitionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(requestRequisitionChangesRequest),
-    },
-  );
-};
-
-/**
- * @summary Resubmit a change-requested requisition
- */
-export type resubmitRequisitionResponse200 = {
-  data: RequisitionResponse;
-  status: 200;
-};
-
-export type resubmitRequisitionResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type resubmitRequisitionResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type resubmitRequisitionResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type resubmitRequisitionResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type resubmitRequisitionResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type resubmitRequisitionResponseSuccess = resubmitRequisitionResponse200 & {
-  headers: Headers;
-};
-export type resubmitRequisitionResponseError = (
-  | resubmitRequisitionResponse401
-  | resubmitRequisitionResponse403
-  | resubmitRequisitionResponse404
-  | resubmitRequisitionResponse409
-  | resubmitRequisitionResponse422
-) & {
-  headers: Headers;
-};
-
-export type resubmitRequisitionResponse =
-  | resubmitRequisitionResponseSuccess
-  | resubmitRequisitionResponseError;
-
-export const getResubmitRequisitionUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/resubmit`;
-};
-
-export const resubmitRequisition = async (
-  requisitionId: string,
-  options?: RequestInit,
-): Promise<resubmitRequisitionResponse> => {
-  return cognifyFetch<resubmitRequisitionResponse>(getResubmitRequisitionUrl(requisitionId), {
-    ...options,
-    method: "POST",
-  });
-};
-
-/**
- * @summary Withdraw a requisition
- */
-export type withdrawRequisitionResponse200 = {
-  data: RequisitionResponse;
-  status: 200;
-};
-
-export type withdrawRequisitionResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type withdrawRequisitionResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type withdrawRequisitionResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type withdrawRequisitionResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type withdrawRequisitionResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type withdrawRequisitionResponseSuccess = withdrawRequisitionResponse200 & {
-  headers: Headers;
-};
-export type withdrawRequisitionResponseError = (
-  | withdrawRequisitionResponse401
-  | withdrawRequisitionResponse403
-  | withdrawRequisitionResponse404
-  | withdrawRequisitionResponse409
-  | withdrawRequisitionResponse422
-) & {
-  headers: Headers;
-};
-
-export type withdrawRequisitionResponse =
-  | withdrawRequisitionResponseSuccess
-  | withdrawRequisitionResponseError;
-
-export const getWithdrawRequisitionUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/withdraw`;
-};
-
-export const withdrawRequisition = async (
-  requisitionId: string,
-  reasonedRequisitionActionRequest: ReasonedRequisitionActionRequest,
-  options?: RequestInit,
-): Promise<withdrawRequisitionResponse> => {
-  return cognifyFetch<withdrawRequisitionResponse>(getWithdrawRequisitionUrl(requisitionId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(reasonedRequisitionActionRequest),
-  });
-};
-
-/**
- * @summary Cancel a requisition
- */
-export type cancelRequisitionResponse200 = {
-  data: RequisitionResponse;
-  status: 200;
-};
-
-export type cancelRequisitionResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type cancelRequisitionResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type cancelRequisitionResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type cancelRequisitionResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type cancelRequisitionResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type cancelRequisitionResponseSuccess = cancelRequisitionResponse200 & {
-  headers: Headers;
-};
-export type cancelRequisitionResponseError = (
-  | cancelRequisitionResponse401
-  | cancelRequisitionResponse403
-  | cancelRequisitionResponse404
-  | cancelRequisitionResponse409
-  | cancelRequisitionResponse422
-) & {
-  headers: Headers;
-};
-
-export type cancelRequisitionResponse =
-  | cancelRequisitionResponseSuccess
-  | cancelRequisitionResponseError;
-
-export const getCancelRequisitionUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/cancel`;
-};
-
-export const cancelRequisition = async (
-  requisitionId: string,
-  reasonedRequisitionActionRequest: ReasonedRequisitionActionRequest,
-  options?: RequestInit,
-): Promise<cancelRequisitionResponse> => {
-  return cognifyFetch<cancelRequisitionResponse>(getCancelRequisitionUrl(requisitionId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(reasonedRequisitionActionRequest),
-  });
-};
-
-/**
- * @summary List comments for a requisition
- */
-export type listRequisitionCommentsResponse200 = {
-  data: CollaborationCommentListResponse;
-  status: 200;
-};
-
-export type listRequisitionCommentsResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listRequisitionCommentsResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type listRequisitionCommentsResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type listRequisitionCommentsResponseSuccess = listRequisitionCommentsResponse200 & {
-  headers: Headers;
-};
-export type listRequisitionCommentsResponseError = (
-  | listRequisitionCommentsResponse401
-  | listRequisitionCommentsResponse403
-  | listRequisitionCommentsResponse404
-) & {
-  headers: Headers;
-};
-
-export type listRequisitionCommentsResponse =
-  | listRequisitionCommentsResponseSuccess
-  | listRequisitionCommentsResponseError;
-
-export const getListRequisitionCommentsUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/comments`;
-};
-
-export const listRequisitionComments = async (
-  requisitionId: string,
-  options?: RequestInit,
-): Promise<listRequisitionCommentsResponse> => {
-  return cognifyFetch<listRequisitionCommentsResponse>(
-    getListRequisitionCommentsUrl(requisitionId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Create a comment on a requisition
- */
-export type createRequisitionCommentResponse201 = {
-  data: CollaborationCommentResponse;
-  status: 201;
-};
-
-export type createRequisitionCommentResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type createRequisitionCommentResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type createRequisitionCommentResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type createRequisitionCommentResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type createRequisitionCommentResponseSuccess = createRequisitionCommentResponse201 & {
-  headers: Headers;
-};
-export type createRequisitionCommentResponseError = (
-  | createRequisitionCommentResponse401
-  | createRequisitionCommentResponse403
-  | createRequisitionCommentResponse404
-  | createRequisitionCommentResponse422
-) & {
-  headers: Headers;
-};
-
-export type createRequisitionCommentResponse =
-  | createRequisitionCommentResponseSuccess
-  | createRequisitionCommentResponseError;
-
-export const getCreateRequisitionCommentUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/comments`;
-};
-
-export const createRequisitionComment = async (
-  requisitionId: string,
-  createCollaborationCommentRequest: CreateCollaborationCommentRequest,
-  options?: RequestInit,
-): Promise<createRequisitionCommentResponse> => {
-  return cognifyFetch<createRequisitionCommentResponse>(
-    getCreateRequisitionCommentUrl(requisitionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(createCollaborationCommentRequest),
-    },
-  );
-};
-
-/**
- * @summary List users who can be mentioned on a requisition
- */
-export type listRequisitionMentionCandidatesResponse200 = {
-  data: CollaborationMentionCandidateListResponse;
-  status: 200;
-};
-
-export type listRequisitionMentionCandidatesResponse401 = {
-  data: UnauthenticatedResponse;
-  status: 401;
-};
-
-export type listRequisitionMentionCandidatesResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
-
-export type listRequisitionMentionCandidatesResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
-
-export type listRequisitionMentionCandidatesResponseSuccess =
-  listRequisitionMentionCandidatesResponse200 & {
-    headers: Headers;
-  };
-export type listRequisitionMentionCandidatesResponseError = (
-  | listRequisitionMentionCandidatesResponse401
-  | listRequisitionMentionCandidatesResponse403
-  | listRequisitionMentionCandidatesResponse404
-) & {
-  headers: Headers;
-};
-
-export type listRequisitionMentionCandidatesResponse =
-  | listRequisitionMentionCandidatesResponseSuccess
-  | listRequisitionMentionCandidatesResponseError;
-
-export const getListRequisitionMentionCandidatesUrl = (requisitionId: string) => {
-  return `/api/requisitions/${requisitionId}/mention-candidates`;
-};
-
-export const listRequisitionMentionCandidates = async (
-  requisitionId: string,
-  options?: RequestInit,
-): Promise<listRequisitionMentionCandidatesResponse> => {
-  return cognifyFetch<listRequisitionMentionCandidatesResponse>(
-    getListRequisitionMentionCandidatesUrl(requisitionId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
 };
 
 /**
@@ -2302,128 +1465,115 @@ export const activateProject = async (
 };
 
 /**
- * @summary Hold project
+ * @summary List project activity
  */
-export type holdProjectResponse200 = {
-  data: ProcurementProjectResponse;
+export type listProjectActivityResponse200 = {
+  data: ProjectActivityListResponse;
   status: 200;
 };
 
-export type holdProjectResponse401 = {
+export type listProjectActivityResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type holdProjectResponse403 = {
+export type listProjectActivityResponse403 = {
   data: ForbiddenResponse;
   status: 403;
 };
 
-export type holdProjectResponse404 = {
+export type listProjectActivityResponse404 = {
   data: NotFoundResponse;
   status: 404;
 };
 
-export type holdProjectResponse409 = {
-  data: InvalidStateResponse;
-  status: 409;
-};
-
-export type holdProjectResponse422 = {
-  data: ValidationFailedResponse;
-  status: 422;
-};
-
-export type holdProjectResponseSuccess = holdProjectResponse200 & {
+export type listProjectActivityResponseSuccess = listProjectActivityResponse200 & {
   headers: Headers;
 };
-export type holdProjectResponseError = (
-  | holdProjectResponse401
-  | holdProjectResponse403
-  | holdProjectResponse404
-  | holdProjectResponse409
-  | holdProjectResponse422
+export type listProjectActivityResponseError = (
+  | listProjectActivityResponse401
+  | listProjectActivityResponse403
+  | listProjectActivityResponse404
 ) & {
   headers: Headers;
 };
 
-export type holdProjectResponse = holdProjectResponseSuccess | holdProjectResponseError;
+export type listProjectActivityResponse =
+  | listProjectActivityResponseSuccess
+  | listProjectActivityResponseError;
 
-export const getHoldProjectUrl = (projectId: string) => {
-  return `/api/projects/${projectId}/hold`;
+export const getListProjectActivityUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/activity`;
 };
 
-export const holdProject = async (
+export const listProjectActivity = async (
   projectId: string,
-  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
   options?: RequestInit,
-): Promise<holdProjectResponse> => {
-  return cognifyFetch<holdProjectResponse>(getHoldProjectUrl(projectId), {
+): Promise<listProjectActivityResponse> => {
+  return cognifyFetch<listProjectActivityResponse>(getListProjectActivityUrl(projectId), {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(transitionProcurementProjectRequest),
+    method: "GET",
   });
 };
 
 /**
- * @summary Resume project
+ * @summary Cancel project
  */
-export type resumeProjectResponse200 = {
+export type cancelProjectResponse200 = {
   data: ProcurementProjectResponse;
   status: 200;
 };
 
-export type resumeProjectResponse401 = {
+export type cancelProjectResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type resumeProjectResponse403 = {
+export type cancelProjectResponse403 = {
   data: ForbiddenResponse;
   status: 403;
 };
 
-export type resumeProjectResponse404 = {
+export type cancelProjectResponse404 = {
   data: NotFoundResponse;
   status: 404;
 };
 
-export type resumeProjectResponse409 = {
+export type cancelProjectResponse409 = {
   data: InvalidStateResponse;
   status: 409;
 };
 
-export type resumeProjectResponse422 = {
+export type cancelProjectResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
 };
 
-export type resumeProjectResponseSuccess = resumeProjectResponse200 & {
+export type cancelProjectResponseSuccess = cancelProjectResponse200 & {
   headers: Headers;
 };
-export type resumeProjectResponseError = (
-  | resumeProjectResponse401
-  | resumeProjectResponse403
-  | resumeProjectResponse404
-  | resumeProjectResponse409
-  | resumeProjectResponse422
+export type cancelProjectResponseError = (
+  | cancelProjectResponse401
+  | cancelProjectResponse403
+  | cancelProjectResponse404
+  | cancelProjectResponse409
+  | cancelProjectResponse422
 ) & {
   headers: Headers;
 };
 
-export type resumeProjectResponse = resumeProjectResponseSuccess | resumeProjectResponseError;
+export type cancelProjectResponse = cancelProjectResponseSuccess | cancelProjectResponseError;
 
-export const getResumeProjectUrl = (projectId: string) => {
-  return `/api/projects/${projectId}/resume`;
+export const getCancelProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/cancel`;
 };
 
-export const resumeProject = async (
+export const cancelProject = async (
   projectId: string,
   transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
   options?: RequestInit,
-): Promise<resumeProjectResponse> => {
-  return cognifyFetch<resumeProjectResponse>(getResumeProjectUrl(projectId), {
+): Promise<cancelProjectResponse> => {
+  return cognifyFetch<cancelProjectResponse>(getCancelProjectUrl(projectId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -2497,63 +1647,63 @@ export const completeProject = async (
 };
 
 /**
- * @summary Cancel project
+ * @summary Hold project
  */
-export type cancelProjectResponse200 = {
+export type holdProjectResponse200 = {
   data: ProcurementProjectResponse;
   status: 200;
 };
 
-export type cancelProjectResponse401 = {
+export type holdProjectResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type cancelProjectResponse403 = {
+export type holdProjectResponse403 = {
   data: ForbiddenResponse;
   status: 403;
 };
 
-export type cancelProjectResponse404 = {
+export type holdProjectResponse404 = {
   data: NotFoundResponse;
   status: 404;
 };
 
-export type cancelProjectResponse409 = {
+export type holdProjectResponse409 = {
   data: InvalidStateResponse;
   status: 409;
 };
 
-export type cancelProjectResponse422 = {
+export type holdProjectResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
 };
 
-export type cancelProjectResponseSuccess = cancelProjectResponse200 & {
+export type holdProjectResponseSuccess = holdProjectResponse200 & {
   headers: Headers;
 };
-export type cancelProjectResponseError = (
-  | cancelProjectResponse401
-  | cancelProjectResponse403
-  | cancelProjectResponse404
-  | cancelProjectResponse409
-  | cancelProjectResponse422
+export type holdProjectResponseError = (
+  | holdProjectResponse401
+  | holdProjectResponse403
+  | holdProjectResponse404
+  | holdProjectResponse409
+  | holdProjectResponse422
 ) & {
   headers: Headers;
 };
 
-export type cancelProjectResponse = cancelProjectResponseSuccess | cancelProjectResponseError;
+export type holdProjectResponse = holdProjectResponseSuccess | holdProjectResponseError;
 
-export const getCancelProjectUrl = (projectId: string) => {
-  return `/api/projects/${projectId}/cancel`;
+export const getHoldProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/hold`;
 };
 
-export const cancelProject = async (
+export const holdProject = async (
   projectId: string,
   transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
   options?: RequestInit,
-): Promise<cancelProjectResponse> => {
-  return cognifyFetch<cancelProjectResponse>(getCancelProjectUrl(projectId), {
+): Promise<holdProjectResponse> => {
+  return cognifyFetch<holdProjectResponse>(getHoldProjectUrl(projectId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -2743,53 +1893,2355 @@ export const unlinkProjectRequisition = async (
 };
 
 /**
- * @summary List project activity
+ * @summary Resume project
  */
-export type listProjectActivityResponse200 = {
-  data: ProjectActivityListResponse;
+export type resumeProjectResponse200 = {
+  data: ProcurementProjectResponse;
   status: 200;
 };
 
-export type listProjectActivityResponse401 = {
+export type resumeProjectResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
 };
 
-export type listProjectActivityResponse403 = {
+export type resumeProjectResponse403 = {
   data: ForbiddenResponse;
   status: 403;
 };
 
-export type listProjectActivityResponse404 = {
+export type resumeProjectResponse404 = {
   data: NotFoundResponse;
   status: 404;
 };
 
-export type listProjectActivityResponseSuccess = listProjectActivityResponse200 & {
+export type resumeProjectResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type resumeProjectResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type resumeProjectResponseSuccess = resumeProjectResponse200 & {
   headers: Headers;
 };
-export type listProjectActivityResponseError = (
-  | listProjectActivityResponse401
-  | listProjectActivityResponse403
-  | listProjectActivityResponse404
+export type resumeProjectResponseError = (
+  | resumeProjectResponse401
+  | resumeProjectResponse403
+  | resumeProjectResponse404
+  | resumeProjectResponse409
+  | resumeProjectResponse422
 ) & {
   headers: Headers;
 };
 
-export type listProjectActivityResponse =
-  | listProjectActivityResponseSuccess
-  | listProjectActivityResponseError;
+export type resumeProjectResponse = resumeProjectResponseSuccess | resumeProjectResponseError;
 
-export const getListProjectActivityUrl = (projectId: string) => {
-  return `/api/projects/${projectId}/activity`;
+export const getResumeProjectUrl = (projectId: string) => {
+  return `/api/projects/${projectId}/resume`;
 };
 
-export const listProjectActivity = async (
+export const resumeProject = async (
   projectId: string,
+  transitionProcurementProjectRequest?: TransitionProcurementProjectRequest,
   options?: RequestInit,
-): Promise<listProjectActivityResponse> => {
-  return cognifyFetch<listProjectActivityResponse>(getListProjectActivityUrl(projectId), {
+): Promise<resumeProjectResponse> => {
+  return cognifyFetch<resumeProjectResponse>(getResumeProjectUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transitionProcurementProjectRequest),
+  });
+};
+
+/**
+ * @summary Get requisition intake options
+ */
+export type getRequisitionIntakeOptionsResponse200 = {
+  data: RequisitionIntakeOptionsResponse;
+  status: 200;
+};
+
+export type getRequisitionIntakeOptionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRequisitionIntakeOptionsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getRequisitionIntakeOptionsResponseSuccess = getRequisitionIntakeOptionsResponse200 & {
+  headers: Headers;
+};
+export type getRequisitionIntakeOptionsResponseError = (
+  | getRequisitionIntakeOptionsResponse401
+  | getRequisitionIntakeOptionsResponse403
+) & {
+  headers: Headers;
+};
+
+export type getRequisitionIntakeOptionsResponse =
+  | getRequisitionIntakeOptionsResponseSuccess
+  | getRequisitionIntakeOptionsResponseError;
+
+export const getGetRequisitionIntakeOptionsUrl = () => {
+  return `/api/requisition-intake-options`;
+};
+
+export const getRequisitionIntakeOptions = async (
+  options?: RequestInit,
+): Promise<getRequisitionIntakeOptionsResponse> => {
+  return cognifyFetch<getRequisitionIntakeOptionsResponse>(getGetRequisitionIntakeOptionsUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+/**
+ * @summary List requisition line item suggestions
+ */
+export type listRequisitionLineItemSuggestionsResponse200 = {
+  data: RequisitionItemSuggestionListResponse;
+  status: 200;
+};
+
+export type listRequisitionLineItemSuggestionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionLineItemSuggestionsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionLineItemSuggestionsResponseSuccess =
+  listRequisitionLineItemSuggestionsResponse200 & {
+    headers: Headers;
+  };
+export type listRequisitionLineItemSuggestionsResponseError = (
+  | listRequisitionLineItemSuggestionsResponse401
+  | listRequisitionLineItemSuggestionsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionLineItemSuggestionsResponse =
+  | listRequisitionLineItemSuggestionsResponseSuccess
+  | listRequisitionLineItemSuggestionsResponseError;
+
+export const getListRequisitionLineItemSuggestionsUrl = (
+  params?: ListRequisitionLineItemSuggestionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/requisition-line-item-suggestions?${stringifiedParams}`
+    : `/api/requisition-line-item-suggestions`;
+};
+
+export const listRequisitionLineItemSuggestions = async (
+  params?: ListRequisitionLineItemSuggestionsParams,
+  options?: RequestInit,
+): Promise<listRequisitionLineItemSuggestionsResponse> => {
+  return cognifyFetch<listRequisitionLineItemSuggestionsResponse>(
+    getListRequisitionLineItemSuggestionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary List requisition templates
+ */
+export type listRequisitionTemplatesResponse200 = {
+  data: RequisitionTemplateListResponse;
+  status: 200;
+};
+
+export type listRequisitionTemplatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionTemplatesResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionTemplatesResponseSuccess = listRequisitionTemplatesResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionTemplatesResponseError = (
+  | listRequisitionTemplatesResponse401
+  | listRequisitionTemplatesResponse403
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionTemplatesResponse =
+  | listRequisitionTemplatesResponseSuccess
+  | listRequisitionTemplatesResponseError;
+
+export const getListRequisitionTemplatesUrl = () => {
+  return `/api/requisition-templates`;
+};
+
+export const listRequisitionTemplates = async (
+  options?: RequestInit,
+): Promise<listRequisitionTemplatesResponse> => {
+  return cognifyFetch<listRequisitionTemplatesResponse>(getListRequisitionTemplatesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary List tenant-visible requisitions
+ */
+export type listRequisitionsResponse200 = {
+  data: RequisitionListResponse;
+  status: 200;
+};
+
+export type listRequisitionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionsResponseSuccess = listRequisitionsResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionsResponseError = (
+  | listRequisitionsResponse401
+  | listRequisitionsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionsResponse =
+  | listRequisitionsResponseSuccess
+  | listRequisitionsResponseError;
+
+export const getListRequisitionsUrl = (params?: ListRequisitionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/requisitions?${stringifiedParams}`
+    : `/api/requisitions`;
+};
+
+export const listRequisitions = async (
+  params?: ListRequisitionsParams,
+  options?: RequestInit,
+): Promise<listRequisitionsResponse> => {
+  return cognifyFetch<listRequisitionsResponse>(getListRequisitionsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create a draft requisition
+ */
+export type createRequisitionResponse201 = {
+  data: RequisitionResponse;
+  status: 201;
+};
+
+export type createRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRequisitionResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createRequisitionResponseSuccess = createRequisitionResponse201 & {
+  headers: Headers;
+};
+export type createRequisitionResponseError = (
+  | createRequisitionResponse401
+  | createRequisitionResponse403
+  | createRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type createRequisitionResponse =
+  | createRequisitionResponseSuccess
+  | createRequisitionResponseError;
+
+export const getCreateRequisitionUrl = () => {
+  return `/api/requisitions`;
+};
+
+export const createRequisition = async (
+  createRequisitionRequest: CreateRequisitionRequest,
+  options?: RequestInit,
+): Promise<createRequisitionResponse> => {
+  return cognifyFetch<createRequisitionResponse>(getCreateRequisitionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createRequisitionRequest),
+  });
+};
+
+/**
+ * @summary Read requisition detail
+ */
+export type getRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type getRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRequisitionResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getRequisitionResponseSuccess = getRequisitionResponse200 & {
+  headers: Headers;
+};
+export type getRequisitionResponseError = (
+  | getRequisitionResponse401
+  | getRequisitionResponse403
+  | getRequisitionResponse404
+) & {
+  headers: Headers;
+};
+
+export type getRequisitionResponse = getRequisitionResponseSuccess | getRequisitionResponseError;
+
+export const getGetRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}`;
+};
+
+export const getRequisition = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<getRequisitionResponse> => {
+  return cognifyFetch<getRequisitionResponse>(getGetRequisitionUrl(requisitionId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update a draft requisition
+ */
+export type updateRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type updateRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateRequisitionResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type updateRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updateRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateRequisitionResponseSuccess = updateRequisitionResponse200 & {
+  headers: Headers;
+};
+export type updateRequisitionResponseError = (
+  | updateRequisitionResponse401
+  | updateRequisitionResponse403
+  | updateRequisitionResponse404
+  | updateRequisitionResponse409
+  | updateRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateRequisitionResponse =
+  | updateRequisitionResponseSuccess
+  | updateRequisitionResponseError;
+
+export const getUpdateRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}`;
+};
+
+export const updateRequisition = async (
+  requisitionId: string,
+  updateRequisitionRequest: UpdateRequisitionRequest,
+  options?: RequestInit,
+): Promise<updateRequisitionResponse> => {
+  return cognifyFetch<updateRequisitionResponse>(getUpdateRequisitionUrl(requisitionId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateRequisitionRequest),
+  });
+};
+
+/**
+ * @summary Preview requisition approval route
+ */
+export type getRequisitionApprovalPreviewResponse200 = {
+  data: ApprovalPreviewResponse;
+  status: 200;
+};
+
+export type getRequisitionApprovalPreviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRequisitionApprovalPreviewResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getRequisitionApprovalPreviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getRequisitionApprovalPreviewResponseSuccess =
+  getRequisitionApprovalPreviewResponse200 & {
+    headers: Headers;
+  };
+export type getRequisitionApprovalPreviewResponseError = (
+  | getRequisitionApprovalPreviewResponse401
+  | getRequisitionApprovalPreviewResponse403
+  | getRequisitionApprovalPreviewResponse404
+) & {
+  headers: Headers;
+};
+
+export type getRequisitionApprovalPreviewResponse =
+  | getRequisitionApprovalPreviewResponseSuccess
+  | getRequisitionApprovalPreviewResponseError;
+
+export const getGetRequisitionApprovalPreviewUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/approval-preview`;
+};
+
+export const getRequisitionApprovalPreview = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<getRequisitionApprovalPreviewResponse> => {
+  return cognifyFetch<getRequisitionApprovalPreviewResponse>(
+    getGetRequisitionApprovalPreviewUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Read requisition activity timeline
+ */
+export type listRequisitionActivityResponse200 = {
+  data: ListRequisitionActivity200;
+  status: 200;
+};
+
+export type listRequisitionActivityResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionActivityResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionActivityResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionActivityResponseSuccess = listRequisitionActivityResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionActivityResponseError = (
+  | listRequisitionActivityResponse401
+  | listRequisitionActivityResponse403
+  | listRequisitionActivityResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionActivityResponse =
+  | listRequisitionActivityResponseSuccess
+  | listRequisitionActivityResponseError;
+
+export const getListRequisitionActivityUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/activity`;
+};
+
+export const listRequisitionActivity = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionActivityResponse> => {
+  return cognifyFetch<listRequisitionActivityResponse>(
+    getListRequisitionActivityUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Apply a requisition template
+ */
+export type applyRequisitionTemplateResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type applyRequisitionTemplateResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type applyRequisitionTemplateResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type applyRequisitionTemplateResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type applyRequisitionTemplateResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type applyRequisitionTemplateResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type applyRequisitionTemplateResponseSuccess = applyRequisitionTemplateResponse200 & {
+  headers: Headers;
+};
+export type applyRequisitionTemplateResponseError = (
+  | applyRequisitionTemplateResponse401
+  | applyRequisitionTemplateResponse403
+  | applyRequisitionTemplateResponse404
+  | applyRequisitionTemplateResponse409
+  | applyRequisitionTemplateResponse422
+) & {
+  headers: Headers;
+};
+
+export type applyRequisitionTemplateResponse =
+  | applyRequisitionTemplateResponseSuccess
+  | applyRequisitionTemplateResponseError;
+
+export const getApplyRequisitionTemplateUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/apply-template`;
+};
+
+export const applyRequisitionTemplate = async (
+  requisitionId: string,
+  applyRequisitionTemplateRequest: ApplyRequisitionTemplateRequest,
+  options?: RequestInit,
+): Promise<applyRequisitionTemplateResponse> => {
+  return cognifyFetch<applyRequisitionTemplateResponse>(
+    getApplyRequisitionTemplateUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(applyRequisitionTemplateRequest),
+    },
+  );
+};
+
+/**
+ * @summary List requisition attachments
+ */
+export type listRequisitionAttachmentsResponse200 = {
+  data: AttachmentListResponse;
+  status: 200;
+};
+
+export type listRequisitionAttachmentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionAttachmentsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listRequisitionAttachmentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionAttachmentsResponseSuccess = listRequisitionAttachmentsResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionAttachmentsResponseError = (
+  | listRequisitionAttachmentsResponse401
+  | listRequisitionAttachmentsResponse403
+  | listRequisitionAttachmentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionAttachmentsResponse =
+  | listRequisitionAttachmentsResponseSuccess
+  | listRequisitionAttachmentsResponseError;
+
+export const getListRequisitionAttachmentsUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/attachments`;
+};
+
+export const listRequisitionAttachments = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionAttachmentsResponse> => {
+  return cognifyFetch<listRequisitionAttachmentsResponse>(
+    getListRequisitionAttachmentsUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Upload a requisition attachment
+ */
+export type uploadRequisitionAttachmentResponse201 = {
+  data: AttachmentResponse;
+  status: 201;
+};
+
+export type uploadRequisitionAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type uploadRequisitionAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type uploadRequisitionAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type uploadRequisitionAttachmentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type uploadRequisitionAttachmentResponseSuccess = uploadRequisitionAttachmentResponse201 & {
+  headers: Headers;
+};
+export type uploadRequisitionAttachmentResponseError = (
+  | uploadRequisitionAttachmentResponse401
+  | uploadRequisitionAttachmentResponse403
+  | uploadRequisitionAttachmentResponse404
+  | uploadRequisitionAttachmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type uploadRequisitionAttachmentResponse =
+  | uploadRequisitionAttachmentResponseSuccess
+  | uploadRequisitionAttachmentResponseError;
+
+export const getUploadRequisitionAttachmentUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/attachments`;
+};
+
+export const uploadRequisitionAttachment = async (
+  requisitionId: string,
+  attachmentUploadRequest: AttachmentUploadRequest,
+  options?: RequestInit,
+): Promise<uploadRequisitionAttachmentResponse> => {
+  const formData = buildFormData(attachmentUploadRequest);
+  return cognifyFetch<uploadRequisitionAttachmentResponse>(
+    getUploadRequisitionAttachmentUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+/**
+ * @summary Cancel a requisition
+ */
+export type cancelRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type cancelRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelRequisitionResponseSuccess = cancelRequisitionResponse200 & {
+  headers: Headers;
+};
+export type cancelRequisitionResponseError = (
+  | cancelRequisitionResponse401
+  | cancelRequisitionResponse403
+  | cancelRequisitionResponse404
+  | cancelRequisitionResponse409
+  | cancelRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelRequisitionResponse =
+  | cancelRequisitionResponseSuccess
+  | cancelRequisitionResponseError;
+
+export const getCancelRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/cancel`;
+};
+
+export const cancelRequisition = async (
+  requisitionId: string,
+  reasonedRequisitionActionRequest: ReasonedRequisitionActionRequest,
+  options?: RequestInit,
+): Promise<cancelRequisitionResponse> => {
+  return cognifyFetch<cancelRequisitionResponse>(getCancelRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reasonedRequisitionActionRequest),
+  });
+};
+
+/**
+ * @summary List comments for a requisition
+ */
+export type listRequisitionCommentsResponse200 = {
+  data: CollaborationCommentListResponse;
+  status: 200;
+};
+
+export type listRequisitionCommentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionCommentsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listRequisitionCommentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionCommentsResponseSuccess = listRequisitionCommentsResponse200 & {
+  headers: Headers;
+};
+export type listRequisitionCommentsResponseError = (
+  | listRequisitionCommentsResponse401
+  | listRequisitionCommentsResponse403
+  | listRequisitionCommentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionCommentsResponse =
+  | listRequisitionCommentsResponseSuccess
+  | listRequisitionCommentsResponseError;
+
+export const getListRequisitionCommentsUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/comments`;
+};
+
+export const listRequisitionComments = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionCommentsResponse> => {
+  return cognifyFetch<listRequisitionCommentsResponse>(
+    getListRequisitionCommentsUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create a comment on a requisition
+ */
+export type createRequisitionCommentResponse201 = {
+  data: CollaborationCommentResponse;
+  status: 201;
+};
+
+export type createRequisitionCommentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRequisitionCommentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createRequisitionCommentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createRequisitionCommentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createRequisitionCommentResponseSuccess = createRequisitionCommentResponse201 & {
+  headers: Headers;
+};
+export type createRequisitionCommentResponseError = (
+  | createRequisitionCommentResponse401
+  | createRequisitionCommentResponse403
+  | createRequisitionCommentResponse404
+  | createRequisitionCommentResponse422
+) & {
+  headers: Headers;
+};
+
+export type createRequisitionCommentResponse =
+  | createRequisitionCommentResponseSuccess
+  | createRequisitionCommentResponseError;
+
+export const getCreateRequisitionCommentUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/comments`;
+};
+
+export const createRequisitionComment = async (
+  requisitionId: string,
+  createCollaborationCommentRequest: CreateCollaborationCommentRequest,
+  options?: RequestInit,
+): Promise<createRequisitionCommentResponse> => {
+  return cognifyFetch<createRequisitionCommentResponse>(
+    getCreateRequisitionCommentUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createCollaborationCommentRequest),
+    },
+  );
+};
+
+/**
+ * @summary List users who can be mentioned on a requisition
+ */
+export type listRequisitionMentionCandidatesResponse200 = {
+  data: CollaborationMentionCandidateListResponse;
+  status: 200;
+};
+
+export type listRequisitionMentionCandidatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRequisitionMentionCandidatesResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listRequisitionMentionCandidatesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRequisitionMentionCandidatesResponseSuccess =
+  listRequisitionMentionCandidatesResponse200 & {
+    headers: Headers;
+  };
+export type listRequisitionMentionCandidatesResponseError = (
+  | listRequisitionMentionCandidatesResponse401
+  | listRequisitionMentionCandidatesResponse403
+  | listRequisitionMentionCandidatesResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRequisitionMentionCandidatesResponse =
+  | listRequisitionMentionCandidatesResponseSuccess
+  | listRequisitionMentionCandidatesResponseError;
+
+export const getListRequisitionMentionCandidatesUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/mention-candidates`;
+};
+
+export const listRequisitionMentionCandidates = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<listRequisitionMentionCandidatesResponse> => {
+  return cognifyFetch<listRequisitionMentionCandidatesResponse>(
+    getListRequisitionMentionCandidatesUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Request changes for a submitted requisition
+ */
+export type requestRequisitionChangesResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type requestRequisitionChangesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type requestRequisitionChangesResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type requestRequisitionChangesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type requestRequisitionChangesResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type requestRequisitionChangesResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type requestRequisitionChangesResponseSuccess = requestRequisitionChangesResponse200 & {
+  headers: Headers;
+};
+export type requestRequisitionChangesResponseError = (
+  | requestRequisitionChangesResponse401
+  | requestRequisitionChangesResponse403
+  | requestRequisitionChangesResponse404
+  | requestRequisitionChangesResponse409
+  | requestRequisitionChangesResponse422
+) & {
+  headers: Headers;
+};
+
+export type requestRequisitionChangesResponse =
+  | requestRequisitionChangesResponseSuccess
+  | requestRequisitionChangesResponseError;
+
+export const getRequestRequisitionChangesUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/request-changes`;
+};
+
+export const requestRequisitionChanges = async (
+  requisitionId: string,
+  requestRequisitionChangesRequest: RequestRequisitionChangesRequest,
+  options?: RequestInit,
+): Promise<requestRequisitionChangesResponse> => {
+  return cognifyFetch<requestRequisitionChangesResponse>(
+    getRequestRequisitionChangesUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(requestRequisitionChangesRequest),
+    },
+  );
+};
+
+/**
+ * @summary Resubmit a change-requested requisition
+ */
+export type resubmitRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type resubmitRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type resubmitRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type resubmitRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type resubmitRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type resubmitRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type resubmitRequisitionResponseSuccess = resubmitRequisitionResponse200 & {
+  headers: Headers;
+};
+export type resubmitRequisitionResponseError = (
+  | resubmitRequisitionResponse401
+  | resubmitRequisitionResponse403
+  | resubmitRequisitionResponse404
+  | resubmitRequisitionResponse409
+  | resubmitRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type resubmitRequisitionResponse =
+  | resubmitRequisitionResponseSuccess
+  | resubmitRequisitionResponseError;
+
+export const getResubmitRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/resubmit`;
+};
+
+export const resubmitRequisition = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<resubmitRequisitionResponse> => {
+  return cognifyFetch<resubmitRequisitionResponse>(getResubmitRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Submit a draft requisition
+ */
+export type submitRequisitionResponse200 = {
+  data: SubmitRequisitionResponse;
+  status: 200;
+};
+
+export type submitRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type submitRequisitionResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type submitRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type submitRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type submitRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type submitRequisitionResponseSuccess = submitRequisitionResponse200 & {
+  headers: Headers;
+};
+export type submitRequisitionResponseError = (
+  | submitRequisitionResponse401
+  | submitRequisitionResponse403
+  | submitRequisitionResponse404
+  | submitRequisitionResponse409
+  | submitRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type submitRequisitionResponse =
+  | submitRequisitionResponseSuccess
+  | submitRequisitionResponseError;
+
+export const getSubmitRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/submit`;
+};
+
+export const submitRequisition = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<submitRequisitionResponse> => {
+  return cognifyFetch<submitRequisitionResponse>(getSubmitRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Withdraw a requisition
+ */
+export type withdrawRequisitionResponse200 = {
+  data: RequisitionResponse;
+  status: 200;
+};
+
+export type withdrawRequisitionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type withdrawRequisitionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type withdrawRequisitionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type withdrawRequisitionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type withdrawRequisitionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type withdrawRequisitionResponseSuccess = withdrawRequisitionResponse200 & {
+  headers: Headers;
+};
+export type withdrawRequisitionResponseError = (
+  | withdrawRequisitionResponse401
+  | withdrawRequisitionResponse403
+  | withdrawRequisitionResponse404
+  | withdrawRequisitionResponse409
+  | withdrawRequisitionResponse422
+) & {
+  headers: Headers;
+};
+
+export type withdrawRequisitionResponse =
+  | withdrawRequisitionResponseSuccess
+  | withdrawRequisitionResponseError;
+
+export const getWithdrawRequisitionUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/withdraw`;
+};
+
+export const withdrawRequisition = async (
+  requisitionId: string,
+  reasonedRequisitionActionRequest: ReasonedRequisitionActionRequest,
+  options?: RequestInit,
+): Promise<withdrawRequisitionResponse> => {
+  return cognifyFetch<withdrawRequisitionResponse>(getWithdrawRequisitionUrl(requisitionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reasonedRequisitionActionRequest),
+  });
+};
+
+/**
+ * @summary Search tenant-visible requisitions and roadmap preview records
+ */
+export type listGlobalSearchResponse200 = {
+  data: SearchResponse;
+  status: 200;
+};
+
+export type listGlobalSearchResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listGlobalSearchResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listGlobalSearchResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listGlobalSearchResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type listGlobalSearchResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
+export type listGlobalSearchResponseSuccess = listGlobalSearchResponse200 & {
+  headers: Headers;
+};
+export type listGlobalSearchResponseError = (
+  | listGlobalSearchResponse400
+  | listGlobalSearchResponse401
+  | listGlobalSearchResponse403
+  | listGlobalSearchResponse422
+  | listGlobalSearchResponse429
+) & {
+  headers: Headers;
+};
+
+export type listGlobalSearchResponse =
+  | listGlobalSearchResponseSuccess
+  | listGlobalSearchResponseError;
+
+export const getListGlobalSearchUrl = (params: ListGlobalSearchParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["types"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : v.toString());
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/search?${stringifiedParams}` : `/api/search`;
+};
+
+export const listGlobalSearch = async (
+  params: ListGlobalSearchParams,
+  options?: RequestInit,
+): Promise<listGlobalSearchResponse> => {
+  return cognifyFetch<listGlobalSearchResponse>(getListGlobalSearchUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Get system readiness status
+ */
+export type getSystemStatusResponse200 = {
+  data: SystemStatusResponse;
+  status: 200;
+};
+
+export type getSystemStatusResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type getSystemStatusResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getSystemStatusResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type getSystemStatusResponseSuccess = getSystemStatusResponse200 & {
+  headers: Headers;
+};
+export type getSystemStatusResponseError = (
+  | getSystemStatusResponse400
+  | getSystemStatusResponse401
+  | getSystemStatusResponse403
+) & {
+  headers: Headers;
+};
+
+export type getSystemStatusResponse = getSystemStatusResponseSuccess | getSystemStatusResponseError;
+
+export const getGetSystemStatusUrl = () => {
+  return `/api/system/status`;
+};
+
+export const getSystemStatus = async (options?: RequestInit): Promise<getSystemStatusResponse> => {
+  return cognifyFetch<getSystemStatusResponse>(getGetSystemStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Validate selected tenant context
+ */
+export type setCurrentTenantResponse200 = {
+  data: CurrentUserResponse;
+  status: 200;
+};
+
+export type setCurrentTenantResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type setCurrentTenantResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type setCurrentTenantResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type setCurrentTenantResponseSuccess = setCurrentTenantResponse200 & {
+  headers: Headers;
+};
+export type setCurrentTenantResponseError = (
+  | setCurrentTenantResponse401
+  | setCurrentTenantResponse403
+  | setCurrentTenantResponse422
+) & {
+  headers: Headers;
+};
+
+export type setCurrentTenantResponse =
+  | setCurrentTenantResponseSuccess
+  | setCurrentTenantResponseError;
+
+export const getSetCurrentTenantUrl = () => {
+  return `/api/tenants/current`;
+};
+
+export const setCurrentTenant = async (
+  setCurrentTenantRequest: SetCurrentTenantRequest,
+  options?: RequestInit,
+): Promise<setCurrentTenantResponse> => {
+  return cognifyFetch<setCurrentTenantResponse>(getSetCurrentTenantUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setCurrentTenantRequest),
+  });
+};
+
+/**
+ * @summary Route a submitted requisition for approval
+ */
+export type routeRequisitionForApprovalResponse200 = {
+  data: RouteRequisitionApprovalResponse;
+  status: 200;
+};
+
+export type routeRequisitionForApprovalResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type routeRequisitionForApprovalResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type routeRequisitionForApprovalResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type routeRequisitionForApprovalResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type routeRequisitionForApprovalResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type routeRequisitionForApprovalResponseSuccess = routeRequisitionForApprovalResponse200 & {
+  headers: Headers;
+};
+export type routeRequisitionForApprovalResponseError = (
+  | routeRequisitionForApprovalResponse401
+  | routeRequisitionForApprovalResponse403
+  | routeRequisitionForApprovalResponse404
+  | routeRequisitionForApprovalResponse409
+  | routeRequisitionForApprovalResponse422
+) & {
+  headers: Headers;
+};
+
+export type routeRequisitionForApprovalResponse =
+  | routeRequisitionForApprovalResponseSuccess
+  | routeRequisitionForApprovalResponseError;
+
+export const getRouteRequisitionForApprovalUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/route-approval`;
+};
+
+export const routeRequisitionForApproval = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<routeRequisitionForApprovalResponse> => {
+  return cognifyFetch<routeRequisitionForApprovalResponse>(
+    getRouteRequisitionForApprovalUrl(requisitionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Get requisition approval summary
+ */
+export type getRequisitionApprovalSummaryResponse200 = {
+  data: ApprovalSummaryResponse;
+  status: 200;
+};
+
+export type getRequisitionApprovalSummaryResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRequisitionApprovalSummaryResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getRequisitionApprovalSummaryResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getRequisitionApprovalSummaryResponseSuccess =
+  getRequisitionApprovalSummaryResponse200 & {
+    headers: Headers;
+  };
+export type getRequisitionApprovalSummaryResponseError = (
+  | getRequisitionApprovalSummaryResponse401
+  | getRequisitionApprovalSummaryResponse403
+  | getRequisitionApprovalSummaryResponse404
+) & {
+  headers: Headers;
+};
+
+export type getRequisitionApprovalSummaryResponse =
+  | getRequisitionApprovalSummaryResponseSuccess
+  | getRequisitionApprovalSummaryResponseError;
+
+export const getGetRequisitionApprovalSummaryUrl = (requisitionId: string) => {
+  return `/api/requisitions/${requisitionId}/approval-summary`;
+};
+
+export const getRequisitionApprovalSummary = async (
+  requisitionId: string,
+  options?: RequestInit,
+): Promise<getRequisitionApprovalSummaryResponse> => {
+  return cognifyFetch<getRequisitionApprovalSummaryResponse>(
+    getGetRequisitionApprovalSummaryUrl(requisitionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary List approval tasks
+ */
+export type listApprovalTasksResponse200 = {
+  data: ApprovalTaskQueueResponse;
+  status: 200;
+};
+
+export type listApprovalTasksResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApprovalTasksResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listApprovalTasksResponseSuccess = listApprovalTasksResponse200 & {
+  headers: Headers;
+};
+export type listApprovalTasksResponseError = (
+  | listApprovalTasksResponse401
+  | listApprovalTasksResponse403
+) & {
+  headers: Headers;
+};
+
+export type listApprovalTasksResponse =
+  | listApprovalTasksResponseSuccess
+  | listApprovalTasksResponseError;
+
+export const getListApprovalTasksUrl = (params?: ListApprovalTasksParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/approval-tasks?${stringifiedParams}`
+    : `/api/approval-tasks`;
+};
+
+export const listApprovalTasks = async (
+  params?: ListApprovalTasksParams,
+  options?: RequestInit,
+): Promise<listApprovalTasksResponse> => {
+  return cognifyFetch<listApprovalTasksResponse>(getListApprovalTasksUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary List approval delegations
+ */
+export type listApprovalDelegationsResponse200 = {
+  data: ApprovalDelegationListResponse;
+  status: 200;
+};
+
+export type listApprovalDelegationsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApprovalDelegationsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listApprovalDelegationsResponseSuccess = listApprovalDelegationsResponse200 & {
+  headers: Headers;
+};
+export type listApprovalDelegationsResponseError = (
+  | listApprovalDelegationsResponse401
+  | listApprovalDelegationsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listApprovalDelegationsResponse =
+  | listApprovalDelegationsResponseSuccess
+  | listApprovalDelegationsResponseError;
+
+export const getListApprovalDelegationsUrl = () => {
+  return `/api/approval-delegations`;
+};
+
+export const listApprovalDelegations = async (
+  options?: RequestInit,
+): Promise<listApprovalDelegationsResponse> => {
+  return cognifyFetch<listApprovalDelegationsResponse>(getListApprovalDelegationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create approval delegation
+ */
+export type createApprovalDelegationResponse201 = {
+  data: ApprovalDelegationResponse;
+  status: 201;
+};
+
+export type createApprovalDelegationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createApprovalDelegationResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createApprovalDelegationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createApprovalDelegationResponseSuccess = createApprovalDelegationResponse201 & {
+  headers: Headers;
+};
+export type createApprovalDelegationResponseError = (
+  | createApprovalDelegationResponse401
+  | createApprovalDelegationResponse403
+  | createApprovalDelegationResponse422
+) & {
+  headers: Headers;
+};
+
+export type createApprovalDelegationResponse =
+  | createApprovalDelegationResponseSuccess
+  | createApprovalDelegationResponseError;
+
+export const getCreateApprovalDelegationUrl = () => {
+  return `/api/approval-delegations`;
+};
+
+export const createApprovalDelegation = async (
+  storeApprovalDelegationRequest: StoreApprovalDelegationRequest,
+  options?: RequestInit,
+): Promise<createApprovalDelegationResponse> => {
+  return cognifyFetch<createApprovalDelegationResponse>(getCreateApprovalDelegationUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(storeApprovalDelegationRequest),
+  });
+};
+
+/**
+ * @summary List approval delegation candidates
+ */
+export type listApprovalDelegationCandidatesResponse200 = {
+  data: ApprovalDelegationCandidateListResponse;
+  status: 200;
+};
+
+export type listApprovalDelegationCandidatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApprovalDelegationCandidatesResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listApprovalDelegationCandidatesResponseSuccess =
+  listApprovalDelegationCandidatesResponse200 & {
+    headers: Headers;
+  };
+export type listApprovalDelegationCandidatesResponseError = (
+  | listApprovalDelegationCandidatesResponse401
+  | listApprovalDelegationCandidatesResponse403
+) & {
+  headers: Headers;
+};
+
+export type listApprovalDelegationCandidatesResponse =
+  | listApprovalDelegationCandidatesResponseSuccess
+  | listApprovalDelegationCandidatesResponseError;
+
+export const getListApprovalDelegationCandidatesUrl = () => {
+  return `/api/approval-delegations/delegate-candidates`;
+};
+
+export const listApprovalDelegationCandidates = async (
+  options?: RequestInit,
+): Promise<listApprovalDelegationCandidatesResponse> => {
+  return cognifyFetch<listApprovalDelegationCandidatesResponse>(
+    getListApprovalDelegationCandidatesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Update approval delegation
+ */
+export type updateApprovalDelegationResponse200 = {
+  data: ApprovalDelegationResponse;
+  status: 200;
+};
+
+export type updateApprovalDelegationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateApprovalDelegationResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type updateApprovalDelegationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateApprovalDelegationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateApprovalDelegationResponseSuccess = updateApprovalDelegationResponse200 & {
+  headers: Headers;
+};
+export type updateApprovalDelegationResponseError = (
+  | updateApprovalDelegationResponse401
+  | updateApprovalDelegationResponse403
+  | updateApprovalDelegationResponse404
+  | updateApprovalDelegationResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateApprovalDelegationResponse =
+  | updateApprovalDelegationResponseSuccess
+  | updateApprovalDelegationResponseError;
+
+export const getUpdateApprovalDelegationUrl = (approvalDelegation: string) => {
+  return `/api/approval-delegations/${approvalDelegation}`;
+};
+
+export const updateApprovalDelegation = async (
+  approvalDelegation: string,
+  storeApprovalDelegationRequest: StoreApprovalDelegationRequest,
+  options?: RequestInit,
+): Promise<updateApprovalDelegationResponse> => {
+  return cognifyFetch<updateApprovalDelegationResponse>(
+    getUpdateApprovalDelegationUrl(approvalDelegation),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(storeApprovalDelegationRequest),
+    },
+  );
+};
+
+/**
+ * @summary Cancel approval delegation
+ */
+export type cancelApprovalDelegationResponse200 = {
+  data: ApprovalDelegationResponse;
+  status: 200;
+};
+
+export type cancelApprovalDelegationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelApprovalDelegationResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type cancelApprovalDelegationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelApprovalDelegationResponseSuccess = cancelApprovalDelegationResponse200 & {
+  headers: Headers;
+};
+export type cancelApprovalDelegationResponseError = (
+  | cancelApprovalDelegationResponse401
+  | cancelApprovalDelegationResponse403
+  | cancelApprovalDelegationResponse404
+) & {
+  headers: Headers;
+};
+
+export type cancelApprovalDelegationResponse =
+  | cancelApprovalDelegationResponseSuccess
+  | cancelApprovalDelegationResponseError;
+
+export const getCancelApprovalDelegationUrl = (approvalDelegation: string) => {
+  return `/api/approval-delegations/${approvalDelegation}/cancel`;
+};
+
+export const cancelApprovalDelegation = async (
+  approvalDelegation: string,
+  options?: RequestInit,
+): Promise<cancelApprovalDelegationResponse> => {
+  return cognifyFetch<cancelApprovalDelegationResponse>(
+    getCancelApprovalDelegationUrl(approvalDelegation),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Get approval SLA summary
+ */
+export type getApprovalSlaSummaryResponse200 = {
+  data: ApprovalSlaSummaryResponse;
+  status: 200;
+};
+
+export type getApprovalSlaSummaryResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getApprovalSlaSummaryResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getApprovalSlaSummaryResponseSuccess = getApprovalSlaSummaryResponse200 & {
+  headers: Headers;
+};
+export type getApprovalSlaSummaryResponseError = (
+  | getApprovalSlaSummaryResponse401
+  | getApprovalSlaSummaryResponse403
+) & {
+  headers: Headers;
+};
+
+export type getApprovalSlaSummaryResponse =
+  | getApprovalSlaSummaryResponseSuccess
+  | getApprovalSlaSummaryResponseError;
+
+export const getGetApprovalSlaSummaryUrl = () => {
+  return `/api/approvals/sla-summary`;
+};
+
+export const getApprovalSlaSummary = async (
+  options?: RequestInit,
+): Promise<getApprovalSlaSummaryResponse> => {
+  return cognifyFetch<getApprovalSlaSummaryResponse>(getGetApprovalSlaSummaryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Get approval instance summary
+ */
+export type getApprovalInstanceResponse200 = {
+  data: ApprovalSummaryResponse;
+  status: 200;
+};
+
+export type getApprovalInstanceResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getApprovalInstanceResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getApprovalInstanceResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getApprovalInstanceResponseSuccess = getApprovalInstanceResponse200 & {
+  headers: Headers;
+};
+export type getApprovalInstanceResponseError = (
+  | getApprovalInstanceResponse401
+  | getApprovalInstanceResponse403
+  | getApprovalInstanceResponse404
+) & {
+  headers: Headers;
+};
+
+export type getApprovalInstanceResponse =
+  | getApprovalInstanceResponseSuccess
+  | getApprovalInstanceResponseError;
+
+export const getGetApprovalInstanceUrl = (approvalInstance: string) => {
+  return `/api/approval-instances/${approvalInstance}`;
+};
+
+export const getApprovalInstance = async (
+  approvalInstance: string,
+  options?: RequestInit,
+): Promise<getApprovalInstanceResponse> => {
+  return cognifyFetch<getApprovalInstanceResponse>(getGetApprovalInstanceUrl(approvalInstance), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Get approval task detail
+ */
+export type getApprovalTaskResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type getApprovalTaskResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getApprovalTaskResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type getApprovalTaskResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getApprovalTaskResponseSuccess = getApprovalTaskResponse200 & {
+  headers: Headers;
+};
+export type getApprovalTaskResponseError = (
+  | getApprovalTaskResponse401
+  | getApprovalTaskResponse403
+  | getApprovalTaskResponse404
+) & {
+  headers: Headers;
+};
+
+export type getApprovalTaskResponse = getApprovalTaskResponseSuccess | getApprovalTaskResponseError;
+
+export const getGetApprovalTaskUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}`;
+};
+
+export const getApprovalTask = async (
+  approvalTask: string,
+  options?: RequestInit,
+): Promise<getApprovalTaskResponse> => {
+  return cognifyFetch<getApprovalTaskResponse>(getGetApprovalTaskUrl(approvalTask), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Mark approval task viewed
+ */
+export type viewApprovalTaskResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type viewApprovalTaskResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type viewApprovalTaskResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type viewApprovalTaskResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type viewApprovalTaskResponseSuccess = viewApprovalTaskResponse200 & {
+  headers: Headers;
+};
+export type viewApprovalTaskResponseError = (
+  | viewApprovalTaskResponse401
+  | viewApprovalTaskResponse403
+  | viewApprovalTaskResponse404
+) & {
+  headers: Headers;
+};
+
+export type viewApprovalTaskResponse =
+  | viewApprovalTaskResponseSuccess
+  | viewApprovalTaskResponseError;
+
+export const getViewApprovalTaskUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/view`;
+};
+
+export const viewApprovalTask = async (
+  approvalTask: string,
+  options?: RequestInit,
+): Promise<viewApprovalTaskResponse> => {
+  return cognifyFetch<viewApprovalTaskResponse>(getViewApprovalTaskUrl(approvalTask), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Approve approval task
+ */
+export type approveApprovalTaskResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type approveApprovalTaskResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type approveApprovalTaskResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type approveApprovalTaskResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type approveApprovalTaskResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type approveApprovalTaskResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type approveApprovalTaskResponseSuccess = approveApprovalTaskResponse200 & {
+  headers: Headers;
+};
+export type approveApprovalTaskResponseError = (
+  | approveApprovalTaskResponse401
+  | approveApprovalTaskResponse403
+  | approveApprovalTaskResponse404
+  | approveApprovalTaskResponse409
+  | approveApprovalTaskResponse422
+) & {
+  headers: Headers;
+};
+
+export type approveApprovalTaskResponse =
+  | approveApprovalTaskResponseSuccess
+  | approveApprovalTaskResponseError;
+
+export const getApproveApprovalTaskUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/approve`;
+};
+
+export const approveApprovalTask = async (
+  approvalTask: string,
+  approvalTaskActionRequest: ApprovalTaskActionRequest,
+  options?: RequestInit,
+): Promise<approveApprovalTaskResponse> => {
+  return cognifyFetch<approveApprovalTaskResponse>(getApproveApprovalTaskUrl(approvalTask), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(approvalTaskActionRequest),
+  });
+};
+
+/**
+ * @summary Reject approval task
+ */
+export type rejectApprovalTaskResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type rejectApprovalTaskResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type rejectApprovalTaskResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type rejectApprovalTaskResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type rejectApprovalTaskResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type rejectApprovalTaskResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type rejectApprovalTaskResponseSuccess = rejectApprovalTaskResponse200 & {
+  headers: Headers;
+};
+export type rejectApprovalTaskResponseError = (
+  | rejectApprovalTaskResponse401
+  | rejectApprovalTaskResponse403
+  | rejectApprovalTaskResponse404
+  | rejectApprovalTaskResponse409
+  | rejectApprovalTaskResponse422
+) & {
+  headers: Headers;
+};
+
+export type rejectApprovalTaskResponse =
+  | rejectApprovalTaskResponseSuccess
+  | rejectApprovalTaskResponseError;
+
+export const getRejectApprovalTaskUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/reject`;
+};
+
+export const rejectApprovalTask = async (
+  approvalTask: string,
+  rejectApprovalTaskRequest: RejectApprovalTaskRequest,
+  options?: RequestInit,
+): Promise<rejectApprovalTaskResponse> => {
+  return cognifyFetch<rejectApprovalTaskResponse>(getRejectApprovalTaskUrl(approvalTask), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(rejectApprovalTaskRequest),
+  });
+};
+
+/**
+ * @summary Request approval changes
+ */
+export type requestApprovalChangesResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type requestApprovalChangesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type requestApprovalChangesResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type requestApprovalChangesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type requestApprovalChangesResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type requestApprovalChangesResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type requestApprovalChangesResponseSuccess = requestApprovalChangesResponse200 & {
+  headers: Headers;
+};
+export type requestApprovalChangesResponseError = (
+  | requestApprovalChangesResponse401
+  | requestApprovalChangesResponse403
+  | requestApprovalChangesResponse404
+  | requestApprovalChangesResponse409
+  | requestApprovalChangesResponse422
+) & {
+  headers: Headers;
+};
+
+export type requestApprovalChangesResponse =
+  | requestApprovalChangesResponseSuccess
+  | requestApprovalChangesResponseError;
+
+export const getRequestApprovalChangesUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/request-changes`;
+};
+
+export const requestApprovalChanges = async (
+  approvalTask: string,
+  requestApprovalChangesRequest: RequestApprovalChangesRequest,
+  options?: RequestInit,
+): Promise<requestApprovalChangesResponse> => {
+  return cognifyFetch<requestApprovalChangesResponse>(getRequestApprovalChangesUrl(approvalTask), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(requestApprovalChangesRequest),
+  });
+};
+
+/**
+ * @summary Delegate approval task
+ */
+export type delegateApprovalTaskResponse200 = {
+  data: ApprovalTaskResponse;
+  status: 200;
+};
+
+export type delegateApprovalTaskResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type delegateApprovalTaskResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type delegateApprovalTaskResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type delegateApprovalTaskResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type delegateApprovalTaskResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type delegateApprovalTaskResponseSuccess = delegateApprovalTaskResponse200 & {
+  headers: Headers;
+};
+export type delegateApprovalTaskResponseError = (
+  | delegateApprovalTaskResponse401
+  | delegateApprovalTaskResponse403
+  | delegateApprovalTaskResponse404
+  | delegateApprovalTaskResponse409
+  | delegateApprovalTaskResponse422
+) & {
+  headers: Headers;
+};
+
+export type delegateApprovalTaskResponse =
+  | delegateApprovalTaskResponseSuccess
+  | delegateApprovalTaskResponseError;
+
+export const getDelegateApprovalTaskUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/delegate`;
+};
+
+export const delegateApprovalTask = async (
+  approvalTask: string,
+  delegateApprovalTaskRequest: DelegateApprovalTaskRequest,
+  options?: RequestInit,
+): Promise<delegateApprovalTaskResponse> => {
+  return cognifyFetch<delegateApprovalTaskResponse>(getDelegateApprovalTaskUrl(approvalTask), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(delegateApprovalTaskRequest),
   });
 };

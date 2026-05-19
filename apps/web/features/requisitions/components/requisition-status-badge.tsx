@@ -28,6 +28,18 @@ const requisitionStatusConfig = {
     tone: "warning",
     icon: AlertTriangle,
   },
+  approved: {
+    label: "Approved",
+    description: "The requisition completed approval.",
+    tone: "success",
+    icon: CheckCircle2,
+  },
+  rejected: {
+    label: "Rejected",
+    description: "The requisition was rejected during approval.",
+    tone: "danger",
+    icon: CircleX,
+  },
   withdrawn: {
     label: "Withdrawn",
     description: "The requester stopped this requisition.",

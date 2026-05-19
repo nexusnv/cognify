@@ -26,8 +26,8 @@ class RequestRequisitionChanges
      */
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): Requisition
     {
-        if ($requisition->status !== RequisitionStatus::Submitted) {
-            throw new ConflictHttpException('Only submitted requisitions can receive change requests.');
+        if (! in_array($requisition->status, [RequisitionStatus::Submitted, RequisitionStatus::PendingApproval], true)) {
+            throw new ConflictHttpException('Only submitted or pending approval requisitions can receive change requests.');
         }
 
         return DB::transaction(function () use ($tenant, $actor, $requisition, $data): Requisition {
@@ -39,6 +39,7 @@ class RequestRequisitionChanges
 
             $requisition->forceFill([
                 'status' => RequisitionStatus::ChangesRequested,
+                'approval_instance_id' => $data['approvalInstanceId'] ?? $requisition->approval_instance_id,
                 'changes_requested_at' => now(),
                 'changes_requested_by_id' => $actor->id,
                 'change_request_reason' => $data['reason'],

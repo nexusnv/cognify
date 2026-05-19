@@ -5,6 +5,7 @@ namespace Domains\Requisition\Models;
 use Domains\Attachment\Models\Attachment;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +34,12 @@ class Requisition extends Model
         'changes_requested_by_id',
         'change_request_reason',
         'change_request_fields',
+        'approved_at',
+        'approved_by_id',
+        'rejected_at',
+        'rejected_by_id',
+        'rejection_reason',
+        'approval_instance_id',
         'withdrawn_at',
         'withdrawn_by_id',
         'withdrawal_reason',
@@ -48,6 +55,8 @@ class Requisition extends Model
             'submitted_at' => 'datetime',
             'changes_requested_at' => 'datetime',
             'change_request_fields' => 'array',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
             'withdrawn_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'lock_version' => 'integer',
@@ -93,6 +102,30 @@ class Requisition extends Model
     public function changesRequestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'changes_requested_by_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_id');
+    }
+
+    /**
+     * @return BelongsTo<ApprovalInstance, $this>
+     */
+    public function approvalInstance(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalInstance::class, 'approval_instance_id');
     }
 
     /**

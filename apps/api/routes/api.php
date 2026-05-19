@@ -1,15 +1,19 @@
 <?php
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Route;
+use App\Audit\Http\Controllers\AuditEventController;
 use App\Auth\Http\Controllers\AuthenticatedSessionController;
 use App\Auth\Http\Controllers\CurrentTenantController;
 use App\Auth\Http\Controllers\CurrentUserController;
 use App\Auth\Http\Controllers\UserProfileController;
-use App\Audit\Http\Controllers\AuditEventController;
 use App\Http\Middleware\ResolveCurrentTenant;
 use App\Notifications\Http\Controllers\NotificationController;
 use App\Observability\SystemStatus\Http\Controllers\SystemStatusController;
+use Domains\Approval\Http\Controllers\ApprovalDelegationController;
+use Domains\Approval\Http\Controllers\ApprovalPolicyController;
+use Domains\Approval\Http\Controllers\ApprovalPolicyVersionController;
+use Domains\Approval\Http\Controllers\ApprovalSlaController;
+use Domains\Approval\Http\Controllers\ApprovalTaskController;
+use Domains\Approval\Http\Controllers\RequisitionApprovalController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
@@ -22,6 +26,8 @@ use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
 use Domains\Requisition\Http\Controllers\RequisitionItemSuggestionController;
 use Domains\Requisition\Http\Controllers\RequisitionTemplateController;
 use Domains\Search\Http\Controllers\SearchController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/health', static function (): JsonResponse {
     return response()->json([
@@ -51,6 +57,29 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
         Route::get('/system/status', [SystemStatusController::class, 'show'])->middleware('throttle:30,1');
 
+        Route::get('/approval-policies', [ApprovalPolicyController::class, 'index']);
+        Route::post('/approval-policies', [ApprovalPolicyController::class, 'store']);
+        Route::post('/approval-policies/preview', [ApprovalPolicyController::class, 'preview']);
+        Route::get('/approval-policies/{approvalPolicy}', [ApprovalPolicyController::class, 'show']);
+        Route::patch('/approval-policies/{approvalPolicy}', [ApprovalPolicyController::class, 'update']);
+        Route::post('/approval-policies/{approvalPolicy}/versions', [ApprovalPolicyVersionController::class, 'store']);
+        Route::post('/approval-policy-versions/{approvalPolicyVersion}/publish', [ApprovalPolicyVersionController::class, 'publish']);
+        Route::post('/approval-policy-versions/{approvalPolicyVersion}/retire', [ApprovalPolicyVersionController::class, 'retire']);
+        Route::get('/approval-delegations', [ApprovalDelegationController::class, 'index']);
+        Route::get('/approval-delegations/delegate-candidates', [ApprovalDelegationController::class, 'candidates']);
+        Route::post('/approval-delegations', [ApprovalDelegationController::class, 'store']);
+        Route::patch('/approval-delegations/{approvalDelegation}', [ApprovalDelegationController::class, 'update']);
+        Route::post('/approval-delegations/{approvalDelegation}/cancel', [ApprovalDelegationController::class, 'cancel']);
+        Route::get('/approvals/sla-summary', [ApprovalSlaController::class, 'summary']);
+        Route::get('/approval-instances/{approvalInstance}', [ApprovalSlaController::class, 'showInstance']);
+        Route::get('/approval-tasks', [ApprovalTaskController::class, 'index']);
+        Route::get('/approval-tasks/{approvalTask}', [ApprovalTaskController::class, 'show']);
+        Route::post('/approval-tasks/{approvalTask}/view', [ApprovalTaskController::class, 'view']);
+        Route::post('/approval-tasks/{approvalTask}/approve', [ApprovalTaskController::class, 'approve']);
+        Route::post('/approval-tasks/{approvalTask}/reject', [ApprovalTaskController::class, 'reject']);
+        Route::post('/approval-tasks/{approvalTask}/request-changes', [ApprovalTaskController::class, 'requestChanges']);
+        Route::post('/approval-tasks/{approvalTask}/delegate', [ApprovalTaskController::class, 'delegate']);
+
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
         Route::get('/requisition-intake-options', RequisitionIntakeOptionsController::class);
@@ -73,6 +102,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/requisitions', [RequisitionController::class, 'index']);
         Route::post('/requisitions', [RequisitionController::class, 'store']);
         Route::get('/requisitions/{requisition}', [RequisitionController::class, 'show']);
+        Route::get('/requisitions/{requisition}/approval-preview', [RequisitionApprovalController::class, 'preview']);
+        Route::post('/requisitions/{requisition}/route-approval', [RequisitionApprovalController::class, 'route']);
+        Route::get('/requisitions/{requisition}/approval-summary', [RequisitionApprovalController::class, 'summary']);
         Route::patch('/requisitions/{requisition}', [RequisitionController::class, 'update']);
         Route::post('/requisitions/{requisition}/apply-template', [RequisitionController::class, 'applyTemplate']);
         Route::post('/requisitions/{requisition}/submit', [RequisitionController::class, 'submit']);

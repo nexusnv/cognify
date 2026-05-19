@@ -33,7 +33,13 @@ class RequisitionPolicy
         }
 
         if (in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value], true)) {
-            return $requisition->status === RequisitionStatus::Submitted;
+            return in_array($requisition->status, [
+                RequisitionStatus::Submitted,
+                RequisitionStatus::PendingApproval,
+                RequisitionStatus::ChangesRequested,
+                RequisitionStatus::Approved,
+                RequisitionStatus::Rejected,
+            ], true);
         }
 
         return false;
@@ -51,13 +57,21 @@ class RequisitionPolicy
         return $this->update($user, $requisition);
     }
 
+    public function routeApproval(User $user, Requisition $requisition): bool
+    {
+        $role = app(CurrentTenant::class)->roleFor($user);
+
+        return in_array($requisition->status, [RequisitionStatus::Submitted], true)
+            && ($role === TenantRole::Admin->value || $requisition->requester_id === $user->id);
+    }
+
     public function requestChanges(User $user, Requisition $requisition): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);
 
         return $this->view($user, $requisition)
             && in_array($role, [TenantRole::Buyer->value, TenantRole::Approver->value, TenantRole::Admin->value], true)
-            && $requisition->status === RequisitionStatus::Submitted;
+            && in_array($requisition->status, [RequisitionStatus::Submitted, RequisitionStatus::PendingApproval], true);
     }
 
     public function resubmit(User $user, Requisition $requisition): bool

@@ -47,6 +47,12 @@ class RequisitionResource extends JsonResource
             'changesRequestedBy' => $this->userSummary($this->whenLoaded('changesRequestedBy')),
             'changeRequestReason' => $this->change_request_reason,
             'changeRequestFields' => $this->change_request_fields ?? [],
+            'approvedAt' => $this->approved_at?->toISOString(),
+            'approvedBy' => $this->userSummary($this->whenLoaded('approvedBy')),
+            'rejectedAt' => $this->rejected_at?->toISOString(),
+            'rejectedBy' => $this->userSummary($this->whenLoaded('rejectedBy')),
+            'rejectionReason' => $this->rejection_reason,
+            'approvalInstanceId' => $this->approval_instance_id !== null ? (string) $this->approval_instance_id : null,
             'withdrawnAt' => $this->withdrawn_at?->toISOString(),
             'withdrawnBy' => $this->userSummary($this->whenLoaded('withdrawnBy')),
             'withdrawalReason' => $this->withdrawal_reason,
@@ -60,14 +66,14 @@ class RequisitionResource extends JsonResource
                     && ($request->user()?->can('submit', $this->resource) ?? false),
                 'canResubmit' => $this->status === RequisitionStatus::ChangesRequested
                     && ($request->user()?->can('resubmit', $this->resource) ?? false),
-                'canRequestChanges' => $this->status === RequisitionStatus::Submitted
+                'canRequestChanges' => in_array($this->status, [RequisitionStatus::Submitted, RequisitionStatus::PendingApproval], true)
                     && ($request->user()?->can('requestChanges', $this->resource) ?? false),
                 'canWithdraw' => in_array($this->status, [
                     RequisitionStatus::Draft,
                     RequisitionStatus::Submitted,
                     RequisitionStatus::ChangesRequested,
                 ], true) && ($request->user()?->can('withdraw', $this->resource) ?? false),
-                'canCancel' => in_array($this->status, [RequisitionStatus::Submitted, RequisitionStatus::ChangesRequested], true)
+                'canCancel' => in_array($this->status, [RequisitionStatus::Submitted, RequisitionStatus::PendingApproval, RequisitionStatus::ChangesRequested], true)
                     && ($request->user()?->can('cancel', $this->resource) ?? false),
                 'canComment' => $request->user()?->can('comment', $this->resource) ?? false,
                 'canMention' => $request->user()?->can('mention', $this->resource) ?? false,

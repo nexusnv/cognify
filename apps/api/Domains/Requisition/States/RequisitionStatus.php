@@ -8,6 +8,8 @@ enum RequisitionStatus: string
     case Submitted = 'submitted';
     case PendingApproval = 'pending_approval';
     case ChangesRequested = 'changes_requested';
+    case Approved = 'approved';
+    case Rejected = 'rejected';
     case Withdrawn = 'withdrawn';
     case Cancelled = 'cancelled';
 }

@@ -36,18 +36,7 @@ export function ProjectForm({
   const currentUserQuery = useCurrentUser();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [values, setValues] = useState<ProjectFormValues>({
-    name: project?.name ?? "",
-    charter: project?.charter ?? "",
-    ownerId: project?.owner.id ?? "",
-    budgetAmount: project?.budgetAmount?.toFixed(2) ?? "",
-    currency: project?.currency ?? "MYR",
-    department: project?.department ?? "",
-    costCenter: project?.costCenter ?? "",
-    targetStartDate: project?.targetStartDate ?? "",
-    targetCompletionDate: project?.targetCompletionDate ?? "",
-  });
-
+  const [values, setValues] = useState<ProjectFormValues>(() => initialProjectFormValues(project));
   const formKey = mode === "edit" && project ? project.id : "create";
 
   const ownerOptions = useMemo(() => {
@@ -283,4 +272,18 @@ export function ProjectForm({
       </div>
     </form>
   );
+}
+
+function initialProjectFormValues(project?: ProcurementProject): ProjectFormValues {
+  return {
+    name: project?.name ?? "",
+    charter: project?.charter ?? "",
+    ownerId: project?.owner.id ?? "",
+    budgetAmount: project?.budgetAmount?.toFixed(2) ?? "",
+    currency: project?.currency ?? "MYR",
+    department: project?.department ?? "",
+    costCenter: project?.costCenter ?? "",
+    targetStartDate: project?.targetStartDate ?? "",
+    targetCompletionDate: project?.targetCompletionDate ?? "",
+  };
 }

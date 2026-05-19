@@ -59,7 +59,7 @@ class DemoRequisitionSeeder
                 'requester',
                 'REQ-2026-0001',
                 'HQ workplace refresh',
-                RequisitionStatus::Submitted,
+                RequisitionStatus::PendingApproval,
                 'Operations',
                 'CC-OPS-100',
                 [
@@ -97,7 +97,7 @@ class DemoRequisitionSeeder
                 'vendor_manager',
                 'REQ-2026-1001',
                 'Regional warehouse supplies',
-                RequisitionStatus::Submitted,
+                RequisitionStatus::Approved,
                 'Operations',
                 'CC-NW-410',
                 [
@@ -110,7 +110,7 @@ class DemoRequisitionSeeder
                 'vendor_manager',
                 'REQ-2026-1002',
                 'Fleet maintenance review',
-                RequisitionStatus::PendingApproval,
+                RequisitionStatus::Rejected,
                 'Logistics',
                 'CC-NW-520',
                 [

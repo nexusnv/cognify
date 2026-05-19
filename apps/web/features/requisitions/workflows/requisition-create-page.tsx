@@ -1,5 +1,6 @@
 "use client";
 
+import { RequisitionApprovalSummary } from "../components/requisition-approval-summary";
 import { RequisitionForm } from "../forms/requisition-form";
 import { useRequisition } from "../hooks/use-requisition";
 
@@ -27,5 +28,12 @@ export function RequisitionCreatePage({ requisitionId }: { requisitionId?: strin
       ? { ...requisitionQuery.data, status: "draft" as const }
       : requisitionQuery.data;
 
-  return <RequisitionForm initialRequisition={initialRequisition} />;
+  return (
+    <div className="space-y-6">
+      {requisitionId && requisitionQuery.data ? (
+        <RequisitionApprovalSummary requisitionId={requisitionId} />
+      ) : null}
+      <RequisitionForm initialRequisition={initialRequisition} />
+    </div>
+  );
 }
