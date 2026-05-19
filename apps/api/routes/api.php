@@ -21,6 +21,7 @@ use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
+use Domains\Quotation\Http\Controllers\RfqInvitationController;
 use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
@@ -28,6 +29,7 @@ use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
 use Domains\Requisition\Http\Controllers\RequisitionItemSuggestionController;
 use Domains\Requisition\Http\Controllers\RequisitionTemplateController;
 use Domains\Search\Http\Controllers\SearchController;
+use Domains\Vendor\Http\Controllers\VendorPickerController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -93,6 +95,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);
         Route::post('/rfqs/{rfq}/cancel', [RfqController::class, 'cancel']);
+        Route::get('/vendors', [VendorPickerController::class, 'index']);
+        Route::get('/rfqs/{rfq}/invitations', [RfqInvitationController::class, 'index']);
+        Route::post('/rfqs/{rfq}/invitations', [RfqInvitationController::class, 'store']);
+        Route::post('/rfq-invitations/{invitation}/resend', [RfqInvitationController::class, 'resend']);
+        Route::post('/rfq-invitations/{invitation}/cancel', [RfqInvitationController::class, 'cancel']);
+        Route::patch('/rfq-invitations/{invitation}/status', [RfqInvitationController::class, 'status']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);

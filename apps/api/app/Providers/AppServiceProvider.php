@@ -10,8 +10,10 @@ use App\Tenancy\CurrentTenant;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Project\Policies\ProcurementProjectPolicy;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\Models\SourcingIntakeReview;
 use Domains\Quotation\Policies\RfqPolicy;
+use Domains\Quotation\Policies\RfqInvitationPolicy;
 use Domains\Quotation\Policies\SourcingIntakeReviewPolicy;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Policies\RequisitionPolicy;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProcurementProject::class, ProcurementProjectPolicy::class);
         Gate::policy(SourcingIntakeReview::class, SourcingIntakeReviewPolicy::class);
         Gate::policy(Rfq::class, RfqPolicy::class);
+        Gate::policy(RfqInvitation::class, RfqInvitationPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
     }
