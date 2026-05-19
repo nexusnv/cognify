@@ -7,6 +7,7 @@ use App\Tenancy\Tenant;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class VendorPickerApiTest extends TestCase
@@ -43,16 +44,18 @@ class VendorPickerApiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/vendors?status=active')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', (string) $active->id)
-            ->assertJsonPath('data.0.name', 'Acme Supplies')
-            ->assertJsonPath('data.0.defaultContact.name', 'Ada Buyer')
-            ->assertJsonPath('data.0.defaultContact.email', 'ada@example.test')
-            ->assertJsonMissing(['name' => 'Dormant Vendor'])
-            ->assertJsonMissing(['name' => 'Other Tenant Vendor']);
+        $response = $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/vendors?status=active');
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', (string) $active->id);
+        $response->assertJsonPath('data.0.name', 'Acme Supplies');
+        $response->assertJsonPath('data.0.defaultContact.name', 'Ada Buyer');
+        $response->assertJsonPath('data.0.defaultContact.email', 'ada@example.test');
+
+        $this->assertSame([(string) $active->id], array_column($response->json('data'), 'id'));
+        $this->assertSame(['Acme Supplies'], array_column($response->json('data'), 'name'));
     }
 
     public function test_requester_cannot_use_vendor_picker(): void
@@ -76,7 +79,7 @@ class VendorPickerApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => fake()->company()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
         $user = User::factory()->create();
         $tenant->users()->attach($user->id, ['role' => $role]);
 

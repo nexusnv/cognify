@@ -15,6 +15,7 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -30,12 +31,13 @@ class RfqInvitationApiTest extends TestCase
         $vendor = $this->vendor($tenant, [
             'name' => 'Northwind Traders',
         ]);
+        $responseDueAt = now()->addDays(14);
 
         $created = $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/invitations", [
                 'vendorIds' => [(string) $vendor->id],
                 'message' => 'Please respond with pricing and delivery details.',
-                'responseDueAt' => '2026-06-30T17:00:00Z',
+                'responseDueAt' => $responseDueAt->utc()->toIso8601String(),
             ])
             ->assertCreated()
             ->assertJsonPath('data.0.vendor.id', (string) $vendor->id)
@@ -99,6 +101,14 @@ class RfqInvitationApiTest extends TestCase
             ])
             ->assertStatus(409)
             ->assertJsonPath('error.code', 'conflict');
+
+        $this->assertSame(
+            1,
+            RfqInvitation::query()
+                ->where('rfq_id', $rfq->id)
+                ->where('vendor_id', $vendor->id)
+                ->count()
+        );
     }
 
     public function test_requester_cannot_manage_rfq_invitations(): void
@@ -201,6 +211,16 @@ class RfqInvitationApiTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.status', RfqInvitationStatus::Acknowledged->value);
+
+        $this->assertDatabaseHas('rfq_invitations', [
+            'id' => $invitation->id,
+            'status' => RfqInvitationStatus::Acknowledged->value,
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $buyer->id,
+            'event_type' => 'rfq_invitation.acknowledged',
+        ]);
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self
@@ -215,7 +235,7 @@ class RfqInvitationApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => fake()->company()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
         $user = User::factory()->create();
         $tenant->users()->attach($user->id, ['role' => $role]);
 
@@ -224,17 +244,27 @@ class RfqInvitationApiTest extends TestCase
 
     private function vendor(Tenant $tenant, array $overrides = []): Vendor
     {
-        return Vendor::query()->create(array_merge([
+        $vendor = Vendor::query()->create(array_merge([
             'tenant_id' => $tenant->id,
-            'name' => fake()->unique()->company(),
+            'name' => 'Vendor',
             'status' => 'active',
             'category' => 'IT Hardware',
             'risk_rating' => 'low',
             'metadata' => [
                 'contactName' => 'Vendor Contact',
-                'contactEmail' => fake()->unique()->safeEmail(),
+                'contactEmail' => 'vendor@example.test',
             ],
         ], $overrides));
+
+        $vendor->forceFill([
+            'name' => $overrides['name'] ?? 'Vendor ' . $vendor->id,
+            'metadata' => array_merge([
+                'contactName' => 'Vendor Contact ' . $vendor->id,
+                'contactEmail' => 'vendor-' . $vendor->id . '@example.test',
+            ], $overrides['metadata'] ?? []),
+        ])->save();
+
+        return $vendor->refresh();
     }
 
     private function draftRfq(Tenant $tenant, User $requester, User $buyer): Rfq
@@ -242,11 +272,15 @@ class RfqInvitationApiTest extends TestCase
         $requisition = Requisition::query()->create([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-' . fake()->unique()->numerify('####'),
+            'number' => 'REQ',
             'title' => 'Laptop refresh',
             'status' => RequisitionStatus::Approved,
             'currency' => 'USD',
         ]);
+
+        $requisition->forceFill([
+            'number' => 'REQ-' . $requisition->id,
+        ])->save();
 
         $review = SourcingIntakeReview::query()->create([
             'tenant_id' => $tenant->id,
@@ -257,16 +291,22 @@ class RfqInvitationApiTest extends TestCase
             'decision_reason' => 'Competitive sourcing required.',
         ]);
 
-        return Rfq::query()->create([
+        $rfq = Rfq::query()->create([
             'tenant_id' => $tenant->id,
             'sourcing_intake_review_id' => $review->id,
             'requisition_id' => $requisition->id,
-            'number' => 'RFQ-' . fake()->unique()->numerify('####'),
+            'number' => 'RFQ',
             'title' => 'Laptop refresh RFQ',
             'status' => RfqStatus::Draft,
             'required_documents' => [],
             'line_items' => [],
         ]);
+
+        $rfq->forceFill([
+            'number' => 'RFQ-' . $rfq->id,
+        ])->save();
+
+        return $rfq->refresh();
     }
 
     private function invitation(Tenant $tenant, Rfq $rfq, Vendor $vendor, array $overrides = []): RfqInvitation
