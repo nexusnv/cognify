@@ -77,13 +77,17 @@ class ApiErrorContractTest extends TestCase
             'needed_by_date' => '2026-07-15',
             'currency' => 'USD',
             'status' => RequisitionStatus::Submitted,
+            'lock_version' => 0,
             'submitted_at' => now(),
         ]);
 
         $this->actingAsTenant($tenant, $user)
-            ->patchJson("/api/requisitions/{$requisition->id}", ['title' => 'Changed'])
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'title' => 'Changed',
+                'lockVersion' => $requisition->lock_version,
+            ])
             ->assertStatus(409)
-            ->assertJsonPath('error.code', 'conflict');
+            ->assertJsonPath('error.code', 'draft_conflict');
     }
 
     public function test_ambiguous_tenant_error_uses_normalized_envelope(): void

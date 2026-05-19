@@ -918,11 +918,6 @@ export type getCurrentUserResponse200 = {
   status: 200;
 };
 
-export type getCurrentUserResponse400 = {
-  data: AmbiguousTenantResponse;
-  status: 400;
-};
-
 export type getCurrentUserResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -937,7 +932,6 @@ export type getCurrentUserResponseSuccess = getCurrentUserResponse200 & {
   headers: Headers;
 };
 export type getCurrentUserResponseError = (
-  | getCurrentUserResponse400
   | getCurrentUserResponse401
   | getCurrentUserResponse403
 ) & {

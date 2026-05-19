@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { CommandPaletteHost } from "./command-palette-host";
 import { Breadcrumbs } from "./breadcrumbs";
 import { NotificationHost } from "./notification-host";
@@ -10,6 +11,8 @@ export interface ShellHeaderProps {
   roleLabel: string;
   breadcrumbs: BreadcrumbItem[];
   mobileNav: React.ReactNode;
+  logoutPending?: boolean;
+  onLogout?: () => void;
 }
 
 export function ShellHeader({
@@ -18,6 +21,8 @@ export function ShellHeader({
   roleLabel,
   breadcrumbs,
   mobileNav,
+  logoutPending = false,
+  onLogout,
 }: ShellHeaderProps) {
   const displayedTenantName = tenantName.trim() || "Operational workspace";
   const displayedRoleLabel = roleLabel.trim() || "Member";
@@ -48,6 +53,19 @@ export function ShellHeader({
           >
             {displayedUserName}
           </Link>
+          {onLogout && (
+            <button
+              type="button"
+              aria-label="Sign out"
+              onClick={onLogout}
+              disabled={logoutPending}
+              className="inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">{logoutPending ? "Signing out" : "Sign out"}</span>
+              <span className="sm:hidden">Sign out</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

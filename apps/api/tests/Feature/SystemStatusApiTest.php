@@ -11,6 +11,7 @@ use App\Observability\SystemStatus\SystemStatusCheckResult;
 use App\Observability\SystemStatus\SystemStatusService;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\States\ApprovalTaskStatus;
 use Domains\Award\Models\Award;
 use Domains\Demo\Models\DemoSeedRun;
 use Domains\Quotation\Models\Quotation;
@@ -105,7 +106,7 @@ class SystemStatusApiTest extends TestCase
             'subject_type' => Quotation::class,
             'subject_id' => $quotation->id,
             'title' => 'Finance approval',
-            'status' => 'pending',
+            'status' => ApprovalTaskStatus::Active,
         ]);
         Award::query()->create([
             'tenant_id' => $tenant->id,

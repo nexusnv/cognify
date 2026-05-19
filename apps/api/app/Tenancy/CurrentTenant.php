@@ -6,9 +6,7 @@ use App\Models\User;
 
 class CurrentTenant
 {
-    public function __construct(private ?Tenant $tenant = null)
-    {
-    }
+    public function __construct(private ?Tenant $tenant = null) {}
 
     public function set(Tenant $tenant): void
     {
@@ -19,6 +17,11 @@ class CurrentTenant
     {
         abort_unless($this->tenant instanceof Tenant, 400, 'A tenant context is required.');
 
+        return $this->tenant;
+    }
+
+    public function nullable(): ?Tenant
+    {
         return $this->tenant;
     }
 

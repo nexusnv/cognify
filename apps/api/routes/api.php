@@ -45,10 +45,10 @@ Route::middleware('throttle:5,1')->group(function (): void {
 // Protected routes
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
+    Route::get('/me', [CurrentUserController::class, 'show']);
     Route::post('/tenants/current', [CurrentTenantController::class, 'store']);
 
     Route::middleware(ResolveCurrentTenant::class)->group(function (): void {
-        Route::get('/me', [CurrentUserController::class, 'show']);
         Route::patch('/me/profile', [UserProfileController::class, 'update']);
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);

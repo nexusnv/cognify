@@ -2,10 +2,12 @@ import {
   getCurrentUser as getCurrentUserEndpoint,
   login as loginEndpoint,
   logout as logoutEndpoint,
+  requestPasswordReset as requestPasswordResetEndpoint,
   setCurrentTenant as setCurrentTenantEndpoint,
   updateCurrentUserProfile as updateCurrentUserProfileEndpoint,
 } from "@cognify/api-client/endpoints";
 import type {
+  ForgotPasswordRequest,
   LoginRequest,
   SetCurrentTenantRequest,
   UpdateCurrentUserProfileRequest,
@@ -26,6 +28,12 @@ export function storeActiveTenantId(tenantId: string) {
   }
 }
 
+export function clearStoredActiveTenantId() {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(ACTIVE_TENANT_KEY);
+  }
+}
+
 export async function login(values: LoginFormValues) {
   await ensureCsrfCookie();
   await loginEndpoint(values satisfies LoginRequest);
@@ -33,6 +41,12 @@ export async function login(values: LoginFormValues) {
 
 export async function logout() {
   await logoutEndpoint();
+  clearStoredActiveTenantId();
+}
+
+export async function requestPasswordReset(email: string) {
+  const request = { email } satisfies ForgotPasswordRequest;
+  await requestPasswordResetEndpoint(request);
 }
 
 export async function getCurrentUser() {

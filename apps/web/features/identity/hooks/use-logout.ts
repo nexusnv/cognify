@@ -11,7 +11,17 @@ export function useLogout() {
       queryClient.removeQueries({
         predicate: (query) => {
           const scope = query.queryKey[0];
-          return scope === "identity" || scope === "requisitions" || scope === "requisition";
+          return (
+            scope === "identity" ||
+            scope === "requisitions" ||
+            scope === "requisition" ||
+            scope === "projects" ||
+            scope === "project" ||
+            scope === "approval" ||
+            scope === "approvals" ||
+            scope === "notifications" ||
+            scope === "system"
+          );
         },
       });
     },

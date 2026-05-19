@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
+import { useLogout } from "@/features/identity/hooks/use-logout";
 import { useSystemStatus } from "@/features/system-readiness/hooks/use-system-status";
 import { getBreadcrumbs, shellNavGroups } from "./shell-route-config";
 import { formatTenantRole, formatWorkspaceLabel, getVisibleNavGroups } from "./shell-utils";
@@ -13,8 +14,10 @@ import { ShellHeader } from "./shell-header";
 import { ShellNav } from "./shell-nav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname() || "/dashboard";
   const { data } = useCurrentUser();
+  const logoutMutation = useLogout();
   const context = data?.data;
   const tenantName = formatWorkspaceLabel(context?.activeTenant?.name);
   const tenantId = context?.activeTenant?.id ?? null;
@@ -51,6 +54,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           userName={userName}
           roleLabel={roleLabel}
           breadcrumbs={breadcrumbs}
+          logoutPending={logoutMutation.isPending}
+          onLogout={() => {
+            logoutMutation.mutate(undefined, {
+              onSuccess: () => router.replace("/login"),
+            });
+          }}
           mobileNav={
             <MobileShellNav
               groups={groups}

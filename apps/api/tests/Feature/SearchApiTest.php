@@ -199,7 +199,7 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.1.title', 'Alpha Workplace Refresh')
             ->assertJsonPath('data.1.subtitle', 'PRJ-2026-ALPHA')
             ->assertJsonPath('data.1.status', 'active')
-            ->assertJsonPath('data.1.href', '/system')
+            ->assertJsonPath('data.1.href', '/projects/'.$project->id)
             ->assertJsonPath('data.2.type', 'rfq')
             ->assertJsonPath('data.2.id', (string) $rfq->id)
             ->assertJsonPath('data.2.title', 'Alpha furniture package')
