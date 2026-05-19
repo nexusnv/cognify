@@ -219,6 +219,7 @@ describe("identity workflow", () => {
 
     const loginLink = await screen.findByRole("link", { name: "sign in" });
     expect(loginLink).toHaveAttribute("href", "/login?next=%2Fprojects%2F1");
+    expect(router.replace).toHaveBeenCalledWith("/login?next=%2Fprojects%2F1");
   });
 
   it("includes the current query string in the sign-in next path", async () => {
@@ -239,6 +240,9 @@ describe("identity workflow", () => {
     const loginLink = await screen.findByRole("link", { name: "sign in" });
     expect(loginLink).toHaveAttribute(
       "href",
+      "/login?next=%2Fprojects%2F1%3Ftab%3Dactivity%26view%3Dcompact",
+    );
+    expect(router.replace).toHaveBeenCalledWith(
       "/login?next=%2Fprojects%2F1%3Ftab%3Dactivity%26view%3Dcompact",
     );
   });

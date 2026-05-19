@@ -144,6 +144,21 @@ class IdentityApiTest extends TestCase
         $response->assertJsonCount(2, 'data.tenants');
     }
 
+    public function test_single_tenant_user_without_tenant_header_auto_selects_active_tenant(): void
+    {
+        $acme = Tenant::create(['name' => 'Acme Procurement']);
+
+        $user = User::factory()->create();
+        $user->tenants()->attach($acme->id, ['role' => TenantRole::Requester->value]);
+
+        $response = $this->actingAs($user)->getJson('/api/me');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.activeTenant.id', (string) $acme->id);
+        $response->assertJsonPath('data.activeRole', TenantRole::Requester->value);
+        $response->assertJsonCount(1, 'data.tenants');
+    }
+
     public function test_current_tenant_rejects_non_member_tenant(): void
     {
         $acme = Tenant::create(['name' => 'Acme Procurement']);
