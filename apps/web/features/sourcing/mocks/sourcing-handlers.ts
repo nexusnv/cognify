@@ -181,7 +181,7 @@ export const sourcingHandlers = [
           : "direct_award_recorded";
     review.permissions.canUpdate = false;
     review.permissions.canRecordDecision = false;
-    review.permissions.canCreateRfq = false;
+    review.permissions.canCreateRfq = payload.sourcingPath === "needs_rfq";
     review.updatedAt = "2026-05-19T08:10:00.000Z";
     review.decidedAt = "2026-05-19T08:10:00.000Z";
     return HttpResponse.json({ data: review });

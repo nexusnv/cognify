@@ -138,7 +138,7 @@ class SourcingIntakeApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', SourcingIntakeStatus::ReadyForRfq->value)
             ->assertJsonPath('data.sourcingPath', SourcingPath::NeedsRfq->value)
-            ->assertJsonPath('data.permissions.canCreateRfq', false);
+            ->assertJsonPath('data.permissions.canCreateRfq', true);
 
         $this->assertDatabaseHas('audit_events', [
             'tenant_id' => $tenant->id,

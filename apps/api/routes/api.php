@@ -20,6 +20,7 @@ use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
+use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
@@ -88,6 +89,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::patch('/sourcing/intake-reviews/{review}', [SourcingIntakeReviewController::class, 'update']);
         Route::post('/sourcing/intake-reviews/{review}/decision', [SourcingIntakeReviewController::class, 'decision']);
         Route::post('/sourcing/intake-reviews/{review}/close', [SourcingIntakeReviewController::class, 'close']);
+        Route::post('/sourcing/intake-reviews/{review}/rfq', [RfqController::class, 'storeForIntake']);
+        Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
+        Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);
+        Route::post('/rfqs/{rfq}/cancel', [RfqController::class, 'cancel']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);

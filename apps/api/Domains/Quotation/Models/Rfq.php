@@ -4,6 +4,7 @@ namespace Domains\Quotation\Models;
 
 use App\Tenancy\Tenant;
 use Domains\Project\Models\ProcurementProject;
+use Domains\Quotation\States\RfqStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,12 +17,22 @@ class Rfq extends Model
 
     protected $fillable = [
         'tenant_id',
+        'sourcing_intake_review_id',
         'project_id',
         'requisition_id',
         'number',
         'title',
         'status',
         'due_at',
+        'response_due_at',
+        'scope_summary',
+        'response_instructions',
+        'required_documents',
+        'line_items',
+        'evaluation_notes',
+        'internal_notes',
+        'cancel_reason',
+        'cancelled_at',
         'metadata',
     ];
 
@@ -29,6 +40,10 @@ class Rfq extends Model
     {
         return [
             'due_at' => 'datetime',
+            'response_due_at' => 'datetime',
+            'required_documents' => 'array',
+            'line_items' => 'array',
+            'cancelled_at' => 'datetime',
             'metadata' => 'array',
         ];
     }
@@ -37,6 +52,17 @@ class Rfq extends Model
     {
         static::saving(function (self $rfq): void {
             DB::transaction(function () use ($rfq): void {
+                if ($rfq->sourcing_intake_review_id !== null && ($rfq->isDirty('sourcing_intake_review_id') || $rfq->isDirty('tenant_id'))) {
+                    $review = SourcingIntakeReview::query()
+                        ->whereKey($rfq->sourcing_intake_review_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($review !== null && (int) $review->tenant_id !== (int) $rfq->tenant_id) {
+                        throw new InvalidArgumentException('RFQ sourcing intake review must belong to the same tenant.');
+                    }
+                }
+
                 if ($rfq->project_id !== null && ($rfq->isDirty('project_id') || $rfq->isDirty('tenant_id'))) {
                     $project = ProcurementProject::query()
                         ->whereKey($rfq->project_id)
@@ -62,12 +88,30 @@ class Rfq extends Model
         });
     }
 
+    public function statusState(): RfqStatus
+    {
+        return RfqStatus::from((string) $this->getAttribute('status'));
+    }
+
+    public function isEditable(): bool
+    {
+        return $this->statusState()->isEditable();
+    }
+
     /**
      * @return BelongsTo<Tenant, $this>
      */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * @return BelongsTo<SourcingIntakeReview, $this>
+     */
+    public function sourcingIntakeReview(): BelongsTo
+    {
+        return $this->belongsTo(SourcingIntakeReview::class, 'sourcing_intake_review_id');
     }
 
     /**
