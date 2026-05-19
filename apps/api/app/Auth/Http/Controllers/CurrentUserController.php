@@ -8,6 +8,7 @@ use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CurrentUserController
 {
@@ -32,12 +33,17 @@ class CurrentUserController
 
         if ($tenantId !== null && $tenantId !== '') {
             $tenant = Tenant::query()->whereKey($tenantId)->first();
-            abort_unless($tenant instanceof Tenant, 403, 'Tenant membership is required.');
+            if (! $tenant instanceof Tenant) {
+                throw new HttpException(404, 'Tenant not found.');
+            }
+
             abort_unless($user->tenants()->whereKey($tenant->id)->exists(), 403, 'Tenant membership is required.');
 
             return $tenant;
         }
 
-        return $user->tenants()->count() === 1 ? $user->tenants()->first() : null;
+        $tenants = $user->tenants()->get();
+
+        return $tenants->count() === 1 ? $tenants->first() : null;
     }
 }

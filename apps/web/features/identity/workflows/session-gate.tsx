@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { TenantSelection } from "../components/tenant-selection";
 import type React from "react";
 
 function SignInRequired() {
   const pathname = usePathname() || "/dashboard";
-  const loginHref = `/login?next=${encodeURIComponent(pathname)}`;
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const next = search ? `${pathname}?${search}` : pathname;
+  const loginHref = `/login?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">

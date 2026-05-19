@@ -221,6 +221,28 @@ describe("identity workflow", () => {
     expect(loginLink).toHaveAttribute("href", "/login?next=%2Fprojects%2F1");
   });
 
+  it("includes the current query string in the sign-in next path", async () => {
+    pathname = "/projects/1";
+    searchParams = new URLSearchParams({ tab: "activity", view: "compact" });
+    server.use(
+      http.get("/api/me", () => {
+        return HttpResponse.json({ message: "Unauthenticated." }, { status: 401 });
+      }),
+    );
+
+    renderWithQuery(
+      <SessionGate>
+        <div>Workspace ready</div>
+      </SessionGate>,
+    );
+
+    const loginLink = await screen.findByRole("link", { name: "sign in" });
+    expect(loginLink).toHaveAttribute(
+      "href",
+      "/login?next=%2Fprojects%2F1%3Ftab%3Dactivity%26view%3Dcompact",
+    );
+  });
+
   it("lets a multi-tenant user choose a workspace when current user has no active tenant", async () => {
     server.use(
       http.get("/api/me", () => {
@@ -256,6 +278,35 @@ describe("identity workflow", () => {
 
     expect(await screen.findByText("Password reset instructions sent.")).toBeInTheDocument();
     expect(resetBody).toEqual({ email: "test@example.com" });
+  });
+
+  it("clears stale password reset success before retrying", async () => {
+    let resetAttempts = 0;
+    server.use(
+      http.post("/api/auth/forgot-password", () => {
+        resetAttempts += 1;
+
+        return resetAttempts === 1
+          ? new HttpResponse(null, { status: 204 })
+          : HttpResponse.json({ message: "Reset failed." }, { status: 500 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithQuery(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "Forgot password?" }));
+    await user.type(screen.getByLabelText("Email"), "test@example.com");
+    await user.click(screen.getByRole("button", { name: "Send reset instructions" }));
+
+    expect(await screen.findByText("Password reset instructions sent.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Send reset instructions" }));
+
+    expect(
+      await screen.findByText("We could not request a password reset. Try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Password reset instructions sent.")).not.toBeInTheDocument();
   });
 
   it("clears the stored active tenant when logging out", async () => {

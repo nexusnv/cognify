@@ -47,6 +47,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
   };
 
   const onResetSubmit = async ({ email }: ResetPasswordValues) => {
+    setResetSent(false);
     setResetError(null);
     setResetPending(true);
     try {
@@ -89,6 +90,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
             type="button"
             className="text-sm text-muted-foreground underline"
             onClick={() => {
+              setResetSent(false);
               setResetMode(false);
               setResetError(null);
             }}
@@ -149,7 +151,11 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
         <button
           type="button"
           className="text-sm text-muted-foreground underline"
-          onClick={() => setResetMode(true)}
+          onClick={() => {
+            setResetSent(false);
+            setResetMode(true);
+            setResetError(null);
+          }}
         >
           Forgot password?
         </button>

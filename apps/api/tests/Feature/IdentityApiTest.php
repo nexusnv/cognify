@@ -161,6 +161,22 @@ class IdentityApiTest extends TestCase
         $response->assertJsonPath('error.message', 'Tenant membership is required.');
     }
 
+    public function test_current_identity_returns_not_found_for_missing_tenant_header(): void
+    {
+        $tenant = Tenant::create(['name' => 'Acme Procurement']);
+
+        $user = User::factory()->create();
+        $user->tenants()->attach($tenant->id, ['role' => TenantRole::Requester->value]);
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Tenant-Id', '999')
+            ->getJson('/api/me');
+
+        $response->assertStatus(404);
+        $response->assertJsonPath('error.code', 'not_found');
+        $response->assertJsonPath('error.message', 'Tenant not found.');
+    }
+
     public function test_post_tenants_current_rejects_non_member_tenant(): void
     {
         $tenant = Tenant::create(['name' => 'Acme Procurement']);
