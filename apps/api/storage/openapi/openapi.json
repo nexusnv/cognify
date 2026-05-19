@@ -10019,7 +10019,9 @@
         "required": [
           "id",
           "name",
+          "category",
           "status",
+          "riskRating",
           "defaultContact"
         ],
         "properties": {
@@ -10100,6 +10102,16 @@
           "rfqId",
           "status",
           "vendor",
+          "contactName",
+          "contactEmail",
+          "message",
+          "responseDueAt",
+          "sentAt",
+          "acknowledgedAt",
+          "declinedAt",
+          "expiredAt",
+          "cancelledAt",
+          "cancelReason",
           "permissions",
           "createdAt",
           "updatedAt"

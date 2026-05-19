@@ -11,8 +11,8 @@ import type { VendorPickerItemDefaultContact } from "./vendorPickerItemDefaultCo
 export interface VendorPickerItem {
   id: string;
   name: string;
-  category?: VendorPickerItemCategory;
+  category: VendorPickerItemCategory;
   status: string;
-  riskRating?: VendorPickerItemRiskRating;
+  riskRating: VendorPickerItemRiskRating;
   defaultContact: VendorPickerItemDefaultContact;
 }
