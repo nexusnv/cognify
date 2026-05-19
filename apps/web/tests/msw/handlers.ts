@@ -9,6 +9,7 @@ import { searchHandlers } from "../../features/search/mocks/search-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 import { projectHandlers } from "@/features/projects/mocks/project-handlers";
 import { sourcingHandlers } from "@/features/sourcing/mocks/sourcing-handlers";
+import { rfqHandlers } from "@/features/sourcing/mocks/rfq-handlers";
 
 export const handlers = [
   http.get("/api/health", () => {
@@ -21,6 +22,7 @@ export const handlers = [
   ...requisitionsHandlers,
   ...projectHandlers,
   ...sourcingHandlers,
+  ...rfqHandlers,
   ...searchHandlers,
   ...attachmentHandlers,
   ...identityHandlers,

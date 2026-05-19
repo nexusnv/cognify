@@ -5,6 +5,7 @@ import { resetAttachmentMockState } from "../features/attachments/mocks/attachme
 import { resetIdentityMockState } from "../features/identity/mocks/identity-handlers";
 import { resetNotificationMockState } from "../features/notifications/mocks/notification-handlers";
 import { resetRequisitionMockState } from "../features/requisitions/mocks/requisitions-handlers";
+import { resetRfqMockState } from "../features/sourcing/mocks/rfq-handlers";
 import { server } from "./msw/server";
 
 Object.defineProperty(URL, "createObjectURL", {
@@ -27,6 +28,7 @@ afterEach(() => {
   resetApprovalMockState();
   resetAttachmentMockState();
   resetRequisitionMockState();
+  resetRfqMockState();
   resetIdentityMockState();
   resetNotificationMockState();
 });
