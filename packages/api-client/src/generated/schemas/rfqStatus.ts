@@ -10,5 +10,6 @@ export type RfqStatus = (typeof RfqStatus)[keyof typeof RfqStatus];
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RfqStatus = {
   draft: "draft",
+  open: "open",
   cancelled: "cancelled",
 } as const;

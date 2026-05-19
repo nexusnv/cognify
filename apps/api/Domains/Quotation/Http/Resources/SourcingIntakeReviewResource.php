@@ -2,6 +2,7 @@
 
 namespace Domains\Quotation\Http\Resources;
 
+use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\States\SourcingIntakeStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -52,7 +53,8 @@ class SourcingIntakeReviewResource extends JsonResource
                     SourcingIntakeStatus::ReadyForRfq,
                     SourcingIntakeStatus::DirectAwardRecorded,
                 ], true),
-                'canCreateRfq' => $status === SourcingIntakeStatus::ReadyForRfq,
+                'canCreateRfq' => $status === SourcingIntakeStatus::ReadyForRfq
+                    && ($request->user()?->can('create', Rfq::class) ?? false),
             ],
         ];
     }

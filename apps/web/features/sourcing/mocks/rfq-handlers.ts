@@ -6,8 +6,8 @@ import type {
   RfqUpdateRequest,
 } from "@cognify/api-client/schemas";
 import { rfqDraftFixture } from "./rfq-fixtures";
+import { sourcingIntakeFixtures } from "./sourcing-fixtures";
 
-const readyReviewId = rfqDraftFixture.intakeReview.id;
 const initialRfq = structuredClone(rfqDraftFixture);
 
 let rfqs = new Map<string, Rfq>([[initialRfq.id, initialRfq]]);
@@ -43,16 +43,24 @@ function buildLineItems(existing: Rfq, lineItems: RfqUpdateRequest["lineItems"])
 
   const currency = existing.lineItems[0]?.currency ?? "MYR";
 
-  return lineItems.map((item) => ({
-    name: item.description,
-    description: item.description,
-    quantity: item.quantity,
-    unit: item.unit,
-    notes: item.notes ?? undefined,
-    unitOfMeasure: item.unit,
-    estimatedUnitPrice: existing.lineItems[0]?.estimatedUnitPrice ?? null,
-    currency,
-  }));
+  return lineItems.map((item) => {
+    const matchedLine = existing.lineItems.find((existingLine) => {
+      const existingKey = `${existingLine.description ?? existingLine.name}|${existingLine.unit}`;
+      const incomingKey = `${item.description}|${item.unit}`;
+      return existingKey === incomingKey;
+    });
+
+    return {
+      name: item.description,
+      description: item.description,
+      quantity: item.quantity,
+      unit: item.unit,
+      notes: item.notes ?? undefined,
+      unitOfMeasure: item.unit,
+      estimatedUnitPrice: matchedLine?.estimatedUnitPrice ?? null,
+      currency,
+    };
+  });
 }
 
 export function resetRfqMockState() {
@@ -65,7 +73,14 @@ export const rfqHandlers = [
     if (reviewId === "sourcing-forbidden") {
       return forbidden("You do not have access to create this RFQ.");
     }
-    if (reviewId !== readyReviewId) {
+    const review = sourcingIntakeFixtures.find((item) => item.id === reviewId);
+    if (!review) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Sourcing intake review was not found." } },
+        { status: 404 },
+      );
+    }
+    if (review.status !== "ready_for_rfq") {
       return conflict("Review is not ready for RFQ.");
     }
 

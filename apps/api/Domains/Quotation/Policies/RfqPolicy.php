@@ -16,7 +16,7 @@ class RfqPolicy
 
     public function view(User $user, Rfq $rfq): bool
     {
-        return $this->canManageSourcing($user);
+        return $this->isTenantScoped($user, $rfq) && $this->canManageSourcing($user);
     }
 
     public function create(User $user): bool
@@ -26,12 +26,16 @@ class RfqPolicy
 
     public function update(User $user, Rfq $rfq): bool
     {
-        return $this->canManageSourcing($user);
+        return $this->isTenantScoped($user, $rfq)
+            && $this->canManageSourcing($user)
+            && $rfq->isEditable();
     }
 
     public function cancel(User $user, Rfq $rfq): bool
     {
-        return $this->canManageSourcing($user);
+        return $this->isTenantScoped($user, $rfq)
+            && $this->canManageSourcing($user)
+            && $rfq->isEditable();
     }
 
     private function canManageSourcing(User $user): bool
@@ -39,5 +43,12 @@ class RfqPolicy
         $role = app(CurrentTenant::class)->roleFor($user);
 
         return in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true);
+    }
+
+    private function isTenantScoped(User $user, Rfq $rfq): bool
+    {
+        $tenant = app(CurrentTenant::class)->nullable();
+
+        return $tenant !== null && (int) $rfq->tenant_id === (int) $tenant->id;
     }
 }

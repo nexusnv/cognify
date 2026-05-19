@@ -955,7 +955,6 @@ class RfqResource extends JsonResource
         return [
             'id' => (string) $user->id,
             'name' => $user->name,
-            'email' => $user->email,
         ];
     }
 }

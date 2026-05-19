@@ -16,8 +16,10 @@ class RfqResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $rfq = $this->resource;
         $status = $this->statusState();
-        $canEdit = $status === RfqStatus::Draft;
+        $canUpdate = $request->user()?->can('update', $rfq) ?? false;
+        $canCancel = $request->user()?->can('cancel', $rfq) ?? false;
 
         return [
             'id' => (string) $this->id,
@@ -41,8 +43,8 @@ class RfqResource extends JsonResource
             'project' => $this->projectSummary($this->whenLoaded('project')),
             'auditSummary' => $this->auditSummary(),
             'permissions' => [
-                'canUpdate' => $canEdit,
-                'canCancel' => $canEdit,
+                'canUpdate' => $canUpdate,
+                'canCancel' => $canCancel,
                 'canInviteVendors' => false,
             ],
         ];
@@ -162,7 +164,6 @@ class RfqResource extends JsonResource
         return [
             'id' => (string) $user->id,
             'name' => $user->name,
-            'email' => $user->email,
         ];
     }
 }

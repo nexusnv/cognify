@@ -12,6 +12,8 @@ use Domains\Quotation\States\SourcingPath;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -193,8 +195,59 @@ class RfqDraftApiTest extends TestCase
 
         $this->actingAsTenant($tenant, $buyer)
             ->patchJson("/api/rfqs/{$rfq->id}", ['title' => 'Should not change'])
-            ->assertStatus(409)
-            ->assertJsonPath('error.code', 'conflict');
+            ->assertStatus(403)
+            ->assertJsonPath('error.code', 'forbidden');
+    }
+
+    public function test_login_and_logout_gates_rfq_endpoints_through_session_auth(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'rfq-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $review = $this->readyReview($tenant, $requester, $buyer);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'rfq-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $createdId = (string) $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/sourcing/intake-reviews/{$review->id}/rfq")
+            ->assertCreated()
+            ->json('data.id');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$createdId}")
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$createdId}")
+            ->assertUnauthorized();
+    }
+
+    public function test_unauthenticated_requests_cannot_access_rfq_endpoints(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $review = $this->readyReview($tenant, $requester, $buyer);
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/sourcing/intake-reviews/{$review->id}/rfq")
+            ->assertUnauthorized();
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self
