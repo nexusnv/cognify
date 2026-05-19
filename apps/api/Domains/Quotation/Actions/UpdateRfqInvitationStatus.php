@@ -31,25 +31,22 @@ class UpdateRfqInvitationStatus
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedInvitation->isTerminal()) {
+            $status = RfqInvitationStatus::from($data['status']);
+
+            if (! $lockedInvitation->canUpdateStatusTo($status)) {
                 throw new ConflictHttpException('This invitation status cannot be updated.');
             }
 
-            $status = RfqInvitationStatus::from($data['status']);
-            $timestampColumn = match ($status) {
-                RfqInvitationStatus::Acknowledged => 'acknowledged_at',
-                RfqInvitationStatus::Declined => 'declined_at',
-                RfqInvitationStatus::Expired => 'expired_at',
-                default => null,
-            };
+            $now = now();
 
             $attributes = [
                 'status' => $status->value,
+                'acknowledged_at' => $status === RfqInvitationStatus::Acknowledged ? $now : null,
+                'declined_at' => $status === RfqInvitationStatus::Declined ? $now : null,
+                'expired_at' => $status === RfqInvitationStatus::Expired ? $now : null,
+                'cancelled_at' => null,
+                'cancel_reason' => null,
             ];
-
-            if ($timestampColumn !== null) {
-                $attributes[$timestampColumn] = now();
-            }
 
             $lockedInvitation->forceFill($attributes)->save();
 

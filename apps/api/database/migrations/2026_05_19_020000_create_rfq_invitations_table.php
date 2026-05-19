@@ -30,7 +30,7 @@ return new class extends Migration
             $table->index(['tenant_id', 'rfq_id']);
             $table->index(['tenant_id', 'vendor_id']);
             $table->index(['tenant_id', 'status']);
-            $table->unique(['rfq_id', 'vendor_id', 'status'], 'rfq_invitation_rfq_vendor_status_unique');
+            $table->unique(['tenant_id', 'rfq_id', 'vendor_id'], 'rfq_invitation_tenant_rfq_vendor_unique');
         });
     }
 

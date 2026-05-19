@@ -28,13 +28,18 @@ class ResendRfqInvitation
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedInvitation->isTerminal()) {
+            if (! $lockedInvitation->canBeResent()) {
                 throw new ConflictHttpException('This invitation cannot be resent.');
             }
 
             $lockedInvitation->forceFill([
                 'status' => RfqInvitationStatus::Sent->value,
                 'sent_at' => now(),
+                'acknowledged_at' => null,
+                'declined_at' => null,
+                'expired_at' => null,
+                'cancelled_at' => null,
+                'cancel_reason' => null,
             ])->save();
 
             $this->audit->record(new AuditEventData(

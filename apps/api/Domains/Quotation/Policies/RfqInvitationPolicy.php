@@ -23,17 +23,17 @@ class RfqInvitationPolicy
 
     public function resend(User $user, RfqInvitation $invitation): bool
     {
-        return $this->canManageInvitation($user, $invitation) && ! $invitation->statusState()->isTerminal();
+        return $this->canManageInvitation($user, $invitation) && $invitation->canBeResent();
     }
 
     public function cancel(User $user, RfqInvitation $invitation): bool
     {
-        return $this->canManageInvitation($user, $invitation) && $invitation->statusState() !== RfqInvitationStatus::Cancelled;
+        return $this->canManageInvitation($user, $invitation) && $invitation->canBeCancelled();
     }
 
     public function updateStatus(User $user, RfqInvitation $invitation): bool
     {
-        return $this->canManageInvitation($user, $invitation) && ! $invitation->statusState()->isTerminal();
+        return $this->canManageInvitation($user, $invitation) && $invitation->statusState() === RfqInvitationStatus::Sent;
     }
 
     private function canManageInvitation(User $user, RfqInvitation $invitation): bool

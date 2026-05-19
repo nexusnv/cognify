@@ -90,6 +90,33 @@ class RfqInvitation extends Model
         return $this->statusState()->isTerminal();
     }
 
+    public function canBeResent(): bool
+    {
+        return in_array($this->statusState(), [
+            RfqInvitationStatus::Pending,
+            RfqInvitationStatus::Sent,
+        ], true);
+    }
+
+    public function canBeCancelled(): bool
+    {
+        return in_array($this->statusState(), [
+            RfqInvitationStatus::Pending,
+            RfqInvitationStatus::Sent,
+            RfqInvitationStatus::Acknowledged,
+        ], true);
+    }
+
+    public function canUpdateStatusTo(RfqInvitationStatus $status): bool
+    {
+        return $this->statusState() === RfqInvitationStatus::Sent
+            && in_array($status, [
+                RfqInvitationStatus::Acknowledged,
+                RfqInvitationStatus::Declined,
+                RfqInvitationStatus::Expired,
+            ], true);
+    }
+
     /**
      * @return BelongsTo<Tenant, $this>
      */

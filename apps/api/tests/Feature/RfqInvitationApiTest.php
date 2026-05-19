@@ -82,7 +82,7 @@ class RfqInvitationApiTest extends TestCase
         ]);
     }
 
-    public function test_duplicate_active_invitation_returns_conflict(): void
+    public function test_duplicate_invitation_returns_conflict(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
         [, $buyer] = $this->tenantUser('buyer', $tenant);
@@ -195,7 +195,59 @@ class RfqInvitationApiTest extends TestCase
             ->assertJsonPath('error.code', 'forbidden');
     }
 
-    public function test_status_update_supports_acknowledged_handoff_state(): void
+    public function test_status_update_sets_exact_timestamp_for_each_allowed_target_state(): void
+    {
+        foreach ([
+            RfqInvitationStatus::Acknowledged,
+            RfqInvitationStatus::Declined,
+            RfqInvitationStatus::Expired,
+        ] as $targetStatus) {
+            [$tenant, $requester] = $this->tenantUser('requester');
+            [, $buyer] = $this->tenantUser('buyer', $tenant);
+            $invitation = $this->invitation(
+                $tenant,
+                $this->draftRfq($tenant, $requester, $buyer),
+                $this->vendor($tenant)
+            );
+
+            $this->actingAsTenant($tenant, $buyer)
+                ->patchJson("/api/rfq-invitations/{$invitation->id}/status", [
+                    'status' => $targetStatus->value,
+                ])
+                ->assertOk()
+                ->assertJsonPath('data.status', $targetStatus->value);
+
+            $updated = $invitation->refresh();
+
+            $this->assertSame($targetStatus, $updated->statusState());
+            $this->assertNull($updated->cancelled_at);
+            $this->assertNull($updated->cancel_reason);
+
+            $timestampFields = [
+                RfqInvitationStatus::Acknowledged->value => 'acknowledged_at',
+                RfqInvitationStatus::Declined->value => 'declined_at',
+                RfqInvitationStatus::Expired->value => 'expired_at',
+            ];
+
+            $this->assertNotNull($updated->{$timestampFields[$targetStatus->value]});
+
+            foreach ($timestampFields as $statusValue => $field) {
+                if ($statusValue === $targetStatus->value) {
+                    continue;
+                }
+
+                $this->assertNull($updated->{$field});
+            }
+
+            $this->assertDatabaseHas('audit_events', [
+                'tenant_id' => $tenant->id,
+                'actor_id' => $buyer->id,
+                'event_type' => 'rfq_invitation.' . $targetStatus->value,
+            ]);
+        }
+    }
+
+    public function test_resend_is_rejected_after_acknowledged_invitation(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
         [, $buyer] = $this->tenantUser('buyer', $tenant);
@@ -209,18 +261,83 @@ class RfqInvitationApiTest extends TestCase
             ->patchJson("/api/rfq-invitations/{$invitation->id}/status", [
                 'status' => RfqInvitationStatus::Acknowledged->value,
             ])
-            ->assertOk()
-            ->assertJsonPath('data.status', RfqInvitationStatus::Acknowledged->value);
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfq-invitations/{$invitation->id}/resend")
+            ->assertForbidden();
 
         $this->assertDatabaseHas('rfq_invitations', [
             'id' => $invitation->id,
             'status' => RfqInvitationStatus::Acknowledged->value,
         ]);
-        $this->assertDatabaseHas('audit_events', [
-            'tenant_id' => $tenant->id,
-            'actor_id' => $buyer->id,
-            'event_type' => 'rfq_invitation.acknowledged',
-        ]);
+    }
+
+    public function test_cancel_is_rejected_after_declined_or_expired_invitation(): void
+    {
+        foreach ([RfqInvitationStatus::Declined, RfqInvitationStatus::Expired] as $targetStatus) {
+            [$tenant, $requester] = $this->tenantUser('requester');
+            [, $buyer] = $this->tenantUser('buyer', $tenant);
+            $invitation = $this->invitation(
+                $tenant,
+                $this->draftRfq($tenant, $requester, $buyer),
+                $this->vendor($tenant)
+            );
+
+            $this->actingAsTenant($tenant, $buyer)
+                ->patchJson("/api/rfq-invitations/{$invitation->id}/status", [
+                    'status' => $targetStatus->value,
+                ])
+                ->assertOk();
+
+            $this->actingAsTenant($tenant, $buyer)
+                ->postJson("/api/rfq-invitations/{$invitation->id}/cancel", [
+                    'cancelReason' => 'Vendor no longer in scope.',
+                ])
+                ->assertForbidden();
+
+            $this->assertDatabaseHas('rfq_invitations', [
+                'id' => $invitation->id,
+                'status' => $targetStatus->value,
+            ]);
+        }
+    }
+
+    public function test_duplicate_create_after_terminal_invitation_returns_conflict(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+
+        $invitation = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/invitations", [
+                'vendorIds' => [(string) $vendor->id],
+            ])
+            ->assertCreated()
+            ->json('data.0.id');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/rfq-invitations/{$invitation}/status", [
+                'status' => RfqInvitationStatus::Declined->value,
+            ])
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/invitations", [
+                'vendorIds' => [(string) $vendor->id],
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+
+        $this->assertSame(
+            1,
+            RfqInvitation::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('rfq_id', $rfq->id)
+                ->where('vendor_id', $vendor->id)
+                ->count()
+        );
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self
