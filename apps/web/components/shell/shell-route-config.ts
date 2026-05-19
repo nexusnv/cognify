@@ -30,6 +30,7 @@ const APPROVAL_TASK_WORKSPACE_PATH = /^\/approvals\/tasks\/[^/]+$/;
 const APPROVAL_POLICY_WORKSPACE_PATH = /^\/approval-policies\/[^/]+$/;
 const PROJECT_WORKSPACE_EDIT_PATH = /^\/projects\/([^/]+)\/edit$/;
 const PROJECT_WORKSPACE_PATH = /^\/projects\/[^/]+$/;
+const RFQ_WORKSPACE_PATH = /^\/sourcing\/rfqs\/[^/]+$/;
 
 export const shellNavGroups: ShellNavGroup[] = [
   {
@@ -136,6 +137,10 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (/^\/sourcing\/intake\/[^/]+$/.test(normalizedPathname)) {
     return [{ label: "Sourcing intake", href: "/sourcing/intake" }, { label: "Intake review" }];
+  }
+
+  if (RFQ_WORKSPACE_PATH.test(normalizedPathname)) {
+    return [{ label: "Sourcing intake", href: "/sourcing/intake" }, { label: "RFQ draft" }];
   }
 
   if (APPROVAL_TASK_WORKSPACE_PATH.test(normalizedPathname)) {
