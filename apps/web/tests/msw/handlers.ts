@@ -8,6 +8,7 @@ import { systemReadinessHandlers } from "@/features/system-readiness/mocks/syste
 import { searchHandlers } from "../../features/search/mocks/search-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 import { projectHandlers } from "@/features/projects/mocks/project-handlers";
+import { sourcingHandlers } from "@/features/sourcing/mocks/sourcing-handlers";
 
 export const handlers = [
   http.get("/api/health", () => {
@@ -19,6 +20,7 @@ export const handlers = [
   ...approvalHandlers,
   ...requisitionsHandlers,
   ...projectHandlers,
+  ...sourcingHandlers,
   ...searchHandlers,
   ...attachmentHandlers,
   ...identityHandlers,

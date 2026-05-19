@@ -2,6 +2,7 @@ import {
   Archive,
   Building2,
   CheckSquare,
+  ClipboardCheck,
   Activity,
   FileSearch,
   FileText,
@@ -21,6 +22,7 @@ const canUseRequisitions = (permissions: IdentityPermissions) =>
   permissions.canSubmitOwnDraftRequisition;
 
 const canUseAudit = (permissions: IdentityPermissions) => permissions.canAccessAdmin;
+const canUseSourcingIntake = (permissions: IdentityPermissions) => permissions.canManageSourcingIntake;
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
@@ -56,6 +58,13 @@ export const shellNavGroups: ShellNavGroup[] = [
     id: "sourcing",
     label: "Sourcing",
     items: [
+      {
+        label: "Sourcing intake",
+        href: "/sourcing/intake",
+        icon: ClipboardCheck,
+        implemented: true,
+        permission: canUseSourcingIntake,
+      },
       { label: "Vendors", href: "/vendors", icon: Building2, implemented: false },
       { label: "Quotations", href: "/quotations", icon: ReceiptText, implemented: false },
       { label: "Comparison", href: "/comparison", icon: Scale, implemented: false },
@@ -119,6 +128,14 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (normalizedPathname === "/approvals") {
     return [{ label: "Approvals" }];
+  }
+
+  if (normalizedPathname === "/sourcing/intake") {
+    return [{ label: "Sourcing intake" }];
+  }
+
+  if (/^\/sourcing\/intake\/[^/]+$/.test(normalizedPathname)) {
+    return [{ label: "Sourcing intake", href: "/sourcing/intake" }, { label: "Intake review" }];
   }
 
   if (APPROVAL_TASK_WORKSPACE_PATH.test(normalizedPathname)) {

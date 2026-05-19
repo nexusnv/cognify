@@ -9,6 +9,7 @@ use Domains\Award\Models\Award;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\SourcingIntakeReview;
 use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Support\Collection;
@@ -36,6 +37,9 @@ class DemoSeedContext
     /** @var Collection<string, Quotation> */
     public Collection $quotations;
 
+    /** @var Collection<string, SourcingIntakeReview> */
+    public Collection $sourcingIntakeReviews;
+
     /** @var Collection<string, ApprovalTask> */
     public Collection $approvalTasks;
 
@@ -51,6 +55,7 @@ class DemoSeedContext
         $this->projects = collect();
         $this->rfqs = collect();
         $this->quotations = collect();
+        $this->sourcingIntakeReviews = collect();
         $this->approvalTasks = collect();
         $this->awards = collect();
     }

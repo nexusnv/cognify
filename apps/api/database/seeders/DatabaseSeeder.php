@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
                         'projects' => $context->projects->count(),
                         'rfqs' => $context->rfqs->count(),
                         'quotations' => $context->quotations->count(),
+                        'sourcing_intake_reviews' => $context->sourcingIntakeReviews->count(),
                         'approval_tasks' => $context->approvalTasks->count(),
                         'awards' => $context->awards->count(),
                     ],
