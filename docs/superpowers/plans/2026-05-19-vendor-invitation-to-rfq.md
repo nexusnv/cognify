@@ -1041,30 +1041,56 @@ Create the remaining actions using the same `AuditRecorder` pattern:
 ```php
 // ResendRfqInvitation::handle(...)
 Gate::forUser($actor)->authorize('resend', $invitation);
-$invitation->forceFill(['status' => RfqInvitationStatus::Sent, 'sent_at' => now()])->save();
-$this->audit->record(new AuditEventData($tenant, $actor, 'rfq_invitation.resent', $invitation, ['rfqId' => (string) $invitation->rfq_id], $invitation->vendor?->name));
-return $invitation->refresh()->load('vendor');
+return DB::transaction(function () use ($tenant, $actor, $invitation): RfqInvitation {
+    $lockedInvitation = RfqInvitation::query()
+        ->where('tenant_id', $tenant->id)
+        ->whereKey($invitation->id)
+        ->lockForUpdate()
+        ->firstOrFail();
+
+    $lockedInvitation->forceFill(['status' => RfqInvitationStatus::Sent, 'sent_at' => now()])->save();
+    $this->audit->record(new AuditEventData($tenant, $actor, 'rfq_invitation.resent', $lockedInvitation, ['rfqId' => (string) $lockedInvitation->rfq_id], $lockedInvitation->vendor?->name));
+
+    return $lockedInvitation->refresh()->load('vendor');
+});
 
 // CancelRfqInvitation::handle(...)
 Gate::forUser($actor)->authorize('cancel', $invitation);
-$invitation->forceFill(['status' => RfqInvitationStatus::Cancelled, 'cancel_reason' => $data['cancelReason'], 'cancelled_at' => now()])->save();
-$this->audit->record(new AuditEventData($tenant, $actor, 'rfq_invitation.cancelled', $invitation, ['rfqId' => (string) $invitation->rfq_id], $invitation->vendor?->name));
-return $invitation->refresh()->load('vendor');
+return DB::transaction(function () use ($tenant, $actor, $invitation, $data): RfqInvitation {
+    $lockedInvitation = RfqInvitation::query()
+        ->where('tenant_id', $tenant->id)
+        ->whereKey($invitation->id)
+        ->lockForUpdate()
+        ->firstOrFail();
+
+    $lockedInvitation->forceFill(['status' => RfqInvitationStatus::Cancelled, 'cancel_reason' => $data['cancelReason'], 'cancelled_at' => now()])->save();
+    $this->audit->record(new AuditEventData($tenant, $actor, 'rfq_invitation.cancelled', $lockedInvitation, ['rfqId' => (string) $lockedInvitation->rfq_id], $lockedInvitation->vendor?->name));
+
+    return $lockedInvitation->refresh()->load('vendor');
+});
 
 // UpdateRfqInvitationStatus::handle(...)
 Gate::forUser($actor)->authorize('updateStatus', $invitation);
-$status = RfqInvitationStatus::from($data['status']);
-$timestampColumn = match ($status) {
-    RfqInvitationStatus::Acknowledged => 'acknowledged_at',
-    RfqInvitationStatus::Declined => 'declined_at',
-    RfqInvitationStatus::Expired => 'expired_at',
-    default => null,
-};
-$attributes = ['status' => $status];
-if ($timestampColumn !== null) $attributes[$timestampColumn] = now();
-$invitation->forceFill($attributes)->save();
-$this->audit->record(new AuditEventData($tenant, $actor, 'rfq_invitation.' . $status->value, $invitation, ['rfqId' => (string) $invitation->rfq_id], $invitation->vendor?->name));
-return $invitation->refresh()->load('vendor');
+return DB::transaction(function () use ($tenant, $actor, $invitation, $data): RfqInvitation {
+    $lockedInvitation = RfqInvitation::query()
+        ->where('tenant_id', $tenant->id)
+        ->whereKey($invitation->id)
+        ->lockForUpdate()
+        ->firstOrFail();
+    $status = RfqInvitationStatus::from($data['status']);
+    $timestampColumn = match ($status) {
+        RfqInvitationStatus::Acknowledged => 'acknowledged_at',
+        RfqInvitationStatus::Declined => 'declined_at',
+        RfqInvitationStatus::Expired => 'expired_at',
+        default => null,
+    };
+    $attributes = ['status' => $status];
+    if ($timestampColumn !== null) $attributes[$timestampColumn] = now();
+    $lockedInvitation->forceFill($attributes)->save();
+    $this->audit->record(new AuditEventData($tenant, $actor, 'rfq_invitation.' . $status->value, $lockedInvitation, ['rfqId' => (string) $lockedInvitation->rfq_id], $lockedInvitation->vendor?->name));
+
+    return $lockedInvitation->refresh()->load('vendor');
+});
 ```
 
 When writing these files, use named arguments for `AuditEventData` if the constructor requires them in this repo.
@@ -1186,7 +1212,7 @@ Create `apps/web/features/sourcing/schemas/rfq-invitation-schema.ts`:
 import { z } from "zod";
 
 export const createRfqInvitationsSchema = z.object({
-  vendorIds: z.array(z.string()).min(1, "Select at least one vendor."),
+  vendorIds: z.array(z.string().regex(/^\d+$/, "Vendor id must be numeric.")).min(1, "Select at least one vendor."),
   message: z.string().max(5000).nullable().optional(),
   responseDueAt: z.string().nullable().optional(),
 });

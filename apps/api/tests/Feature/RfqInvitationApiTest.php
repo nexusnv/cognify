@@ -15,6 +15,8 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -135,9 +137,134 @@ class RfqInvitationApiTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_invitation_actions_are_tenant_scoped(): void
+    public function test_login_and_logout_gates_rfq_invitation_endpoints_through_session_auth(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'rfq-invitation-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant, ['name' => 'Session Vendor']);
+        $statusVendor = $this->vendor($tenant, ['name' => 'Status Vendor']);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'rfq-invitation-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $createdId = (string) $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfqs/{$rfq->id}/invitations", [
+                'vendorIds' => [(string) $vendor->id],
+            ])
+            ->assertCreated()
+            ->json('data.0.id');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/invitations")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $createdId);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$createdId}/resend")
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$createdId}/cancel", [
+                'cancelReason' => 'No longer needed.',
+            ])
+            ->assertOk();
+
+        $statusInvitation = $this->invitation($tenant, $rfq, $statusVendor);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->patchJson("/api/rfq-invitations/{$statusInvitation->id}/status", [
+                'status' => RfqInvitationStatus::Acknowledged->value,
+            ])
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/invitations")
+            ->assertUnauthorized();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$createdId}/resend")
+            ->assertUnauthorized();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$createdId}/cancel", [
+                'cancelReason' => 'Logged out.',
+            ])
+            ->assertUnauthorized();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->patchJson("/api/rfq-invitations/{$statusInvitation->id}/status", [
+                'status' => RfqInvitationStatus::Declined->value,
+            ])
+            ->assertUnauthorized();
+    }
+
+    public function test_unauthenticated_and_invalid_token_requests_cannot_access_rfq_invitation_endpoints(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $invitation = $this->invitation($tenant, $rfq, $this->vendor($tenant));
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/invitations")
+            ->assertUnauthorized();
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfqs/{$rfq->id}/invitations", [
+                'vendorIds' => [(string) $invitation->vendor_id],
+            ])
+            ->assertUnauthorized();
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$invitation->id}/resend")
+            ->assertUnauthorized();
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$invitation->id}/cancel", [
+                'cancelReason' => 'No session.',
+            ])
+            ->assertUnauthorized();
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->patchJson("/api/rfq-invitations/{$invitation->id}/status", [
+                'status' => RfqInvitationStatus::Acknowledged->value,
+            ])
+            ->assertUnauthorized();
+
+        $this->withToken('not-a-valid-token')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/invitations")
+            ->assertUnauthorized();
+    }
+
+    public function test_invitation_actions_are_tenant_scoped(): void
+    {
+        [$tenant] = $this->tenantUser('requester');
         [, $buyer] = $this->tenantUser('buyer', $tenant);
         [$otherTenant, $otherRequester] = $this->tenantUser('requester');
         [, $otherBuyer] = $this->tenantUser('buyer', $otherTenant);

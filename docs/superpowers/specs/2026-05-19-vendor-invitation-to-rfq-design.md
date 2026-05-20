@@ -82,8 +82,8 @@ Workflow rules:
 
 - Only `draft` RFQs can receive invitations.
 - Only buyers and admins can create, resend, cancel, or update invitation status.
-- Only active vendors in the current tenant can be invited.
-- One vendor can have at most one active invitation per RFQ.
+- Invitations can be sent only to active vendors in the current tenant.
+- Each vendor may have at most one active invitation per RFQ.
 - Cancelled invitations are terminal and require a reason.
 - Resending updates `sent_at` and writes an audit event; it does not create a duplicate invitation.
 - Invitation records remain linked to the RFQ, vendor, tenant, and source procurement context.

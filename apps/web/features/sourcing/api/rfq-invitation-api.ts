@@ -17,8 +17,7 @@ import {
   type RfqInvitationViewModel,
 } from "../types/rfq-invitation-view-model";
 
-function withActiveTenantHeader(): RequestInit | undefined {
-  const tenantId = getStoredActiveTenantId();
+function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit | undefined {
   if (!tenantId) return undefined;
 
   return {
@@ -38,15 +37,19 @@ export async function fetchRfqInvitations(rfqId: string): Promise<RfqInvitationV
 export async function createRfqInvitations(
   rfqId: string,
   values: CreateRfqInvitationsRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<RfqInvitationViewModel[]> {
-  const response = await createRfqInvitationsEndpoint(rfqId, values, withActiveTenantHeader());
+  const response = await createRfqInvitationsEndpoint(rfqId, values, withActiveTenantHeader(tenantId));
   if (response.status !== 201) throw response.data;
 
   return response.data.data.map((invitation: ApiRfqInvitation) => toRfqInvitationViewModel(invitation));
 }
 
-export async function resendRfqInvitation(invitationId: string): Promise<RfqInvitationViewModel> {
-  const response = await resendRfqInvitationEndpoint(invitationId, withActiveTenantHeader());
+export async function resendRfqInvitation(
+  invitationId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<RfqInvitationViewModel> {
+  const response = await resendRfqInvitationEndpoint(invitationId, withActiveTenantHeader(tenantId));
   if (response.status !== 200) throw response.data;
 
   return toRfqInvitationViewModel(response.data.data as ApiRfqInvitation);
@@ -55,8 +58,9 @@ export async function resendRfqInvitation(invitationId: string): Promise<RfqInvi
 export async function cancelRfqInvitation(
   invitationId: string,
   values: CancelRfqInvitationRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<RfqInvitationViewModel> {
-  const response = await cancelRfqInvitationEndpoint(invitationId, values, withActiveTenantHeader());
+  const response = await cancelRfqInvitationEndpoint(invitationId, values, withActiveTenantHeader(tenantId));
   if (response.status !== 200) throw response.data;
 
   return toRfqInvitationViewModel(response.data.data as ApiRfqInvitation);
@@ -65,8 +69,9 @@ export async function cancelRfqInvitation(
 export async function updateRfqInvitationStatus(
   invitationId: string,
   values: UpdateRfqInvitationStatusRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<RfqInvitationViewModel> {
-  const response = await updateRfqInvitationStatusEndpoint(invitationId, values, withActiveTenantHeader());
+  const response = await updateRfqInvitationStatusEndpoint(invitationId, values, withActiveTenantHeader(tenantId));
   if (response.status !== 200) throw response.data;
 
   return toRfqInvitationViewModel(response.data.data as ApiRfqInvitation);

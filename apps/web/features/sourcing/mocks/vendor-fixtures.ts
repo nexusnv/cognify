@@ -2,7 +2,7 @@ import type { VendorPickerItem } from "@cognify/api-client/schemas";
 
 export const vendorPickerFixtures = [
   {
-    id: "vendor-1",
+    id: "1",
     name: "Northwind Traders",
     category: "IT Hardware",
     status: "active",
@@ -13,7 +13,7 @@ export const vendorPickerFixtures = [
     },
   },
   {
-    id: "vendor-2",
+    id: "2",
     name: "Atlas Workplace Supply",
     category: "Office Supplies",
     status: "active",
@@ -24,7 +24,7 @@ export const vendorPickerFixtures = [
     },
   },
   {
-    id: "vendor-3",
+    id: "3",
     name: "Keystone Tech Services",
     category: "Managed Services",
     status: "active",
@@ -35,7 +35,7 @@ export const vendorPickerFixtures = [
     },
   },
   {
-    id: "vendor-4",
+    id: "4",
     name: "Redwood Office Systems",
     category: "Office Supplies",
     status: "inactive",

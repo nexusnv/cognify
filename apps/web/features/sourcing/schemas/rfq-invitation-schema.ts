@@ -3,7 +3,7 @@ import { UpdateRfqInvitationStatusRequestStatus } from "@cognify/api-client/sche
 
 export const rfqInvitationCreateSchema = z.object({
   vendorIds: z
-    .array(z.string().min(1))
+    .array(z.string().regex(/^\d+$/, "Vendor id must be numeric."))
     .min(1, "Select at least one vendor.")
     .max(25, "You can invite at most 25 vendors at a time."),
   message: z.string().trim().max(5000, "Buyer message / instructions is too long.").nullable(),

@@ -6,8 +6,10 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class VendorPickerApiTest extends TestCase
@@ -65,6 +67,59 @@ class VendorPickerApiTest extends TestCase
         $this->actingAsTenant($tenant, $requester)
             ->getJson('/api/vendors?status=active')
             ->assertForbidden();
+    }
+
+    public function test_session_authentication_allows_and_denies_vendor_picker(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $buyer->forceFill([
+            'email' => 'vendor-picker-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+
+        $active = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Session Vendor',
+            'status' => 'active',
+        ]);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'vendor-picker-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/vendors?status=active')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', (string) $active->id);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/vendors?status=active')
+            ->assertUnauthorized();
+    }
+
+    public function test_unauthenticated_and_invalid_token_requests_cannot_use_vendor_picker(): void
+    {
+        [$tenant] = $this->tenantUser('buyer');
+
+        $this->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/vendors?status=active')
+            ->assertUnauthorized();
+
+        $this->withToken('not-a-valid-token')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/vendors?status=active')
+            ->assertUnauthorized();
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self

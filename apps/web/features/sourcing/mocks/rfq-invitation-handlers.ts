@@ -34,6 +34,10 @@ function validationFailed(message: string) {
   return HttpResponse.json({ error: { code: "validation_failed", message } }, { status: 422 });
 }
 
+function forbidden(message: string) {
+  return HttpResponse.json({ error: { code: "forbidden", message } }, { status: 403 });
+}
+
 function buildInvitation(
   rfqId: string,
   vendorId: string,
@@ -121,6 +125,9 @@ export const rfqInvitationHandlers = [
   http.post("/api/rfq-invitations/:invitationId/resend", ({ params }) => {
     const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
     if (!existing) return notFound();
+    if (!existing.permissions.canResend) {
+      return forbidden("This invitation cannot be resent.");
+    }
 
     const resent: RfqInvitation = {
       ...existing,
@@ -144,6 +151,9 @@ export const rfqInvitationHandlers = [
   http.post("/api/rfq-invitations/:invitationId/cancel", async ({ params, request }) => {
     const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
     if (!existing) return notFound();
+    if (!existing.permissions.canCancel) {
+      return forbidden("This invitation cannot be cancelled.");
+    }
 
     const payload = (await request.json()) as CancelRfqInvitationRequest;
     if (!payload.cancelReason?.trim()) {
@@ -173,8 +183,14 @@ export const rfqInvitationHandlers = [
   http.patch("/api/rfq-invitations/:invitationId/status", async ({ params, request }) => {
     const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
     if (!existing) return notFound();
+    if (!existing.permissions.canUpdateStatus) {
+      return forbidden("This invitation status cannot be updated.");
+    }
 
     const payload = (await request.json()) as UpdateRfqInvitationStatusRequest;
+    if (!["acknowledged", "declined", "expired"].includes(payload.status)) {
+      return validationFailed("Select a valid invitation status.");
+    }
     const timestamp = "2026-05-19T13:00:00.000000Z";
 
     const updated: RfqInvitation = {

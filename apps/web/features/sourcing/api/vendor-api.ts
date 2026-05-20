@@ -15,7 +15,7 @@ function withActiveTenantHeader(): RequestInit | undefined {
 }
 
 export async function fetchVendorPickerItems(params: ListVendorsParams = {}): Promise<VendorPickerViewModel[]> {
-  const response = await listVendorsEndpoint({ status: "active", ...params }, withActiveTenantHeader());
+  const response = await listVendorsEndpoint({ ...params, status: "active" }, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
 
   return [...response.data.data].map((vendor: VendorPickerItem) => toVendorPickerViewModel(vendor)).sort((left, right) =>

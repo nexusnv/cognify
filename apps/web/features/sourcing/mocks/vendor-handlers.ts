@@ -13,11 +13,13 @@ export const vendorHandlers = [
     const status = url.searchParams.get("status");
     const category = url.searchParams.get("category")?.toLowerCase();
 
-    const data = vendors.filter((vendor) => {
-      const matchesStatus = !status || vendor.status === status;
-      const matchesCategory = !category || vendor.category?.toLowerCase() === category;
-      return matchesStatus && matchesCategory;
-    });
+    const data = vendors
+      .filter((vendor) => {
+        const matchesStatus = !status || vendor.status === status;
+        const matchesCategory = !category || vendor.category?.toLowerCase() === category;
+        return matchesStatus && matchesCategory;
+      })
+      .map((vendor) => structuredClone(vendor));
 
     return HttpResponse.json({ data });
   }),

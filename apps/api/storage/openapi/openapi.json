@@ -4194,6 +4194,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
           }
         }
       }
@@ -10063,7 +10066,8 @@
                 "type": [
                   "string",
                   "null"
-                ]
+                ],
+                "format": "email"
               }
             }
           }
@@ -10142,7 +10146,8 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "format": "email"
           },
           "message": {
             "type": [
@@ -10305,6 +10310,7 @@
                         "string",
                         "null"
                       ],
+                      "format": "email",
                       "maxLength": 255
                     }
                   }

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   cancelRfqInvitation,
   createRfqInvitations,
@@ -19,23 +20,25 @@ function replaceInvitationInList<T extends { id: string }>(list: T[] | undefined
 
 export function useCreateRfqInvitations(rfqId: string) {
   const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
     mutationFn: (values: RfqInvitationCreateValues) =>
-      createRfqInvitations(rfqId, values as Parameters<typeof createRfqInvitations>[1]),
+      createRfqInvitations(rfqId, values as Parameters<typeof createRfqInvitations>[1], tenantId),
     onSuccess: (invitations) => {
-      queryClient.setQueryData(rfqInvitationKeys.list(rfqId), invitations);
+      queryClient.setQueryData(rfqInvitationKeys.list(rfqId, tenantId), invitations);
     },
   });
 }
 
 export function useResendRfqInvitation(rfqId: string) {
   const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (invitationId: string) => resendRfqInvitation(invitationId),
+    mutationFn: (invitationId: string) => resendRfqInvitation(invitationId, tenantId),
     onSuccess: (updatedInvitation) => {
-      queryClient.setQueryData(rfqInvitationKeys.list(rfqId), (current: unknown) =>
+      queryClient.setQueryData(rfqInvitationKeys.list(rfqId, tenantId), (current: unknown) =>
         replaceInvitationInList(
           Array.isArray(current) ? (current as Array<{ id: string }>) : undefined,
           updatedInvitation,
@@ -47,6 +50,7 @@ export function useResendRfqInvitation(rfqId: string) {
 
 export function useCancelRfqInvitation(rfqId: string) {
   const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
     mutationFn: ({
@@ -55,9 +59,9 @@ export function useCancelRfqInvitation(rfqId: string) {
     }: {
       invitationId: string;
       values: RfqInvitationCancelValues;
-    }) => cancelRfqInvitation(invitationId, values as Parameters<typeof cancelRfqInvitation>[1]),
+    }) => cancelRfqInvitation(invitationId, values as Parameters<typeof cancelRfqInvitation>[1], tenantId),
     onSuccess: (updatedInvitation) => {
-      queryClient.setQueryData(rfqInvitationKeys.list(rfqId), (current: unknown) =>
+      queryClient.setQueryData(rfqInvitationKeys.list(rfqId, tenantId), (current: unknown) =>
         replaceInvitationInList(
           Array.isArray(current) ? (current as Array<{ id: string }>) : undefined,
           updatedInvitation,
@@ -69,6 +73,7 @@ export function useCancelRfqInvitation(rfqId: string) {
 
 export function useUpdateRfqInvitationStatus(rfqId: string) {
   const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
     mutationFn: ({
@@ -77,9 +82,9 @@ export function useUpdateRfqInvitationStatus(rfqId: string) {
     }: {
       invitationId: string;
       values: RfqInvitationStatusValues;
-    }) => updateRfqInvitationStatus(invitationId, values as Parameters<typeof updateRfqInvitationStatus>[1]),
+    }) => updateRfqInvitationStatus(invitationId, values as Parameters<typeof updateRfqInvitationStatus>[1], tenantId),
     onSuccess: (updatedInvitation) => {
-      queryClient.setQueryData(rfqInvitationKeys.list(rfqId), (current: unknown) =>
+      queryClient.setQueryData(rfqInvitationKeys.list(rfqId, tenantId), (current: unknown) =>
         replaceInvitationInList(
           Array.isArray(current) ? (current as Array<{ id: string }>) : undefined,
           updatedInvitation,

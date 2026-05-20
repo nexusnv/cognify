@@ -5211,6 +5211,11 @@ export type resendRfqInvitationResponse404 = {
   status: 404;
 };
 
+export type resendRfqInvitationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type resendRfqInvitationResponseSuccess = resendRfqInvitationResponse200 & {
   headers: Headers;
 };
@@ -5218,6 +5223,7 @@ export type resendRfqInvitationResponseError = (
   | resendRfqInvitationResponse401
   | resendRfqInvitationResponse403
   | resendRfqInvitationResponse404
+  | resendRfqInvitationResponse409
 ) & {
   headers: Headers;
 };

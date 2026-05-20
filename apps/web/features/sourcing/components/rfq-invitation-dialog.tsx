@@ -63,6 +63,8 @@ export function RfqInvitationDialog({
   }, [open, restoreFocusRef]);
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
+    if (isPending) return;
+
     if (event.target === event.currentTarget) {
       onOpenChange(false);
     }
@@ -71,6 +73,7 @@ export function RfqInvitationDialog({
   function handleDialogKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Escape") {
       event.preventDefault();
+      if (isPending) return;
       onOpenChange(false);
       return;
     }
@@ -125,7 +128,7 @@ export function RfqInvitationDialog({
         {footerNote ? <div className="mt-3 text-xs text-muted-foreground">{footerNote}</div> : null}
 
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Close
           </Button>
           <Button
