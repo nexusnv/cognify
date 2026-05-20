@@ -6,6 +6,8 @@ import type {
   CreateRfqInvitationsRequestContactOverridesOneOfItem,
   Quotation,
   RfqInvitation,
+  SaveQuotationManualEntryRequest,
+  SaveQuotationLineItemRequest,
   UpdateRfqInvitationStatusRequest,
 } from "@cognify/api-client/schemas";
 import { isActiveRfqInvitationStatus } from "../types/rfq-invitation-view-model";
@@ -162,11 +164,40 @@ export const rfqInvitationHandlers = [
     return HttpResponse.json({ data: cloneQuotation(quotationByInvitationId.get(invitation.id) ?? null) });
   }),
 
+  http.put("/api/rfq-invitations/:invitationId/quotation/manual-entry", async ({ params, request }) => {
+    const invitation = findInvitation(String(params.invitationId));
+    if (!invitation) return notFound();
+    if (!["sent", "acknowledged"].includes(invitation.status)) {
+      return forbidden("Structured quotation entry is only available for sent or acknowledged invitations.");
+    }
+
+    const payload = (await request.json()) as SaveQuotationManualEntryRequest;
+    const currentQuotation = quotationByInvitationId.get(invitation.id) ?? null;
+    const quotation = currentQuotation ?? buildManualEntryQuotation(++quotationSequence, invitation);
+    const updated = updateQuotationManualEntry(quotation, payload, "buyer_upload");
+    quotationByInvitationId.set(updated.rfqInvitationId, updated);
+
+    return HttpResponse.json({ data: structuredClone(updated) });
+  }),
+
   http.get("/api/quotations/:quotationId/attachments", ({ params }) => {
     const quotation = findQuotationById(String(params.quotationId));
     if (!quotation) return notFound();
 
     return HttpResponse.json({ data: quotation.attachments.map((attachment) => structuredClone(attachment)) });
+  }),
+
+  http.put("/api/quotations/:quotationId/manual-entry", async ({ params, request }) => {
+    const quotationId = String(params.quotationId);
+    const payload = (await request.json()) as SaveQuotationManualEntryRequest;
+    const existingQuotation = findQuotationById(quotationId);
+
+    if (!existingQuotation) return notFound();
+
+    const updated = updateQuotationManualEntry(existingQuotation, payload, "buyer_upload");
+    quotationByInvitationId.set(updated.rfqInvitationId, updated);
+
+    return HttpResponse.json({ data: structuredClone(updated) });
   }),
 
   http.post("/api/rfq-invitations/:invitationId/quotation/attachments", async ({ params, request }) => {
@@ -343,9 +374,17 @@ function buildQuotation(
     },
     submittedByVendorContact: null,
     attachments: [attachment],
+    manualEntry: emptyManualEntry(),
+    lineItems: [],
+    completeness: {
+      isComplete: false,
+      missingFields: ["currency", "totalAmount", "lineItems"],
+      lineItemCount: 0,
+    },
     permissions: {
       canUploadAttachment: true,
       canViewAttachments: true,
+      canEditManualEntry: true,
     },
   };
 }
@@ -358,6 +397,144 @@ function updateQuotation(existing: Quotation, attachment: Attachment, now: strin
     latestReceivedAt: now,
     fileCount: attachments.length,
     attachments,
+  };
+}
+
+function buildManualEntryQuotation(sequence: number, invitation: RfqInvitation): Quotation {
+  const now = "2026-05-19T12:20:00.000000Z";
+
+  return {
+    id: `quotation-${sequence}`,
+    rfqId: invitation.rfqId,
+    vendorId: invitation.vendor.id,
+    rfqInvitationId: invitation.id,
+    number: `Q-${String(sequence).padStart(4, "0")}`,
+    status: "received",
+    submissionSource: "buyer_upload",
+    submittedAt: now,
+    latestReceivedAt: now,
+    fileCount: 0,
+    submittedByUser: {
+      id: "user-1",
+      name: "Maya Tan",
+    },
+    submittedByVendorContact: null,
+    attachments: [],
+    manualEntry: emptyManualEntry(),
+    lineItems: [],
+    completeness: {
+      isComplete: false,
+      missingFields: ["currency", "totalAmount", "lineItems"],
+      lineItemCount: 0,
+    },
+    permissions: {
+      canUploadAttachment: true,
+      canViewAttachments: true,
+      canEditManualEntry: true,
+    },
+  };
+}
+
+function updateQuotationManualEntry(
+  quotation: Quotation,
+  payload: SaveQuotationManualEntryRequest,
+  submissionSource: Quotation["submissionSource"],
+): Quotation {
+  const now = "2026-05-19T12:20:00.000000Z";
+  const lineItems = buildQuotationLineItems(payload.lineItems ?? []);
+  const completeness = buildCompleteness(payload, lineItems.length);
+
+  return {
+    ...quotation,
+    status: "received",
+    submissionSource,
+    submittedAt: quotation.submittedAt ?? now,
+    latestReceivedAt: now,
+    manualEntry: {
+      quotationReference: payload.quotationReference ?? null,
+      quotedAt: payload.quotedAt ?? null,
+      validUntil: payload.validUntil ?? null,
+      currency: payload.currency ?? null,
+      subtotalAmount: payload.subtotalAmount ?? null,
+      taxAmount: payload.taxAmount ?? null,
+      freightAmount: payload.freightAmount ?? null,
+      discountAmount: payload.discountAmount ?? null,
+      totalAmount: payload.totalAmount ?? null,
+      paymentTerms: payload.paymentTerms ?? null,
+      deliveryTerms: payload.deliveryTerms ?? null,
+      leadTimeDays: payload.leadTimeDays ?? null,
+      warrantyTerms: payload.warrantyTerms ?? null,
+      exclusions: payload.exclusions ?? null,
+      complianceNotes: payload.complianceNotes ?? null,
+      buyerNotes: payload.buyerNotes ?? null,
+      vendorNotes: payload.vendorNotes ?? null,
+    },
+    lineItems,
+    completeness,
+  };
+}
+
+function buildQuotationLineItems(lineItems: SaveQuotationLineItemRequest[]) {
+  return lineItems.map((lineItem, index) => ({
+    id: `quotation-line-${index + 1}`,
+    rfqLineItemId: lineItem.rfqLineItemId ?? null,
+    description: lineItem.description,
+    quantity: lineItem.quantity,
+    unit: lineItem.unit ?? null,
+    unitPrice: lineItem.unitPrice ?? null,
+    subtotalAmount: lineItem.subtotalAmount ?? null,
+    taxAmount: lineItem.taxAmount ?? null,
+    totalAmount: lineItem.totalAmount ?? null,
+    leadTimeDays: lineItem.leadTimeDays ?? null,
+    manufacturer: lineItem.manufacturer ?? null,
+    modelNumber: lineItem.modelNumber ?? null,
+    alternateOffered: lineItem.alternateOffered ?? false,
+    complianceStatus: lineItem.complianceStatus ?? null,
+    notes: lineItem.notes ?? null,
+  }));
+}
+
+function buildCompleteness(payload: SaveQuotationManualEntryRequest, lineItemCount: number) {
+  const missingFields: string[] = [];
+
+  if (!payload.currency?.trim()) {
+    missingFields.push("currency");
+  }
+
+  if (!payload.totalAmount?.trim()) {
+    missingFields.push("totalAmount");
+  }
+
+  if (lineItemCount === 0) {
+    missingFields.push("lineItems");
+  }
+
+  return {
+    isComplete: missingFields.length === 0,
+    missingFields,
+    lineItemCount,
+  };
+}
+
+function emptyManualEntry(): Quotation["manualEntry"] {
+  return {
+    quotationReference: null,
+    quotedAt: null,
+    validUntil: null,
+    currency: null,
+    subtotalAmount: null,
+    taxAmount: null,
+    freightAmount: null,
+    discountAmount: null,
+    totalAmount: null,
+    paymentTerms: null,
+    deliveryTerms: null,
+    leadTimeDays: null,
+    warrantyTerms: null,
+    exclusions: null,
+    complianceNotes: null,
+    buyerNotes: null,
+    vendorNotes: null,
   };
 }
 

@@ -1,6 +1,7 @@
 import type {
   AttachmentVendorPortal,
   QuotationVendorPortal,
+  SaveQuotationManualEntryRequest,
   VendorPortalRfqInvitation,
 } from "@cognify/api-client/schemas";
 
@@ -91,6 +92,76 @@ export function appendVendorPortalQuotationAttachment(attachment: AttachmentVend
   return vendorPortalQuotation;
 }
 
+export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntryRequest) {
+  if (!vendorPortalQuotation) {
+    vendorPortalQuotation = buildVendorPortalQuotationFixture();
+  }
+
+  const lineItems = (payload.lineItems ?? []).map((lineItem, index) => ({
+    id: `quotation-line-${index + 1}`,
+    rfqLineItemId: lineItem.rfqLineItemId ?? null,
+    description: lineItem.description,
+    quantity: lineItem.quantity,
+    unit: lineItem.unit ?? null,
+    unitPrice: lineItem.unitPrice ?? null,
+    subtotalAmount: lineItem.subtotalAmount ?? null,
+    taxAmount: lineItem.taxAmount ?? null,
+    totalAmount: lineItem.totalAmount ?? null,
+    leadTimeDays: lineItem.leadTimeDays ?? null,
+    manufacturer: lineItem.manufacturer ?? null,
+    modelNumber: lineItem.modelNumber ?? null,
+    alternateOffered: lineItem.alternateOffered ?? false,
+    complianceStatus: lineItem.complianceStatus ?? null,
+    notes: lineItem.notes ?? null,
+  }));
+  const missingFields = [
+    payload.currency ? null : "currency",
+    payload.totalAmount ? null : "totalAmount",
+    lineItems.length > 0 ? null : "lineItems",
+  ].filter((field): field is string => Boolean(field));
+
+  vendorPortalQuotation = {
+    ...vendorPortalQuotation,
+    status: "received",
+    submissionSource: "vendor_portal",
+    submittedAt: vendorPortalQuotation.submittedAt ?? new Date().toISOString(),
+    latestReceivedAt: new Date().toISOString(),
+    manualEntry: {
+      quotationReference: payload.quotationReference ?? null,
+      quotedAt: payload.quotedAt ?? null,
+      validUntil: payload.validUntil ?? null,
+      currency: payload.currency ?? null,
+      subtotalAmount: payload.subtotalAmount ?? null,
+      taxAmount: payload.taxAmount ?? null,
+      freightAmount: payload.freightAmount ?? null,
+      discountAmount: payload.discountAmount ?? null,
+      totalAmount: payload.totalAmount ?? null,
+      paymentTerms: payload.paymentTerms ?? null,
+      deliveryTerms: payload.deliveryTerms ?? null,
+      leadTimeDays: payload.leadTimeDays ?? null,
+      warrantyTerms: payload.warrantyTerms ?? null,
+      exclusions: payload.exclusions ?? null,
+      complianceNotes: payload.complianceNotes ?? null,
+      buyerNotes: null,
+      vendorNotes: payload.vendorNotes ?? null,
+    },
+    lineItems,
+    completeness: {
+      isComplete: missingFields.length === 0,
+      missingFields,
+      lineItemCount: lineItems.length,
+    },
+    permissions: {
+      ...vendorPortalQuotation.permissions,
+      canUploadAttachment: true,
+      canViewAttachments: true,
+      canEditManualEntry: true,
+    },
+  };
+
+  return vendorPortalQuotation;
+}
+
 export function buildVendorPortalQuotationFixture(
   attachments: AttachmentVendorPortal[] = [],
 ): QuotationVendorPortal {
@@ -106,11 +177,40 @@ export function buildVendorPortalQuotationFixture(
     latestReceivedAt: "2026-06-01T10:00:00.000000Z",
     fileCount: attachments.length,
     submittedByUser: null,
-    submittedByVendorContact: null,
+    submittedByVendorContact: {
+      name: "Nina Northwind",
+      email: "nina@northwind.test",
+    },
     attachments,
+    manualEntry: {
+      quotationReference: null,
+      quotedAt: null,
+      validUntil: null,
+      currency: null,
+      subtotalAmount: null,
+      taxAmount: null,
+      freightAmount: null,
+      discountAmount: null,
+      totalAmount: null,
+      paymentTerms: null,
+      deliveryTerms: null,
+      leadTimeDays: null,
+      warrantyTerms: null,
+      exclusions: null,
+      complianceNotes: null,
+      buyerNotes: null,
+      vendorNotes: null,
+    },
+    lineItems: [],
+    completeness: {
+      isComplete: false,
+      missingFields: ["currency", "totalAmount", "lineItems"],
+      lineItemCount: 0,
+    },
     permissions: {
       canUploadAttachment: true,
-      canViewAttachments: false,
+      canViewAttachments: true,
+      canEditManualEntry: true,
     },
   };
 }

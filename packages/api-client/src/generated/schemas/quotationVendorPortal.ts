@@ -8,7 +8,11 @@ import type { QuotationVendorPortalStatus } from "./quotationVendorPortalStatus"
 import type { QuotationVendorPortalSubmissionSource } from "./quotationVendorPortalSubmissionSource";
 import type { QuotationVendorPortalSubmittedAt } from "./quotationVendorPortalSubmittedAt";
 import type { QuotationVendorPortalLatestReceivedAt } from "./quotationVendorPortalLatestReceivedAt";
+import type { QuotationVendorPortalSubmittedByVendorContact } from "./quotationVendorPortalSubmittedByVendorContact";
 import type { AttachmentVendorPortal } from "./attachmentVendorPortal";
+import type { QuotationManualEntry } from "./quotationManualEntry";
+import type { QuotationLineItem } from "./quotationLineItem";
+import type { QuotationCompleteness } from "./quotationCompleteness";
 import type { QuotationPermissions } from "./quotationPermissions";
 
 export interface QuotationVendorPortal {
@@ -24,7 +28,10 @@ export interface QuotationVendorPortal {
   /** @minimum 0 */
   fileCount: number;
   submittedByUser: null;
-  submittedByVendorContact: null;
+  submittedByVendorContact: QuotationVendorPortalSubmittedByVendorContact;
   attachments: AttachmentVendorPortal[];
+  manualEntry: QuotationManualEntry;
+  lineItems: QuotationLineItem[];
+  completeness: QuotationCompleteness;
   permissions: QuotationPermissions;
 }

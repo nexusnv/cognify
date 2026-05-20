@@ -11,6 +11,9 @@ import type { QuotationLatestReceivedAt } from "./quotationLatestReceivedAt";
 import type { QuotationSubmittedByUser } from "./quotationSubmittedByUser";
 import type { QuotationSubmittedByVendorContact } from "./quotationSubmittedByVendorContact";
 import type { Attachment } from "./attachment";
+import type { QuotationManualEntry } from "./quotationManualEntry";
+import type { QuotationLineItem } from "./quotationLineItem";
+import type { QuotationCompleteness } from "./quotationCompleteness";
 import type { QuotationPermissions } from "./quotationPermissions";
 
 export interface Quotation {
@@ -28,5 +31,8 @@ export interface Quotation {
   submittedByUser: QuotationSubmittedByUser;
   submittedByVendorContact: QuotationSubmittedByVendorContact;
   attachments: Attachment[];
+  manualEntry: QuotationManualEntry;
+  lineItems: QuotationLineItem[];
+  completeness: QuotationCompleteness;
   permissions: QuotationPermissions;
 }

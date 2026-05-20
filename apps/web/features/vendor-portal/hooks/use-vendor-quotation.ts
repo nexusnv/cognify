@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchVendorPortalQuotation, uploadVendorPortalQuotationAttachment } from "../api/vendor-portal-api";
+import type { SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
+import {
+  fetchVendorPortalQuotation,
+  saveVendorPortalQuotationManualEntry,
+  uploadVendorPortalQuotationAttachment,
+} from "../api/vendor-portal-api";
 import { vendorPortalKeys } from "./use-vendor-rfq-invitation";
 
 export function useVendorQuotation(token: string) {
@@ -19,5 +24,17 @@ export function useVendorQuotationUpload(token: string) {
   return useMutation({
     mutationFn: (file: File) => uploadVendorPortalQuotationAttachment(token, file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotation(token) }),
+  });
+}
+
+export function useVendorQuotationManualEntry(token: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SaveQuotationManualEntryRequest) =>
+      saveVendorPortalQuotationManualEntry(token, payload),
+    onSuccess: (quotation) => {
+      queryClient.setQueryData(vendorPortalKeys.quotation(token), quotation);
+    },
   });
 }

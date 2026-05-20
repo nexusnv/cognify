@@ -20,7 +20,17 @@ class QuotationResource extends JsonResource
         /** @var Quotation $quotation */
         $quotation = $this->resource;
 
-        $redactInternalIdentity = (bool) $request->attributes->get('vendor_portal', false) || ! $request->user();
+        $vendorPortal = (bool) $request->attributes->get('vendor_portal', false);
+        $redactInternalIdentity = $vendorPortal || ! $request->user();
+        $canEditManualEntry = $vendorPortal
+            ? (bool) $request->attributes->get('vendor_portal_can_edit_quotation', false)
+            : ($request->user()?->can('view', $quotation->rfq) ?? false);
+        $canUploadAttachment = $vendorPortal
+            ? $canEditManualEntry
+            : ($request->user()?->can('view', $quotation->rfq) ?? false);
+        $canViewAttachments = $vendorPortal
+            ? $canEditManualEntry
+            : ($request->user()?->can('view', $quotation->rfq) ?? false);
 
         return [
             'id' => (string) $quotation->id,
@@ -38,12 +48,40 @@ class QuotationResource extends JsonResource
                 'name' => $quotation->submittedByUser->name,
             ] : null,
             'submittedByVendorContact' => $quotation->submitted_by_vendor_contact,
+            'manualEntry' => [
+                'quotationReference' => $quotation->quotation_reference,
+                'quotedAt' => $quotation->quoted_at?->toDateString(),
+                'validUntil' => $quotation->valid_until?->toDateString(),
+                'currency' => $quotation->currency,
+                'subtotalAmount' => $quotation->subtotal_amount,
+                'taxAmount' => $quotation->tax_amount,
+                'freightAmount' => $quotation->freight_amount,
+                'discountAmount' => $quotation->discount_amount,
+                'totalAmount' => $quotation->total_amount,
+                'paymentTerms' => $quotation->payment_terms,
+                'deliveryTerms' => $quotation->delivery_terms,
+                'leadTimeDays' => $quotation->lead_time_days,
+                'warrantyTerms' => $quotation->warranty_terms,
+                'exclusions' => $quotation->exclusions,
+                'complianceNotes' => $quotation->compliance_notes,
+                'buyerNotes' => $vendorPortal ? null : $quotation->buyer_notes,
+                'vendorNotes' => $quotation->vendor_notes,
+            ],
+            'lineItems' => $quotation->relationLoaded('lineItems')
+                ? QuotationLineItemResource::collection($quotation->lineItems)
+                : [],
+            'completeness' => [
+                'isComplete' => (bool) $quotation->manual_entry_complete,
+                'missingFields' => $quotation->manual_entry_missing_fields ?? [],
+                'lineItemCount' => $quotation->relationLoaded('lineItems') ? $quotation->lineItems->count() : 0,
+            ],
             'attachments' => $quotation->relationLoaded('attachments')
                 ? AttachmentResource::collection($quotation->attachments)
                 : [],
             'permissions' => [
-                'canUploadAttachment' => $request->user()?->can('view', $quotation->rfq) ?? false,
-                'canViewAttachments' => $request->user()?->can('view', $quotation->rfq) ?? false,
+                'canUploadAttachment' => $canUploadAttachment,
+                'canViewAttachments' => $canViewAttachments,
+                'canEditManualEntry' => $canEditManualEntry,
             ],
         ];
     }

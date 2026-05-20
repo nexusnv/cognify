@@ -1,9 +1,10 @@
 import { http, HttpResponse } from "msw";
-import type { AttachmentVendorPortal } from "@cognify/api-client/schemas";
+import type { AttachmentVendorPortal, SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
 import {
   appendVendorPortalQuotationAttachment,
   expiredVendorPortalToken,
   getVendorPortalQuotationFixture,
+  updateVendorPortalQuotationManualEntry,
   unavailableVendorPortalToken,
   validVendorPortalToken,
   vendorPortalRfqInvitationFixture,
@@ -93,6 +94,22 @@ export const vendorPortalHandlers = [
     const quotation = appendVendorPortalQuotationAttachment(attachment);
 
     return HttpResponse.json({ data: structuredClone(quotation) }, { status: 201 });
+  }),
+
+  http.put("/api/vendor-portal/rfq-invitations/:token/quotation/manual-entry", async ({ request, params }) => {
+    const token = String(params.token);
+
+    if (token !== validVendorPortalToken) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "This vendor portal link could not be found." } },
+        { status: 404 },
+      );
+    }
+
+    const payload = (await request.json()) as SaveQuotationManualEntryRequest;
+    const quotation = updateVendorPortalQuotationManualEntry(payload);
+
+    return HttpResponse.json({ data: structuredClone(quotation) });
   }),
 ];
 

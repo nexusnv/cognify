@@ -195,6 +195,36 @@ describe("RFQ invitation workflow", () => {
     });
   });
 
+  it("lets a buyer save structured quotation terms and line items", async () => {
+    const user = userEvent.setup();
+
+    render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
+
+    const invitationCard = (await screen.findByText("Northwind Traders")).closest(
+      "[data-testid='rfq-invitation-card']",
+    );
+    expect(invitationCard).toBeTruthy();
+    const card = within(invitationCard as HTMLElement);
+
+    await user.click(card.getByRole("button", { name: "Create structured quotation" }));
+    await user.clear(await card.findByLabelText("Quotation reference"));
+    await user.type(card.getByLabelText("Quotation reference"), "NW-Q-2026-041");
+    await user.clear(card.getByLabelText("Currency"));
+    await user.type(card.getByLabelText("Currency"), "USD");
+    await user.clear(card.getByLabelText("Total amount"));
+    await user.type(card.getByLabelText("Total amount"), "12470.00");
+    await user.type(card.getByLabelText("Buyer notes"), "Buyer confirmed totals by email.");
+    await user.click(card.getByRole("button", { name: "Add quoted line" }));
+    await user.type(card.getByLabelText("Line 1 description"), "Developer laptop");
+    await user.type(card.getByLabelText("Line 1 quantity"), "10");
+    await user.type(card.getByLabelText("Line 1 unit price"), "1200.00");
+    await user.click(card.getByRole("button", { name: "Save structured quotation" }));
+
+    expect(await card.findByText("Structured quotation saved.")).toBeInTheDocument();
+    expect(card.getByText("Ready for evaluation")).toBeInTheDocument();
+    expect(card.getByDisplayValue("NW-Q-2026-041")).toBeInTheDocument();
+  });
+
   it("requires a cancel reason and refreshes the invitation list after cancel", async () => {
     const user = userEvent.setup();
 

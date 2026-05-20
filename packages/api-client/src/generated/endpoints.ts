@@ -78,6 +78,7 @@ import type {
   RfqResponse,
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
+  SaveQuotationManualEntryRequest,
   SearchResponse,
   SetCurrentTenantRequest,
   SourcingIntakeReviewCloseRequest,
@@ -5315,6 +5316,71 @@ export const showVendorPortalQuotation = async (
 };
 
 /**
+ * @summary Save vendor portal quotation manual entry
+ */
+export type saveVendorPortalQuotationManualEntryResponse200 = {
+  data: QuotationVendorPortalResponse;
+  status: 200;
+};
+
+export type saveVendorPortalQuotationManualEntryResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type saveVendorPortalQuotationManualEntryResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type saveVendorPortalQuotationManualEntryResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type saveVendorPortalQuotationManualEntryResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
+export type saveVendorPortalQuotationManualEntryResponseSuccess =
+  saveVendorPortalQuotationManualEntryResponse200 & {
+    headers: Headers;
+  };
+export type saveVendorPortalQuotationManualEntryResponseError = (
+  | saveVendorPortalQuotationManualEntryResponse404
+  | saveVendorPortalQuotationManualEntryResponse409
+  | saveVendorPortalQuotationManualEntryResponse422
+  | saveVendorPortalQuotationManualEntryResponse429
+) & {
+  headers: Headers;
+};
+
+export type saveVendorPortalQuotationManualEntryResponse =
+  | saveVendorPortalQuotationManualEntryResponseSuccess
+  | saveVendorPortalQuotationManualEntryResponseError;
+
+export const getSaveVendorPortalQuotationManualEntryUrl = (token: string) => {
+  return `/api/vendor-portal/rfq-invitations/${token}/quotation/manual-entry`;
+};
+
+export const saveVendorPortalQuotationManualEntry = async (
+  token: string,
+  saveQuotationManualEntryRequest: SaveQuotationManualEntryRequest,
+  options?: RequestInit,
+): Promise<saveVendorPortalQuotationManualEntryResponse> => {
+  return cognifyFetch<saveVendorPortalQuotationManualEntryResponse>(
+    getSaveVendorPortalQuotationManualEntryUrl(token),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationManualEntryRequest),
+    },
+  );
+};
+
+/**
  * @summary Upload vendor portal quotation attachment
  */
 export type storeVendorPortalQuotationAttachmentResponse201 = {
@@ -5435,6 +5501,77 @@ export const showRfqInvitationQuotation = async (
 };
 
 /**
+ * @summary Create or save RFQ invitation quotation manual entry
+ */
+export type saveRfqInvitationQuotationManualEntryResponse200 = {
+  data: QuotationResponse;
+  status: 200;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponseSuccess =
+  saveRfqInvitationQuotationManualEntryResponse200 & {
+    headers: Headers;
+  };
+export type saveRfqInvitationQuotationManualEntryResponseError = (
+  | saveRfqInvitationQuotationManualEntryResponse401
+  | saveRfqInvitationQuotationManualEntryResponse403
+  | saveRfqInvitationQuotationManualEntryResponse404
+  | saveRfqInvitationQuotationManualEntryResponse409
+  | saveRfqInvitationQuotationManualEntryResponse422
+) & {
+  headers: Headers;
+};
+
+export type saveRfqInvitationQuotationManualEntryResponse =
+  | saveRfqInvitationQuotationManualEntryResponseSuccess
+  | saveRfqInvitationQuotationManualEntryResponseError;
+
+export const getSaveRfqInvitationQuotationManualEntryUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/quotation/manual-entry`;
+};
+
+export const saveRfqInvitationQuotationManualEntry = async (
+  invitation: string,
+  saveQuotationManualEntryRequest: SaveQuotationManualEntryRequest,
+  options?: RequestInit,
+): Promise<saveRfqInvitationQuotationManualEntryResponse> => {
+  return cognifyFetch<saveRfqInvitationQuotationManualEntryResponse>(
+    getSaveRfqInvitationQuotationManualEntryUrl(invitation),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationManualEntryRequest),
+    },
+  );
+};
+
+/**
  * @summary Upload buyer-received quotation attachment
  */
 export type storeRfqInvitationQuotationAttachmentResponse201 = {
@@ -5548,6 +5685,73 @@ export const listQuotationAttachments = async (
   return cognifyFetch<listQuotationAttachmentsResponse>(getListQuotationAttachmentsUrl(quotation), {
     ...options,
     method: "GET",
+  });
+};
+
+/**
+ * @summary Save quotation manual entry
+ */
+export type saveQuotationManualEntryResponse200 = {
+  data: QuotationResponse;
+  status: 200;
+};
+
+export type saveQuotationManualEntryResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type saveQuotationManualEntryResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type saveQuotationManualEntryResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type saveQuotationManualEntryResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type saveQuotationManualEntryResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type saveQuotationManualEntryResponseSuccess = saveQuotationManualEntryResponse200 & {
+  headers: Headers;
+};
+export type saveQuotationManualEntryResponseError = (
+  | saveQuotationManualEntryResponse401
+  | saveQuotationManualEntryResponse403
+  | saveQuotationManualEntryResponse404
+  | saveQuotationManualEntryResponse409
+  | saveQuotationManualEntryResponse422
+) & {
+  headers: Headers;
+};
+
+export type saveQuotationManualEntryResponse =
+  | saveQuotationManualEntryResponseSuccess
+  | saveQuotationManualEntryResponseError;
+
+export const getSaveQuotationManualEntryUrl = (quotation: string) => {
+  return `/api/quotations/${quotation}/manual-entry`;
+};
+
+export const saveQuotationManualEntry = async (
+  quotation: string,
+  saveQuotationManualEntryRequest: SaveQuotationManualEntryRequest,
+  options?: RequestInit,
+): Promise<saveQuotationManualEntryResponse> => {
+  return cognifyFetch<saveQuotationManualEntryResponse>(getSaveQuotationManualEntryUrl(quotation), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveQuotationManualEntryRequest),
   });
 };
 

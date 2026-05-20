@@ -2,12 +2,15 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
+import type { SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
 import { Button } from "@cognify/ui";
+import { useSaveQuotationManualEntry } from "../hooks/use-quotation-manual-entry";
 import {
   useQuotationAttachments,
   useRfqInvitationQuotation,
   useRfqInvitationQuotationUpload,
 } from "../hooks/use-quotation-upload";
+import { QuotationManualEntryPanel } from "./quotation-manual-entry-panel";
 
 const uploadableInvitationStatuses = new Set(["sent", "acknowledged"]);
 
@@ -22,6 +25,7 @@ export function QuotationEvidencePanel({
   const quotation = quotationQuery.data ?? null;
   const attachmentsQuery = useQuotationAttachments(quotation?.id ?? null);
   const uploadMutation = useRfqInvitationQuotationUpload(invitationId);
+  const createManualEntryMutation = useSaveQuotationManualEntry(invitationId, quotation?.id);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -33,6 +37,8 @@ export function QuotationEvidencePanel({
     ? getApiErrorMessage(quotationQuery.error)
     : uploadMutation.isError
       ? getApiErrorMessage(uploadMutation.error)
+      : createManualEntryMutation.isError
+        ? getApiErrorMessage(createManualEntryMutation.error)
       : null;
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
@@ -49,6 +55,19 @@ export function QuotationEvidencePanel({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+    } catch {
+      return;
+    }
+  }
+
+  async function handleCreateStructuredQuotation() {
+    const payload: SaveQuotationManualEntryRequest = {
+      currency: "USD",
+      lineItems: [],
+    };
+
+    try {
+      await createManualEntryMutation.mutateAsync(payload);
     } catch {
       return;
     }
@@ -102,6 +121,28 @@ export function QuotationEvidencePanel({
             {errorMessage}
           </p>
         ) : null}
+
+        {quotation ? (
+          <QuotationManualEntryPanel
+            invitationId={invitationId}
+            invitationStatus={invitationStatus}
+            quotation={quotation}
+          />
+        ) : (
+          <div className="space-y-3 rounded-md border border-dashed p-3">
+            <p className="text-sm text-muted-foreground">
+              Upload a quotation file or create structured quotation data to start the response record.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleCreateStructuredQuotation()}
+              disabled={!canUpload || createManualEntryMutation.isPending}
+            >
+              Create structured quotation
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
