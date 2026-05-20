@@ -14,7 +14,10 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ResendRfqInvitation
 {
-    public function __construct(private readonly AuditRecorder $audit) {}
+    public function __construct(
+        private readonly AuditRecorder $audit,
+        private readonly EnsureRfqInvitationPortalToken $portalTokens,
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, RfqInvitation $invitation): RfqInvitation
     {
@@ -53,6 +56,8 @@ class ResendRfqInvitation
                 ],
                 subjectDisplay: $lockedInvitation->vendor?->name,
             ));
+
+            $this->portalTokens->handle($tenant, $actor, $lockedInvitation->refresh()->load('vendor', 'rfq'));
 
             return $lockedInvitation->refresh()->load('vendor');
         });

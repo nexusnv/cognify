@@ -103,7 +103,7 @@ class RfqInvitationPortalApiTest extends TestCase
         [, $buyer] = $this->tenantUser('buyer', $tenant);
         $rfq = $this->draftRfq($tenant, $requester, $buyer);
 
-        $this->getJson('/api/vendor-portal/rfq-invitations/not-a-real-token')
+        $this->getJson('/api/vendor-portal/rfq-invitations/not-a-real-token-not-a-real-token-1234')
             ->assertNotFound()
             ->assertJsonMissing(['Laptop refresh RFQ']);
 
@@ -118,7 +118,12 @@ class RfqInvitationPortalApiTest extends TestCase
 
         foreach ([RfqInvitationStatus::Cancelled, RfqInvitationStatus::Declined, RfqInvitationStatus::Expired] as $status) {
             $blocked = $this->invitation($tenant, $rfq, $this->vendor($tenant), ['status' => $status]);
-            $blockedToken = $this->issuePortalToken($tenant, $buyer, $blocked);
+            $blockedToken = Str::random(64);
+            $blocked->forceFill([
+                'portal_token_hash' => hash('sha256', $blockedToken),
+                'portal_token_created_at' => now()->subHour(),
+                'portal_token_expires_at' => now()->addDay(),
+            ])->save();
 
             $this->getJson("/api/vendor-portal/rfq-invitations/{$blockedToken}")
                 ->assertStatus(409)

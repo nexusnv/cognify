@@ -38,6 +38,12 @@ class RfqInvitationResource extends JsonResource
             'cancelReason' => $this->cancel_reason,
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
+            'portalAccess' => [
+                'hasToken' => $this->portal_token_hash !== null,
+                'expiresAt' => $this->portal_token_expires_at?->toISOString(),
+                'lastViewedAt' => $this->portal_last_viewed_at?->toISOString(),
+                'viewCount' => (int) $this->portal_view_count,
+            ],
             'permissions' => [
                 'canResend' => $user?->can('resend', $this->resource) ?? false,
                 'canCancel' => $user?->can('cancel', $this->resource) ?? false,

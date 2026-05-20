@@ -7,6 +7,7 @@ use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -28,6 +29,11 @@ class RfqInvitation extends Model
         'cancelled_at',
         'cancel_reason',
         'metadata',
+        'portal_token_hash',
+        'portal_token_created_at',
+        'portal_token_expires_at',
+        'portal_last_viewed_at',
+        'portal_view_count',
     ];
 
     protected function casts(): array
@@ -41,6 +47,10 @@ class RfqInvitation extends Model
             'expired_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'metadata' => 'array',
+            'portal_token_created_at' => 'datetime',
+            'portal_token_expires_at' => 'datetime',
+            'portal_last_viewed_at' => 'datetime',
+            'portal_view_count' => 'integer',
         ];
     }
 
@@ -115,6 +125,26 @@ class RfqInvitation extends Model
                 RfqInvitationStatus::Declined,
                 RfqInvitationStatus::Expired,
             ], true);
+    }
+
+    public function canBeViewedInPortal(): bool
+    {
+        return in_array($this->statusState(), [
+            RfqInvitationStatus::Sent,
+            RfqInvitationStatus::Acknowledged,
+        ], true);
+    }
+
+    public function portalTokenExpired(): bool
+    {
+        return $this->portal_token_expires_at !== null && $this->portal_token_expires_at->isPast();
+    }
+
+    public function defaultPortalTokenExpiry(): Carbon
+    {
+        return $this->response_due_at
+            ?? $this->rfq?->response_due_at
+            ?? now()->addDays(30);
     }
 
     /**

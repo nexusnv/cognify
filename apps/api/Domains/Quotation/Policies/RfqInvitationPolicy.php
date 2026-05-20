@@ -36,6 +36,11 @@ class RfqInvitationPolicy
         return $this->canManageInvitation($user, $invitation) && $invitation->statusState() === RfqInvitationStatus::Sent;
     }
 
+    public function regeneratePortalLink(User $user, RfqInvitation $invitation): bool
+    {
+        return $this->canManageInvitation($user, $invitation) && $invitation->canBeViewedInPortal();
+    }
+
     private function canManageInvitation(User $user, RfqInvitation $invitation): bool
     {
         return $this->canManageSourcing($user) && $this->invitationInCurrentTenant($invitation);
