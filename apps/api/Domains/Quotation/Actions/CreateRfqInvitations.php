@@ -18,7 +18,10 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CreateRfqInvitations
 {
-    public function __construct(private readonly AuditRecorder $audit) {}
+    public function __construct(
+        private readonly AuditRecorder $audit,
+        private readonly EnsureRfqInvitationPortalToken $portalTokens,
+    ) {}
 
     /**
      * @param array<string, mixed> $data
@@ -101,6 +104,8 @@ class CreateRfqInvitations
                             subjectDisplay: $vendor->name,
                         ));
                     }
+
+                    $this->portalTokens->handle($tenant, $actor, $invitation->refresh()->load('vendor', 'rfq'));
 
                     return $invitation->refresh()->load('vendor');
                 })->all();

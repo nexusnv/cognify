@@ -2,6 +2,7 @@ import {
   cancelRfqInvitation as cancelRfqInvitationEndpoint,
   createRfqInvitations as createRfqInvitationsEndpoint,
   listRfqInvitations as listRfqInvitationsEndpoint,
+  regenerateRfqInvitationPortalLink as regenerateRfqInvitationPortalLinkEndpoint,
   resendRfqInvitation as resendRfqInvitationEndpoint,
   updateRfqInvitationStatus as updateRfqInvitationStatusEndpoint,
 } from "@cognify/api-client/endpoints";
@@ -9,6 +10,7 @@ import type {
   CancelRfqInvitationRequest,
   CreateRfqInvitationsRequest,
   RfqInvitation as ApiRfqInvitation,
+  RfqInvitationPortalLink,
   UpdateRfqInvitationStatusRequest,
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
@@ -53,6 +55,16 @@ export async function resendRfqInvitation(
   if (response.status !== 200) throw response.data;
 
   return toRfqInvitationViewModel(response.data.data as ApiRfqInvitation);
+}
+
+export async function regenerateRfqInvitationPortalLink(
+  invitationId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<RfqInvitationPortalLink> {
+  const response = await regenerateRfqInvitationPortalLinkEndpoint(invitationId, withActiveTenantHeader(tenantId));
+  if (response.status !== 200) throw response.data;
+
+  return response.data.data;
 }
 
 export async function cancelRfqInvitation(

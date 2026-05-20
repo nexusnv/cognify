@@ -70,6 +70,12 @@ function buildInvitation(
     expiredAt: null,
     cancelledAt: null,
     cancelReason: null,
+    portalAccess: {
+      hasToken: true,
+      expiresAt: requestValues?.responseDueAt ?? "2026-06-30T17:00:00.000000Z",
+      lastViewedAt: null,
+      viewCount: 0,
+    },
     createdAt: now,
     updatedAt: now,
     permissions: {
@@ -146,6 +152,38 @@ export const rfqInvitationHandlers = [
     );
 
     return HttpResponse.json({ data: cloneInvitation(resent) });
+  }),
+
+  http.post("/api/rfq-invitations/:invitationId/portal-link", ({ params }) => {
+    const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
+    if (!existing) return notFound();
+    if (!["sent", "acknowledged"].includes(existing.status)) {
+      return conflict("This invitation is not available in the vendor portal.");
+    }
+
+    const expiresAt = existing.portalAccess?.expiresAt ?? existing.responseDueAt ?? "2026-06-30T17:00:00.000000Z";
+    const updated: RfqInvitation = {
+      ...existing,
+      portalAccess: {
+        hasToken: true,
+        expiresAt,
+        lastViewedAt: existing.portalAccess?.lastViewedAt ?? null,
+        viewCount: existing.portalAccess?.viewCount ?? 0,
+      },
+    };
+
+    rfqInvitations = rfqInvitations.map((invitation) =>
+      invitation.id === updated.id ? updated : invitation,
+    );
+
+    return HttpResponse.json({
+      data: {
+        invitationId: updated.id,
+        token: "vendor-portal-valid-token",
+        portalUrl: "/vendor/rfq-invitations/vendor-portal-valid-token",
+        expiresAt,
+      },
+    });
   }),
 
   http.post("/api/rfq-invitations/:invitationId/cancel", async ({ params, request }) => {

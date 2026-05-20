@@ -69,6 +69,7 @@ import type {
   RequisitionTemplateListResponse,
   RfqCancelRequest,
   RfqInvitationListResponse,
+  RfqInvitationPortalLinkResponse,
   RfqInvitationResponse,
   RfqResponse,
   RfqUpdateRequest,
@@ -98,6 +99,7 @@ import type {
   UpdateRfqInvitationStatusRequest,
   ValidationFailedResponse,
   VendorPickerListResponse,
+  VendorPortalRfqInvitationResponse,
 } from "./schemas";
 
 import { cognifyFetch } from "../client";
@@ -402,6 +404,11 @@ export type createApprovalPolicyVersionResponse422 = {
   status: 422;
 };
 
+export type createApprovalPolicyVersionResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
 export type createApprovalPolicyVersionResponseSuccess = createApprovalPolicyVersionResponse201 & {
   headers: Headers;
 };
@@ -411,6 +418,7 @@ export type createApprovalPolicyVersionResponseError = (
   | createApprovalPolicyVersionResponse404
   | createApprovalPolicyVersionResponse409
   | createApprovalPolicyVersionResponse422
+  | createApprovalPolicyVersionResponse429
 ) & {
   headers: Headers;
 };
@@ -467,6 +475,11 @@ export type publishApprovalPolicyVersionResponse409 = {
   status: 409;
 };
 
+export type publishApprovalPolicyVersionResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
 export type publishApprovalPolicyVersionResponseSuccess =
   publishApprovalPolicyVersionResponse200 & {
     headers: Headers;
@@ -476,6 +489,7 @@ export type publishApprovalPolicyVersionResponseError = (
   | publishApprovalPolicyVersionResponse403
   | publishApprovalPolicyVersionResponse404
   | publishApprovalPolicyVersionResponse409
+  | publishApprovalPolicyVersionResponse429
 ) & {
   headers: Headers;
 };
@@ -5189,6 +5203,62 @@ export const createRfqInvitations = async (
 };
 
 /**
+ * @summary Show vendor portal RFQ invitation
+ */
+export type showVendorPortalRfqInvitationResponse200 = {
+  data: VendorPortalRfqInvitationResponse;
+  status: 200;
+};
+
+export type showVendorPortalRfqInvitationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showVendorPortalRfqInvitationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type showVendorPortalRfqInvitationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type showVendorPortalRfqInvitationResponseSuccess =
+  showVendorPortalRfqInvitationResponse200 & {
+    headers: Headers;
+  };
+export type showVendorPortalRfqInvitationResponseError = (
+  | showVendorPortalRfqInvitationResponse404
+  | showVendorPortalRfqInvitationResponse409
+  | showVendorPortalRfqInvitationResponse422
+) & {
+  headers: Headers;
+};
+
+export type showVendorPortalRfqInvitationResponse =
+  | showVendorPortalRfqInvitationResponseSuccess
+  | showVendorPortalRfqInvitationResponseError;
+
+export const getShowVendorPortalRfqInvitationUrl = (token: string) => {
+  return `/api/vendor-portal/rfq-invitations/${token}`;
+};
+
+export const showVendorPortalRfqInvitation = async (
+  token: string,
+  options?: RequestInit,
+): Promise<showVendorPortalRfqInvitationResponse> => {
+  return cognifyFetch<showVendorPortalRfqInvitationResponse>(
+    getShowVendorPortalRfqInvitationUrl(token),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
  * @summary Resend RFQ invitation
  */
 export type resendRfqInvitationResponse200 = {
@@ -5244,6 +5314,68 @@ export const resendRfqInvitation = async (
     ...options,
     method: "POST",
   });
+};
+
+/**
+ * @summary Regenerate RFQ invitation vendor portal link
+ */
+export type regenerateRfqInvitationPortalLinkResponse200 = {
+  data: RfqInvitationPortalLinkResponse;
+  status: 200;
+};
+
+export type regenerateRfqInvitationPortalLinkResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type regenerateRfqInvitationPortalLinkResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type regenerateRfqInvitationPortalLinkResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type regenerateRfqInvitationPortalLinkResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type regenerateRfqInvitationPortalLinkResponseSuccess =
+  regenerateRfqInvitationPortalLinkResponse200 & {
+    headers: Headers;
+  };
+export type regenerateRfqInvitationPortalLinkResponseError = (
+  | regenerateRfqInvitationPortalLinkResponse401
+  | regenerateRfqInvitationPortalLinkResponse403
+  | regenerateRfqInvitationPortalLinkResponse404
+  | regenerateRfqInvitationPortalLinkResponse409
+) & {
+  headers: Headers;
+};
+
+export type regenerateRfqInvitationPortalLinkResponse =
+  | regenerateRfqInvitationPortalLinkResponseSuccess
+  | regenerateRfqInvitationPortalLinkResponseError;
+
+export const getRegenerateRfqInvitationPortalLinkUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/portal-link`;
+};
+
+export const regenerateRfqInvitationPortalLink = async (
+  invitation: string,
+  options?: RequestInit,
+): Promise<regenerateRfqInvitationPortalLinkResponse> => {
+  return cognifyFetch<regenerateRfqInvitationPortalLinkResponse>(
+    getRegenerateRfqInvitationPortalLinkUrl(invitation),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 /**

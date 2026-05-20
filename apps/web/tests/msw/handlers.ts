@@ -8,6 +8,7 @@ import { systemReadinessHandlers } from "@/features/system-readiness/mocks/syste
 import { searchHandlers } from "../../features/search/mocks/search-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 import { projectHandlers } from "@/features/projects/mocks/project-handlers";
+import { vendorPortalHandlers } from "@/features/vendor-portal/mocks/vendor-portal-handlers";
 import { sourcingHandlers } from "@/features/sourcing/mocks/sourcing-handlers";
 import { rfqHandlers } from "@/features/sourcing/mocks/rfq-handlers";
 import { vendorHandlers } from "@/features/sourcing/mocks/vendor-handlers";
@@ -23,6 +24,7 @@ export const handlers = [
   ...approvalHandlers,
   ...requisitionsHandlers,
   ...projectHandlers,
+  ...vendorPortalHandlers,
   ...sourcingHandlers,
   ...vendorHandlers,
   ...rfqHandlers,

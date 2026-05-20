@@ -22,6 +22,7 @@ use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\RfqInvitationController;
+use Domains\Quotation\Http\Controllers\RfqInvitationPortalController;
 use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
@@ -45,6 +46,9 @@ Route::middleware('throttle:5,1')->group(function (): void {
     Route::post('/auth/login', [AuthenticatedSessionController::class, 'store']);
     Route::post('/auth/forgot-password', [AuthenticatedSessionController::class, 'forgotPassword']);
 });
+
+Route::get('/vendor-portal/rfq-invitations/{token}', [RfqInvitationPortalController::class, 'show'])
+    ->middleware('throttle:60,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -101,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/rfq-invitations/{invitation}/resend', [RfqInvitationController::class, 'resend']);
         Route::post('/rfq-invitations/{invitation}/cancel', [RfqInvitationController::class, 'cancel']);
         Route::patch('/rfq-invitations/{invitation}/status', [RfqInvitationController::class, 'status']);
+        Route::post('/rfq-invitations/{invitation}/portal-link', [RfqInvitationPortalController::class, 'regenerate']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);

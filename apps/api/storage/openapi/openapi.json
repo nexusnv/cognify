@@ -251,6 +251,9 @@
           "409": {
             "$ref": "#/components/responses/InvalidState"
           },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationFailed"
           }
@@ -296,6 +299,9 @@
           },
           "409": {
             "$ref": "#/components/responses/InvalidState"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }
@@ -4158,6 +4164,46 @@
         }
       }
     },
+    "/api/vendor-portal/rfq-invitations/{token}": {
+      "get": {
+        "operationId": "showVendorPortalRfqInvitation",
+        "summary": "Show vendor portal RFQ invitation",
+        "tags": [
+          "Vendor Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor-safe RFQ invitation package",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorPortalRfqInvitationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
     "/api/rfq-invitations/{invitation}/resend": {
       "post": {
         "operationId": "resendRfqInvitation",
@@ -4182,6 +4228,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RfqInvitationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      }
+    },
+    "/api/rfq-invitations/{invitation}/portal-link": {
+      "post": {
+        "operationId": "regenerateRfqInvitationPortalLink",
+        "summary": "Regenerate RFQ invitation vendor portal link",
+        "tags": [
+          "RFQ Invitations"
+        ],
+        "parameters": [
+          {
+            "name": "invitation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ invitation portal link regenerated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqInvitationPortalLinkResponse"
                 }
               }
             }
@@ -10087,6 +10176,323 @@
           }
         }
       },
+      "RfqInvitationPortalAccess": {
+        "type": "object",
+        "required": [
+          "hasToken",
+          "expiresAt",
+          "lastViewedAt",
+          "viewCount"
+        ],
+        "properties": {
+          "hasToken": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastViewedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "viewCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "RfqInvitationPortalLink": {
+        "type": "object",
+        "required": [
+          "invitationId",
+          "token",
+          "portalUrl",
+          "expiresAt"
+        ],
+        "properties": {
+          "invitationId": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "portalUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "RfqInvitationPortalLinkResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RfqInvitationPortalLink"
+          }
+        }
+      },
+      "VendorPortalRfqInvitation": {
+        "type": "object",
+        "required": [
+          "invitation",
+          "tenant",
+          "vendor",
+          "rfq"
+        ],
+        "properties": {
+          "invitation": {
+            "type": "object",
+            "required": [
+              "id",
+              "status",
+              "responseDueAt",
+              "message",
+              "portalExpiresAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/components/schemas/RfqInvitationStatus"
+              },
+              "responseDueAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "message": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "portalExpiresAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            }
+          },
+          "tenant": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "vendor": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "contactName",
+              "contactEmail"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "contactName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "contactEmail": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "email"
+              }
+            }
+          },
+          "rfq": {
+            "type": "object",
+            "required": [
+              "id",
+              "number",
+              "title",
+              "scopeSummary",
+              "responseDueAt",
+              "responseInstructions",
+              "requiredDocuments",
+              "lineItems"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "number": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "scopeSummary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "responseDueAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "responseInstructions": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "requiredDocuments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VendorPortalRfqRequiredDocument"
+                }
+              },
+              "lineItems": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VendorPortalRfqLineItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "VendorPortalRfqRequiredDocument": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "required"
+        ],
+        "properties": {
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VendorPortalRfqLineItem": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "quantity",
+          "unit",
+          "notes",
+          "unitOfMeasure",
+          "estimatedUnitPrice",
+          "currency"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitOfMeasure": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimatedUnitPrice": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "VendorPortalRfqInvitationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/VendorPortalRfqInvitation"
+          }
+        }
+      },
       "RfqInvitationStatus": {
         "type": "string",
         "enum": [
@@ -10106,6 +10512,7 @@
           "rfqId",
           "status",
           "vendor",
+          "portalAccess",
           "contactName",
           "contactEmail",
           "message",
@@ -10135,6 +10542,9 @@
           },
           "vendor": {
             "$ref": "#/components/schemas/VendorPickerItem"
+          },
+          "portalAccess": {
+            "$ref": "#/components/schemas/RfqInvitationPortalAccess"
           },
           "contactName": {
             "type": [
