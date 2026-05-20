@@ -34,7 +34,7 @@ export function RfqInvitationDialog({
   restoreFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const modalRef = useRef<HTMLDivElement | null>(null);
-  const wasOpenRef = useRef(open);
+  const wasOpenRef = useRef(false);
   const restoreFocusTargetRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 

@@ -65,13 +65,10 @@ describe("RFQ invitation workflow", () => {
   });
 
   it("lets a buyer search vendors and create invitations with buyer instructions and a response due date", async () => {
-    const user = userEvent.setup();
-
     render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
 
     expect(await screen.findByRole("heading", { name: "Vendor invitations" })).toBeInTheDocument();
-    await screen.findByRole("button", { name: "Invite vendors" });
-    await user.click(screen.getByRole("button", { name: "Invite vendors" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Invite vendors" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Invite vendors to RFQ" });
     expect(dialog).toBeInTheDocument();
@@ -85,12 +82,12 @@ describe("RFQ invitation workflow", () => {
     fireEvent.change(within(dialog).getByLabelText("Search vendors"), { target: { value: "Atlas" } });
 
     expect(await screen.findByRole("checkbox", { name: "Atlas Workplace Supply" })).toBeInTheDocument();
-    await user.click(screen.getByRole("checkbox", { name: "Atlas Workplace Supply" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Atlas Workplace Supply" }));
     fireEvent.change(within(dialog).getByLabelText("Buyer message / instructions"), {
       target: { value: "Please confirm pricing and delivery terms." },
     });
     fireEvent.change(within(dialog).getByLabelText("Response due date"), { target: { value: "2026-07-01T09:30" } });
-    await user.click(screen.getByRole("button", { name: "Create invitations" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create invitations" }));
 
     const invitationHeading = await screen.findByRole("heading", { name: "Atlas Workplace Supply" });
     const invitationCard = invitationHeading.closest("[data-testid='rfq-invitation-card']");
@@ -158,11 +155,10 @@ describe("RFQ invitation workflow", () => {
     fireEvent.change(screen.getByLabelText("Invitation cancel reason"), { target: { value: "Vendor is out of scope." } });
     await user.click(screen.getByRole("button", { name: "Confirm cancel" }));
 
-    const cancelledCard = invitationCard as HTMLElement;
-    await waitFor(() => {
-      expect(within(cancelledCard).getByText("Invitation cancelled")).toBeInTheDocument();
-      expect(within(cancelledCard).getByText("Cancel reason: Vendor is out of scope.")).toBeInTheDocument();
-    });
+    const cancelledStatus = await screen.findByText("Invitation cancelled");
+    const cancelledCard = cancelledStatus.closest("[data-testid='rfq-invitation-card']");
+    expect(cancelledCard).not.toBeNull();
+    expect(within(cancelledCard as HTMLElement).getByText("Cancel reason: Vendor is out of scope.")).toBeInTheDocument();
   });
 
   it("shows read-only invitation state after the RFQ is cancelled", async () => {
