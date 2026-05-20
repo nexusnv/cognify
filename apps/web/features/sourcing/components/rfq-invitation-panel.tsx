@@ -9,6 +9,7 @@ import { VendorPicker } from "./vendor-picker";
 import {
   useCancelRfqInvitation,
   useCreateRfqInvitations,
+  useRegenerateRfqInvitationPortalLink,
   useResendRfqInvitation,
   useUpdateRfqInvitationStatus,
 } from "../hooks/use-rfq-invitation-actions";
@@ -36,6 +37,7 @@ export function RfqInvitationPanel({
   const invitationQuery = useRfqInvitations(rfqId);
   const createMutation = useCreateRfqInvitations(rfqId);
   const resendMutation = useResendRfqInvitation(rfqId);
+  const portalLinkMutation = useRegenerateRfqInvitationPortalLink(rfqId);
   const cancelMutation = useCancelRfqInvitation(rfqId);
   const updateStatusMutation = useUpdateRfqInvitationStatus(rfqId);
 
@@ -50,6 +52,7 @@ export function RfqInvitationPanel({
   const [cancelReason, setCancelReason] = useState("");
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [invitationActionErrors, setInvitationActionErrors] = useState<Record<string, string>>({});
+  const [portalLinkByInvitationId, setPortalLinkByInvitationId] = useState<Record<string, string>>({});
   const createTriggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
 
@@ -190,6 +193,28 @@ export function RfqInvitationPanel({
     }
   }
 
+  async function generatePortalLink(invitationId: string) {
+    setInvitationActionErrors((current) => {
+      if (!current[invitationId]) return current;
+      const next = { ...current };
+      delete next[invitationId];
+      return next;
+    });
+
+    try {
+      const portalLink = await portalLinkMutation.mutateAsync(invitationId);
+      setPortalLinkByInvitationId((current) => ({ ...current, [invitationId]: portalLink.portalUrl }));
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${window.location.origin}${portalLink.portalUrl}`);
+      }
+    } catch (error) {
+      setInvitationActionErrors((current) => ({
+        ...current,
+        [invitationId]: getApiErrorMessage(error),
+      }));
+    }
+  }
+
   if (invitationQuery.isLoading && invitations.length === 0) {
     return (
       <section id="vendor-invitations" className="rounded-md border p-4">
@@ -217,7 +242,7 @@ export function RfqInvitationPanel({
           <div className="space-y-1">
             <h2 className="text-base font-semibold">Vendor invitations</h2>
             <p className="text-sm text-muted-foreground">
-              Track invitation records for this RFQ. Email delivery and vendor portal access arrive later.
+              Track invitation records for this RFQ. Generate portal links here for manual vendor sharing; email delivery is not enabled.
             </p>
           </div>
           <InvitationSummary summary={invitationSummary} />
@@ -252,10 +277,20 @@ export function RfqInvitationPanel({
                   <p className="text-sm text-muted-foreground">
                     {invitation.responseDueAt ? `Response due ${formatDateTime(invitation.responseDueAt)}` : "No response due date recorded"}
                   </p>
+                  <p className="text-sm text-muted-foreground">
+                    {invitation.portalAccess.hasToken
+                      ? `Portal access expires ${formatDateTime(invitation.portalAccess.expiresAt ?? invitation.responseDueAt ?? invitation.createdAt)}`
+                      : "Portal access has not been generated."}
+                  </p>
                   <p className="text-sm text-muted-foreground">{invitation.activitySummary}</p>
                   {invitation.message ? <p className="text-sm text-muted-foreground">{invitation.message}</p> : null}
                   {invitation.cancelReason ? (
                     <p className="text-sm text-muted-foreground">Cancel reason: {invitation.cancelReason}</p>
+                  ) : null}
+                  {portalLinkByInvitationId[invitation.id] ? (
+                    <p className="text-sm text-green-700">
+                      Portal link copied. Manual sharing only; email delivery is not enabled.
+                    </p>
                   ) : null}
                   {invitationActionErrors[invitation.id] ? (
                     <p role="alert" className="text-sm text-red-700">
@@ -265,6 +300,17 @@ export function RfqInvitationPanel({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                  {canInvite && ["sent", "acknowledged"].includes(invitation.status) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void generatePortalLink(invitation.id)}
+                      disabled={portalLinkMutation.isPending}
+                    >
+                      Generate portal link
+                    </Button>
+                  ) : null}
+
                   {canInvite && invitation.permissions.canResend ? (
                     <Button
                       variant="outline"

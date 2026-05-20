@@ -3,6 +3,7 @@ import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   cancelRfqInvitation,
   createRfqInvitations,
+  regenerateRfqInvitationPortalLink,
   resendRfqInvitation,
   updateRfqInvitationStatus,
 } from "../api/rfq-invitation-api";
@@ -44,6 +45,34 @@ export function useResendRfqInvitation(rfqId: string) {
           updatedInvitation,
         ),
       );
+    },
+  });
+}
+
+export function useRegenerateRfqInvitationPortalLink(rfqId: string) {
+  const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
+
+  return useMutation({
+    mutationFn: (invitationId: string) => regenerateRfqInvitationPortalLink(invitationId, tenantId),
+    onSuccess: (portalLink, invitationId) => {
+      queryClient.setQueryData(rfqInvitationKeys.list(rfqId, tenantId), (current: unknown) => {
+        if (!Array.isArray(current)) return current;
+
+        return current.map((item) =>
+          (item as { id: string }).id === invitationId
+            ? {
+                ...(item as Record<string, unknown>),
+                portalAccess: {
+                  hasToken: true,
+                  expiresAt: portalLink.expiresAt,
+                  lastViewedAt: (item as { portalAccess?: { lastViewedAt?: string | null } }).portalAccess?.lastViewedAt ?? null,
+                  viewCount: (item as { portalAccess?: { viewCount?: number } }).portalAccess?.viewCount ?? 0,
+                },
+              }
+            : item,
+        );
+      });
     },
   });
 }

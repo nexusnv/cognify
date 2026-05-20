@@ -20,6 +20,12 @@ export const rfqInvitationFixtures: RfqInvitation[] = [
     expiredAt: null,
     cancelledAt: null,
     cancelReason: null,
+    portalAccess: {
+      hasToken: true,
+      expiresAt: "2026-06-30T17:00:00.000000Z",
+      lastViewedAt: null,
+      viewCount: 0,
+    },
     createdAt: "2026-05-19T10:00:00.000000Z",
     updatedAt: "2026-05-19T10:00:00.000000Z",
     permissions: {
