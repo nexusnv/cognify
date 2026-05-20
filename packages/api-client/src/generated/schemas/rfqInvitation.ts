@@ -6,6 +6,7 @@
  */
 import type { RfqInvitationStatus } from "./rfqInvitationStatus";
 import type { VendorPickerItem } from "./vendorPickerItem";
+import type { RfqInvitationPortalAccess } from "./rfqInvitationPortalAccess";
 import type { RfqInvitationContactName } from "./rfqInvitationContactName";
 import type { RfqInvitationContactEmail } from "./rfqInvitationContactEmail";
 import type { RfqInvitationMessage } from "./rfqInvitationMessage";
@@ -24,6 +25,7 @@ export interface RfqInvitation {
   rfqId: string;
   status: RfqInvitationStatus;
   vendor: VendorPickerItem;
+  portalAccess: RfqInvitationPortalAccess;
   contactName: RfqInvitationContactName;
   contactEmail: RfqInvitationContactEmail;
   message: RfqInvitationMessage;
