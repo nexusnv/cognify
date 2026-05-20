@@ -39,6 +39,7 @@ function buildInvitation(
   vendorId: string,
   overrides: Partial<RfqInvitation> = {},
   contactOverrides: CreateRfqInvitationsRequestContactOverridesOneOfItem[] | null = null,
+  requestValues?: Pick<CreateRfqInvitationsRequest, "message" | "responseDueAt">,
 ): RfqInvitation {
   const vendor = vendorPickerFixtures.find((item) => item.id === vendorId);
   if (!vendor) {
@@ -57,8 +58,8 @@ function buildInvitation(
     vendor,
     contactName: contactOverride?.contactName ?? vendor.defaultContact.name,
     contactEmail: contactOverride?.contactEmail ?? vendor.defaultContact.email,
-    message: "Please review the RFQ package and confirm your interest.",
-    responseDueAt: "2026-06-30T17:00:00.000000Z",
+    message: requestValues?.message ?? null,
+    responseDueAt: requestValues?.responseDueAt ?? null,
     sentAt: now,
     acknowledgedAt: null,
     declinedAt: null,
@@ -110,7 +111,7 @@ export const rfqInvitationHandlers = [
     }
 
     const created = payload.vendorIds.map((vendorId) =>
-      buildInvitation(rfqId, vendorId, {}, payload.contactOverrides),
+      buildInvitation(rfqId, vendorId, {}, payload.contactOverrides, payload),
     );
     rfqInvitations = [...created, ...rfqInvitations];
 

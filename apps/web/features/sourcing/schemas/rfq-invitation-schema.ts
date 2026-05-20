@@ -6,6 +6,8 @@ export const rfqInvitationCreateSchema = z.object({
     .array(z.string().min(1))
     .min(1, "Select at least one vendor.")
     .max(25, "You can invite at most 25 vendors at a time."),
+  message: z.string().trim().max(5000, "Buyer message / instructions is too long.").nullable(),
+  responseDueAt: z.string().nullable(),
 });
 
 export type RfqInvitationCreateValues = z.infer<typeof rfqInvitationCreateSchema>;

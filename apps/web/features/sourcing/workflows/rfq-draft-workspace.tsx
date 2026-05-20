@@ -189,6 +189,8 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
       <RfqInvitationPanel
         rfqId={rfq.id}
         canInvite={rfq.status === "draft" && rfq.permissions.canInviteVendors}
+        responseInstructions={rfq.responseInstructions}
+        responseDueAt={rfq.responseDueAt}
         readOnlyReason={
           rfq.status === "cancelled"
             ? "Vendor invitations are read-only because this RFQ is cancelled."

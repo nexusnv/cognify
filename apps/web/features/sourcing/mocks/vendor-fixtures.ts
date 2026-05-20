@@ -34,4 +34,15 @@ export const vendorPickerFixtures = [
       email: "kiera@keystone.test",
     },
   },
+  {
+    id: "vendor-4",
+    name: "Redwood Office Systems",
+    category: "Office Supplies",
+    status: "inactive",
+    riskRating: "high",
+    defaultContact: {
+      name: "Rhea Redwood",
+      email: "rhea@redwood.test",
+    },
+  },
 ] satisfies VendorPickerItem[];

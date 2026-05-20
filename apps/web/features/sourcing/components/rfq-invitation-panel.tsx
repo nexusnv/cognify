@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import { Button, Textarea } from "@cognify/ui";
 import { RfqInvitationDialog } from "./rfq-invitation-dialog";
@@ -24,10 +24,14 @@ export function RfqInvitationPanel({
   rfqId,
   canInvite,
   readOnlyReason,
+  responseInstructions,
+  responseDueAt,
 }: {
   rfqId: string;
   canInvite: boolean;
   readOnlyReason?: string;
+  responseInstructions?: string | null;
+  responseDueAt?: string | null;
 }) {
   const invitationQuery = useRfqInvitations(rfqId);
   const createMutation = useCreateRfqInvitations(rfqId);
@@ -38,11 +42,16 @@ export function RfqInvitationPanel({
   const [createOpen, setCreateOpen] = useState(false);
   const [createSearch, setCreateSearch] = useState("");
   const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
+  const [createMessage, setCreateMessage] = useState("");
+  const [createResponseDueAt, setCreateResponseDueAt] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
 
   const [cancelTarget, setCancelTarget] = useState<RfqInvitationViewModel | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [invitationActionErrors, setInvitationActionErrors] = useState<Record<string, string>>({});
+  const createTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const cancelTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const invitations = useMemo(
     () =>
@@ -51,6 +60,7 @@ export function RfqInvitationPanel({
       ),
     [invitationQuery.data],
   );
+  const invitationSummary = useMemo(() => buildInvitationSummary(invitations), [invitations]);
 
   const readOnlyMessage =
     readOnlyReason ?? (!canInvite ? "Vendor invitations are read-only for this RFQ." : null);
@@ -59,6 +69,8 @@ export function RfqInvitationPanel({
     setCreateError(null);
     setCreateSearch("");
     setSelectedVendorIds([]);
+    setCreateMessage(responseInstructions ?? "");
+    setCreateResponseDueAt(toDateTimeLocalValue(responseDueAt));
     setCreateOpen(true);
   }
 
@@ -67,6 +79,8 @@ export function RfqInvitationPanel({
     setCreateError(null);
     setCreateSearch("");
     setSelectedVendorIds([]);
+    setCreateMessage("");
+    setCreateResponseDueAt("");
   }
 
   function toggleVendor(vendorId: string) {
@@ -79,7 +93,17 @@ export function RfqInvitationPanel({
   }
 
   async function submitCreateInvitations() {
-    const parsed = rfqInvitationCreateSchema.safeParse({ vendorIds: selectedVendorIds });
+    const responseDueAtResult = parseResponseDueAt(createResponseDueAt);
+    if (!responseDueAtResult.ok) {
+      setCreateError(responseDueAtResult.error);
+      return;
+    }
+
+    const parsed = rfqInvitationCreateSchema.safeParse({
+      vendorIds: selectedVendorIds,
+      message: emptyStringToNull(createMessage),
+      responseDueAt: responseDueAtResult.value,
+    });
     if (!parsed.success) {
       setCreateError(parsed.error.issues[0]?.message ?? "Select at least one vendor.");
       return;
@@ -93,7 +117,8 @@ export function RfqInvitationPanel({
     }
   }
 
-  function openCancelDialog(invitation: RfqInvitationViewModel) {
+  function openCancelDialog(invitation: RfqInvitationViewModel, triggerElement: HTMLButtonElement | null) {
+    cancelTriggerRef.current = triggerElement;
     setCancelTarget(invitation);
     setCancelReason("");
     setCancelError(null);
@@ -124,14 +149,46 @@ export function RfqInvitationPanel({
     }
   }
 
+  async function resendInvitation(invitationId: string) {
+    setInvitationActionErrors((current) => {
+      if (!current[invitationId]) return current;
+      const next = { ...current };
+      delete next[invitationId];
+      return next;
+    });
+
+    try {
+      await resendMutation.mutateAsync(invitationId);
+    } catch (error) {
+      setInvitationActionErrors((current) => ({
+        ...current,
+        [invitationId]: getApiErrorMessage(error),
+      }));
+    }
+  }
+
   async function markInvitationStatus(invitationId: string, status: "acknowledged" | "declined" | "expired") {
     const parsed = rfqInvitationStatusSchema.safeParse({ status });
     if (!parsed.success) return;
 
-    await updateStatusMutation.mutateAsync({
-      invitationId,
-      values: parsed.data,
+    setInvitationActionErrors((current) => {
+      if (!current[invitationId]) return current;
+      const next = { ...current };
+      delete next[invitationId];
+      return next;
     });
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        invitationId,
+        values: parsed.data,
+      });
+    } catch (error) {
+      setInvitationActionErrors((current) => ({
+        ...current,
+        [invitationId]: getApiErrorMessage(error),
+      }));
+    }
   }
 
   if (invitationQuery.isLoading && invitations.length === 0) {
@@ -164,11 +221,17 @@ export function RfqInvitationPanel({
               Track invitation records for this RFQ. Email delivery and vendor portal access arrive later.
             </p>
           </div>
+          <InvitationSummary summary={invitationSummary} />
           {readOnlyMessage ? <p className="text-sm text-amber-700">{readOnlyMessage}</p> : null}
         </div>
 
         {canInvite ? (
-          <Button onClick={openCreateDialog}>Invite vendors</Button>
+          <Button
+            ref={createTriggerRef}
+            onClick={openCreateDialog}
+          >
+            Invite vendors
+          </Button>
         ) : null}
       </div>
 
@@ -195,6 +258,11 @@ export function RfqInvitationPanel({
                   {invitation.cancelReason ? (
                     <p className="text-sm text-muted-foreground">Cancel reason: {invitation.cancelReason}</p>
                   ) : null}
+                  {invitationActionErrors[invitation.id] ? (
+                    <p role="alert" className="text-sm text-red-700">
+                      {invitationActionErrors[invitation.id]}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -202,7 +270,7 @@ export function RfqInvitationPanel({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => void resendMutation.mutateAsync(invitation.id)}
+                      onClick={() => void resendInvitation(invitation.id)}
                       disabled={resendMutation.isPending}
                     >
                       Resend
@@ -239,7 +307,11 @@ export function RfqInvitationPanel({
                   ) : null}
 
                   {canInvite && invitation.permissions.canCancel ? (
-                    <Button variant="destructive" size="sm" onClick={() => openCancelDialog(invitation)}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={(event) => openCancelDialog(invitation, event.currentTarget)}
+                    >
                       Cancel invitation
                     </Button>
                   ) : null}
@@ -272,7 +344,34 @@ export function RfqInvitationPanel({
         }}
         onConfirm={submitCreateInvitations}
         footerNote={selectedVendorIds.length > 0 ? `${selectedVendorIds.length} vendor${selectedVendorIds.length === 1 ? "" : "s"} selected.` : "Select at least one vendor to continue."}
+        restoreFocusRef={createTriggerRef}
       >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <label className="block text-sm font-medium lg:col-span-2">
+            Buyer message / instructions
+            <Textarea
+              className="mt-1 min-h-28"
+              value={createMessage}
+              onChange={(event) => {
+                setCreateError(null);
+                setCreateMessage(event.target.value);
+              }}
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            Response due date
+            <input
+              aria-label="Response due date"
+              className="mt-1 min-h-11 w-full rounded-md border bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+              type="datetime-local"
+              value={createResponseDueAt}
+              onChange={(event) => {
+                setCreateError(null);
+                setCreateResponseDueAt(event.target.value);
+              }}
+            />
+          </label>
+        </div>
         <VendorPicker
           search={createSearch}
           selectedVendorIds={selectedVendorIds}
@@ -297,6 +396,7 @@ export function RfqInvitationPanel({
           }
         }}
         onConfirm={submitCancelInvitation}
+        restoreFocusRef={cancelTriggerRef}
       >
         <label className="block text-sm font-medium">
           Invitation cancel reason
@@ -315,9 +415,71 @@ export function RfqInvitationPanel({
   );
 }
 
+function InvitationSummary({ summary }: { summary: ReturnType<typeof buildInvitationSummary> }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="font-medium text-foreground">
+        {summary.total} invitation{summary.total === 1 ? "" : "s"} recorded
+      </span>
+      <span className="text-muted-foreground">{summary.statusSummary}</span>
+    </div>
+  );
+}
+
+function buildInvitationSummary(invitations: RfqInvitationViewModel[]) {
+  const counts = invitations.reduce(
+    (accumulator, invitation) => {
+      accumulator[invitation.status] = (accumulator[invitation.status] ?? 0) + 1;
+      return accumulator;
+    },
+    {} as Record<string, number>,
+  );
+
+  const statusSummaryParts = invitationStatusOrder
+    .map((status) => counts[status])
+    .flatMap((count, index) => {
+      if (!count) return [];
+      const status = invitationStatusOrder[index];
+      return `${count} ${status}`;
+    });
+
+  return {
+    total: invitations.length,
+    statusSummary: statusSummaryParts.length > 0 ? statusSummaryParts.join(" · ") : "No statuses recorded yet.",
+  };
+}
+
+function parseResponseDueAt(value: string): { ok: true; value: string | null } | { ok: false; error: string } {
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return { ok: false, error: "Enter a valid response due date and time." };
+
+  return { ok: true, value: parsed.toISOString() };
+}
+
+function emptyStringToNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+const invitationStatusOrder = ["pending", "sent", "acknowledged", "declined", "expired", "cancelled"] as const;
+
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function toDateTimeLocalValue(value: string | null | undefined): string {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  const localDate = new Date(date.getTime() - offsetMs);
+  return localDate.toISOString().slice(0, 16);
 }

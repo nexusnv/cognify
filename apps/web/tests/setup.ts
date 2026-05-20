@@ -6,6 +6,8 @@ import { resetIdentityMockState } from "../features/identity/mocks/identity-hand
 import { resetNotificationMockState } from "../features/notifications/mocks/notification-handlers";
 import { resetRequisitionMockState } from "../features/requisitions/mocks/requisitions-handlers";
 import { resetRfqMockState } from "../features/sourcing/mocks/rfq-handlers";
+import { resetRfqInvitationMockState } from "../features/sourcing/mocks/rfq-invitation-handlers";
+import { resetVendorMockState } from "../features/sourcing/mocks/vendor-handlers";
 import { server } from "./msw/server";
 
 Object.defineProperty(URL, "createObjectURL", {
@@ -29,6 +31,8 @@ afterEach(() => {
   resetAttachmentMockState();
   resetRequisitionMockState();
   resetRfqMockState();
+  resetRfqInvitationMockState();
+  resetVendorMockState();
   resetIdentityMockState();
   resetNotificationMockState();
 });

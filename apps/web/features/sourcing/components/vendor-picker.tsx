@@ -49,8 +49,16 @@ export function VendorPicker({
         </div>
       ) : (
         <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">No vendors match {normalizedSearch ? `"${normalizedSearch}".` : "your search."}</p>
-          <p className="mt-1">Try another search term or clear the search.</p>
+          <p className="font-medium text-foreground">
+            {normalizedSearch
+              ? `No vendors match "${normalizedSearch}".`
+              : "No active vendors are available for invitation."}
+          </p>
+          <p className="mt-1">
+            {normalizedSearch
+              ? "Try another search term or clear the search."
+              : "Add active vendors before starting an invitation."}
+          </p>
         </div>
       )}
     </div>

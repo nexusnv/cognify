@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode, RefObject } from "react";
 import { useEffect, useId, useRef } from "react";
 import { Button } from "@cognify/ui";
 
@@ -17,6 +17,7 @@ export function RfqInvitationDialog({
   onConfirm,
   children,
   footerNote,
+  restoreFocusRef,
 }: {
   open: boolean;
   title: string;
@@ -30,21 +31,20 @@ export function RfqInvitationDialog({
   onConfirm: () => Promise<void> | void;
   children: ReactNode;
   footerNote?: ReactNode;
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const modalRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 
   useEffect(() => {
     if (!open) {
-      triggerRef.current?.focus();
-      triggerRef.current = null;
+      restoreFocusRef?.current?.focus();
       return;
     }
 
     const focusableElements = getFocusableElements(modalRef.current);
     (focusableElements[0] ?? modalRef.current)?.focus();
-  }, [open]);
+  }, [open, restoreFocusRef]);
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) {
@@ -109,15 +109,7 @@ export function RfqInvitationDialog({
         {footerNote ? <div className="mt-3 text-xs text-muted-foreground">{footerNote}</div> : null}
 
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            ref={(node) => {
-              if (node && !triggerRef.current) {
-                triggerRef.current = node;
-              }
-            }}
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
           <Button
