@@ -129,6 +129,96 @@ class QuotationManualEntryApiTest extends TestCase
         ]);
     }
 
+    public function test_buyer_can_login_and_save_manual_entry_through_session_auth(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'manual-entry-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+        $invitation = $this->invitation($tenant, $rfq, $vendor);
+        $quotation = $this->quotation($tenant, $rfq, $vendor, $invitation);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'manual-entry-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->putJson("/api/quotations/{$quotation->id}/manual-entry", $this->validManualEntryPayload())
+            ->assertOk()
+            ->assertJsonPath('data.id', (string) $quotation->id)
+            ->assertJsonPath('data.manualEntry.totalAmount', '12470.00');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->putJson("/api/rfq-invitations/{$invitation->id}/quotation/manual-entry", $this->validManualEntryPayload([
+                'quotationReference' => 'NW-Q-2026-042',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('data.rfqInvitationId', (string) $invitation->id)
+            ->assertJsonPath('data.manualEntry.quotationReference', 'NW-Q-2026-042');
+    }
+
+    public function test_manual_entry_protected_routes_reject_unauthenticated_requests(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+        $invitation = $this->invitation($tenant, $rfq, $vendor);
+        $quotation = $this->quotation($tenant, $rfq, $vendor, $invitation);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->putJson("/api/quotations/{$quotation->id}/manual-entry", $this->validManualEntryPayload())
+            ->assertUnauthorized();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->putJson("/api/rfq-invitations/{$invitation->id}/quotation/manual-entry", $this->validManualEntryPayload())
+            ->assertUnauthorized();
+    }
+
+    public function test_manual_entry_protected_routes_require_tenant_context_after_login(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $otherTenant = Tenant::query()->create(['name' => 'Second tenant']);
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'manual-entry-multi-tenant-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $otherTenant->users()->attach($buyer->id, ['role' => 'buyer']);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+        $invitation = $this->invitation($tenant, $rfq, $vendor);
+        $quotation = $this->quotation($tenant, $rfq, $vendor, $invitation);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'manual-entry-multi-tenant-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->putJson("/api/quotations/{$quotation->id}/manual-entry", $this->validManualEntryPayload())
+            ->assertBadRequest()
+            ->assertJsonPath('error.code', 'ambiguous_tenant');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->putJson("/api/rfq-invitations/{$invitation->id}/quotation/manual-entry", $this->validManualEntryPayload())
+            ->assertBadRequest()
+            ->assertJsonPath('error.code', 'ambiguous_tenant');
+    }
+
     public function test_vendor_can_save_structured_quotation_terms_through_portal_token(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

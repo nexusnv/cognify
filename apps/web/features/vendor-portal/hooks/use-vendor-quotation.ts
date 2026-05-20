@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
+import type { SaveQuotationManualEntryRequestForVendor } from "@cognify/api-client/schemas";
 import {
   fetchVendorPortalQuotation,
   saveVendorPortalQuotationManualEntry,
@@ -31,7 +31,7 @@ export function useVendorQuotationManualEntry(token: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: SaveQuotationManualEntryRequest) =>
+    mutationFn: (payload: SaveQuotationManualEntryRequestForVendor) =>
       saveVendorPortalQuotationManualEntry(token, payload),
     onSuccess: (quotation) => {
       queryClient.setQueryData(vendorPortalKeys.quotation(token), quotation);

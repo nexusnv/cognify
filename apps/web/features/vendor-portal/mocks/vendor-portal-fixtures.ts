@@ -1,7 +1,7 @@
 import type {
   AttachmentVendorPortal,
   QuotationVendorPortal,
-  SaveQuotationManualEntryRequest,
+  SaveQuotationManualEntryRequestForVendor,
   VendorPortalRfqInvitation,
 } from "@cognify/api-client/schemas";
 
@@ -92,7 +92,7 @@ export function appendVendorPortalQuotationAttachment(attachment: AttachmentVend
   return vendorPortalQuotation;
 }
 
-export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntryRequest) {
+export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntryRequestForVendor) {
   if (!vendorPortalQuotation) {
     vendorPortalQuotation = buildVendorPortalQuotationFixture();
   }
@@ -115,8 +115,8 @@ export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationMan
     notes: lineItem.notes ?? null,
   }));
   const missingFields = [
-    payload.currency ? null : "currency",
-    payload.totalAmount ? null : "totalAmount",
+    payload.currency?.trim() ? null : "currency",
+    payload.totalAmount?.trim() ? null : "totalAmount",
     lineItems.length > 0 ? null : "lineItems",
   ].filter((field): field is string => Boolean(field));
 
@@ -142,7 +142,6 @@ export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationMan
       warrantyTerms: payload.warrantyTerms ?? null,
       exclusions: payload.exclusions ?? null,
       complianceNotes: payload.complianceNotes ?? null,
-      buyerNotes: null,
       vendorNotes: payload.vendorNotes ?? null,
     },
     lineItems,
@@ -198,7 +197,6 @@ export function buildVendorPortalQuotationFixture(
       warrantyTerms: null,
       exclusions: null,
       complianceNotes: null,
-      buyerNotes: null,
       vendorNotes: null,
     },
     lineItems: [],

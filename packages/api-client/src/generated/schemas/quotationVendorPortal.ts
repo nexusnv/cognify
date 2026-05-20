@@ -10,7 +10,7 @@ import type { QuotationVendorPortalSubmittedAt } from "./quotationVendorPortalSu
 import type { QuotationVendorPortalLatestReceivedAt } from "./quotationVendorPortalLatestReceivedAt";
 import type { QuotationVendorPortalSubmittedByVendorContact } from "./quotationVendorPortalSubmittedByVendorContact";
 import type { AttachmentVendorPortal } from "./attachmentVendorPortal";
-import type { QuotationManualEntry } from "./quotationManualEntry";
+import type { QuotationManualEntryForVendor } from "./quotationManualEntryForVendor";
 import type { QuotationLineItem } from "./quotationLineItem";
 import type { QuotationCompleteness } from "./quotationCompleteness";
 import type { QuotationPermissions } from "./quotationPermissions";
@@ -30,7 +30,7 @@ export interface QuotationVendorPortal {
   submittedByUser: null;
   submittedByVendorContact: QuotationVendorPortalSubmittedByVendorContact;
   attachments: AttachmentVendorPortal[];
-  manualEntry: QuotationManualEntry;
+  manualEntry: QuotationManualEntryForVendor;
   lineItems: QuotationLineItem[];
   completeness: QuotationCompleteness;
   permissions: QuotationPermissions;

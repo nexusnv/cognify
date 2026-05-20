@@ -6,7 +6,7 @@ import {
 } from "@cognify/api-client/endpoints";
 import type {
   QuotationVendorPortal,
-  SaveQuotationManualEntryRequest,
+  SaveQuotationManualEntryRequestForVendor,
   VendorPortalRfqInvitation,
 } from "@cognify/api-client/schemas";
 import {
@@ -42,7 +42,7 @@ export async function uploadVendorPortalQuotationAttachment(
 
 export async function saveVendorPortalQuotationManualEntry(
   token: string,
-  payload: SaveQuotationManualEntryRequest,
+  payload: SaveQuotationManualEntryRequestForVendor,
 ): Promise<QuotationVendorPortal> {
   const response = await saveVendorPortalQuotationManualEntryEndpoint(token, payload);
   if (response.status !== 200) throw response.data;

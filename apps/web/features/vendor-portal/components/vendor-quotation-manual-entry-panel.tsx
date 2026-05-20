@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
-import type { QuotationVendorPortal } from "@cognify/api-client/schemas";
+import type {
+  QuotationVendorPortal,
+  SaveQuotationManualEntryRequestForVendor,
+} from "@cognify/api-client/schemas";
 import { Button, Textarea } from "@cognify/ui";
 import { useVendorQuotationManualEntry } from "../hooks/use-vendor-quotation";
 import {
@@ -30,6 +33,10 @@ export function VendorQuotationManualEntryPanel({
   const statusLabel = completeness ? "Ready for evaluation" : "Incomplete quotation data";
   const errorMessage = validationMessage ?? (saveMutation.isError ? getApiErrorMessage(saveMutation.error) : null);
 
+  useEffect(() => {
+    setValues(formValuesFromQuotation(quotation));
+  }, [quotation]);
+
   function updateValue<K extends keyof QuotationManualEntryFormValues>(
     key: K,
     nextValue: QuotationManualEntryFormValues[K],
@@ -53,10 +60,8 @@ export function VendorQuotationManualEntryPanel({
     }
 
     try {
-      await saveMutation.mutateAsync({
-        ...payloadFromFormValues(result.data),
-        buyerNotes: null,
-      });
+      const { buyerNotes: _buyerNotes, ...payload } = payloadFromFormValues(result.data);
+      await saveMutation.mutateAsync(payload satisfies SaveQuotationManualEntryRequestForVendor);
       setSuccessMessage("Quotation details saved.");
     } catch {
       return;

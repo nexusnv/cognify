@@ -225,6 +225,31 @@ describe("RFQ invitation workflow", () => {
     expect(card.getByDisplayValue("NW-Q-2026-041")).toBeInTheDocument();
   });
 
+  it("rejects direct manual-entry updates after an invitation becomes terminal", async () => {
+    const createResponse = await fetch("/api/rfq-invitations/invitation-1/quotation/manual-entry", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validManualEntryPayload()),
+    });
+    const created = await createResponse.json();
+
+    expect(createResponse.status).toBe(200);
+
+    await fetch("/api/rfq-invitations/invitation-1/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cancelReason: "No longer needed." }),
+    });
+
+    const updateResponse = await fetch(`/api/quotations/${created.data.id}/manual-entry`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validManualEntryPayload({ quotationReference: "NW-Q-2026-042" })),
+    });
+
+    expect(updateResponse.status).toBe(403);
+  });
+
   it("requires a cancel reason and refreshes the invitation list after cancel", async () => {
     const user = userEvent.setup();
 
@@ -333,4 +358,19 @@ function toDateTimeLocalValue(value: string | null | undefined): string {
   const offsetMs = date.getTimezoneOffset() * 60_000;
   const localDate = new Date(date.getTime() - offsetMs);
   return localDate.toISOString().slice(0, 16);
+}
+
+function validManualEntryPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    quotationReference: "NW-Q-2026-041",
+    currency: "USD",
+    totalAmount: "12470.00",
+    lineItems: [
+      {
+        description: "Developer laptop",
+        quantity: "10",
+      },
+    ],
+    ...overrides,
+  };
 }

@@ -79,6 +79,7 @@ import type {
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
   SaveQuotationManualEntryRequest,
+  SaveQuotationManualEntryRequestForVendor,
   SearchResponse,
   SetCurrentTenantRequest,
   SourcingIntakeReviewCloseRequest,
@@ -5366,7 +5367,7 @@ export const getSaveVendorPortalQuotationManualEntryUrl = (token: string) => {
 
 export const saveVendorPortalQuotationManualEntry = async (
   token: string,
-  saveQuotationManualEntryRequest: SaveQuotationManualEntryRequest,
+  saveQuotationManualEntryRequestForVendor: SaveQuotationManualEntryRequestForVendor,
   options?: RequestInit,
 ): Promise<saveVendorPortalQuotationManualEntryResponse> => {
   return cognifyFetch<saveVendorPortalQuotationManualEntryResponse>(
@@ -5375,7 +5376,7 @@ export const saveVendorPortalQuotationManualEntry = async (
       ...options,
       method: "PUT",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(saveQuotationManualEntryRequest),
+      body: JSON.stringify(saveQuotationManualEntryRequestForVendor),
     },
   );
 };

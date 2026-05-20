@@ -8,8 +8,8 @@ import type {
 
 export const quotationLineItemSchema = z.object({
   rfqLineItemId: z.string().optional().nullable(),
-  description: z.string().min(1, "Description is required."),
-  quantity: z.string().min(1, "Quantity is required."),
+  description: z.string().trim().min(1, "Description is required."),
+  quantity: z.string().trim().min(1, "Quantity is required."),
   unit: z.string().optional().nullable(),
   unitPrice: z.string().optional().nullable(),
   subtotalAmount: z.string().optional().nullable(),
@@ -27,7 +27,7 @@ export const quotationManualEntrySchema = z.object({
   quotationReference: z.string().optional().nullable(),
   quotedAt: z.string().optional().nullable(),
   validUntil: z.string().optional().nullable(),
-  currency: z.string().length(3, "Currency must use a 3-letter code.").optional().nullable(),
+  currency: z.string().trim().length(3, "Currency must use a 3-letter code.").optional().nullable(),
   subtotalAmount: z.string().optional().nullable(),
   taxAmount: z.string().optional().nullable(),
   freightAmount: z.string().optional().nullable(),
@@ -45,14 +45,19 @@ export const quotationManualEntrySchema = z.object({
 });
 
 export type QuotationManualEntryFormValues = z.infer<typeof quotationManualEntrySchema>;
-type QuotationManualEntrySource = Pick<Quotation | QuotationVendorPortal, "manualEntry" | "lineItems">;
+type QuotationManualEntrySource = {
+  manualEntry: Omit<Quotation["manualEntry"], "buyerNotes"> & {
+    buyerNotes?: Quotation["manualEntry"]["buyerNotes"];
+  };
+  lineItems: Quotation["lineItems"] | QuotationVendorPortal["lineItems"];
+};
 
 export function formValuesFromQuotation(quotation: QuotationManualEntrySource | null): QuotationManualEntryFormValues {
   return {
     quotationReference: quotation?.manualEntry?.quotationReference ?? "",
     quotedAt: quotation?.manualEntry?.quotedAt ?? "",
     validUntil: quotation?.manualEntry?.validUntil ?? "",
-    currency: quotation?.manualEntry?.currency ?? "USD",
+    currency: quotation?.manualEntry?.currency ?? "",
     subtotalAmount: quotation?.manualEntry?.subtotalAmount ?? "",
     taxAmount: quotation?.manualEntry?.taxAmount ?? "",
     freightAmount: quotation?.manualEntry?.freightAmount ?? "",

@@ -90,6 +90,42 @@ describe("vendor RFQ portal", () => {
     expect(screen.queryByLabelText("Buyer notes")).not.toBeInTheDocument();
   });
 
+  it("returns conflict when a vendor saves manual entry with an expired portal token", async () => {
+    const response = await fetch(
+      `/api/vendor-portal/rfq-invitations/${expiredVendorPortalToken}/quotation/manual-entry`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validManualEntryPayload()),
+      },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("conflict");
+  });
+
+  it("counts whitespace-only currency and total amount as missing in vendor manual-entry fixtures", async () => {
+    const response = await fetch(
+      `/api/vendor-portal/rfq-invitations/${validVendorPortalToken}/quotation/manual-entry`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validManualEntryPayload({
+          currency: "   ",
+          totalAmount: "   ",
+        })),
+      },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.completeness.isComplete).toBe(false);
+    expect(body.data.completeness.missingFields).toEqual(
+      expect.arrayContaining(["currency", "totalAmount"]),
+    );
+  });
+
   it("shows a safe invalid link state", async () => {
     render(<VendorRfqInvitationPage token="invalid-token" />, { wrapper: TestProviders });
 
@@ -111,3 +147,18 @@ describe("vendor RFQ portal", () => {
     expect(screen.queryByText("Field laptop refresh RFQ")).not.toBeInTheDocument();
   });
 });
+
+function validManualEntryPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    quotationReference: "NW-Q-2026-041",
+    currency: "USD",
+    totalAmount: "12470.00",
+    lineItems: [
+      {
+        description: "Developer laptop",
+        quantity: "10",
+      },
+    ],
+    ...overrides,
+  };
+}

@@ -193,6 +193,11 @@ export const rfqInvitationHandlers = [
     const existingQuotation = findQuotationById(quotationId);
 
     if (!existingQuotation) return notFound();
+    const invitation = findInvitation(existingQuotation.rfqInvitationId);
+    if (!invitation) return notFound();
+    if (!["sent", "acknowledged"].includes(invitation.status)) {
+      return forbidden("Structured quotation entry is only available for sent or acknowledged invitations.");
+    }
 
     const updated = updateQuotationManualEntry(existingQuotation, payload, "buyer_upload");
     quotationByInvitationId.set(updated.rfqInvitationId, updated);

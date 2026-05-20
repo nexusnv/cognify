@@ -62,7 +62,6 @@ export function QuotationEvidencePanel({
 
   async function handleCreateStructuredQuotation() {
     const payload: SaveQuotationManualEntryRequest = {
-      currency: "USD",
       lineItems: [],
     };
 

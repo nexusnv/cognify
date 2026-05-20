@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { Quotation } from "@cognify/api-client/schemas";
 import { Button, Textarea } from "@cognify/ui";
@@ -33,6 +33,10 @@ export function QuotationManualEntryPanel({
   const completeness = quotation?.completeness?.isComplete ?? false;
   const statusLabel = completeness ? "Ready for evaluation" : "Incomplete quotation data";
   const errorMessage = validationMessage ?? (saveMutation.isError ? getApiErrorMessage(saveMutation.error) : null);
+
+  useEffect(() => {
+    setValues(formValuesFromQuotation(quotation));
+  }, [quotation]);
 
   function updateValue<K extends keyof QuotationManualEntryFormValues>(
     key: K,
