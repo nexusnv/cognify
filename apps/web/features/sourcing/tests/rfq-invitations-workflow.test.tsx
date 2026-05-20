@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -70,7 +70,8 @@ describe("RFQ invitation workflow", () => {
     render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
 
     expect(await screen.findByRole("heading", { name: "Vendor invitations" })).toBeInTheDocument();
-    await user.click(await screen.findByRole("button", { name: "Invite vendors" }));
+    await screen.findByRole("button", { name: "Invite vendors" });
+    await user.click(screen.getByRole("button", { name: "Invite vendors" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Invite vendors to RFQ" });
     expect(dialog).toBeInTheDocument();
@@ -81,25 +82,24 @@ describe("RFQ invitation workflow", () => {
       toDateTimeLocalValue(rfqDraftFixture.responseDueAt),
     );
 
-    const searchInput = screen.getByLabelText("Search vendors");
-    await user.type(searchInput, "Atlas");
+    fireEvent.change(within(dialog).getByLabelText("Search vendors"), { target: { value: "Atlas" } });
 
     expect(await screen.findByRole("checkbox", { name: "Atlas Workplace Supply" })).toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: "Atlas Workplace Supply" }));
-    await user.clear(screen.getByLabelText("Buyer message / instructions"));
-    await user.type(screen.getByLabelText("Buyer message / instructions"), "Please confirm pricing and delivery terms.");
-    await user.clear(screen.getByLabelText("Response due date"));
-    await user.type(screen.getByLabelText("Response due date"), "2026-07-01T09:30");
+    fireEvent.change(within(dialog).getByLabelText("Buyer message / instructions"), {
+      target: { value: "Please confirm pricing and delivery terms." },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Response due date"), { target: { value: "2026-07-01T09:30" } });
     await user.click(screen.getByRole("button", { name: "Create invitations" }));
 
-    await waitFor(() => {
-      expect(screen.getByText("Atlas Workplace Supply")).toBeInTheDocument();
-      expect(screen.getAllByText("Invitation recorded").length).toBeGreaterThan(0);
-    });
-    expect(screen.getByText("Please confirm pricing and delivery terms.")).toBeInTheDocument();
-    expect(
-      screen.getByText((content) => content.includes(formatDateTime(new Date("2026-07-01T09:30").toISOString()))),
-    ).toBeInTheDocument();
+    const invitationHeading = await screen.findByRole("heading", { name: "Atlas Workplace Supply" });
+    const invitationCard = invitationHeading.closest("[data-testid='rfq-invitation-card']");
+    expect(invitationCard).not.toBeNull();
+
+    const invitationScope = within(invitationCard as HTMLElement);
+    invitationScope.getByText("Invitation recorded");
+    invitationScope.getByText("Please confirm pricing and delivery terms.");
+    invitationScope.getByText(`Response due ${formatDateTime(new Date("2026-07-01T09:30").toISOString())}`);
   });
 
   it("shows a duplicate invitation error and lets the buyer recover", async () => {
@@ -155,12 +155,13 @@ describe("RFQ invitation workflow", () => {
     await user.click(screen.getByRole("button", { name: "Confirm cancel" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Cancel reason is required.");
 
-    await user.type(screen.getByLabelText("Invitation cancel reason"), "Vendor is out of scope.");
+    fireEvent.change(screen.getByLabelText("Invitation cancel reason"), { target: { value: "Vendor is out of scope." } });
     await user.click(screen.getByRole("button", { name: "Confirm cancel" }));
 
+    const cancelledCard = invitationCard as HTMLElement;
     await waitFor(() => {
-      expect(screen.getByText("cancelled")).toBeInTheDocument();
-      expect(screen.getByText(/Cancel reason: Vendor is out of scope\./)).toBeInTheDocument();
+      expect(within(cancelledCard).getByText("Invitation cancelled")).toBeInTheDocument();
+      expect(within(cancelledCard).getByText("Cancel reason: Vendor is out of scope.")).toBeInTheDocument();
     });
   });
 

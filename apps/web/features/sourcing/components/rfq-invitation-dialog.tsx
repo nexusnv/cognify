@@ -34,16 +34,32 @@ export function RfqInvitationDialog({
   restoreFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const wasOpenRef = useRef(open);
+  const restoreFocusTargetRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 
   useEffect(() => {
-    if (!open) {
-      restoreFocusRef?.current?.focus();
-      return;
+    const wasOpen = wasOpenRef.current;
+
+    if (open && !wasOpen) {
+      const activeElement = document.activeElement;
+      restoreFocusTargetRef.current =
+        activeElement instanceof HTMLElement && activeElement !== document.body && activeElement !== document.documentElement
+          ? activeElement
+          : null;
+
+      const focusableElements = getFocusableElements(modalRef.current);
+      (focusableElements[0] ?? modalRef.current)?.focus();
     }
 
-    const focusableElements = getFocusableElements(modalRef.current);
-    (focusableElements[0] ?? modalRef.current)?.focus();
+    if (!open && wasOpen) {
+      const restoreTarget =
+        (restoreFocusTargetRef.current?.isConnected ? restoreFocusTargetRef.current : null) ?? restoreFocusRef?.current ?? null;
+      restoreTarget?.focus();
+      restoreFocusTargetRef.current = null;
+    }
+
+    wasOpenRef.current = open;
   }, [open, restoreFocusRef]);
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {

@@ -51,7 +51,7 @@ export function RfqInvitationPanel({
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [invitationActionErrors, setInvitationActionErrors] = useState<Record<string, string>>({});
   const createTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const cancelTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
 
   const invitations = useMemo(
     () =>
@@ -117,8 +117,7 @@ export function RfqInvitationPanel({
     }
   }
 
-  function openCancelDialog(invitation: RfqInvitationViewModel, triggerElement: HTMLButtonElement | null) {
-    cancelTriggerRef.current = triggerElement;
+  function openCancelDialog(invitation: RfqInvitationViewModel) {
     setCancelTarget(invitation);
     setCancelReason("");
     setCancelError(null);
@@ -212,7 +211,7 @@ export function RfqInvitationPanel({
   }
 
   return (
-    <section id="vendor-invitations" className="rounded-md border p-4">
+    <section id="vendor-invitations" ref={panelRef} tabIndex={-1} className="rounded-md border p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="space-y-1">
@@ -310,7 +309,7 @@ export function RfqInvitationPanel({
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={(event) => openCancelDialog(invitation, event.currentTarget)}
+                      onClick={() => openCancelDialog(invitation)}
                     >
                       Cancel invitation
                     </Button>
@@ -396,7 +395,7 @@ export function RfqInvitationPanel({
           }
         }}
         onConfirm={submitCancelInvitation}
-        restoreFocusRef={cancelTriggerRef}
+        restoreFocusRef={panelRef}
       >
         <label className="block text-sm font-medium">
           Invitation cancel reason
