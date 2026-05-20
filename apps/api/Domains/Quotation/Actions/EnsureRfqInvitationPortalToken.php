@@ -45,6 +45,8 @@ class EnsureRfqInvitationPortalToken
             action: $forceRegenerate ? 'rfq_invitation.portal_token_regenerated' : 'rfq_invitation.portal_token_created',
             subject: $invitation,
             metadata: [
+                'tenantId' => (string) $tenant->id,
+                'invitationId' => (string) $invitation->id,
                 'rfqId' => (string) $invitation->rfq_id,
                 'vendorId' => (string) $invitation->vendor_id,
                 'expiresAt' => $expiresAt?->toISOString(),

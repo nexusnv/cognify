@@ -47,7 +47,8 @@ Route::middleware('throttle:5,1')->group(function (): void {
     Route::post('/auth/forgot-password', [AuthenticatedSessionController::class, 'forgotPassword']);
 });
 
-Route::get('/vendor-portal/rfq-invitations/{token}', [RfqInvitationPortalController::class, 'show']);
+Route::get('/vendor-portal/rfq-invitations/{token}', [RfqInvitationPortalController::class, 'show'])
+    ->middleware('throttle:60,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function (): void {

@@ -27,8 +27,8 @@ class VendorPortalRfqInvitationResource extends JsonResource
             'vendor' => [
                 'id' => (string) $this->vendor->id,
                 'name' => $this->vendor->name,
-                'category' => $this->vendor->category,
-                'riskRating' => $this->vendor->risk_rating,
+                'contactName' => $this->contact_name,
+                'contactEmail' => $this->contact_email,
             ],
             'rfq' => [
                 'id' => (string) $this->rfq->id,

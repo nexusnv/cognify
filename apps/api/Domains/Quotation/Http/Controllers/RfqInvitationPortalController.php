@@ -15,7 +15,7 @@ class RfqInvitationPortalController extends Controller
 {
     public function show(ResolveRfqInvitationPortalRequest $request, ResolveRfqInvitationPortalAccess $action): VendorPortalRfqInvitationResource
     {
-        $invitation = $action->handle((string) $request->route('token'));
+        $invitation = $action->handle((string) $request->validated('token'), $request);
 
         return new VendorPortalRfqInvitationResource($invitation);
     }
