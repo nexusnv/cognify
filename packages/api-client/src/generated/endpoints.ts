@@ -404,6 +404,11 @@ export type createApprovalPolicyVersionResponse422 = {
   status: 422;
 };
 
+export type createApprovalPolicyVersionResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
 export type createApprovalPolicyVersionResponseSuccess = createApprovalPolicyVersionResponse201 & {
   headers: Headers;
 };
@@ -413,6 +418,7 @@ export type createApprovalPolicyVersionResponseError = (
   | createApprovalPolicyVersionResponse404
   | createApprovalPolicyVersionResponse409
   | createApprovalPolicyVersionResponse422
+  | createApprovalPolicyVersionResponse429
 ) & {
   headers: Headers;
 };
@@ -469,6 +475,11 @@ export type publishApprovalPolicyVersionResponse409 = {
   status: 409;
 };
 
+export type publishApprovalPolicyVersionResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
 export type publishApprovalPolicyVersionResponseSuccess =
   publishApprovalPolicyVersionResponse200 & {
     headers: Headers;
@@ -478,6 +489,7 @@ export type publishApprovalPolicyVersionResponseError = (
   | publishApprovalPolicyVersionResponse403
   | publishApprovalPolicyVersionResponse404
   | publishApprovalPolicyVersionResponse409
+  | publishApprovalPolicyVersionResponse429
 ) & {
   headers: Headers;
 };

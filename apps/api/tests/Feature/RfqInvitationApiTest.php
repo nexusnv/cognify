@@ -471,6 +471,10 @@ class RfqInvitationApiTest extends TestCase
     {
         [$tenant, $requester] = $this->tenantUser('requester');
         [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'rfq-invitation-portal-link@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
         $rfq = $this->draftRfq($tenant, $requester, $buyer);
         $vendor = $this->vendor($tenant);
 
@@ -496,6 +500,38 @@ class RfqInvitationApiTest extends TestCase
             ->assertJsonMissing(['token']);
 
         $this->assertNotNull($created->refresh()->portal_token_hash);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'rfq-invitation-portal-link@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $portalLinkToken = (string) $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$createdId}/portal-link")
+            ->assertOk()
+            ->assertJsonPath('data.invitationId', $createdId)
+            ->assertJsonPath('data.portalUrl', fn (string $url): bool => str_contains($url, '/vendor/rfq-invitations/'))
+            ->assertJsonPath('data.expiresAt', fn (?string $value): bool => $value !== null)
+            ->json('data.token');
+
+        $this->assertNotSame('', $portalLinkToken);
+
+        $created = RfqInvitation::query()->findOrFail((int) $createdId)->refresh();
+        $this->assertSame(hash('sha256', $portalLinkToken), $created->portal_token_hash);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfq-invitations/{$createdId}/portal-link")
+            ->assertUnauthorized();
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self

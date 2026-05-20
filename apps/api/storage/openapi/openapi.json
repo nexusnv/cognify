@@ -251,6 +251,9 @@
           "409": {
             "$ref": "#/components/responses/InvalidState"
           },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationFailed"
           }
@@ -296,6 +299,9 @@
           },
           "409": {
             "$ref": "#/components/responses/InvalidState"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }
@@ -10375,18 +10381,104 @@
               "requiredDocuments": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/VendorPortalRfqRequiredDocument"
                 }
               },
               "lineItems": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/VendorPortalRfqLineItem"
                 }
               }
             }
+          }
+        }
+      },
+      "VendorPortalRfqRequiredDocument": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "required"
+        ],
+        "properties": {
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VendorPortalRfqLineItem": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "quantity",
+          "unit",
+          "notes",
+          "unitOfMeasure",
+          "estimatedUnitPrice",
+          "currency"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitOfMeasure": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimatedUnitPrice": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

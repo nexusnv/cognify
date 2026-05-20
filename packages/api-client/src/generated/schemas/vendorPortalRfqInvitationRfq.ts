@@ -7,8 +7,8 @@
 import type { VendorPortalRfqInvitationRfqScopeSummary } from "./vendorPortalRfqInvitationRfqScopeSummary";
 import type { VendorPortalRfqInvitationRfqResponseDueAt } from "./vendorPortalRfqInvitationRfqResponseDueAt";
 import type { VendorPortalRfqInvitationRfqResponseInstructions } from "./vendorPortalRfqInvitationRfqResponseInstructions";
-import type { VendorPortalRfqInvitationRfqRequiredDocumentsItem } from "./vendorPortalRfqInvitationRfqRequiredDocumentsItem";
-import type { VendorPortalRfqInvitationRfqLineItemsItem } from "./vendorPortalRfqInvitationRfqLineItemsItem";
+import type { VendorPortalRfqRequiredDocument } from "./vendorPortalRfqRequiredDocument";
+import type { VendorPortalRfqLineItem } from "./vendorPortalRfqLineItem";
 
 export type VendorPortalRfqInvitationRfq = {
   id: string;
@@ -17,6 +17,6 @@ export type VendorPortalRfqInvitationRfq = {
   scopeSummary: VendorPortalRfqInvitationRfqScopeSummary;
   responseDueAt: VendorPortalRfqInvitationRfqResponseDueAt;
   responseInstructions: VendorPortalRfqInvitationRfqResponseInstructions;
-  requiredDocuments: VendorPortalRfqInvitationRfqRequiredDocumentsItem[];
-  lineItems: VendorPortalRfqInvitationRfqLineItemsItem[];
+  requiredDocuments: VendorPortalRfqRequiredDocument[];
+  lineItems: VendorPortalRfqLineItem[];
 };

@@ -1,22 +1,13 @@
+import type {
+  VendorPortalRfqLineItem,
+  VendorPortalRfqRequiredDocument,
+} from "@cognify/api-client/schemas";
 import type { VendorRfqPortalViewModel } from "../types/vendor-rfq-portal-view-model";
 import { formatDateTime } from "../types/vendor-rfq-portal-view-model";
 
-type RequiredDocument = {
-  key?: string;
-  label?: string;
-  required?: boolean;
-};
-
-type LineItem = {
-  description?: string;
-  quantity?: number;
-  unit?: string;
-  notes?: string;
-};
-
 export function VendorRfqPackage({ invitation }: { invitation: VendorRfqPortalViewModel }) {
-  const requiredDocuments = invitation.rfq.requiredDocuments as RequiredDocument[];
-  const lineItems = invitation.rfq.lineItems as LineItem[];
+  const requiredDocuments: VendorPortalRfqRequiredDocument[] = invitation.rfq.requiredDocuments;
+  const lineItems: VendorPortalRfqLineItem[] = invitation.rfq.lineItems;
 
   return (
     <article className="mx-auto max-w-5xl space-y-6 px-4 py-8">

@@ -140,23 +140,31 @@ describe("RFQ invitation workflow", () => {
   it("lets a buyer generate a manual vendor portal link without email delivery", async () => {
     const user = userEvent.setup();
     const clipboardWrite = vi.fn().mockResolvedValue(undefined);
+    const originalClipboard = navigator.clipboard;
 
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText: clipboardWrite },
-    });
+    try {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: clipboardWrite },
+      });
 
-    render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
+      render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
 
-    await screen.findByText("Northwind Traders");
-    await user.click(screen.getByRole("button", { name: "Generate portal link" }));
+      await screen.findByText("Northwind Traders");
+      await user.click(screen.getByRole("button", { name: "Generate portal link" }));
 
-    expect(
-      await screen.findByText("Portal link copied. Manual sharing only; email delivery is not enabled."),
-    ).toBeInTheDocument();
-    expect(clipboardWrite).toHaveBeenCalledWith(
-      expect.stringContaining("/vendor/rfq-invitations/vendor-portal-valid-token"),
-    );
+      expect(
+        await screen.findByText("Portal link copied. Manual sharing only; email delivery is not enabled."),
+      ).toBeInTheDocument();
+      expect(clipboardWrite).toHaveBeenCalledWith(
+        expect.stringContaining("/vendor/rfq-invitations/vendor-portal-valid-token"),
+      );
+    } finally {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
+    }
   });
 
   it("requires a cancel reason and refreshes the invitation list after cancel", async () => {

@@ -203,14 +203,18 @@ export function RfqInvitationPanel({
 
     try {
       const portalLink = await portalLinkMutation.mutateAsync(invitationId);
-      setPortalLinkByInvitationId((current) => ({ ...current, [invitationId]: portalLink.portalUrl }));
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${window.location.origin}${portalLink.portalUrl}`);
+      const portalUrl = `${window.location.origin}${portalLink.portalUrl}`;
+
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard copy is unavailable. Copy the portal link manually from a supported browser.");
       }
+
+      await navigator.clipboard.writeText(portalUrl);
+      setPortalLinkByInvitationId((current) => ({ ...current, [invitationId]: portalLink.portalUrl }));
     } catch (error) {
       setInvitationActionErrors((current) => ({
         ...current,
-        [invitationId]: getApiErrorMessage(error),
+        [invitationId]: error instanceof Error ? error.message : getApiErrorMessage(error),
       }));
     }
   }

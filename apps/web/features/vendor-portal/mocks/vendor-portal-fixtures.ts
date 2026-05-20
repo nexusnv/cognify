@@ -33,7 +33,16 @@ export const vendorPortalRfqInvitationFixture: VendorPortalRfqInvitation = {
       { key: "company_profile", label: "Company profile", required: false },
     ],
     lineItems: [
-      { description: "Developer laptop", quantity: 10, unit: "each", notes: "16GB RAM minimum" },
+      {
+        name: "Developer laptop",
+        description: "Developer laptop",
+        quantity: 10,
+        unit: "each",
+        notes: "16GB RAM minimum",
+        unitOfMeasure: null,
+        estimatedUnitPrice: null,
+        currency: null,
+      },
     ],
   },
 };

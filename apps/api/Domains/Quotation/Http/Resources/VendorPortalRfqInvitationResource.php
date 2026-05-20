@@ -37,9 +37,51 @@ class VendorPortalRfqInvitationResource extends JsonResource
                 'responseDueAt' => $this->rfq->response_due_at?->toISOString(),
                 'scopeSummary' => $this->rfq->scope_summary,
                 'responseInstructions' => $this->rfq->response_instructions,
-                'requiredDocuments' => $this->rfq->required_documents ?? [],
-                'lineItems' => $this->rfq->line_items ?? [],
+                'requiredDocuments' => $this->requiredDocuments(),
+                'lineItems' => $this->lineItems(),
             ],
         ];
+    }
+
+    /**
+     * @return array<int, array{key: mixed, label: mixed, required: bool}>
+     */
+    private function requiredDocuments(): array
+    {
+        return collect($this->rfq->required_documents ?? [])
+            ->map(fn ($document): array => [
+                'key' => data_get($document, 'key'),
+                'label' => data_get($document, 'label'),
+                'required' => (bool) data_get($document, 'required', false),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function lineItems(): array
+    {
+        return collect($this->rfq->line_items ?? [])
+            ->map(function ($lineItem): array {
+                $description = data_get($lineItem, 'description');
+                $name = data_get($lineItem, 'name');
+                $unit = data_get($lineItem, 'unit');
+                $unitOfMeasure = data_get($lineItem, 'unit_of_measure');
+
+                return [
+                    'name' => $name,
+                    'description' => $description ?? $name,
+                    'quantity' => data_get($lineItem, 'quantity'),
+                    'unit' => $unit ?? $unitOfMeasure,
+                    'notes' => data_get($lineItem, 'notes'),
+                    'unitOfMeasure' => $unitOfMeasure,
+                    'estimatedUnitPrice' => data_get($lineItem, 'estimated_unit_price'),
+                    'currency' => data_get($lineItem, 'currency'),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }
