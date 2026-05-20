@@ -4204,6 +4204,232 @@
         }
       }
     },
+    "/api/vendor-portal/rfq-invitations/{token}/quotation": {
+      "get": {
+        "operationId": "showVendorPortalQuotation",
+        "summary": "Show vendor portal quotation",
+        "tags": [
+          "Vendor Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor quotation state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNullableVendorPortalResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/api/vendor-portal/rfq-invitations/{token}/quotation/attachments": {
+      "post": {
+        "operationId": "storeVendorPortalQuotationAttachment",
+        "summary": "Upload vendor portal quotation attachment",
+        "tags": [
+          "Vendor Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vendor quotation attachment uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVendorPortalResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/api/rfq-invitations/{invitation}/quotation": {
+      "get": {
+        "operationId": "showRfqInvitationQuotation",
+        "summary": "Show RFQ invitation quotation",
+        "tags": [
+          "RFQ Invitations"
+        ],
+        "parameters": [
+          {
+            "name": "invitation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ invitation quotation state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNullableResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/rfq-invitations/{invitation}/quotation/attachments": {
+      "post": {
+        "operationId": "storeRfqInvitationQuotationAttachment",
+        "summary": "Upload buyer-received quotation attachment",
+        "tags": [
+          "RFQ Invitations"
+        ],
+        "parameters": [
+          {
+            "name": "invitation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Buyer-received quotation attachment uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotations/{quotation}/attachments": {
+      "get": {
+        "operationId": "listQuotationAttachments",
+        "summary": "List quotation attachments",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "quotation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotation attachments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/rfq-invitations/{invitation}/resend": {
       "post": {
         "operationId": "resendRfqInvitation",
@@ -5174,7 +5400,8 @@
           "parentType": {
             "type": "string",
             "enum": [
-              "requisition"
+              "requisition",
+              "quotation"
             ]
           },
           "parentId": {
@@ -5212,6 +5439,73 @@
                 "type": "null"
               }
             ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AttachmentPermissions"
+          }
+        }
+      },
+      "AttachmentVendorPortal": {
+        "type": "object",
+        "required": [
+          "id",
+          "parentType",
+          "parentId",
+          "filename",
+          "mimeType",
+          "extension",
+          "sizeBytes",
+          "previewable",
+          "uploadedBy",
+          "createdAt",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parentType": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "quotation"
+            ]
+          },
+          "parentId": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "extension": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "previewable": {
+            "type": "boolean"
+          },
+          "uploadedBy": {
+            "type": "null"
           },
           "createdAt": {
             "type": [
@@ -8963,6 +9257,294 @@
             "format": "date-time"
           }
         }
+      },
+      "Quotation": {
+        "type": "object",
+        "required": [
+          "id",
+          "rfqId",
+          "vendorId",
+          "rfqInvitationId",
+          "number",
+          "status",
+          "submissionSource",
+          "submittedAt",
+          "latestReceivedAt",
+          "fileCount",
+          "submittedByUser",
+          "submittedByVendorContact",
+          "attachments",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rfqId": {
+            "type": "string"
+          },
+          "vendorId": {
+            "type": "string"
+          },
+          "rfqInvitationId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "withdrawn",
+              "superseded"
+            ]
+          },
+          "submissionSource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "vendor_portal",
+              "buyer_upload",
+              null
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "latestReceivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "fileCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "submittedByUser": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "submittedByVendorContact": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVendorContact"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationPermissions"
+          }
+        }
+      },
+      "QuotationVendorPortal": {
+        "type": "object",
+        "required": [
+          "id",
+          "rfqId",
+          "vendorId",
+          "rfqInvitationId",
+          "number",
+          "status",
+          "submissionSource",
+          "submittedAt",
+          "latestReceivedAt",
+          "fileCount",
+          "submittedByUser",
+          "submittedByVendorContact",
+          "attachments",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rfqId": {
+            "type": "string"
+          },
+          "vendorId": {
+            "type": "string"
+          },
+          "rfqInvitationId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "withdrawn",
+              "superseded"
+            ]
+          },
+          "submissionSource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "vendor_portal",
+              "buyer_upload",
+              null
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "latestReceivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "fileCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "submittedByUser": {
+            "type": "null"
+          },
+          "submittedByVendorContact": {
+            "type": "null"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentVendorPortal"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationPermissions"
+          }
+        }
+      },
+      "QuotationNullableResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Quotation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "QuotationNullableVendorPortalResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVendorPortal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "QuotationPermissions": {
+        "type": "object",
+        "required": [
+          "canUploadAttachment",
+          "canViewAttachments"
+        ],
+        "properties": {
+          "canUploadAttachment": {
+            "type": "boolean"
+          },
+          "canViewAttachments": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Quotation"
+          }
+        }
+      },
+      "QuotationVendorPortalResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuotationVendorPortal"
+          }
+        }
+      },
+      "QuotationVendorContact": {
+        "type": "object",
+        "required": [
+          "name",
+          "email"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email"
+          }
+        },
+        "additionalProperties": true
       },
       "ApprovalTask": {
         "type": "object",

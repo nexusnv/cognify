@@ -39,7 +39,7 @@ class QuotationSearchProvider implements SearchProvider
                 id: (string) $quotation->id,
                 title: $quotation->number,
                 subtitle: $quotation->vendor?->name,
-                status: $quotation->status,
+                status: $quotation->status?->value,
                 href: $quotation->rfq?->requisition_id ? "/requisitions/{$quotation->rfq->requisition_id}" : '/system',
                 updatedAt: $quotation->updated_at?->toISOString(),
             ));

@@ -58,6 +58,10 @@ import type {
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
+  QuotationNullableResponse,
+  QuotationNullableVendorPortalResponse,
+  QuotationResponse,
+  QuotationVendorPortalResponse,
   ReasonedRequisitionActionRequest,
   RejectApprovalTaskRequest,
   RequestApprovalChangesRequest,
@@ -5256,6 +5260,295 @@ export const showVendorPortalRfqInvitation = async (
       method: "GET",
     },
   );
+};
+
+/**
+ * @summary Show vendor portal quotation
+ */
+export type showVendorPortalQuotationResponse200 = {
+  data: QuotationNullableVendorPortalResponse;
+  status: 200;
+};
+
+export type showVendorPortalQuotationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showVendorPortalQuotationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type showVendorPortalQuotationResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
+export type showVendorPortalQuotationResponseSuccess = showVendorPortalQuotationResponse200 & {
+  headers: Headers;
+};
+export type showVendorPortalQuotationResponseError = (
+  | showVendorPortalQuotationResponse404
+  | showVendorPortalQuotationResponse409
+  | showVendorPortalQuotationResponse429
+) & {
+  headers: Headers;
+};
+
+export type showVendorPortalQuotationResponse =
+  | showVendorPortalQuotationResponseSuccess
+  | showVendorPortalQuotationResponseError;
+
+export const getShowVendorPortalQuotationUrl = (token: string) => {
+  return `/api/vendor-portal/rfq-invitations/${token}/quotation`;
+};
+
+export const showVendorPortalQuotation = async (
+  token: string,
+  options?: RequestInit,
+): Promise<showVendorPortalQuotationResponse> => {
+  return cognifyFetch<showVendorPortalQuotationResponse>(getShowVendorPortalQuotationUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Upload vendor portal quotation attachment
+ */
+export type storeVendorPortalQuotationAttachmentResponse201 = {
+  data: QuotationVendorPortalResponse;
+  status: 201;
+};
+
+export type storeVendorPortalQuotationAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type storeVendorPortalQuotationAttachmentResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type storeVendorPortalQuotationAttachmentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type storeVendorPortalQuotationAttachmentResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
+export type storeVendorPortalQuotationAttachmentResponseSuccess =
+  storeVendorPortalQuotationAttachmentResponse201 & {
+    headers: Headers;
+  };
+export type storeVendorPortalQuotationAttachmentResponseError = (
+  | storeVendorPortalQuotationAttachmentResponse404
+  | storeVendorPortalQuotationAttachmentResponse409
+  | storeVendorPortalQuotationAttachmentResponse422
+  | storeVendorPortalQuotationAttachmentResponse429
+) & {
+  headers: Headers;
+};
+
+export type storeVendorPortalQuotationAttachmentResponse =
+  | storeVendorPortalQuotationAttachmentResponseSuccess
+  | storeVendorPortalQuotationAttachmentResponseError;
+
+export const getStoreVendorPortalQuotationAttachmentUrl = (token: string) => {
+  return `/api/vendor-portal/rfq-invitations/${token}/quotation/attachments`;
+};
+
+export const storeVendorPortalQuotationAttachment = async (
+  token: string,
+  attachmentUploadRequest: AttachmentUploadRequest,
+  options?: RequestInit,
+): Promise<storeVendorPortalQuotationAttachmentResponse> => {
+  const formData = buildFormData(attachmentUploadRequest);
+  return cognifyFetch<storeVendorPortalQuotationAttachmentResponse>(
+    getStoreVendorPortalQuotationAttachmentUrl(token),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+/**
+ * @summary Show RFQ invitation quotation
+ */
+export type showRfqInvitationQuotationResponse200 = {
+  data: QuotationNullableResponse;
+  status: 200;
+};
+
+export type showRfqInvitationQuotationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showRfqInvitationQuotationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showRfqInvitationQuotationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showRfqInvitationQuotationResponseSuccess = showRfqInvitationQuotationResponse200 & {
+  headers: Headers;
+};
+export type showRfqInvitationQuotationResponseError = (
+  | showRfqInvitationQuotationResponse401
+  | showRfqInvitationQuotationResponse403
+  | showRfqInvitationQuotationResponse404
+) & {
+  headers: Headers;
+};
+
+export type showRfqInvitationQuotationResponse =
+  | showRfqInvitationQuotationResponseSuccess
+  | showRfqInvitationQuotationResponseError;
+
+export const getShowRfqInvitationQuotationUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/quotation`;
+};
+
+export const showRfqInvitationQuotation = async (
+  invitation: string,
+  options?: RequestInit,
+): Promise<showRfqInvitationQuotationResponse> => {
+  return cognifyFetch<showRfqInvitationQuotationResponse>(
+    getShowRfqInvitationQuotationUrl(invitation),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Upload buyer-received quotation attachment
+ */
+export type storeRfqInvitationQuotationAttachmentResponse201 = {
+  data: QuotationResponse;
+  status: 201;
+};
+
+export type storeRfqInvitationQuotationAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type storeRfqInvitationQuotationAttachmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type storeRfqInvitationQuotationAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type storeRfqInvitationQuotationAttachmentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type storeRfqInvitationQuotationAttachmentResponseSuccess =
+  storeRfqInvitationQuotationAttachmentResponse201 & {
+    headers: Headers;
+  };
+export type storeRfqInvitationQuotationAttachmentResponseError = (
+  | storeRfqInvitationQuotationAttachmentResponse401
+  | storeRfqInvitationQuotationAttachmentResponse403
+  | storeRfqInvitationQuotationAttachmentResponse404
+  | storeRfqInvitationQuotationAttachmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type storeRfqInvitationQuotationAttachmentResponse =
+  | storeRfqInvitationQuotationAttachmentResponseSuccess
+  | storeRfqInvitationQuotationAttachmentResponseError;
+
+export const getStoreRfqInvitationQuotationAttachmentUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/quotation/attachments`;
+};
+
+export const storeRfqInvitationQuotationAttachment = async (
+  invitation: string,
+  attachmentUploadRequest: AttachmentUploadRequest,
+  options?: RequestInit,
+): Promise<storeRfqInvitationQuotationAttachmentResponse> => {
+  const formData = buildFormData(attachmentUploadRequest);
+  return cognifyFetch<storeRfqInvitationQuotationAttachmentResponse>(
+    getStoreRfqInvitationQuotationAttachmentUrl(invitation),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+/**
+ * @summary List quotation attachments
+ */
+export type listQuotationAttachmentsResponse200 = {
+  data: AttachmentListResponse;
+  status: 200;
+};
+
+export type listQuotationAttachmentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listQuotationAttachmentsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listQuotationAttachmentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listQuotationAttachmentsResponseSuccess = listQuotationAttachmentsResponse200 & {
+  headers: Headers;
+};
+export type listQuotationAttachmentsResponseError = (
+  | listQuotationAttachmentsResponse401
+  | listQuotationAttachmentsResponse403
+  | listQuotationAttachmentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listQuotationAttachmentsResponse =
+  | listQuotationAttachmentsResponseSuccess
+  | listQuotationAttachmentsResponseError;
+
+export const getListQuotationAttachmentsUrl = (quotation: string) => {
+  return `/api/quotations/${quotation}/attachments`;
+};
+
+export const listQuotationAttachments = async (
+  quotation: string,
+  options?: RequestInit,
+): Promise<listQuotationAttachmentsResponse> => {
+  return cognifyFetch<listQuotationAttachmentsResponse>(getListQuotationAttachmentsUrl(quotation), {
+    ...options,
+    method: "GET",
+  });
 };
 
 /**

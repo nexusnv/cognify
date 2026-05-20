@@ -22,8 +22,10 @@ use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\RfqInvitationController;
+use Domains\Quotation\Http\Controllers\RfqInvitationQuotationController;
 use Domains\Quotation\Http\Controllers\RfqInvitationPortalController;
 use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
+use Domains\Quotation\Http\Controllers\VendorPortalQuotationController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
 use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
@@ -48,6 +50,10 @@ Route::middleware('throttle:5,1')->group(function (): void {
 });
 
 Route::get('/vendor-portal/rfq-invitations/{token}', [RfqInvitationPortalController::class, 'show'])
+    ->middleware('throttle:60,1');
+Route::get('/vendor-portal/rfq-invitations/{token}/quotation', [VendorPortalQuotationController::class, 'show'])
+    ->middleware('throttle:60,1');
+Route::post('/vendor-portal/rfq-invitations/{token}/quotation/attachments', [VendorPortalQuotationController::class, 'storeAttachment'])
     ->middleware('throttle:60,1');
 
 // Protected routes
@@ -106,6 +112,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/rfq-invitations/{invitation}/cancel', [RfqInvitationController::class, 'cancel']);
         Route::patch('/rfq-invitations/{invitation}/status', [RfqInvitationController::class, 'status']);
         Route::post('/rfq-invitations/{invitation}/portal-link', [RfqInvitationPortalController::class, 'regenerate']);
+        Route::get('/rfq-invitations/{invitation}/quotation', [RfqInvitationQuotationController::class, 'show']);
+        Route::post('/rfq-invitations/{invitation}/quotation/attachments', [RfqInvitationQuotationController::class, 'storeAttachment']);
+        Route::get('/quotations/{quotation}/attachments', [RfqInvitationQuotationController::class, 'attachments']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);

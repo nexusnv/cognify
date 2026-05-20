@@ -83,9 +83,9 @@ Frontend files to modify:
 
 ## Task 1: Backend Contract Tests First
 
-- [ ] Add `apps/api/tests/Feature/QuotationUploadApiTest.php`.
-- [ ] Use `RefreshDatabase`, `Storage::fake('local')`, `UploadedFile::fake()`, and the same tenant/RFQ/invitation helpers from `RfqInvitationPortalApiTest`.
-- [ ] Cover vendor upload creating the quotation and attachment:
+- [x] Add `apps/api/tests/Feature/QuotationUploadApiTest.php`.
+- [x] Use `RefreshDatabase`, `Storage::fake('local')`, `UploadedFile::fake()`, and the same tenant/RFQ/invitation helpers from `RfqInvitationPortalApiTest`.
+- [x] Cover vendor upload creating the quotation and attachment:
 
 ```php
 public function test_vendor_portal_upload_creates_received_quotation_and_attachment(): void
@@ -127,15 +127,15 @@ public function test_vendor_portal_upload_creates_received_quotation_and_attachm
 }
 ```
 
-- [ ] Cover buyer upload with `POST /api/rfq-invitations/{invitation}/quotation/attachments`, asserting `submissionSource` is `buyer_upload` and `submittedByUser` matches the buyer.
-- [ ] Cover repeated upload to the same invitation, asserting the same quotation ID is returned and `file_count` increments.
-- [ ] Cover `GET /api/vendor-portal/rfq-invitations/{token}/quotation`, returning `200` with `data: null` before upload and the quotation after upload.
-- [ ] Cover `GET /api/rfq-invitations/{invitation}/quotation`, returning the tenant-scoped quotation for permitted buyers.
-- [ ] Cover `GET /api/quotations/{quotation}/attachments`, returning only attachments for that quotation and tenant.
-- [ ] Cover invalid, expired, cancelled, declined, and expired-status portal tokens returning the same safe errors as `RfqInvitationPortalApiTest`.
-- [ ] Cover cross-tenant buyer access returning `404` or `403` without revealing quotation data.
-- [ ] Cover invalid upload validation for empty files and disallowed extensions.
-- [ ] Run the new test before implementation:
+- [x] Cover buyer upload with `POST /api/rfq-invitations/{invitation}/quotation/attachments`, asserting `submissionSource` is `buyer_upload` and `submittedByUser` matches the buyer.
+- [x] Cover repeated upload to the same invitation, asserting the same quotation ID is returned and `file_count` increments.
+- [x] Cover `GET /api/vendor-portal/rfq-invitations/{token}/quotation`, returning `200` with `data: null` before upload and the quotation after upload.
+- [x] Cover `GET /api/rfq-invitations/{invitation}/quotation`, returning the tenant-scoped quotation for permitted buyers.
+- [x] Cover `GET /api/quotations/{quotation}/attachments`, returning only attachments for that quotation and tenant.
+- [x] Cover invalid, expired, cancelled, declined, and expired-status portal tokens returning the same safe errors as `RfqInvitationPortalApiTest`.
+- [x] Cover cross-tenant buyer access returning `404` or `403` without revealing quotation data.
+- [x] Cover invalid upload validation for empty files and disallowed extensions.
+- [x] Run the new test before implementation:
 
 ```bash
 cd apps/api && php artisan test --filter=QuotationUploadApiTest
@@ -145,9 +145,9 @@ Expected result before implementation: tests fail because routes, columns, resou
 
 ## Task 2: Backend Data Model
 
-- [ ] Add migration `apps/api/database/migrations/2026_05_20_020000_extend_quotations_for_upload_capture.php`.
-- [ ] Add nullable columns to `quotations`: `rfq_invitation_id`, `submission_source`, `submitted_at`, `submitted_by_user_id`, `submitted_by_vendor_contact`, `file_count`, `latest_received_at`.
-- [ ] Add indexes and constraints:
+- [x] Add migration `apps/api/database/migrations/2026_05_20_020000_extend_quotations_for_upload_capture.php`.
+- [x] Add nullable columns to `quotations`: `rfq_invitation_id`, `submission_source`, `submitted_at`, `submitted_by_user_id`, `submitted_by_vendor_contact`, `file_count`, `latest_received_at`.
+- [x] Add indexes and constraints:
 
 ```php
 Schema::table('quotations', function (Blueprint $table): void {
@@ -164,9 +164,9 @@ Schema::table('quotations', function (Blueprint $table): void {
 });
 ```
 
-- [ ] Add `QuotationStatus` enum with `Draft`, `Received`, `Withdrawn`, `Superseded`. Only create and transition to `received` in this slice.
-- [ ] Add `QuotationSubmissionSource` enum with `VendorPortal` and `BuyerUpload`.
-- [ ] Update `Quotation.php` fillable, casts, and relationships:
+- [x] Add `QuotationStatus` enum with `Draft`, `Received`, `Withdrawn`, `Superseded`. Only create and transition to `received` in this slice.
+- [x] Add `QuotationSubmissionSource` enum with `VendorPortal` and `BuyerUpload`.
+- [x] Update `Quotation.php` fillable, casts, and relationships:
 
 ```php
 protected $fillable = [
@@ -202,9 +202,9 @@ protected function casts(): array
 }
 ```
 
-- [ ] Add `rfqInvitation()`, `submittedByUser()`, and `attachments()` relationships to `Quotation`.
-- [ ] Extend the existing `saving` guard in `Quotation.php` so `rfq_invitation_id` must belong to the same tenant and match `rfq_id` plus `vendor_id`.
-- [ ] Run:
+- [x] Add `rfqInvitation()`, `submittedByUser()`, and `attachments()` relationships to `Quotation`.
+- [x] Extend the existing `saving` guard in `Quotation.php` so `rfq_invitation_id` must belong to the same tenant and match `rfq_id` plus `vendor_id`.
+- [x] Run:
 
 ```bash
 cd apps/api && php artisan test --filter=QuotationUploadApiTest
@@ -214,15 +214,15 @@ Expected result: failures move from missing schema/model fields to missing route
 
 ## Task 3: Backend Actions, Resources, Routes
 
-- [ ] Add `CreateOrRevealQuotationForInvitation`.
-- [ ] Implement the action as the only place that creates the quotation for an invitation.
-- [ ] Lock the invitation row and use `firstOrCreate` inside a transaction keyed by `tenant_id` and `rfq_invitation_id`.
-- [ ] Generate quotation numbers as `QUOTE-{rfq number}-{vendor id}` so repeated uploads to the same invitation keep a stable human-readable number.
-- [ ] Record `quotation.created` only when the quotation is first created.
-- [ ] Add `StoreQuotationAttachment`, modeled after `StoreRequisitionAttachment`, but attach to `Quotation::class`.
-- [ ] For buyer uploads, require the actor can view the invitation's RFQ through existing RFQ invitation policy checks.
-- [ ] For vendor uploads, require the resolved portal invitation is portal-readable through `ResolveRfqInvitationPortalAccess`; no Sanctum user is required.
-- [ ] Store metadata:
+- [x] Add `CreateOrRevealQuotationForInvitation`.
+- [x] Implement the action as the only place that creates the quotation for an invitation.
+- [x] Lock the invitation row and use `firstOrCreate` inside a transaction keyed by `tenant_id` and `rfq_invitation_id`.
+- [x] Generate quotation numbers as `QUOTE-{rfq number}-{vendor id}` so repeated uploads to the same invitation keep a stable human-readable number.
+- [x] Record `quotation.created` only when the quotation is first created.
+- [x] Add `StoreQuotationAttachment`, modeled after `StoreRequisitionAttachment`, but attach to `Quotation::class`.
+- [x] For buyer uploads, require the actor can view the invitation's RFQ through existing RFQ invitation policy checks.
+- [x] For vendor uploads, require the resolved portal invitation is portal-readable through `ResolveRfqInvitationPortalAccess`; no Sanctum user is required.
+- [x] Store metadata:
 
 ```php
 [
@@ -233,10 +233,10 @@ Expected result: failures move from missing schema/model fields to missing route
 ]
 ```
 
-- [ ] Update the quotation after each successful attachment insert: `status=received`, `submission_source`, `submitted_at` on first receipt, `latest_received_at=now()`, and `file_count` from active attachment count.
-- [ ] Record `quotation.attachment_uploaded` for every uploaded file.
-- [ ] Record `rfq_invitation.quotation_received` only when the first attachment transitions file count from zero to one.
-- [ ] Add `QuotationResource` with this shape:
+- [x] Update the quotation after each successful attachment insert: `status=received`, `submission_source`, `submitted_at` on first receipt, `latest_received_at=now()`, and `file_count` from active attachment count.
+- [x] Record `quotation.attachment_uploaded` for every uploaded file.
+- [x] Record `rfq_invitation.quotation_received` only when the first attachment transitions file count from zero to one.
+- [x] Add `QuotationResource` with this shape:
 
 ```php
 return [
@@ -263,11 +263,11 @@ return [
 ];
 ```
 
-- [ ] Update `AttachmentResource` so `parentType` returns `quotation` for `Quotation::class`.
-- [ ] Update `AttachmentPolicy` so authenticated buyers who can view the quotation's RFQ can preview/download quotation attachments.
-- [ ] Add `RfqInvitationQuotationController` with `show`, `storeAttachment`, and `attachments` methods for authenticated buyers.
-- [ ] Add `VendorPortalQuotationController` with `show` and `storeAttachment` methods for token-authenticated vendors.
-- [ ] Register routes in `apps/api/routes/api.php`:
+- [x] Update `AttachmentResource` so `parentType` returns `quotation` for `Quotation::class`.
+- [x] Update `AttachmentPolicy` so authenticated buyers who can view the quotation's RFQ can preview/download quotation attachments.
+- [x] Add `RfqInvitationQuotationController` with `show`, `storeAttachment`, and `attachments` methods for authenticated buyers.
+- [x] Add `VendorPortalQuotationController` with `show` and `storeAttachment` methods for token-authenticated vendors.
+- [x] Register routes in `apps/api/routes/api.php`:
 
 ```php
 Route::get('/vendor-portal/rfq-invitations/{token}/quotation', [VendorPortalQuotationController::class, 'show'])
@@ -282,7 +282,7 @@ Route::middleware(['auth:sanctum', ResolveCurrentTenant::class])->group(function
 });
 ```
 
-- [ ] Run:
+- [x] Run:
 
 ```bash
 cd apps/api && php artisan test --filter=QuotationUploadApiTest
@@ -293,7 +293,7 @@ Expected result: quotation upload tests pass and existing portal access tests st
 
 ## Task 4: OpenAPI and Generated Client
 
-- [ ] Update `apps/api/storage/openapi/openapi.json` with the five new operations:
+- [x] Update `apps/api/storage/openapi/openapi.json` with the five new operations:
 
 ```text
 GET  /api/vendor-portal/rfq-invitations/{token}/quotation
@@ -303,9 +303,9 @@ POST /api/rfq-invitations/{invitation}/quotation/attachments
 GET  /api/quotations/{quotation}/attachments
 ```
 
-- [ ] Add schemas for `Quotation`, `QuotationResponse`, `QuotationNullableResponse`, and reuse existing `Attachment`, `ApiError`, `ValidationError`, `ForbiddenResponse`, `UnauthenticatedResponse`, `InvalidStateResponse`, and `TooManyRequestsResponse` schemas.
-- [ ] Ensure upload request bodies use `multipart/form-data` with `file` binary and the existing attachment validation response shape.
-- [ ] Generate the client:
+- [x] Add schemas for `Quotation`, `QuotationResponse`, `QuotationNullableResponse`, and reuse existing `Attachment`, `ApiError`, `ValidationError`, `ForbiddenResponse`, `UnauthenticatedResponse`, `InvalidStateResponse`, and `TooManyRequestsResponse` schemas.
+- [x] Ensure upload request bodies use `multipart/form-data` with `file` binary and the existing attachment validation response shape.
+- [x] Generate the client:
 
 ```bash
 pnpm generate:api
@@ -316,7 +316,7 @@ Expected result: generated endpoint helpers and schemas compile, and contract ch
 
 ## Task 5: Vendor Portal API, MSW, and UI
 
-- [ ] Extend `apps/web/features/vendor-portal/api/vendor-portal-api.ts` with:
+- [x] Extend `apps/web/features/vendor-portal/api/vendor-portal-api.ts` with:
 
 ```ts
 export async function fetchVendorPortalQuotation(token: string): Promise<Quotation | null> {
@@ -334,8 +334,8 @@ export async function uploadVendorPortalQuotationAttachment(token: string, file:
 }
 ```
 
-- [ ] Add `apps/web/features/vendor-portal/hooks/use-vendor-quotation.ts` with a query keyed by `["vendor-portal-quotation", token]` and a mutation that invalidates that key after upload.
-- [ ] Update vendor portal MSW fixtures with:
+- [x] Add `apps/web/features/vendor-portal/hooks/use-vendor-quotation.ts` with a query keyed by `["vendor-portal-quotation", token]` and a mutation that invalidates that key after upload.
+- [x] Update vendor portal MSW fixtures with:
 
 ```ts
 export const vendorPortalQuotationFixture = {
@@ -376,11 +376,11 @@ export const vendorPortalQuotationFixture = {
 };
 ```
 
-- [ ] Add MSW handlers for vendor quotation `GET` and upload `POST`.
-- [ ] Replace the placeholder section in `VendorRfqPackage` with `VendorQuotationUploadPanel`.
-- [ ] `VendorQuotationUploadPanel` must show accepted file guidance, current quotation status, existing uploaded files, pending state, validation errors, and success copy.
-- [ ] Use an accessible `<input type="file">` with a visible label and a submit button; do not implement drag-and-drop in this slice.
-- [ ] Add tests in `vendor-rfq-portal.test.tsx`:
+- [x] Add MSW handlers for vendor quotation `GET` and upload `POST`.
+- [x] Replace the placeholder section in `VendorRfqPackage` with `VendorQuotationUploadPanel`.
+- [x] `VendorQuotationUploadPanel` must show accepted file guidance, current quotation status, existing uploaded files, pending state, validation errors, and success copy.
+- [x] Use an accessible `<input type="file">` with a visible label and a submit button; do not implement drag-and-drop in this slice.
+- [x] Add tests in `vendor-rfq-portal.test.tsx`:
 
 ```ts
 it("lets a vendor upload a quotation file from the RFQ portal", async () => {
@@ -396,8 +396,8 @@ it("lets a vendor upload a quotation file from the RFQ portal", async () => {
 });
 ```
 
-- [ ] Keep invalid, expired, and unavailable token tests passing without exposing RFQ detail or upload controls.
-- [ ] Run:
+- [x] Keep invalid, expired, and unavailable token tests passing without exposing RFQ detail or upload controls.
+- [x] Run:
 
 ```bash
 pnpm --filter @cognify/web test -- vendor-rfq-portal.test.tsx
@@ -407,11 +407,11 @@ Expected result: vendor portal upload tests pass.
 
 ## Task 6: Buyer API, MSW, and UI
 
-- [ ] Add `apps/web/features/sourcing/api/quotation-api.ts` using generated client endpoints and `withActiveTenantHeader`.
-- [ ] Add `apps/web/features/sourcing/types/quotation-view-model.ts` if the generated `Quotation` shape needs UI formatting only; do not duplicate server contract types for API payloads.
-- [ ] Add `apps/web/features/sourcing/hooks/use-quotation-upload.ts` with query and mutation hooks keyed by invitation ID.
-- [ ] Add `QuotationEvidencePanel` and render it inside each invitation card in `RfqInvitationPanel`.
-- [ ] The buyer panel must show:
+- [x] Add `apps/web/features/sourcing/api/quotation-api.ts` using generated client endpoints and `withActiveTenantHeader`.
+- [x] Add `apps/web/features/sourcing/types/quotation-view-model.ts` if the generated `Quotation` shape needs UI formatting only; do not duplicate server contract types for API payloads.
+- [x] Add `apps/web/features/sourcing/hooks/use-quotation-upload.ts` with query and mutation hooks keyed by invitation ID.
+- [x] Add `QuotationEvidencePanel` and render it inside each invitation card in `RfqInvitationPanel`.
+- [x] The buyer panel must show:
 
 ```text
 Quotation evidence
@@ -427,9 +427,9 @@ northwind-quotation.pdf
 1 file
 ```
 
-- [ ] Disable buyer upload for invitation statuses outside `sent` and `acknowledged`.
-- [ ] Add MSW handlers for buyer quotation `GET` and upload `POST`.
-- [ ] Add tests in `rfq-invitations-workflow.test.tsx`:
+- [x] Disable buyer upload for invitation statuses outside `sent` and `acknowledged`.
+- [x] Add MSW handlers for buyer quotation `GET` and upload `POST`.
+- [x] Add tests in `rfq-invitations-workflow.test.tsx`:
 
 ```ts
 it("lets a buyer upload a quotation file to an RFQ invitation", async () => {
@@ -449,8 +449,8 @@ it("lets a buyer upload a quotation file to an RFQ invitation", async () => {
 });
 ```
 
-- [ ] Ensure `RfqInvitationPanel` still handles invite, resend, status update, cancel, and portal-link generation tests.
-- [ ] Run:
+- [x] Ensure `RfqInvitationPanel` still handles invite, resend, status update, cancel, and portal-link generation tests.
+- [x] Run:
 
 ```bash
 pnpm --filter @cognify/web test -- rfq-invitations-workflow.test.tsx
@@ -460,34 +460,34 @@ Expected result: buyer invitation tests pass.
 
 ## Task 7: Integration Verification
 
-- [ ] Run focused backend tests:
+- [x] Run focused backend tests:
 
 ```bash
 cd apps/api && php artisan test --filter=QuotationUploadApiTest
 cd apps/api && php artisan test --filter=RfqInvitationPortalApiTest
 ```
 
-- [ ] Run focused frontend tests:
+- [x] Run focused frontend tests:
 
 ```bash
 pnpm --filter @cognify/web test -- vendor-rfq-portal.test.tsx
 pnpm --filter @cognify/web test -- rfq-invitations-workflow.test.tsx
 ```
 
-- [ ] Run contract and type checks:
+- [x] Run contract and type checks:
 
 ```bash
 pnpm check:api-contract
 pnpm --filter @cognify/web typecheck
 ```
 
-- [ ] Run root build because generated client, API contracts, and app UI are touched:
+- [x] Run root build because generated client, API contracts, and app UI are touched:
 
 ```bash
 pnpm build
 ```
 
-- [ ] Run whitespace check:
+- [x] Run whitespace check:
 
 ```bash
 git diff --check
@@ -497,23 +497,23 @@ Expected final result: all commands exit successfully.
 
 ## Task 8: Roadmap Loopback
 
-- [ ] Confirm `docs/01-product/feature-roadmap.md` has P1-26 linked to this plan.
-- [ ] Leave P1-27 and P1-28 as `Planned`; do not mark them implemented during this slice.
-- [ ] If implementation completes successfully, update P1-26 status to `Fully Implemented` only after backend, frontend, generated client, and build verification pass.
+- [x] Confirm `docs/01-product/feature-roadmap.md` has P1-26 linked to this plan.
+- [x] Leave P1-27 and P1-28 as `Planned`; do not mark them implemented during this slice.
+- [x] If implementation completes successfully, update P1-26 status to `Fully Implemented` only after backend, frontend, generated client, and build verification pass.
 
 ## Task 9: Self-Review Checklist
 
-- [ ] Quotation creation is centralized in `CreateOrRevealQuotationForInvitation`.
-- [ ] Vendor token routes never require `X-Tenant-Id` or a Sanctum user.
-- [ ] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
-- [ ] Upload validation reuses `StoreAttachmentRequest` and `AttachmentStorage`.
-- [ ] Attachments use `attachable_type = Domains\Quotation\Models\Quotation`.
-- [ ] `AttachmentResource.parentType` returns `quotation` for quotation attachments.
-- [ ] Audit events include `quotation.created`, `quotation.attachment_uploaded`, and `rfq_invitation.quotation_received`.
-- [ ] Generated client endpoints are used by frontend code.
-- [ ] UI components do not import mock fixtures directly.
-- [ ] Manual entry, versioning, normalization, comparison, and award flows remain out of scope.
-- [ ] Placeholder scan passes:
+- [x] Quotation creation is centralized in `CreateOrRevealQuotationForInvitation`.
+- [x] Vendor token routes never require `X-Tenant-Id` or a Sanctum user.
+- [x] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
+- [x] Upload validation reuses `StoreAttachmentRequest` and `AttachmentStorage`.
+- [x] Attachments use `attachable_type = Domains\Quotation\Models\Quotation`.
+- [x] `AttachmentResource.parentType` returns `quotation` for quotation attachments.
+- [x] Audit events include `quotation.created`, `quotation.attachment_uploaded`, and `rfq_invitation.quotation_received`.
+- [x] Generated client endpoints are used by frontend code.
+- [x] UI components do not import mock fixtures directly.
+- [x] Manual entry, versioning, normalization, comparison, and award flows remain out of scope.
+- [x] Placeholder scan passes:
 
 ```bash
 terms='T''ODO|T''BD|implement[ ]later|Similar[ ]to|edge[ ]cases|as[ ]appropriate'

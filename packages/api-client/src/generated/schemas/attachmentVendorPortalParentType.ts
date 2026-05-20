@@ -5,10 +5,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AttachmentParentType = (typeof AttachmentParentType)[keyof typeof AttachmentParentType];
+export type AttachmentVendorPortalParentType =
+  (typeof AttachmentVendorPortalParentType)[keyof typeof AttachmentVendorPortalParentType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const AttachmentParentType = {
+export const AttachmentVendorPortalParentType = {
   requisition: "requisition",
   quotation: "quotation",
 } as const;

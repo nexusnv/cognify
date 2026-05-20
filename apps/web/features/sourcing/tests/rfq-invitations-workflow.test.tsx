@@ -167,6 +167,34 @@ describe("RFQ invitation workflow", () => {
     }
   });
 
+  it("lets a buyer upload quotation evidence on an active invitation", async () => {
+    const user = userEvent.setup();
+
+    render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
+
+    const invitationCard = (await screen.findByText("Northwind Traders")).closest(
+      "[data-testid='rfq-invitation-card']",
+    );
+    expect(invitationCard).toBeTruthy();
+
+    const card = within(invitationCard as HTMLElement);
+    expect(card.getByText("Quotation evidence")).toBeInTheDocument();
+    expect(card.getByText("No quotation files received yet.")).toBeInTheDocument();
+
+    const quotationFile = new File(["buyer quotation"], "buyer-received-quotation.pdf", {
+      type: "application/pdf",
+    });
+
+    await user.upload(card.getByLabelText("Buyer-received quotation file"), quotationFile);
+    await user.click(card.getByRole("button", { name: "Upload buyer-received quotation" }));
+
+    await waitFor(() => {
+      expect(card.getByText("Quotation received")).toBeInTheDocument();
+      expect(card.getByText("buyer-received-quotation.pdf")).toBeInTheDocument();
+      expect(card.getByText("1 file received")).toBeInTheDocument();
+    });
+  });
+
   it("requires a cancel reason and refreshes the invitation list after cancel", async () => {
     const user = userEvent.setup();
 

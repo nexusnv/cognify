@@ -24,7 +24,7 @@ export function VendorRfqInvitationPage({ token }: { token: string }) {
     return <StatusPanel role="alert" title={title} message={message} />;
   }
 
-  return <VendorRfqPackage invitation={invitationQuery.data} />;
+  return <VendorRfqPackage invitation={invitationQuery.data} token={token} />;
 }
 
 function StatusPanel({
