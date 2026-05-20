@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type {
   QuotationVendorPortal,
@@ -23,19 +23,44 @@ export function VendorQuotationManualEntryPanel({
   token: string;
   quotation: QuotationVendorPortal | null;
 }) {
-  const saveMutation = useVendorQuotationManualEntry(token);
-  const [values, setValues] = useState<QuotationManualEntryFormValues>(() => formValuesFromQuotation(quotation));
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+
+  return (
+    <VendorQuotationManualEntryForm
+      key={quotationFormKey(quotation)}
+      token={token}
+      quotation={quotation}
+      successMessage={successMessage}
+      validationMessage={validationMessage}
+      setSuccessMessage={setSuccessMessage}
+      setValidationMessage={setValidationMessage}
+    />
+  );
+}
+
+function VendorQuotationManualEntryForm({
+  token,
+  quotation,
+  successMessage,
+  validationMessage,
+  setSuccessMessage,
+  setValidationMessage,
+}: {
+  token: string;
+  quotation: QuotationVendorPortal | null;
+  successMessage: string | null;
+  validationMessage: string | null;
+  setSuccessMessage: (message: string | null) => void;
+  setValidationMessage: (message: string | null) => void;
+}) {
+  const saveMutation = useVendorQuotationManualEntry(token);
+  const [values, setValues] = useState<QuotationManualEntryFormValues>(() => formValuesFromQuotation(quotation));
 
   const canSave = quotation?.permissions.canEditManualEntry !== false;
   const completeness = quotation?.completeness?.isComplete ?? false;
   const statusLabel = completeness ? "Ready for evaluation" : "Incomplete quotation data";
   const errorMessage = validationMessage ?? (saveMutation.isError ? getApiErrorMessage(saveMutation.error) : null);
-
-  useEffect(() => {
-    setValues(formValuesFromQuotation(quotation));
-  }, [quotation]);
 
   function updateValue<K extends keyof QuotationManualEntryFormValues>(
     key: K,
@@ -60,7 +85,8 @@ export function VendorQuotationManualEntryPanel({
     }
 
     try {
-      const { buyerNotes: _buyerNotes, ...payload } = payloadFromFormValues(result.data);
+      const payload = payloadFromFormValues(result.data);
+      delete payload.buyerNotes;
       await saveMutation.mutateAsync(payload satisfies SaveQuotationManualEntryRequestForVendor);
       setSuccessMessage("Quotation details saved.");
     } catch {
@@ -151,4 +177,14 @@ export function VendorQuotationManualEntryPanel({
       </div>
     </section>
   );
+}
+
+function quotationFormKey(quotation: QuotationVendorPortal | null): string {
+  if (!quotation) return "empty";
+
+  return JSON.stringify({
+    id: quotation.id,
+    manualEntry: quotation.manualEntry,
+    lineItems: quotation.lineItems,
+  });
 }

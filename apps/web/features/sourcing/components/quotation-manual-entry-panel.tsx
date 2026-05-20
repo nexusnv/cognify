@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { Quotation } from "@cognify/api-client/schemas";
 import { Button, Textarea } from "@cognify/ui";
@@ -24,19 +24,47 @@ export function QuotationManualEntryPanel({
   invitationStatus: string;
   quotation: Quotation | null;
 }) {
-  const saveMutation = useSaveQuotationManualEntry(invitationId, quotation?.id);
-  const [values, setValues] = useState<QuotationManualEntryFormValues>(() => formValuesFromQuotation(quotation));
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+
+  return (
+    <QuotationManualEntryForm
+      key={quotationFormKey(quotation)}
+      invitationId={invitationId}
+      invitationStatus={invitationStatus}
+      quotation={quotation}
+      successMessage={successMessage}
+      validationMessage={validationMessage}
+      setSuccessMessage={setSuccessMessage}
+      setValidationMessage={setValidationMessage}
+    />
+  );
+}
+
+function QuotationManualEntryForm({
+  invitationId,
+  invitationStatus,
+  quotation,
+  successMessage,
+  validationMessage,
+  setSuccessMessage,
+  setValidationMessage,
+}: {
+  invitationId: string;
+  invitationStatus: string;
+  quotation: Quotation | null;
+  successMessage: string | null;
+  validationMessage: string | null;
+  setSuccessMessage: (message: string | null) => void;
+  setValidationMessage: (message: string | null) => void;
+}) {
+  const saveMutation = useSaveQuotationManualEntry(invitationId, quotation?.id);
+  const [values, setValues] = useState<QuotationManualEntryFormValues>(() => formValuesFromQuotation(quotation));
 
   const canSave = editableInvitationStatuses.has(invitationStatus);
   const completeness = quotation?.completeness?.isComplete ?? false;
   const statusLabel = completeness ? "Ready for evaluation" : "Incomplete quotation data";
   const errorMessage = validationMessage ?? (saveMutation.isError ? getApiErrorMessage(saveMutation.error) : null);
-
-  useEffect(() => {
-    setValues(formValuesFromQuotation(quotation));
-  }, [quotation]);
 
   function updateValue<K extends keyof QuotationManualEntryFormValues>(
     key: K,
@@ -160,4 +188,14 @@ export function QuotationManualEntryPanel({
       </div>
     </section>
   );
+}
+
+function quotationFormKey(quotation: Quotation | null): string {
+  if (!quotation) return "empty";
+
+  return JSON.stringify({
+    id: quotation.id,
+    manualEntry: quotation.manualEntry,
+    lineItems: quotation.lineItems,
+  });
 }
