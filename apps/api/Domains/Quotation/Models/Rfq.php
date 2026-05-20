@@ -4,10 +4,12 @@ namespace Domains\Quotation\Models;
 
 use App\Tenancy\Tenant;
 use Domains\Project\Models\ProcurementProject;
+use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -128,5 +130,13 @@ class Rfq extends Model
     public function requisition(): BelongsTo
     {
         return $this->belongsTo(Requisition::class);
+    }
+
+    /**
+     * @return HasMany<RfqInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(RfqInvitation::class);
     }
 }

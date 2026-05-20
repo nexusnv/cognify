@@ -4,6 +4,7 @@ namespace Domains\Quotation\Http\Resources;
 
 use App\Audit\AuditEvent;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\RfqStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,6 +21,7 @@ class RfqResource extends JsonResource
         $status = $this->statusState();
         $canUpdate = $request->user()?->can('update', $rfq) ?? false;
         $canCancel = $request->user()?->can('cancel', $rfq) ?? false;
+        $canInviteVendors = $request->user()?->can('create', [RfqInvitation::class, $rfq]) ?? false;
 
         return [
             'id' => (string) $this->id,
@@ -45,7 +47,7 @@ class RfqResource extends JsonResource
             'permissions' => [
                 'canUpdate' => $canUpdate,
                 'canCancel' => $canCancel,
-                'canInviteVendors' => false,
+                'canInviteVendors' => $canInviteVendors,
             ],
         ];
     }

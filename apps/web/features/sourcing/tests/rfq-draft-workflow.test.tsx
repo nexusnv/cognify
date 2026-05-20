@@ -5,8 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RightPanelProvider } from "@/components/right-panel/right-panel-provider";
 import { RightPanelRoot } from "@/components/right-panel/right-panel-root";
 import { resetIdentityMockState } from "@/features/identity/mocks/identity-handlers";
+import { resetRfqInvitationMockState } from "../mocks/rfq-invitation-handlers";
 import { resetRfqMockState } from "../mocks/rfq-handlers";
 import { resetSourcingMockState } from "../mocks/sourcing-handlers";
+import { resetVendorMockState } from "../mocks/vendor-handlers";
 import { RfqDraftWorkspace } from "../workflows/rfq-draft-workspace";
 import { SourcingIntakeDetailPage } from "../workflows/sourcing-intake-detail-page";
 
@@ -44,6 +46,8 @@ beforeEach(() => {
   resetIdentityMockState();
   resetSourcingMockState();
   resetRfqMockState();
+  resetRfqInvitationMockState();
+  resetVendorMockState();
   window.localStorage.clear();
   window.localStorage.setItem("cognify.activeTenantId", "1");
   pushMock.mockReset();

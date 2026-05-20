@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import { RfqDraftForm } from "../components/rfq-draft-form";
+import { RfqInvitationPanel } from "../components/rfq-invitation-panel";
 import { RfqStatusBadge } from "../components/rfq-status-badge";
 import { useCancelRfqDraft, useSaveRfqDraft } from "../hooks/use-rfq-draft-actions";
 import { useRfqDraft } from "../hooks/use-rfq-draft";
@@ -185,14 +186,21 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
         }}
       />
 
-      <section id="vendor-invitations" className="rounded-md border p-4">
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold">Vendor invitations</h2>
-          <p className="text-sm text-muted-foreground">
-            Vendor invitations are intentionally unavailable in this slice.
-          </p>
-        </div>
-      </section>
+      <RfqInvitationPanel
+        rfqId={rfq.id}
+        canInvite={rfq.status === "draft" && rfq.permissions.canInviteVendors}
+        responseInstructions={rfq.responseInstructions}
+        responseDueAt={rfq.responseDueAt}
+        readOnlyReason={
+          rfq.status === "cancelled"
+            ? "Vendor invitations are read-only because this RFQ is cancelled."
+            : rfq.status !== "draft"
+              ? "Vendor invitations are available only while the RFQ is a draft."
+              : rfq.permissions.canInviteVendors
+                ? undefined
+                : "You do not have permission to invite vendors."
+        }
+      />
     </RecordWorkspaceLayout>
   );
 }

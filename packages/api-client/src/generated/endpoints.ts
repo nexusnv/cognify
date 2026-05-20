@@ -23,11 +23,13 @@ import type {
   AttachmentResponse,
   AttachmentUploadRequest,
   AuditEventListResponse,
+  CancelRfqInvitationRequest,
   CollaborationCommentListResponse,
   CollaborationCommentResponse,
   CollaborationMentionCandidateListResponse,
   CreateCollaborationCommentRequest,
   CreateRequisitionRequest,
+  CreateRfqInvitationsRequest,
   CurrentUserResponse,
   DelegateApprovalTaskRequest,
   ForbiddenResponse,
@@ -44,6 +46,7 @@ import type {
   ListRequisitionLineItemSuggestionsParams,
   ListRequisitionsParams,
   ListSourcingIntakeReviewsParams,
+  ListVendorsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
   NotFoundResponse,
@@ -65,6 +68,8 @@ import type {
   RequisitionResponse,
   RequisitionTemplateListResponse,
   RfqCancelRequest,
+  RfqInvitationListResponse,
+  RfqInvitationResponse,
   RfqResponse,
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
@@ -90,7 +95,9 @@ import type {
   UpdateCurrentUserProfileRequest,
   UpdateProcurementProjectRequest,
   UpdateRequisitionRequest,
+  UpdateRfqInvitationStatusRequest,
   ValidationFailedResponse,
+  VendorPickerListResponse,
 } from "./schemas";
 
 import { cognifyFetch } from "../client";
@@ -5009,4 +5016,369 @@ export const cancelRfqDraft = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(rfqCancelRequest),
   });
+};
+
+/**
+ * @summary List vendor picker options
+ */
+export type listVendorsResponse200 = {
+  data: VendorPickerListResponse;
+  status: 200;
+};
+
+export type listVendorsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listVendorsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listVendorsResponseSuccess = listVendorsResponse200 & {
+  headers: Headers;
+};
+export type listVendorsResponseError = (listVendorsResponse401 | listVendorsResponse403) & {
+  headers: Headers;
+};
+
+export type listVendorsResponse = listVendorsResponseSuccess | listVendorsResponseError;
+
+export const getListVendorsUrl = (params?: ListVendorsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/vendors?${stringifiedParams}` : `/api/vendors`;
+};
+
+export const listVendors = async (
+  params?: ListVendorsParams,
+  options?: RequestInit,
+): Promise<listVendorsResponse> => {
+  return cognifyFetch<listVendorsResponse>(getListVendorsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary List RFQ invitations
+ */
+export type listRfqInvitationsResponse200 = {
+  data: RfqInvitationListResponse;
+  status: 200;
+};
+
+export type listRfqInvitationsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listRfqInvitationsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listRfqInvitationsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listRfqInvitationsResponseSuccess = listRfqInvitationsResponse200 & {
+  headers: Headers;
+};
+export type listRfqInvitationsResponseError = (
+  | listRfqInvitationsResponse401
+  | listRfqInvitationsResponse403
+  | listRfqInvitationsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listRfqInvitationsResponse =
+  | listRfqInvitationsResponseSuccess
+  | listRfqInvitationsResponseError;
+
+export const getListRfqInvitationsUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/invitations`;
+};
+
+export const listRfqInvitations = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<listRfqInvitationsResponse> => {
+  return cognifyFetch<listRfqInvitationsResponse>(getListRfqInvitationsUrl(rfq), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create RFQ invitations
+ */
+export type createRfqInvitationsResponse201 = {
+  data: RfqInvitationListResponse;
+  status: 201;
+};
+
+export type createRfqInvitationsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRfqInvitationsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createRfqInvitationsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createRfqInvitationsResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createRfqInvitationsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createRfqInvitationsResponseSuccess = createRfqInvitationsResponse201 & {
+  headers: Headers;
+};
+export type createRfqInvitationsResponseError = (
+  | createRfqInvitationsResponse401
+  | createRfqInvitationsResponse403
+  | createRfqInvitationsResponse404
+  | createRfqInvitationsResponse409
+  | createRfqInvitationsResponse422
+) & {
+  headers: Headers;
+};
+
+export type createRfqInvitationsResponse =
+  | createRfqInvitationsResponseSuccess
+  | createRfqInvitationsResponseError;
+
+export const getCreateRfqInvitationsUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/invitations`;
+};
+
+export const createRfqInvitations = async (
+  rfq: string,
+  createRfqInvitationsRequest: CreateRfqInvitationsRequest,
+  options?: RequestInit,
+): Promise<createRfqInvitationsResponse> => {
+  return cognifyFetch<createRfqInvitationsResponse>(getCreateRfqInvitationsUrl(rfq), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createRfqInvitationsRequest),
+  });
+};
+
+/**
+ * @summary Resend RFQ invitation
+ */
+export type resendRfqInvitationResponse200 = {
+  data: RfqInvitationResponse;
+  status: 200;
+};
+
+export type resendRfqInvitationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type resendRfqInvitationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type resendRfqInvitationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type resendRfqInvitationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type resendRfqInvitationResponseSuccess = resendRfqInvitationResponse200 & {
+  headers: Headers;
+};
+export type resendRfqInvitationResponseError = (
+  | resendRfqInvitationResponse401
+  | resendRfqInvitationResponse403
+  | resendRfqInvitationResponse404
+  | resendRfqInvitationResponse409
+) & {
+  headers: Headers;
+};
+
+export type resendRfqInvitationResponse =
+  | resendRfqInvitationResponseSuccess
+  | resendRfqInvitationResponseError;
+
+export const getResendRfqInvitationUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/resend`;
+};
+
+export const resendRfqInvitation = async (
+  invitation: string,
+  options?: RequestInit,
+): Promise<resendRfqInvitationResponse> => {
+  return cognifyFetch<resendRfqInvitationResponse>(getResendRfqInvitationUrl(invitation), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Cancel RFQ invitation
+ */
+export type cancelRfqInvitationResponse200 = {
+  data: RfqInvitationResponse;
+  status: 200;
+};
+
+export type cancelRfqInvitationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelRfqInvitationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelRfqInvitationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelRfqInvitationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelRfqInvitationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelRfqInvitationResponseSuccess = cancelRfqInvitationResponse200 & {
+  headers: Headers;
+};
+export type cancelRfqInvitationResponseError = (
+  | cancelRfqInvitationResponse401
+  | cancelRfqInvitationResponse403
+  | cancelRfqInvitationResponse404
+  | cancelRfqInvitationResponse409
+  | cancelRfqInvitationResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelRfqInvitationResponse =
+  | cancelRfqInvitationResponseSuccess
+  | cancelRfqInvitationResponseError;
+
+export const getCancelRfqInvitationUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/cancel`;
+};
+
+export const cancelRfqInvitation = async (
+  invitation: string,
+  cancelRfqInvitationRequest: CancelRfqInvitationRequest,
+  options?: RequestInit,
+): Promise<cancelRfqInvitationResponse> => {
+  return cognifyFetch<cancelRfqInvitationResponse>(getCancelRfqInvitationUrl(invitation), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(cancelRfqInvitationRequest),
+  });
+};
+
+/**
+ * @summary Update RFQ invitation status
+ */
+export type updateRfqInvitationStatusResponse200 = {
+  data: RfqInvitationResponse;
+  status: 200;
+};
+
+export type updateRfqInvitationStatusResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateRfqInvitationStatusResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateRfqInvitationStatusResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateRfqInvitationStatusResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updateRfqInvitationStatusResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateRfqInvitationStatusResponseSuccess = updateRfqInvitationStatusResponse200 & {
+  headers: Headers;
+};
+export type updateRfqInvitationStatusResponseError = (
+  | updateRfqInvitationStatusResponse401
+  | updateRfqInvitationStatusResponse403
+  | updateRfqInvitationStatusResponse404
+  | updateRfqInvitationStatusResponse409
+  | updateRfqInvitationStatusResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateRfqInvitationStatusResponse =
+  | updateRfqInvitationStatusResponseSuccess
+  | updateRfqInvitationStatusResponseError;
+
+export const getUpdateRfqInvitationStatusUrl = (invitation: string) => {
+  return `/api/rfq-invitations/${invitation}/status`;
+};
+
+export const updateRfqInvitationStatus = async (
+  invitation: string,
+  updateRfqInvitationStatusRequest: UpdateRfqInvitationStatusRequest,
+  options?: RequestInit,
+): Promise<updateRfqInvitationStatusResponse> => {
+  return cognifyFetch<updateRfqInvitationStatusResponse>(
+    getUpdateRfqInvitationStatusUrl(invitation),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateRfqInvitationStatusRequest),
+    },
+  );
 };
