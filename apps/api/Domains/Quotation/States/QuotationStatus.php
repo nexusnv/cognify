@@ -8,4 +8,5 @@ enum QuotationStatus: string
     case Received = 'received';
     case Withdrawn = 'withdrawn';
     case Superseded = 'superseded';
+    case submitted = 'submitted';
 }
