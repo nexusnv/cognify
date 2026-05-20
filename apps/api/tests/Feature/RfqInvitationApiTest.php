@@ -467,6 +467,37 @@ class RfqInvitationApiTest extends TestCase
         );
     }
 
+    public function test_create_and_resend_ensure_portal_token_metadata_without_exposing_raw_token(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+
+        $createdId = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/invitations", [
+                'vendorIds' => [(string) $vendor->id],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.0.portalAccess.hasToken', true)
+            ->assertJsonMissing(['token'])
+            ->json('data.0.id');
+
+        $created = RfqInvitation::query()->findOrFail((int) $createdId);
+        $this->assertNotNull($created->portal_token_hash);
+        $this->assertNotNull($created->portal_token_expires_at);
+
+        $created->forceFill(['portal_token_hash' => null, 'portal_token_expires_at' => null])->save();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfq-invitations/{$created->id}/resend")
+            ->assertOk()
+            ->assertJsonPath('data.portalAccess.hasToken', true)
+            ->assertJsonMissing(['token']);
+
+        $this->assertNotNull($created->refresh()->portal_token_hash);
+    }
+
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
