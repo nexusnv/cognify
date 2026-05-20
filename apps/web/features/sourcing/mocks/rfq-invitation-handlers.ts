@@ -1,8 +1,10 @@
 import { http, HttpResponse } from "msw";
 import type {
   CancelRfqInvitationRequest,
+  Attachment,
   CreateRfqInvitationsRequest,
   CreateRfqInvitationsRequestContactOverridesOneOfItem,
+  Quotation,
   RfqInvitation,
   UpdateRfqInvitationStatusRequest,
 } from "@cognify/api-client/schemas";
@@ -12,11 +14,21 @@ import { rfqInvitationFixtures } from "./rfq-invitation-fixtures";
 
 let rfqInvitations = structuredClone(rfqInvitationFixtures);
 let invitationSequence = rfqInvitationFixtures.length;
+let quotationSequence = 0;
+let quotationAttachmentSequence = 0;
+let quotationByInvitationId = new Map<string, Quotation | null>();
 
 export function resetRfqInvitationMockState() {
   rfqInvitations = structuredClone(rfqInvitationFixtures);
   invitationSequence = rfqInvitationFixtures.length;
+  quotationSequence = 0;
+  quotationAttachmentSequence = 0;
+  quotationByInvitationId = new Map(
+    rfqInvitationFixtures.map((invitation) => [invitation.id, null] as const),
+  );
 }
+
+resetRfqInvitationMockState();
 
 function cloneInvitation(invitation: RfqInvitation): RfqInvitation {
   return structuredClone(invitation);
@@ -91,6 +103,18 @@ function listInvitations(rfqId: string) {
   return rfqInvitations.filter((invitation) => invitation.rfqId === rfqId).map(cloneInvitation);
 }
 
+function findInvitation(invitationId: string) {
+  return rfqInvitations.find((invitation) => invitation.id === invitationId) ?? null;
+}
+
+function findQuotationById(quotationId: string) {
+  for (const quotation of quotationByInvitationId.values()) {
+    if (quotation?.id === quotationId) return quotation;
+  }
+
+  return null;
+}
+
 export const rfqInvitationHandlers = [
   http.get("/api/rfqs/:rfqId/invitations", ({ params }) => {
     return HttpResponse.json({ data: listInvitations(String(params.rfqId)) });
@@ -124,12 +148,54 @@ export const rfqInvitationHandlers = [
       buildInvitation(rfqId, vendorId, {}, payload.contactOverrides, payload),
     );
     rfqInvitations = [...created, ...rfqInvitations];
+    created.forEach((invitation) => {
+      quotationByInvitationId.set(invitation.id, null);
+    });
 
     return HttpResponse.json({ data: listInvitations(rfqId) }, { status: 201 });
   }),
 
+  http.get("/api/rfq-invitations/:invitationId/quotation", ({ params }) => {
+    const invitation = findInvitation(String(params.invitationId));
+    if (!invitation) return notFound();
+
+    return HttpResponse.json({ data: cloneQuotation(quotationByInvitationId.get(invitation.id) ?? null) });
+  }),
+
+  http.get("/api/quotations/:quotationId/attachments", ({ params }) => {
+    const quotation = findQuotationById(String(params.quotationId));
+    if (!quotation) return notFound();
+
+    return HttpResponse.json({ data: quotation.attachments.map((attachment) => structuredClone(attachment)) });
+  }),
+
+  http.post("/api/rfq-invitations/:invitationId/quotation/attachments", async ({ params, request }) => {
+    const invitation = findInvitation(String(params.invitationId));
+    if (!invitation) return notFound();
+    if (!["sent", "acknowledged"].includes(invitation.status)) {
+      return forbidden("Quotation uploads are only available for sent or acknowledged invitations.");
+    }
+
+    const upload = await parseQuotationUpload(request);
+    if (!upload) {
+      return validationFailed("File is required.");
+    }
+
+    const currentQuotation = quotationByInvitationId.get(invitation.id) ?? null;
+    const now = "2026-05-19T12:15:00.000000Z";
+    const quotationId = currentQuotation?.id ?? `quotation-${quotationSequence + 1}`;
+    const attachment = buildQuotationAttachment(++quotationAttachmentSequence, quotationId, upload, now);
+    const quotation = currentQuotation
+      ? updateQuotation(currentQuotation, attachment, now)
+      : buildQuotation(++quotationSequence, invitation, attachment, now);
+
+    quotationByInvitationId.set(invitation.id, quotation);
+
+    return HttpResponse.json({ data: cloneQuotation(quotation) }, { status: 201 });
+  }),
+
   http.post("/api/rfq-invitations/:invitationId/resend", ({ params }) => {
-    const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
+    const existing = findInvitation(String(params.invitationId));
     if (!existing) return notFound();
     if (!existing.permissions.canResend) {
       return forbidden("This invitation cannot be resent.");
@@ -155,7 +221,7 @@ export const rfqInvitationHandlers = [
   }),
 
   http.post("/api/rfq-invitations/:invitationId/portal-link", ({ params }) => {
-    const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
+    const existing = findInvitation(String(params.invitationId));
     if (!existing) return notFound();
     if (!["sent", "acknowledged"].includes(existing.status)) {
       return conflict("This invitation is not available in the vendor portal.");
@@ -187,7 +253,7 @@ export const rfqInvitationHandlers = [
   }),
 
   http.post("/api/rfq-invitations/:invitationId/cancel", async ({ params, request }) => {
-    const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
+    const existing = findInvitation(String(params.invitationId));
     if (!existing) return notFound();
     if (!existing.permissions.canCancel) {
       return forbidden("This invitation cannot be cancelled.");
@@ -219,7 +285,7 @@ export const rfqInvitationHandlers = [
   }),
 
   http.patch("/api/rfq-invitations/:invitationId/status", async ({ params, request }) => {
-    const existing = rfqInvitations.find((invitation) => invitation.id === params.invitationId);
+    const existing = findInvitation(String(params.invitationId));
     if (!existing) return notFound();
     if (!existing.permissions.canUpdateStatus) {
       return forbidden("This invitation status cannot be updated.");
@@ -253,3 +319,177 @@ export const rfqInvitationHandlers = [
     return HttpResponse.json({ data: cloneInvitation(updated) });
   }),
 ];
+
+function buildQuotation(
+  sequence: number,
+  invitation: RfqInvitation,
+  attachment: Attachment,
+  now: string,
+): Quotation {
+  return {
+    id: `quotation-${sequence}`,
+    rfqId: invitation.rfqId,
+    vendorId: invitation.vendor.id,
+    rfqInvitationId: invitation.id,
+    number: `Q-${String(sequence).padStart(4, "0")}`,
+    status: "received",
+    submissionSource: "buyer_upload",
+    submittedAt: now,
+    latestReceivedAt: now,
+    fileCount: 1,
+    submittedByUser: {
+      id: "user-1",
+      name: "Maya Tan",
+    },
+    submittedByVendorContact: null,
+    attachments: [attachment],
+    permissions: {
+      canUploadAttachment: true,
+      canViewAttachments: true,
+    },
+  };
+}
+
+function updateQuotation(existing: Quotation, attachment: Attachment, now: string): Quotation {
+  const attachments = [attachment, ...existing.attachments];
+
+  return {
+    ...existing,
+    latestReceivedAt: now,
+    fileCount: attachments.length,
+    attachments,
+  };
+}
+
+function buildQuotationAttachment(
+  sequence: number,
+  quotationId: string,
+  upload: { filename: string; mimeType: string; sizeBytes: number },
+  createdAt: string,
+): Attachment {
+  const previewable = upload.mimeType === "application/pdf" || upload.mimeType.startsWith("image/");
+
+  return {
+    id: `quotation-att-${sequence}`,
+    parentType: "quotation",
+    parentId: quotationId,
+    filename: upload.filename,
+    mimeType: upload.mimeType,
+    extension: upload.filename.split(".").pop() ?? null,
+    sizeBytes: upload.sizeBytes,
+    previewable,
+    uploadedBy: {
+      id: "user-1",
+      name: "Maya Tan",
+    },
+    createdAt,
+    permissions: {
+      canPreview: previewable,
+      canDownload: true,
+      canDelete: true,
+    },
+  };
+}
+
+function cloneQuotation(quotation: Quotation | null): Quotation | null {
+  return quotation ? structuredClone(quotation) : null;
+}
+
+async function parseQuotationUpload(request: Request) {
+  const formDataUpload = await parseFormDataUpload(request.clone());
+  if (formDataUpload && isHelpfulFilename(formDataUpload.filename)) return formDataUpload;
+
+  const textUpload = parseMultipartUploadText(await request.clone().text());
+  if (formDataUpload && textUpload?.filename) {
+    return {
+      filename: textUpload.filename,
+      mimeType: formDataUpload.mimeType,
+      sizeBytes: formDataUpload.sizeBytes,
+    };
+  }
+
+  return formDataUpload ?? textUpload;
+}
+
+async function parseFormDataUpload(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
+    if (!isFileLike(file)) return null;
+
+    const filename = formDataString(formData, "file.filename") ?? file.name;
+    const mimeType = formDataString(formData, "file.mimeType") ?? (file.type || "application/octet-stream");
+    const metadataSize = formDataString(formData, "file.sizeBytes");
+    const sizeBytes = metadataSize ? Number(metadataSize) : file.size;
+
+    return {
+      filename,
+      mimeType,
+      sizeBytes,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formDataString(formData: FormData, key: string): string | null {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : null;
+}
+
+function isHelpfulFilename(filename: string | null | undefined) {
+  return Boolean(filename && filename !== "blob");
+}
+
+function parseMultipartUploadText(body: string) {
+  const filename =
+    extractMultipartField(body, "file.filename") ?? extractMultipartField(body, "filename");
+  const mimeType =
+    extractMultipartField(body, "file.mimeType") ?? extractMultipartField(body, "mimeType");
+  const sizeBytes =
+    extractMultipartField(body, "file.sizeBytes") ?? extractMultipartField(body, "sizeBytes");
+
+  if (filename && mimeType && sizeBytes) {
+    return {
+      filename,
+      mimeType,
+      sizeBytes: Number(sizeBytes),
+    };
+  }
+
+  const filenameMatch = body.match(/filename="([^"]+)"/);
+  if (!filenameMatch) return null;
+
+  const mimeTypeMatch = body.match(/Content-Type:\s*([^\r\n]+)/);
+  const mimeTypeValue = mimeTypeMatch?.[1]?.trim() ?? "application/octet-stream";
+
+  const lines = body.split(/\r?\n/);
+  const boundaryLine = lines[0] ?? "";
+  const headerBreak = body.match(/\r?\n\r?\n/);
+  const contentStart = headerBreak ? body.indexOf(headerBreak[0]) + headerBreak[0].length : -1;
+  const contentEnd = boundaryLine ? body.indexOf(boundaryLine, contentStart) : -1;
+  const content = contentStart >= 0 && contentEnd >= 0 ? body.slice(contentStart, contentEnd) : "";
+
+  return {
+    filename: filenameMatch[1],
+    mimeType: mimeTypeValue,
+    sizeBytes: content.length,
+  };
+}
+
+function extractMultipartField(body: string, fieldName: string) {
+  const fieldMatch = body.match(
+    new RegExp(`name="${fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\r?\\n\\r?\\n([^\\r\\n]+)`),
+  );
+  return fieldMatch?.[1]?.trim() ?? null;
+}
+
+function isFileLike(value: FormDataEntryValue | null): value is File {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "type" in value &&
+    "size" in value
+  );
+}

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import { Button, Textarea } from "@cognify/ui";
 import { RfqInvitationDialog } from "./rfq-invitation-dialog";
+import { QuotationEvidencePanel } from "./quotation-evidence-panel";
 import { RfqInvitationStatusBadge } from "./rfq-invitation-status-badge";
 import { VendorPicker } from "./vendor-picker";
 import {
@@ -287,6 +288,7 @@ export function RfqInvitationPanel({
                       : "Portal access has not been generated."}
                   </p>
                   <p className="text-sm text-muted-foreground">{invitation.activitySummary}</p>
+                  <QuotationEvidencePanel invitationId={invitation.id} invitationStatus={invitation.status} />
                   {invitation.message ? <p className="text-sm text-muted-foreground">{invitation.message}</p> : null}
                   {invitation.cancelReason ? (
                     <p className="text-sm text-muted-foreground">Cancel reason: {invitation.cancelReason}</p>

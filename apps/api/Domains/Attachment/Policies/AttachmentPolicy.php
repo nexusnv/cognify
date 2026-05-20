@@ -5,6 +5,7 @@ namespace Domains\Attachment\Policies;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Quotation\Models\Quotation;
 use Domains\Requisition\Models\Requisition;
 
 class AttachmentPolicy
@@ -19,7 +20,15 @@ class AttachmentPolicy
 
         $parent = $attachment->attachable;
 
-        return $parent instanceof Requisition && $user->can('view', $parent);
+        if ($parent instanceof Requisition) {
+            return $user->can('view', $parent);
+        }
+
+        if ($parent instanceof Quotation) {
+            return $parent->rfq !== null && $user->can('view', $parent->rfq);
+        }
+
+        return false;
     }
 
     public function preview(User $user, Attachment $attachment): bool
@@ -40,6 +49,14 @@ class AttachmentPolicy
 
         $parent = $attachment->attachable;
 
-        return $parent instanceof Requisition && $user->can('update', $parent);
+        if ($parent instanceof Requisition) {
+            return $user->can('update', $parent);
+        }
+
+        if ($parent instanceof Quotation) {
+            return $parent->rfq !== null && $user->can('update', $parent->rfq);
+        }
+
+        return false;
     }
 }

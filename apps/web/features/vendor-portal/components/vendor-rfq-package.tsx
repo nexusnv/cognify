@@ -4,8 +4,15 @@ import type {
 } from "@cognify/api-client/schemas";
 import type { VendorRfqPortalViewModel } from "../types/vendor-rfq-portal-view-model";
 import { formatDateTime } from "../types/vendor-rfq-portal-view-model";
+import { VendorQuotationUploadPanel } from "./vendor-quotation-upload-panel";
 
-export function VendorRfqPackage({ invitation }: { invitation: VendorRfqPortalViewModel }) {
+export function VendorRfqPackage({
+  invitation,
+  token,
+}: {
+  invitation: VendorRfqPortalViewModel;
+  token: string;
+}) {
   const requiredDocuments: VendorPortalRfqRequiredDocument[] = invitation.rfq.requiredDocuments;
   const lineItems: VendorPortalRfqLineItem[] = invitation.rfq.lineItems;
 
@@ -102,10 +109,7 @@ export function VendorRfqPackage({ invitation }: { invitation: VendorRfqPortalVi
         )}
       </section>
 
-      <section className="rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-950">
-        Quotation submission will be available in a later Cognify workflow. Use the buyer
-        instructions above to prepare your response.
-      </section>
+      <VendorQuotationUploadPanel token={token} />
     </article>
   );
 }

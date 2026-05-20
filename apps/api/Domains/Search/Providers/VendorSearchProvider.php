@@ -23,7 +23,6 @@ class VendorSearchProvider implements SearchProvider
     public function search(Tenant $tenant, User $user, string $query, int $limit): Collection
     {
         $normalizedQuery = mb_strtolower(trim($query));
-        // TODO: Vendor visibility is tenant-wide for P0; keep $user for the shared provider contract.
 
         $builder = Vendor::query()
             ->where('tenant_id', $tenant->id);

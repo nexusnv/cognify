@@ -10,4 +10,5 @@ export type AttachmentParentType = (typeof AttachmentParentType)[keyof typeof At
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AttachmentParentType = {
   requisition: "requisition",
+  quotation: "quotation",
 } as const;

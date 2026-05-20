@@ -1,4 +1,4 @@
-import type { VendorPortalRfqInvitation } from "@cognify/api-client/schemas";
+import type { Attachment, Quotation, VendorPortalRfqInvitation } from "@cognify/api-client/schemas";
 
 export const validVendorPortalToken = "vendor-portal-valid-token";
 export const expiredVendorPortalToken = "vendor-portal-expired-token";
@@ -46,3 +46,68 @@ export const vendorPortalRfqInvitationFixture: VendorPortalRfqInvitation = {
     ],
   },
 };
+
+export const vendorPortalQuotationFixture: Quotation | null = null;
+
+let vendorPortalQuotation: Quotation | null = structuredClone(vendorPortalQuotationFixture);
+let vendorPortalQuotationAttachmentSequence = 0;
+
+export function resetVendorPortalMockState() {
+  vendorPortalQuotation = structuredClone(vendorPortalQuotationFixture);
+  vendorPortalQuotationAttachmentSequence = 0;
+}
+
+export function getVendorPortalQuotationFixture() {
+  return vendorPortalQuotation;
+}
+
+export function setVendorPortalQuotationFixture(nextQuotation: Quotation | null) {
+  vendorPortalQuotation = structuredClone(nextQuotation);
+  vendorPortalQuotationAttachmentSequence = nextQuotation?.attachments.length ?? 0;
+}
+
+export function appendVendorPortalQuotationAttachment(attachment: Attachment) {
+  if (!vendorPortalQuotation) {
+    vendorPortalQuotation = buildVendorPortalQuotationFixture([attachment]);
+    vendorPortalQuotationAttachmentSequence = 1;
+    return vendorPortalQuotation;
+  }
+
+  vendorPortalQuotationAttachmentSequence += 1;
+  vendorPortalQuotation = {
+    ...vendorPortalQuotation,
+    status: "received",
+    submissionSource: "vendor_portal",
+    submittedAt: new Date().toISOString(),
+    latestReceivedAt: new Date().toISOString(),
+    fileCount: vendorPortalQuotationAttachmentSequence,
+    attachments: [attachment, ...vendorPortalQuotation.attachments],
+  };
+
+  return vendorPortalQuotation;
+}
+
+export function buildVendorPortalQuotationFixture(attachments: Attachment[] = []): Quotation {
+  return {
+    id: "quotation-1",
+    rfqId: "rfq-1",
+    vendorId: "1",
+    rfqInvitationId: "1",
+    number: "QTN-2026-000001",
+    status: "received",
+    submissionSource: "vendor_portal",
+    submittedAt: "2026-06-01T10:00:00.000000Z",
+    latestReceivedAt: "2026-06-01T10:00:00.000000Z",
+    fileCount: attachments.length,
+    submittedByUser: null,
+    submittedByVendorContact: {
+      name: "Nina Northwind",
+      email: "nina@northwind.test",
+    },
+    attachments,
+    permissions: {
+      canUploadAttachment: true,
+      canViewAttachments: false,
+    },
+  };
+}

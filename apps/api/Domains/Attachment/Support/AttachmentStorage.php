@@ -5,6 +5,7 @@ namespace Domains\Attachment\Support;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
 use Domains\Requisition\Models\Requisition;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -51,16 +52,26 @@ class AttachmentStorage
      *     originalFilename: string
      * }
      */
-    public function store(Tenant $tenant, Requisition $requisition, UploadedFile $file): array
+    public function store(Tenant $tenant, Model $attachable, UploadedFile $file): array
     {
         $extension = $this->extensionFor($file);
         $safeFilename = $this->safeFilename($file);
-        $directory = sprintf(
-            'tenants/%s/requisitions/%s/%s',
-            $tenant->id,
-            $requisition->id,
-            Str::uuid()->toString(),
-        );
+        if ($attachable instanceof Requisition) {
+            $directory = sprintf(
+                'tenants/%s/requisitions/%s/%s',
+                $tenant->id,
+                $attachable->id,
+                Str::uuid()->toString(),
+            );
+        } else {
+            $directory = sprintf(
+                'tenants/%s/%s/%s/%s',
+                $tenant->id,
+                $attachable->getTable(),
+                $attachable->id,
+                Str::uuid()->toString(),
+            );
+        }
         $filename = $extension !== null ? "{$safeFilename}.{$extension}" : $safeFilename;
         $path = "{$directory}/{$filename}";
         $realPath = $file->getRealPath();
