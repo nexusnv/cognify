@@ -59,7 +59,9 @@ import type {
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
   QuotationNullableResponse,
+  QuotationNullableVendorPortalResponse,
   QuotationResponse,
+  QuotationVendorPortalResponse,
   ReasonedRequisitionActionRequest,
   RejectApprovalTaskRequest,
   RequestApprovalChangesRequest,
@@ -5264,7 +5266,7 @@ export const showVendorPortalRfqInvitation = async (
  * @summary Show vendor portal quotation
  */
 export type showVendorPortalQuotationResponse200 = {
-  data: QuotationNullableResponse;
+  data: QuotationNullableVendorPortalResponse;
   status: 200;
 };
 
@@ -5316,7 +5318,7 @@ export const showVendorPortalQuotation = async (
  * @summary Upload vendor portal quotation attachment
  */
 export type storeVendorPortalQuotationAttachmentResponse201 = {
-  data: QuotationResponse;
+  data: QuotationVendorPortalResponse;
   status: 201;
 };
 

@@ -18,6 +18,7 @@ use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -117,6 +118,106 @@ class QuotationUploadApiTest extends TestCase
             'actor_id' => $buyer->id,
             'event_type' => 'quotation.created',
         ]);
+    }
+
+    public function test_buyer_can_login_and_access_protected_endpoints(): void
+    {
+        Storage::fake('attachments');
+
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'quotation-buyer@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $invitation = $this->invitation($tenant, $rfq, $this->vendor($tenant));
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'quotation-buyer@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $upload = $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->post("/api/rfq-invitations/{$invitation->id}/quotation/attachments", [
+                'file' => UploadedFile::fake()->create('session-buyer-quote.pdf', 128, 'application/pdf'),
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.submittedByUser.id', (string) $buyer->id);
+
+        $quotationId = (string) $upload->json('data.id');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfq-invitations/{$invitation->id}/quotation")
+            ->assertOk()
+            ->assertJsonPath('data.id', $quotationId);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/quotations/{$quotationId}/attachments")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.filename', 'session-buyer-quote.pdf');
+    }
+
+    public function test_protected_endpoints_return_401_when_unauthenticated(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $invitation = $this->invitation($tenant, $rfq, $this->vendor($tenant));
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfq-invitations/{$invitation->id}/quotation")
+            ->assertUnauthorized();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->withHeader('Accept', 'application/json')
+            ->post("/api/rfq-invitations/{$invitation->id}/quotation/attachments", [
+                'file' => UploadedFile::fake()->create('unauthenticated.pdf', 128, 'application/pdf'),
+            ])
+            ->assertUnauthorized();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/quotations/' . Str::uuid() . '/attachments')
+            ->assertUnauthorized();
+    }
+
+    public function test_session_failure_results_in_401(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'quotation-session-failure@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $invitation = $this->invitation($tenant, $rfq, $this->vendor($tenant));
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'quotation-session-failure@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfq-invitations/{$invitation->id}/quotation")
+            ->assertUnauthorized();
     }
 
     public function test_buyer_upload_rejects_invitations_that_are_not_accepting_quotations(): void

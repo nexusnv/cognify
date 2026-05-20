@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import type { Attachment } from "@cognify/api-client/schemas";
+import type { AttachmentVendorPortal } from "@cognify/api-client/schemas";
 import {
   appendVendorPortalQuotationAttachment,
   expiredVendorPortalToken,
@@ -121,7 +121,7 @@ async function parseFormDataUpload(request: Request) {
     const filename = formDataString(formData, "file.filename") ?? file.name;
     const mimeType = formDataString(formData, "file.mimeType") ?? (file.type || "application/octet-stream");
     const metadataSize = formDataString(formData, "file.sizeBytes");
-    const sizeBytes = metadataSize ? Number(metadataSize) : file.size;
+    const sizeBytes = parseSizeBytes(metadataSize) ?? file.size;
 
     return {
       filename,
@@ -151,10 +151,13 @@ function parseMultipartUploadText(body: string) {
     extractMultipartField(body, "file.sizeBytes") ?? extractMultipartField(body, "sizeBytes");
 
   if (filename && mimeType && sizeBytes) {
+    const parsedSizeBytes = parseSizeBytes(sizeBytes);
+    if (parsedSizeBytes === null) return null;
+
     return {
       filename,
       mimeType,
-      sizeBytes: Number(sizeBytes),
+      sizeBytes: parsedSizeBytes,
     };
   }
 
@@ -185,14 +188,18 @@ function extractMultipartField(body: string, fieldName: string) {
   return fieldMatch?.[1]?.trim() ?? null;
 }
 
-function buildQuotationAttachment(upload: { filename: string; mimeType: string; sizeBytes: number }): Attachment {
+function buildQuotationAttachment(upload: {
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}): AttachmentVendorPortal {
   return {
     id: `quotation-att-${Date.now()}`,
     parentType: "quotation",
     parentId: "quotation-1",
     filename: upload.filename,
     mimeType: upload.mimeType,
-    extension: upload.filename.split(".").pop() ?? null,
+    extension: fileExtension(upload.filename),
     sizeBytes: upload.sizeBytes,
     previewable: false,
     uploadedBy: null,
@@ -203,6 +210,18 @@ function buildQuotationAttachment(upload: { filename: string; mimeType: string; 
       canDelete: false,
     },
   };
+}
+
+function fileExtension(filename: string): string | null {
+  const extensionIndex = filename.lastIndexOf(".");
+  return extensionIndex >= 0 ? filename.slice(extensionIndex + 1) : null;
+}
+
+function parseSizeBytes(value: string | null): number | null {
+  if (!value) return null;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
 function isFileLike(value: FormDataEntryValue | null): value is File {

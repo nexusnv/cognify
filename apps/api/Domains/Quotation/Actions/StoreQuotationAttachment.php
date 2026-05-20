@@ -39,7 +39,11 @@ class StoreQuotationAttachment
         try {
             $quotation = DB::transaction(function () use ($tenant, $actor, $invitation, $file, $source, $receivedAt, &$stored): Quotation {
                 $result = $this->createOrRevealQuotationForInvitation->handle($tenant, $invitation, $actor);
-                $quotation = $result['quotation'];
+                $quotation = Quotation::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->whereKey($result['quotation']->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
                 $stored = $this->storage->store($tenant, $quotation, $file);
 
                 $attachment = Attachment::query()->create([

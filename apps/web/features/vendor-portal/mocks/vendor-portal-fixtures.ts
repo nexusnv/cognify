@@ -1,4 +1,8 @@
-import type { Attachment, Quotation, VendorPortalRfqInvitation } from "@cognify/api-client/schemas";
+import type {
+  AttachmentVendorPortal,
+  QuotationVendorPortal,
+  VendorPortalRfqInvitation,
+} from "@cognify/api-client/schemas";
 
 export const validVendorPortalToken = "vendor-portal-valid-token";
 export const expiredVendorPortalToken = "vendor-portal-expired-token";
@@ -47,9 +51,9 @@ export const vendorPortalRfqInvitationFixture: VendorPortalRfqInvitation = {
   },
 };
 
-export const vendorPortalQuotationFixture: Quotation | null = null;
+export const vendorPortalQuotationFixture: QuotationVendorPortal | null = null;
 
-let vendorPortalQuotation: Quotation | null = structuredClone(vendorPortalQuotationFixture);
+let vendorPortalQuotation: QuotationVendorPortal | null = structuredClone(vendorPortalQuotationFixture);
 let vendorPortalQuotationAttachmentSequence = 0;
 
 export function resetVendorPortalMockState() {
@@ -61,12 +65,12 @@ export function getVendorPortalQuotationFixture() {
   return vendorPortalQuotation;
 }
 
-export function setVendorPortalQuotationFixture(nextQuotation: Quotation | null) {
+export function setVendorPortalQuotationFixture(nextQuotation: QuotationVendorPortal | null) {
   vendorPortalQuotation = structuredClone(nextQuotation);
   vendorPortalQuotationAttachmentSequence = nextQuotation?.attachments.length ?? 0;
 }
 
-export function appendVendorPortalQuotationAttachment(attachment: Attachment) {
+export function appendVendorPortalQuotationAttachment(attachment: AttachmentVendorPortal) {
   if (!vendorPortalQuotation) {
     vendorPortalQuotation = buildVendorPortalQuotationFixture([attachment]);
     vendorPortalQuotationAttachmentSequence = 1;
@@ -87,7 +91,9 @@ export function appendVendorPortalQuotationAttachment(attachment: Attachment) {
   return vendorPortalQuotation;
 }
 
-export function buildVendorPortalQuotationFixture(attachments: Attachment[] = []): Quotation {
+export function buildVendorPortalQuotationFixture(
+  attachments: AttachmentVendorPortal[] = [],
+): QuotationVendorPortal {
   return {
     id: "quotation-1",
     rfqId: "rfq-1",
@@ -100,10 +106,7 @@ export function buildVendorPortalQuotationFixture(attachments: Attachment[] = []
     latestReceivedAt: "2026-06-01T10:00:00.000000Z",
     fileCount: attachments.length,
     submittedByUser: null,
-    submittedByVendorContact: {
-      name: "Nina Northwind",
-      email: "nina@northwind.test",
-    },
+    submittedByVendorContact: null,
     attachments,
     permissions: {
       canUploadAttachment: true,

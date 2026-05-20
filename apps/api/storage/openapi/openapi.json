@@ -4227,7 +4227,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuotationNullableResponse"
+                  "$ref": "#/components/schemas/QuotationNullableVendorPortalResponse"
                 }
               }
             }
@@ -4277,7 +4277,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuotationResponse"
+                  "$ref": "#/components/schemas/QuotationVendorPortalResponse"
                 }
               }
             }
@@ -5439,6 +5439,73 @@
                 "type": "null"
               }
             ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AttachmentPermissions"
+          }
+        }
+      },
+      "AttachmentVendorPortal": {
+        "type": "object",
+        "required": [
+          "id",
+          "parentType",
+          "parentId",
+          "filename",
+          "mimeType",
+          "extension",
+          "sizeBytes",
+          "previewable",
+          "uploadedBy",
+          "createdAt",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parentType": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "quotation"
+            ]
+          },
+          "parentId": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "extension": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "previewable": {
+            "type": "boolean"
+          },
+          "uploadedBy": {
+            "type": "null"
           },
           "createdAt": {
             "type": [
@@ -9294,6 +9361,95 @@
           }
         }
       },
+      "QuotationVendorPortal": {
+        "type": "object",
+        "required": [
+          "id",
+          "rfqId",
+          "vendorId",
+          "rfqInvitationId",
+          "number",
+          "status",
+          "submissionSource",
+          "submittedAt",
+          "latestReceivedAt",
+          "fileCount",
+          "submittedByUser",
+          "submittedByVendorContact",
+          "attachments",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rfqId": {
+            "type": "string"
+          },
+          "vendorId": {
+            "type": "string"
+          },
+          "rfqInvitationId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "withdrawn",
+              "superseded"
+            ]
+          },
+          "submissionSource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "vendor_portal",
+              "buyer_upload",
+              null
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "latestReceivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "fileCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "submittedByUser": {
+            "type": "null"
+          },
+          "submittedByVendorContact": {
+            "type": "null"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentVendorPortal"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationPermissions"
+          }
+        }
+      },
       "QuotationNullableResponse": {
         "type": "object",
         "required": [
@@ -9304,6 +9460,24 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/Quotation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "QuotationNullableVendorPortalResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVendorPortal"
               },
               {
                 "type": "null"
@@ -9335,6 +9509,17 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Quotation"
+          }
+        }
+      },
+      "QuotationVendorPortalResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuotationVendorPortal"
           }
         }
       },

@@ -34,13 +34,12 @@ export function useQuotationAttachments(quotationId: string | null | undefined) 
 
 export function useRfqInvitationQuotationUpload(invitationId: string) {
   const queryClient = useQueryClient();
-  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (file: File) => uploadRfqInvitationQuotationAttachment(invitationId, file, tenantId),
+    mutationFn: (file: File) => uploadRfqInvitationQuotationAttachment(invitationId, file),
     onSuccess: (quotation) => {
-      queryClient.setQueryData(quotationKeys.byInvitation(invitationId, tenantId), quotation);
-      queryClient.setQueryData(quotationKeys.attachments(quotation.id, tenantId), quotation.attachments);
+      const tenantId = getStoredActiveTenantId();
+
       queryClient.invalidateQueries({ queryKey: quotationKeys.byInvitation(invitationId, tenantId) });
       queryClient.invalidateQueries({ queryKey: quotationKeys.attachments(quotation.id, tenantId) });
     },

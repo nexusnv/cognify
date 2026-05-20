@@ -5,6 +5,20 @@ import type { ChangeEvent, FormEvent } from "react";
 import { useVendorQuotation, useVendorQuotationUpload } from "../hooks/use-vendor-quotation";
 
 const acceptedFileGuidance = "Accepted file types: PDF, DOC, DOCX, XLS, XLSX, or CSV.";
+const acceptedFileTypes = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".csv",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+].join(",");
 
 export function VendorQuotationUploadPanel({ token }: { token: string }) {
   const quotationQuery = useVendorQuotation(token);
@@ -108,6 +122,7 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
                 ref={fileInputRef}
                 id="quotation-file"
                 type="file"
+                accept={acceptedFileTypes}
                 className="block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer"
                 onChange={handleFileSelect}
                 aria-label="Quotation file"

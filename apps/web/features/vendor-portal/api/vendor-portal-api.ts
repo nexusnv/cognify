@@ -3,7 +3,7 @@ import {
   showVendorPortalRfqInvitation,
   storeVendorPortalQuotationAttachment,
 } from "@cognify/api-client/endpoints";
-import type { Quotation, VendorPortalRfqInvitation } from "@cognify/api-client/schemas";
+import type { QuotationVendorPortal, VendorPortalRfqInvitation } from "@cognify/api-client/schemas";
 import {
   toVendorRfqPortalViewModel,
   type VendorRfqPortalViewModel,
@@ -18,7 +18,7 @@ export async function fetchVendorPortalRfqInvitation(
   return toVendorRfqPortalViewModel(response.data.data as VendorPortalRfqInvitation);
 }
 
-export async function fetchVendorPortalQuotation(token: string): Promise<Quotation | null> {
+export async function fetchVendorPortalQuotation(token: string): Promise<QuotationVendorPortal | null> {
   const response = await showVendorPortalQuotation(token);
   if (response.status !== 200) throw response.data;
 
@@ -28,7 +28,7 @@ export async function fetchVendorPortalQuotation(token: string): Promise<Quotati
 export async function uploadVendorPortalQuotationAttachment(
   token: string,
   file: File,
-): Promise<Quotation> {
+): Promise<QuotationVendorPortal> {
   const response = await storeVendorPortalQuotationAttachment(token, { file });
   if (response.status !== 201) throw response.data;
 

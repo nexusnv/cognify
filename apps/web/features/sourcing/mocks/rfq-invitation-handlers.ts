@@ -375,7 +375,7 @@ function buildQuotationAttachment(
     parentId: quotationId,
     filename: upload.filename,
     mimeType: upload.mimeType,
-    extension: upload.filename.split(".").pop() ?? null,
+    extension: fileExtension(upload.filename),
     sizeBytes: upload.sizeBytes,
     previewable,
     uploadedBy: {
@@ -420,7 +420,7 @@ async function parseFormDataUpload(request: Request) {
     const filename = formDataString(formData, "file.filename") ?? file.name;
     const mimeType = formDataString(formData, "file.mimeType") ?? (file.type || "application/octet-stream");
     const metadataSize = formDataString(formData, "file.sizeBytes");
-    const sizeBytes = metadataSize ? Number(metadataSize) : file.size;
+    const sizeBytes = parseSizeBytes(metadataSize) ?? file.size;
 
     return {
       filename,
@@ -450,10 +450,13 @@ function parseMultipartUploadText(body: string) {
     extractMultipartField(body, "file.sizeBytes") ?? extractMultipartField(body, "sizeBytes");
 
   if (filename && mimeType && sizeBytes) {
+    const parsedSizeBytes = parseSizeBytes(sizeBytes);
+    if (parsedSizeBytes === null) return null;
+
     return {
       filename,
       mimeType,
-      sizeBytes: Number(sizeBytes),
+      sizeBytes: parsedSizeBytes,
     };
   }
 
@@ -475,6 +478,18 @@ function parseMultipartUploadText(body: string) {
     mimeType: mimeTypeValue,
     sizeBytes: content.length,
   };
+}
+
+function fileExtension(filename: string): string | null {
+  const extensionIndex = filename.lastIndexOf(".");
+  return extensionIndex >= 0 ? filename.slice(extensionIndex + 1) : null;
+}
+
+function parseSizeBytes(value: string | null): number | null {
+  if (!value) return null;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
 function extractMultipartField(body: string, fieldName: string) {
