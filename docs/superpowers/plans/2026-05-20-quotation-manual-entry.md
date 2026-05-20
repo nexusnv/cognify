@@ -1,6 +1,6 @@
 # Quotation Manual Entry Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement P1-27 so buyers and token-authenticated vendors can save structured quotation header terms and line items against the current quotation for an RFQ invitation.
 
@@ -198,7 +198,7 @@ Vendor portal response must return `manualEntry.buyerNotes: null` and `permissio
 - Reference: `apps/api/tests/Feature/QuotationUploadApiTest.php`
 - Reference: `apps/api/tests/Feature/RfqInvitationPortalApiTest.php`
 
-- [ ] Add `QuotationManualEntryApiTest` with `RefreshDatabase` and helpers copied from `QuotationUploadApiTest` for tenant users, RFQ drafts, vendors, invitations, portal tokens, and quotation creation.
+- [x] Add `QuotationManualEntryApiTest` with `RefreshDatabase` and helpers copied from `QuotationUploadApiTest` for tenant users, RFQ drafts, vendors, invitations, portal tokens, and quotation creation.
 
 Use this test class skeleton:
 
@@ -288,7 +288,7 @@ class QuotationManualEntryApiTest extends TestCase
 }
 ```
 
-- [ ] Add buyer test coverage for manual entry without uploaded files.
+- [x] Add buyer test coverage for manual entry without uploaded files.
 
 Use this test method:
 
@@ -310,7 +310,7 @@ public function test_buyer_manual_entry_does_not_require_uploaded_files(): void
 }
 ```
 
-- [ ] Add vendor portal save test coverage.
+- [x] Add vendor portal save test coverage.
 
 Use this test method:
 
@@ -346,7 +346,7 @@ public function test_vendor_can_save_structured_quotation_terms_through_portal_t
 }
 ```
 
-- [ ] Add validation and authorization tests.
+- [x] Add validation and authorization tests.
 
 Use these test methods:
 
@@ -436,7 +436,7 @@ public function test_manual_entry_validation_returns_field_errors(): void
 }
 ```
 
-- [ ] Add the helper payload method to the test class.
+- [x] Add the helper payload method to the test class.
 
 Use this helper:
 
@@ -487,7 +487,7 @@ private function validManualEntryPayload(array $overrides = []): array
 }
 ```
 
-- [ ] Run the backend test before implementation.
+- [x] Run the backend test before implementation.
 
 Run:
 
@@ -506,7 +506,7 @@ Expected result: failures for missing routes, request class, tables, columns, mo
 - Create: `apps/api/Domains/Quotation/Models/QuotationLineItem.php`
 - Modify: `apps/api/Domains/Quotation/Models/Quotation.php`
 
-- [ ] Add quotation header fields migration.
+- [x] Add quotation header fields migration.
 
 Use this migration body:
 
@@ -573,7 +573,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add quotation line items migration.
+- [x] Add quotation line items migration.
 
 Use this migration body:
 
@@ -621,7 +621,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add `QuotationLineItem` model.
+- [x] Add `QuotationLineItem` model.
 
 Use this file:
 
@@ -707,7 +707,7 @@ class QuotationLineItem extends Model
 }
 ```
 
-- [ ] Extend `Quotation` fillable, casts, and relationships.
+- [x] Extend `Quotation` fillable, casts, and relationships.
 
 Add these fillable entries:
 
@@ -767,7 +767,7 @@ use Domains\Quotation\Models\QuotationLineItem;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 ```
 
-- [ ] Run the backend test again.
+- [x] Run the backend test again.
 
 Run:
 
@@ -790,7 +790,7 @@ Expected result: failures move from missing schema/model to missing request, act
 - Modify: `apps/api/Domains/Quotation/Http/Controllers/VendorPortalQuotationController.php`
 - Modify: `apps/api/routes/api.php`
 
-- [ ] Add request validation.
+- [x] Add request validation.
 
 Use this file:
 
@@ -847,7 +847,7 @@ class SaveQuotationManualEntryRequest extends FormRequest
 }
 ```
 
-- [ ] Add completeness data object.
+- [x] Add completeness data object.
 
 Use this file:
 
@@ -882,7 +882,7 @@ class QuotationCompletenessData
 }
 ```
 
-- [ ] Add `SaveQuotationManualEntry` action.
+- [x] Add `SaveQuotationManualEntry` action.
 
 Use this implementation:
 
@@ -1052,7 +1052,7 @@ class SaveQuotationManualEntry
 }
 ```
 
-- [ ] Add `QuotationLineItemResource`.
+- [x] Add `QuotationLineItemResource`.
 
 Use this file:
 
@@ -1096,7 +1096,7 @@ class QuotationLineItemResource extends JsonResource
 }
 ```
 
-- [ ] Extend `QuotationResource`.
+- [x] Extend `QuotationResource`.
 
 Add `lineItems`, `manualEntry`, `completeness`, and `canEditManualEntry`:
 
@@ -1141,7 +1141,7 @@ $canEditManualEntry = $vendorPortal
 ],
 ```
 
-- [ ] Add authenticated buyer route handler to `RfqInvitationQuotationController`.
+- [x] Add authenticated buyer route handler to `RfqInvitationQuotationController`.
 
 Add this method:
 
@@ -1181,7 +1181,7 @@ Update `findTenantQuotation()` eager loading:
 ->with(['rfq', 'vendor', 'rfqInvitation', 'lineItems'])
 ```
 
-- [ ] Add vendor portal route handler to `VendorPortalQuotationController`.
+- [x] Add vendor portal route handler to `VendorPortalQuotationController`.
 
 Add this method:
 
@@ -1219,7 +1219,7 @@ Update `findTenantQuotationByInvitation()` eager loading:
 ->with(['attachments' => fn ($query) => $query->with('uploader')->latest('created_at'), 'lineItems', 'submittedByUser', 'rfq', 'vendor', 'rfqInvitation'])
 ```
 
-- [ ] Register routes in `apps/api/routes/api.php`.
+- [x] Register routes in `apps/api/routes/api.php`.
 
 Add vendor portal route near existing vendor quotation routes:
 
@@ -1234,7 +1234,7 @@ Add authenticated route inside the tenant group:
 Route::put('/quotations/{quotation}/manual-entry', [RfqInvitationQuotationController::class, 'saveManualEntry']);
 ```
 
-- [ ] Run backend focused tests.
+- [x] Run backend focused tests.
 
 Run:
 
@@ -1254,14 +1254,14 @@ Expected result: manual entry tests pass, upload tests still pass, and search st
 - Regenerate: `packages/api-client/src/generated/endpoints.ts`
 - Regenerate: `packages/api-client/src/generated/schemas/*`
 
-- [ ] Add OpenAPI operations:
+- [x] Add OpenAPI operations:
 
 ```text
 PUT /api/quotations/{quotation}/manual-entry
 PUT /api/vendor-portal/rfq-invitations/{token}/quotation/manual-entry
 ```
 
-- [ ] Add request schema `SaveQuotationManualEntryRequest`.
+- [x] Add request schema `SaveQuotationManualEntryRequest`.
 
 Use these required properties:
 
@@ -1295,7 +1295,7 @@ Use these required properties:
 }
 ```
 
-- [ ] Add response schemas:
+- [x] Add response schemas:
 
 ```text
 QuotationManualEntry
@@ -1305,7 +1305,7 @@ SaveQuotationManualEntryRequest
 SaveQuotationLineItemRequest
 ```
 
-- [ ] Extend `Quotation` schema with:
+- [x] Extend `Quotation` schema with:
 
 ```text
 manualEntry
@@ -1314,7 +1314,7 @@ completeness
 permissions.canEditManualEntry
 ```
 
-- [ ] Generate the client and verify contract output.
+- [x] Generate the client and verify contract output.
 
 Run:
 
@@ -1343,7 +1343,7 @@ saveVendorPortalQuotationManualEntry
 - Modify: `apps/web/features/sourcing/mocks/rfq-invitation-handlers.ts`
 - Modify: `apps/web/features/sourcing/tests/rfq-invitations-workflow.test.tsx`
 
-- [ ] Add buyer API client function.
+- [x] Add buyer API client function.
 
 Append to `apps/web/features/sourcing/api/quotation-api.ts`:
 
@@ -1365,7 +1365,7 @@ export async function saveQuotationManualEntry(
 }
 ```
 
-- [ ] Add buyer manual entry hook.
+- [x] Add buyer manual entry hook.
 
 Use this file:
 
@@ -1395,7 +1395,7 @@ export function useSaveQuotationManualEntry(invitationId: string, quotationId: s
 }
 ```
 
-- [ ] Add form schema and mapping helpers.
+- [x] Add form schema and mapping helpers.
 
 Use this file:
 
@@ -1486,7 +1486,7 @@ export function payloadFromFormValues(values: QuotationManualEntryFormValues): S
 }
 ```
 
-- [ ] Add buyer line items editor.
+- [x] Add buyer line items editor.
 
 Use a compact table with labeled inputs for `description`, `quantity`, `unit`, `unitPrice`, `totalAmount`, `complianceStatus`, and `notes`. The component props must be:
 
@@ -1504,7 +1504,7 @@ export function QuotationLineItemsEditor({
 }
 ```
 
-- [ ] Add buyer manual entry panel.
+- [x] Add buyer manual entry panel.
 
 Use this component contract:
 
@@ -1538,7 +1538,7 @@ Add quoted line
 Save structured quotation
 ```
 
-- [ ] Render manual entry panel from `QuotationEvidencePanel`.
+- [x] Render manual entry panel from `QuotationEvidencePanel`.
 
 Pass the loaded `quotation` to `QuotationManualEntryPanel` after the evidence section. If `quotation` is `null`, show this copy:
 
@@ -1554,7 +1554,7 @@ Create structured quotation
 
 The button should call a minimal manual-entry save with `lineItems: []`, `currency: "USD"`, and then show the full panel from the returned quotation.
 
-- [ ] Extend sourcing MSW handlers.
+- [x] Extend sourcing MSW handlers.
 
 Add `PUT /api/quotations/:quotationId/manual-entry` to `apps/web/features/sourcing/mocks/rfq-invitation-handlers.ts`. It should update the in-memory quotation:
 
@@ -1573,7 +1573,7 @@ http.put("/api/quotations/:quotationId/manual-entry", async ({ params, request }
 
 The mock `updateQuotationManualEntry` must update `manualEntry`, `lineItems`, `completeness`, `status: "received"`, `submissionSource`, `submittedAt`, and `latestReceivedAt`.
 
-- [ ] Add buyer workflow test.
+- [x] Add buyer workflow test.
 
 Append this test to `apps/web/features/sourcing/tests/rfq-invitations-workflow.test.tsx`:
 
@@ -1609,7 +1609,7 @@ it("lets a buyer save structured quotation terms and line items", async () => {
 });
 ```
 
-- [ ] Run buyer frontend test.
+- [x] Run buyer frontend test.
 
 Run:
 
@@ -1632,7 +1632,7 @@ Expected result: all sourcing RFQ invitation workflow tests pass.
 - Modify: `apps/web/features/vendor-portal/mocks/vendor-portal-handlers.ts`
 - Modify: `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`
 
-- [ ] Add vendor portal API client function.
+- [x] Add vendor portal API client function.
 
 Append to `apps/web/features/vendor-portal/api/vendor-portal-api.ts`:
 
@@ -1653,7 +1653,7 @@ export async function saveVendorPortalQuotationManualEntry(
 }
 ```
 
-- [ ] Extend vendor quotation hook.
+- [x] Extend vendor quotation hook.
 
 Add this mutation to `apps/web/features/vendor-portal/hooks/use-vendor-quotation.ts`:
 
@@ -1672,7 +1672,7 @@ export function useVendorQuotationManualEntry(token: string) {
 
 Add imports for `SaveQuotationManualEntryRequest` and `saveVendorPortalQuotationManualEntry`.
 
-- [ ] Add vendor manual entry panel.
+- [x] Add vendor manual entry panel.
 
 Use this component contract:
 
@@ -1703,11 +1703,11 @@ Add quoted line
 Save quotation details
 ```
 
-- [ ] Render vendor manual entry panel inside `VendorQuotationUploadPanel`.
+- [x] Render vendor manual entry panel inside `VendorQuotationUploadPanel`.
 
 Place the structured response panel below the uploaded files section. Use the same `quotation` object returned by `useVendorQuotation(token)` so file evidence and structured details share one response summary.
 
-- [ ] Extend vendor portal MSW fixtures and handlers.
+- [x] Extend vendor portal MSW fixtures and handlers.
 
 Add `manualEntry`, `lineItems`, `completeness`, and `permissions.canEditManualEntry` to vendor quotation fixture. Add this handler:
 
@@ -1731,7 +1731,7 @@ http.put("/api/vendor-portal/rfq-invitations/:token/quotation/manual-entry", asy
 
 The mock updater must force `manualEntry.buyerNotes` to `null`.
 
-- [ ] Add vendor portal workflow test.
+- [x] Add vendor portal workflow test.
 
 Append this test to `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`:
 
@@ -1759,7 +1759,7 @@ it("lets a vendor save structured quotation details from the RFQ portal", async 
 });
 ```
 
-- [ ] Run vendor portal frontend test.
+- [x] Run vendor portal frontend test.
 
 Run:
 
@@ -1775,7 +1775,7 @@ Expected result: all vendor RFQ portal tests pass.
 
 - Verify all touched API, generated-client, and web surfaces.
 
-- [ ] Run focused backend tests.
+- [x] Run focused backend tests.
 
 Run:
 
@@ -1788,7 +1788,7 @@ php artisan test --filter=SearchApiTest
 
 Expected result: all listed tests pass.
 
-- [ ] Run focused frontend tests.
+- [x] Run focused frontend tests.
 
 Run:
 
@@ -1799,7 +1799,7 @@ pnpm --dir apps/web exec vitest run features/vendor-portal/tests/vendor-rfq-port
 
 Expected result: sourcing and vendor portal suites pass.
 
-- [ ] Run contract, type, lint, build, and whitespace checks.
+- [x] Run contract, type, lint, build, and whitespace checks.
 
 Run:
 
@@ -1813,7 +1813,7 @@ git diff --check
 
 Expected result: all commands exit successfully. If `pnpm build` fails in the sandbox with a Turbopack process or port permission error, rerun the same command with required sandbox escalation and record both outputs.
 
-- [ ] Run placeholder scan.
+- [x] Run placeholder scan.
 
 Run:
 
@@ -1831,7 +1831,7 @@ Expected result: no matches introduced by this implementation.
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: `docs/superpowers/plans/2026-05-20-quotation-manual-entry.md`
 
-- [ ] Confirm P1-27 links to this implementation plan.
+- [x] Confirm P1-27 links to this implementation plan.
 
 Expected P1-27 row values:
 
@@ -1839,25 +1839,25 @@ Expected P1-27 row values:
 | P1-27 | Quotation Manual Entry | Support structured quotation entry when a vendor responds outside the portal or submits incomplete documents. Manual entry keeps the workflow usable before full OCR automation exists. | Fully Implemented | 2026-05-20-quotation-manual-entry-design.md | 2026-05-20-quotation-manual-entry.md |  | Implemented as Epic 6 slice 3 with buyer and vendor structured quotation entry. |
 ```
 
-- [ ] Leave P1-28 as `Planned`.
+- [x] Leave P1-28 as `Planned`.
 
 Do not update P1-28 implementation plan or status during this slice.
 
-- [ ] Mark all completed plan checkboxes after verification passes.
+- [x] Mark all completed plan checkboxes after verification passes.
 
 Use only `- [x]` for tasks actually completed and verified in the current implementation session.
 
 ## Task 9: Self-Review Checklist
 
-- [ ] Manual entry saves reuse the P1-26 quotation record created by `CreateOrRevealQuotationForInvitation`.
-- [ ] Buyer and vendor saves use the same `SaveQuotationManualEntry` action.
-- [ ] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
-- [ ] Vendor routes use portal token resolution and do not rely on `X-Tenant-Id`.
-- [ ] Vendor portal responses never expose buyer notes or buyer identity.
-- [ ] Buyer saves do not erase uploaded attachments.
-- [ ] Line item replacement happens in one transaction with the header save.
-- [ ] Completeness is explicit and does not trigger comparison behavior.
-- [ ] Audit events include `quotation.manual_entry_saved`, `quotation.line_items_saved`, and `quotation.completeness_changed`.
-- [ ] Generated client endpoints and schemas are used by frontend code.
-- [ ] UI components do not import mock fixtures directly.
-- [ ] Quotation versioning, normalization, comparison, and award flows remain outside this slice.
+- [x] Manual entry saves reuse the P1-26 quotation record created by `CreateOrRevealQuotationForInvitation`.
+- [x] Buyer and vendor saves use the same `SaveQuotationManualEntry` action.
+- [x] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
+- [x] Vendor routes use portal token resolution and do not rely on `X-Tenant-Id`.
+- [x] Vendor portal responses never expose buyer notes or buyer identity.
+- [x] Buyer saves do not erase uploaded attachments.
+- [x] Line item replacement happens in one transaction with the header save.
+- [x] Completeness is explicit and does not trigger comparison behavior.
+- [x] Audit events include `quotation.manual_entry_saved`, `quotation.line_items_saved`, and `quotation.completeness_changed`.
+- [x] Generated client endpoints and schemas are used by frontend code.
+- [x] UI components do not import mock fixtures directly.
+- [x] Quotation versioning, normalization, comparison, and award flows remain outside this slice.

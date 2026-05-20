@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useVendorQuotation, useVendorQuotationUpload } from "../hooks/use-vendor-quotation";
+import { VendorQuotationManualEntryPanel } from "./vendor-quotation-manual-entry-panel";
 
 const acceptedFileGuidance = "Accepted file types: PDF, DOC, DOCX, XLS, XLSX, or CSV.";
 const acceptedFileTypes = [
@@ -149,6 +150,10 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
               {uploadMutation.isPending ? "Uploading quotation..." : "Upload quotation"}
             </button>
           </form>
+        )}
+
+        {quotationQuery.isLoading ? null : (
+          <VendorQuotationManualEntryPanel token={token} quotation={quotation ?? null} />
         )}
       </div>
     </section>

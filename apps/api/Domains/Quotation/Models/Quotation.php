@@ -5,6 +5,7 @@ namespace Domains\Quotation\Models;
 use App\Tenancy\Tenant;
 use App\Models\User;
 use Domains\Attachment\Models\Attachment;
+use Domains\Quotation\Models\QuotationLineItem;
 use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\QuotationSubmissionSource;
 use Domains\Quotation\Models\RfqInvitation;
@@ -12,6 +13,7 @@ use Domains\Quotation\Models\Rfq;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -31,6 +33,25 @@ class Quotation extends Model
         'submitted_by_vendor_contact',
         'file_count',
         'latest_received_at',
+        'quotation_reference',
+        'quoted_at',
+        'valid_until',
+        'subtotal_amount',
+        'tax_amount',
+        'freight_amount',
+        'discount_amount',
+        'payment_terms',
+        'delivery_terms',
+        'lead_time_days',
+        'warranty_terms',
+        'exclusions',
+        'compliance_notes',
+        'buyer_notes',
+        'vendor_notes',
+        'manual_entry_complete',
+        'manual_entry_missing_fields',
+        'manual_entry_saved_at',
+        'manual_entry_saved_source',
         'total_amount',
         'currency',
         'metadata',
@@ -45,6 +66,16 @@ class Quotation extends Model
             'submitted_by_vendor_contact' => 'array',
             'file_count' => 'integer',
             'latest_received_at' => 'immutable_datetime',
+            'quoted_at' => 'immutable_date',
+            'valid_until' => 'immutable_date',
+            'subtotal_amount' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'freight_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'lead_time_days' => 'integer',
+            'manual_entry_complete' => 'boolean',
+            'manual_entry_missing_fields' => 'array',
+            'manual_entry_saved_at' => 'immutable_datetime',
             'total_amount' => 'decimal:2',
             'metadata' => 'array',
         ];
@@ -141,5 +172,13 @@ class Quotation extends Model
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    /**
+     * @return HasMany<QuotationLineItem, $this>
+     */
+    public function lineItems(): HasMany
+    {
+        return $this->hasMany(QuotationLineItem::class)->orderBy('position');
     }
 }

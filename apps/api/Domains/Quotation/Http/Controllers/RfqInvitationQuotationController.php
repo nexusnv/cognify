@@ -8,7 +8,9 @@ use App\Tenancy\Tenant;
 use Domains\Attachment\Http\Requests\StoreAttachmentRequest;
 use Domains\Attachment\Http\Resources\AttachmentResource;
 use Domains\Attachment\Models\Attachment;
+use Domains\Quotation\Actions\SaveQuotationManualEntry;
 use Domains\Quotation\Actions\StoreQuotationAttachment;
+use Domains\Quotation\Http\Requests\SaveQuotationManualEntryRequest;
 use Domains\Quotation\Http\Resources\QuotationResource;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\RfqInvitation;
@@ -55,6 +57,47 @@ class RfqInvitationQuotationController extends Controller
         return (new QuotationResource($quotation))->response()->setStatusCode(201);
     }
 
+    public function saveManualEntry(
+        SaveQuotationManualEntryRequest $request,
+        CurrentTenant $currentTenant,
+        int $quotation,
+        SaveQuotationManualEntry $saveQuotationManualEntry,
+    ): QuotationResource {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $model = $this->findTenantQuotation($tenant, $quotation);
+        $model->loadMissing(['rfqInvitation', 'rfq', 'vendor']);
+        $this->authorize('view', $model->rfq);
+        $this->ensureInvitationAcceptsQuotation($model->rfqInvitation);
+
+        return new QuotationResource($saveQuotationManualEntry->handle(
+            $tenant,
+            $request->user(),
+            $model->rfqInvitation,
+            $request->validated(),
+            QuotationSubmissionSource::BuyerUpload,
+        ));
+    }
+
+    public function saveManualEntryForInvitation(
+        SaveQuotationManualEntryRequest $request,
+        CurrentTenant $currentTenant,
+        int $invitation,
+        SaveQuotationManualEntry $saveQuotationManualEntry,
+    ): QuotationResource {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $model = $this->findTenantInvitation($tenant, $invitation);
+        $this->authorize('view', $model->rfq);
+        $this->ensureInvitationAcceptsQuotation($model);
+
+        return new QuotationResource($saveQuotationManualEntry->handle(
+            $tenant,
+            $request->user(),
+            $model,
+            $request->validated(),
+            QuotationSubmissionSource::BuyerUpload,
+        ));
+    }
+
     public function attachments(CurrentTenant $currentTenant, int $quotation): AnonymousResourceCollection
     {
         $tenant = $this->tenantOrAbort($currentTenant);
@@ -83,7 +126,7 @@ class RfqInvitationQuotationController extends Controller
     private function findTenantQuotation(Tenant $tenant, int $id): Quotation
     {
         return Quotation::query()
-            ->with(['rfq', 'vendor', 'rfqInvitation'])
+            ->with(['rfq', 'vendor', 'rfqInvitation', 'lineItems'])
             ->where('tenant_id', $tenant->id)
             ->findOrFail($id);
     }
@@ -91,7 +134,7 @@ class RfqInvitationQuotationController extends Controller
     private function findTenantQuotationByInvitation(Tenant $tenant, int $invitationId): ?Quotation
     {
         return Quotation::query()
-            ->with(['attachments' => fn ($query) => $query->with('uploader')->latest('created_at'), 'submittedByUser', 'rfq', 'vendor', 'rfqInvitation'])
+            ->with(['attachments' => fn ($query) => $query->with('uploader')->latest('created_at'), 'lineItems', 'submittedByUser', 'rfq', 'vendor', 'rfqInvitation'])
             ->where('tenant_id', $tenant->id)
             ->where('rfq_invitation_id', $invitationId)
             ->first();

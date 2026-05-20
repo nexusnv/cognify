@@ -1,9 +1,11 @@
 import {
   listQuotationAttachments as listQuotationAttachmentsEndpoint,
+  saveRfqInvitationQuotationManualEntry as saveRfqInvitationQuotationManualEntryEndpoint,
+  saveQuotationManualEntry as saveQuotationManualEntryEndpoint,
   showRfqInvitationQuotation as showRfqInvitationQuotationEndpoint,
   storeRfqInvitationQuotationAttachment as storeRfqInvitationQuotationAttachmentEndpoint,
 } from "@cognify/api-client/endpoints";
-import type { Attachment, Quotation } from "@cognify/api-client/schemas";
+import type { Attachment, Quotation, SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
 function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit | undefined {
@@ -46,6 +48,32 @@ export async function fetchQuotationAttachments(
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<Attachment[]> {
   const response = await listQuotationAttachmentsEndpoint(quotationId, withActiveTenantHeader(tenantId));
+  if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function saveQuotationManualEntry(
+  quotationId: string,
+  payload: SaveQuotationManualEntryRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<Quotation> {
+  const response = await saveQuotationManualEntryEndpoint(quotationId, payload, withActiveTenantHeader(tenantId));
+  if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function saveRfqInvitationQuotationManualEntry(
+  invitationId: string,
+  payload: SaveQuotationManualEntryRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<Quotation> {
+  const response = await saveRfqInvitationQuotationManualEntryEndpoint(
+    invitationId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  );
   if (response.status !== 200) throw response.data;
 
   return response.data.data;

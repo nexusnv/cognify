@@ -4244,6 +4244,59 @@
         }
       }
     },
+    "/api/vendor-portal/rfq-invitations/{token}/quotation/manual-entry": {
+      "put": {
+        "operationId": "saveVendorPortalQuotationManualEntry",
+        "summary": "Save vendor portal quotation manual entry",
+        "tags": [
+          "Vendor Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationManualEntryRequestForVendor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vendor quotation manual entry saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVendorPortalResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
     "/api/vendor-portal/rfq-invitations/{token}/quotation/attachments": {
       "post": {
         "operationId": "storeVendorPortalQuotationAttachment",
@@ -4337,6 +4390,62 @@
         }
       }
     },
+    "/api/rfq-invitations/{invitation}/quotation/manual-entry": {
+      "put": {
+        "operationId": "saveRfqInvitationQuotationManualEntry",
+        "summary": "Create or save RFQ invitation quotation manual entry",
+        "tags": [
+          "RFQ Invitations"
+        ],
+        "parameters": [
+          {
+            "name": "invitation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationManualEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "RFQ invitation quotation manual entry saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
     "/api/rfq-invitations/{invitation}/quotation/attachments": {
       "post": {
         "operationId": "storeRfqInvitationQuotationAttachment",
@@ -4426,6 +4535,62 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/quotations/{quotation}/manual-entry": {
+      "put": {
+        "operationId": "saveQuotationManualEntry",
+        "summary": "Save quotation manual entry",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "quotation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationManualEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quotation manual entry saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
           }
         }
       }
@@ -9274,6 +9439,9 @@
           "submittedByUser",
           "submittedByVendorContact",
           "attachments",
+          "manualEntry",
+          "lineItems",
+          "completeness",
           "permissions"
         ],
         "properties": {
@@ -9356,6 +9524,18 @@
               "$ref": "#/components/schemas/Attachment"
             }
           },
+          "manualEntry": {
+            "$ref": "#/components/schemas/QuotationManualEntry"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationLineItem"
+            }
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/QuotationCompleteness"
+          },
           "permissions": {
             "$ref": "#/components/schemas/QuotationPermissions"
           }
@@ -9377,6 +9557,9 @@
           "submittedByUser",
           "submittedByVendorContact",
           "attachments",
+          "manualEntry",
+          "lineItems",
+          "completeness",
           "permissions"
         ],
         "properties": {
@@ -9437,13 +9620,32 @@
             "type": "null"
           },
           "submittedByVendorContact": {
-            "type": "null"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVendorContact"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "attachments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AttachmentVendorPortal"
             }
+          },
+          "manualEntry": {
+            "$ref": "#/components/schemas/QuotationManualEntryForVendor"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationLineItem"
+            }
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/QuotationCompleteness"
           },
           "permissions": {
             "$ref": "#/components/schemas/QuotationPermissions"
@@ -9490,7 +9692,8 @@
         "type": "object",
         "required": [
           "canUploadAttachment",
-          "canViewAttachments"
+          "canViewAttachments",
+          "canEditManualEntry"
         ],
         "properties": {
           "canUploadAttachment": {
@@ -9498,6 +9701,397 @@
           },
           "canViewAttachments": {
             "type": "boolean"
+          },
+          "canEditManualEntry": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotationManualEntry": {
+        "type": "object",
+        "required": [
+          "quotationReference",
+          "quotedAt",
+          "validUntil",
+          "currency",
+          "subtotalAmount",
+          "taxAmount",
+          "freightAmount",
+          "discountAmount",
+          "totalAmount",
+          "paymentTerms",
+          "deliveryTerms",
+          "leadTimeDays",
+          "warrantyTerms",
+          "exclusions",
+          "complianceNotes",
+          "buyerNotes",
+          "vendorNotes"
+        ],
+        "properties": {
+          "quotationReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "quotedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "subtotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warrantyTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exclusions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complianceNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyerNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationManualEntryForVendor": {
+        "type": "object",
+        "required": [
+          "quotationReference",
+          "quotedAt",
+          "validUntil",
+          "currency",
+          "subtotalAmount",
+          "taxAmount",
+          "freightAmount",
+          "discountAmount",
+          "totalAmount",
+          "paymentTerms",
+          "deliveryTerms",
+          "leadTimeDays",
+          "warrantyTerms",
+          "exclusions",
+          "complianceNotes",
+          "vendorNotes"
+        ],
+        "properties": {
+          "quotationReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "quotedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "subtotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warrantyTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exclusions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complianceNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationLineItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "rfqLineItemId",
+          "description",
+          "quantity",
+          "unit",
+          "unitPrice",
+          "subtotalAmount",
+          "taxAmount",
+          "totalAmount",
+          "leadTimeDays",
+          "manufacturer",
+          "modelNumber",
+          "alternateOffered",
+          "complianceStatus",
+          "notes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rfqLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subtotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "manufacturer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modelNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "alternateOffered": {
+            "type": "boolean"
+          },
+          "complianceStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "compliant",
+              "partial",
+              "non_compliant",
+              "alternate",
+              null
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationCompleteness": {
+        "type": "object",
+        "required": [
+          "isComplete",
+          "missingFields",
+          "lineItemCount"
+        ],
+        "properties": {
+          "isComplete": {
+            "type": "boolean"
+          },
+          "missingFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lineItemCount": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       },
@@ -9520,6 +10114,343 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/QuotationVendorPortal"
+          }
+        }
+      },
+      "SaveQuotationLineItemRequest": {
+        "type": "object",
+        "required": [
+          "description",
+          "quantity"
+        ],
+        "properties": {
+          "rfqLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "unitPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subtotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "manufacturer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "modelNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "alternateOffered": {
+            "type": "boolean",
+            "default": false
+          },
+          "complianceStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "compliant",
+              "partial",
+              "non_compliant",
+              "alternate",
+              null
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 5000
+          }
+        }
+      },
+      "SaveQuotationManualEntryRequest": {
+        "type": "object",
+        "required": [
+          "lineItems"
+        ],
+        "properties": {
+          "quotationReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "quotedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "subtotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warrantyTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exclusions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complianceNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyerNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveQuotationLineItemRequest"
+            }
+          }
+        }
+      },
+      "SaveQuotationManualEntryRequestForVendor": {
+        "type": "object",
+        "required": [
+          "lineItems"
+        ],
+        "properties": {
+          "quotationReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "quotedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "subtotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warrantyTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exclusions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complianceNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveQuotationLineItemRequest"
+            }
           }
         }
       },

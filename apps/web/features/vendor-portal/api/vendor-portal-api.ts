@@ -1,9 +1,14 @@
 import {
+  saveVendorPortalQuotationManualEntry as saveVendorPortalQuotationManualEntryEndpoint,
   showVendorPortalQuotation,
   showVendorPortalRfqInvitation,
   storeVendorPortalQuotationAttachment,
 } from "@cognify/api-client/endpoints";
-import type { QuotationVendorPortal, VendorPortalRfqInvitation } from "@cognify/api-client/schemas";
+import type {
+  QuotationVendorPortal,
+  SaveQuotationManualEntryRequestForVendor,
+  VendorPortalRfqInvitation,
+} from "@cognify/api-client/schemas";
 import {
   toVendorRfqPortalViewModel,
   type VendorRfqPortalViewModel,
@@ -31,6 +36,16 @@ export async function uploadVendorPortalQuotationAttachment(
 ): Promise<QuotationVendorPortal> {
   const response = await storeVendorPortalQuotationAttachment(token, { file });
   if (response.status !== 201) throw response.data;
+
+  return response.data.data;
+}
+
+export async function saveVendorPortalQuotationManualEntry(
+  token: string,
+  payload: SaveQuotationManualEntryRequestForVendor,
+): Promise<QuotationVendorPortal> {
+  const response = await saveVendorPortalQuotationManualEntryEndpoint(token, payload);
+  if (response.status !== 200) throw response.data;
 
   return response.data.data;
 }

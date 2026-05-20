@@ -55,6 +55,8 @@ Route::get('/vendor-portal/rfq-invitations/{token}/quotation', [VendorPortalQuot
     ->middleware('throttle:60,1');
 Route::post('/vendor-portal/rfq-invitations/{token}/quotation/attachments', [VendorPortalQuotationController::class, 'storeAttachment'])
     ->middleware('throttle:60,1');
+Route::put('/vendor-portal/rfq-invitations/{token}/quotation/manual-entry', [VendorPortalQuotationController::class, 'saveManualEntry'])
+    ->middleware('throttle:60,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -113,8 +115,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::patch('/rfq-invitations/{invitation}/status', [RfqInvitationController::class, 'status']);
         Route::post('/rfq-invitations/{invitation}/portal-link', [RfqInvitationPortalController::class, 'regenerate']);
         Route::get('/rfq-invitations/{invitation}/quotation', [RfqInvitationQuotationController::class, 'show']);
+        Route::put('/rfq-invitations/{invitation}/quotation/manual-entry', [RfqInvitationQuotationController::class, 'saveManualEntryForInvitation']);
         Route::post('/rfq-invitations/{invitation}/quotation/attachments', [RfqInvitationQuotationController::class, 'storeAttachment']);
         Route::get('/quotations/{quotation}/attachments', [RfqInvitationQuotationController::class, 'attachments']);
+        Route::put('/quotations/{quotation}/manual-entry', [RfqInvitationQuotationController::class, 'saveManualEntry']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
