@@ -2,8 +2,12 @@
 
 namespace Domains\Quotation\Http\Resources;
 
+use App\Auth\TenantRole;
+use App\Tenancy\CurrentTenant;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
+use Domains\Quotation\States\QuotationNormalizationIssueStatus;
+use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +20,12 @@ class QuotationNormalizationSummaryResource extends JsonResource
     {
         $normalization = $this->resource;
         $issues = $normalization->relationLoaded('issues') ? $normalization->issues : collect();
+        $hasBlockingIssues = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Blocking->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
+        $hasUnresolvedWarnings = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Warning->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
+        $isReviewReady = in_array($normalization->status, [
+            QuotationNormalizationStatus::NeedsReview,
+            QuotationNormalizationStatus::ReadyForApproval,
+        ], true);
 
         return [
             'id' => (string) $normalization->id,
@@ -39,16 +49,31 @@ class QuotationNormalizationSummaryResource extends JsonResource
             ],
             'permissions' => [
                 'canEdit' => $request->user()?->can('update', $normalization) ?? false,
-                'canApprove' => $request->user()?->can('approve', $normalization) ?? false,
-                'canApproveWithWarnings' => $request->user()?->can('approveWithWarnings', $normalization) ?? false,
+                'canApprove' => $this->canReview($request, $normalization) && $isReviewReady && ! $hasBlockingIssues,
+                'canApproveWithWarnings' => $this->canReview($request, $normalization) && $isReviewReady && ! $hasBlockingIssues && $hasUnresolvedWarnings,
                 'canRetry' => $request->user()?->can('retry', $normalization) ?? false,
                 'canCreateRevision' => $request->user()?->can('createRevision', $normalization) ?? false,
             ],
         ];
     }
 
+    private function canReview(Request $request, QuotationNormalization $normalization): bool
+    {
+        $tenant = app(CurrentTenant::class)->nullable();
+        $role = $tenant?->roleFor($request->user());
+
+        return $tenant !== null
+            && in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true)
+            && (int) $normalization->tenant_id === (int) $tenant->id;
+    }
+
     private function issueSeverity(mixed $issue): string
     {
         return $issue->severity?->value ?? $issue->severity;
+    }
+
+    private function issueStatus(mixed $issue): string
+    {
+        return $issue->status?->value ?? $issue->status;
     }
 }

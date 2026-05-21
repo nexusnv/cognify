@@ -80,12 +80,16 @@ class QuotationNormalizationResource extends JsonResource
         $issues = $normalization->relationLoaded('issues') ? $normalization->issues : collect();
         $hasBlockingIssues = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Blocking->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
         $hasUnresolvedWarnings = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Warning->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
+        $isReviewReady = in_array($normalization->status, [
+            QuotationNormalizationStatus::NeedsReview,
+            QuotationNormalizationStatus::ReadyForApproval,
+        ], true);
         $canReview = $tenant !== null && in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true) && (int) $normalization->tenant_id === (int) $tenant->id;
 
         return [
             'canEdit' => $canReview && $normalization->isMutable(),
-            'canApprove' => $canReview && $normalization->isMutable() && ! $hasBlockingIssues,
-            'canApproveWithWarnings' => $canReview && $normalization->isMutable() && ! $hasBlockingIssues && $hasUnresolvedWarnings,
+            'canApprove' => $canReview && $isReviewReady && ! $hasBlockingIssues,
+            'canApproveWithWarnings' => $canReview && $isReviewReady && ! $hasBlockingIssues && $hasUnresolvedWarnings,
             'canRetry' => $canReview && $normalization->status === QuotationNormalizationStatus::Failed,
             'canCreateRevision' => $canReview && in_array($normalization->status, [
                 QuotationNormalizationStatus::Approved,

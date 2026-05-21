@@ -40,6 +40,13 @@ class ApproveQuotationNormalization
                 throw new ConflictHttpException('Quotation normalization is not mutable.');
             }
 
+            if (! in_array($lockedNormalization->status, [
+                QuotationNormalizationStatus::NeedsReview,
+                QuotationNormalizationStatus::ReadyForApproval,
+            ], true)) {
+                throw new ConflictHttpException('Quotation normalization is not ready for approval.');
+            }
+
             $hasBlockingIssues = $lockedNormalization->issues->contains(function ($issue): bool {
                 $severity = $issue->severity instanceof QuotationNormalizationIssueSeverity
                     ? $issue->severity

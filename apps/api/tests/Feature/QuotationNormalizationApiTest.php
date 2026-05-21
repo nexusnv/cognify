@@ -173,6 +173,63 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertJsonPath('error.code', 'conflict');
     }
 
+    public function test_non_review_ready_normalizations_reject_approval_and_keep_status(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+
+        foreach ([
+            QuotationNormalizationStatus::Failed,
+            QuotationNormalizationStatus::Pending,
+            QuotationNormalizationStatus::Processing,
+        ] as $status) {
+            $normalization = $this->normalizationForTenant($tenant)->forceFill([
+                'status' => $status,
+                'is_current_for_version' => true,
+            ]);
+            $normalization->save();
+
+            $this->actingAsTenant($tenant, $buyer)
+                ->postJson("/api/quotation-normalizations/{$normalization->id}/approve", [
+                    'approvalNote' => 'Normalization reviewed for comparison.',
+                ])
+                ->assertConflict()
+                ->assertJsonPath('error.code', 'conflict');
+
+            $this->assertSame($status->value, $normalization->refresh()->status->value);
+        }
+    }
+
+    public function test_queue_summary_permissions_do_not_allow_approval_for_non_review_ready_statuses(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+
+        $normalizations = collect([
+            QuotationNormalizationStatus::Failed,
+            QuotationNormalizationStatus::Pending,
+            QuotationNormalizationStatus::Processing,
+        ])->map(function (QuotationNormalizationStatus $status) use ($tenant): QuotationNormalization {
+            return tap($this->normalizationForTenant($tenant), function (QuotationNormalization $normalization) use ($status): void {
+                $normalization->forceFill([
+                    'status' => $status,
+                    'is_current_for_version' => true,
+                ])->save();
+            });
+        });
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/quotation-normalizations?'.http_build_query([
+                'status' => array_map(fn (QuotationNormalizationStatus $status) => $status->value, $normalizations->pluck('status')->all()),
+            ]))
+            ->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('data.0.permissions.canApprove', false)
+            ->assertJsonPath('data.0.permissions.canApproveWithWarnings', false)
+            ->assertJsonPath('data.1.permissions.canApprove', false)
+            ->assertJsonPath('data.1.permissions.canApproveWithWarnings', false)
+            ->assertJsonPath('data.2.permissions.canApprove', false)
+            ->assertJsonPath('data.2.permissions.canApproveWithWarnings', false);
+    }
+
     public function test_corrections_reject_foreign_issue_id_with_conflict_not_500(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
