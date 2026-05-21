@@ -14,9 +14,8 @@ use Domains\Quotation\Models\QuotationNormalizationCorrection;
 use Domains\Quotation\Models\QuotationNormalizationField;
 use Domains\Quotation\Models\QuotationNormalizationIssue;
 use Domains\Quotation\States\QuotationNormalizationIssueStatus;
-use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class SaveQuotationNormalizationCorrections
 {
@@ -39,7 +38,7 @@ class SaveQuotationNormalizationCorrections
                 ->firstOrFail();
 
             if (! $lockedNormalization->isMutable()) {
-                throw new InvalidArgumentException('Quotation normalization is not mutable.');
+                throw new ConflictHttpException('Quotation normalization is not mutable.');
             }
 
             foreach ($corrections as $correctionPayload) {

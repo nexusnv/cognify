@@ -27,7 +27,6 @@ class QuotationVersionNormalizationController extends Controller
             ->with(['quotation.vendor', 'quotationVersion.quotation.rfq', 'fields', 'lineGroups.mappings', 'attachments', 'issues'])
             ->where('tenant_id', $tenant->id)
             ->where('quotation_version_id', $version)
-            ->where('status', 'failed')
             ->latest('normalization_revision')
             ->firstOrFail();
     }

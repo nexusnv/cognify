@@ -14,7 +14,7 @@ use Domains\Quotation\Models\QuotationNormalizationLineGroup;
 use Domains\Quotation\Models\QuotationNormalizationLineMapping;
 use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CreateQuotationNormalizationRevision
 {
@@ -37,7 +37,20 @@ class CreateQuotationNormalizationRevision
                 QuotationNormalizationStatus::Approved,
                 QuotationNormalizationStatus::ApprovedWithWarnings,
             ], true)) {
-                throw new InvalidArgumentException('Quotation normalization revision can only be created from an approved normalization.');
+                throw new ConflictHttpException('Quotation normalization revision can only be created from an approved normalization.');
+            }
+
+            $currentRevisionExists = QuotationNormalization::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('quotation_version_id', $current->quotation_version_id)
+                ->where('is_current_for_version', true)
+                ->where('id', '!=', $current->id)
+                ->lockForUpdate()
+                ->get()
+                ->isNotEmpty();
+
+            if ($currentRevisionExists) {
+                throw new ConflictHttpException('A current quotation normalization revision already exists for this version.');
             }
 
             $current->forceFill([

@@ -13,7 +13,7 @@ use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
 use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApproveQuotationNormalization
 {
@@ -37,7 +37,7 @@ class ApproveQuotationNormalization
                 ->firstOrFail();
 
             if (! $lockedNormalization->isMutable()) {
-                throw new InvalidArgumentException('Quotation normalization is not mutable.');
+                throw new ConflictHttpException('Quotation normalization is not mutable.');
             }
 
             $hasBlockingIssues = $lockedNormalization->issues->contains(function ($issue): bool {
@@ -49,7 +49,7 @@ class ApproveQuotationNormalization
             });
 
             if ($hasBlockingIssues) {
-                throw new InvalidArgumentException('Quotation normalization has unresolved blocking issues.');
+                throw new ConflictHttpException('Quotation normalization has unresolved blocking issues.');
             }
 
             $status = $withWarnings ? QuotationNormalizationStatus::ApprovedWithWarnings : QuotationNormalizationStatus::Approved;

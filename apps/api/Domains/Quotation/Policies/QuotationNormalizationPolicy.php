@@ -24,34 +24,27 @@ class QuotationNormalizationPolicy
 
     public function update(User $user, QuotationNormalization $normalization): bool
     {
-        return $this->view($user, $normalization) && $normalization->isMutable();
+        return $this->view($user, $normalization);
     }
 
     public function approve(User $user, QuotationNormalization $normalization): bool
     {
-        return $this->view($user, $normalization)
-            && $normalization->isMutable()
-            && ! $this->hasUnresolvedBlockingIssues($normalization);
+        return $this->view($user, $normalization);
     }
 
     public function approveWithWarnings(User $user, QuotationNormalization $normalization): bool
     {
-        return $this->approve($user, $normalization);
+        return $this->view($user, $normalization);
     }
 
     public function createRevision(User $user, QuotationNormalization $normalization): bool
     {
-        return $this->view($user, $normalization)
-            && in_array($normalization->status, [
-                QuotationNormalizationStatus::Approved,
-                QuotationNormalizationStatus::ApprovedWithWarnings,
-            ], true);
+        return $this->view($user, $normalization);
     }
 
     public function retry(User $user, QuotationNormalization $normalization): bool
     {
-        return $this->view($user, $normalization)
-            && $normalization->status === QuotationNormalizationStatus::Failed;
+        return $this->view($user, $normalization);
     }
 
     private function canReview(User $user): bool

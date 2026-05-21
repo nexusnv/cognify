@@ -2,9 +2,12 @@
 
 namespace Domains\Quotation\Http\Resources;
 
+use App\Auth\TenantRole;
 use App\Tenancy\CurrentTenant;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
+use Domains\Quotation\States\QuotationNormalizationIssueStatus;
+use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -71,18 +74,23 @@ class QuotationNormalizationResource extends JsonResource
 
     private function permissions(Request $request, QuotationNormalization $normalization): array
     {
-        $policy = app(\Domains\Quotation\Policies\QuotationNormalizationPolicy::class);
+        $tenant = app(CurrentTenant::class)->nullable();
         $user = $request->user();
+        $role = $tenant?->roleFor($user);
         $issues = $normalization->relationLoaded('issues') ? $normalization->issues : collect();
-        $hasBlockingIssues = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Blocking->value && $this->issueStatus($issue) !== 'resolved');
-        $hasUnresolvedWarnings = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Warning->value && $this->issueStatus($issue) !== 'resolved');
+        $hasBlockingIssues = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Blocking->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
+        $hasUnresolvedWarnings = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Warning->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
+        $canReview = $tenant !== null && in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true) && (int) $normalization->tenant_id === (int) $tenant->id;
 
         return [
-            'canEdit' => $user !== null && $policy->update($user, $normalization),
-            'canApprove' => $user !== null && $policy->approve($user, $normalization),
-            'canApproveWithWarnings' => $user !== null && ! $hasBlockingIssues && $hasUnresolvedWarnings && $policy->approveWithWarnings($user, $normalization),
-            'canRetry' => $user !== null && $policy->retry($user, $normalization),
-            'canCreateRevision' => $user !== null && $policy->createRevision($user, $normalization),
+            'canEdit' => $canReview && $normalization->isMutable(),
+            'canApprove' => $canReview && $normalization->isMutable() && ! $hasBlockingIssues,
+            'canApproveWithWarnings' => $canReview && $normalization->isMutable() && ! $hasBlockingIssues && $hasUnresolvedWarnings,
+            'canRetry' => $canReview && $normalization->status === QuotationNormalizationStatus::Failed,
+            'canCreateRevision' => $canReview && in_array($normalization->status, [
+                QuotationNormalizationStatus::Approved,
+                QuotationNormalizationStatus::ApprovedWithWarnings,
+            ], true),
         ];
     }
 

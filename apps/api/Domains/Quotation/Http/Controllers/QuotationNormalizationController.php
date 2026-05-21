@@ -98,7 +98,7 @@ class QuotationNormalizationController extends Controller
         return new QuotationNormalizationResource($action->handle($this->tenantOrAbort($currentTenant), $request->user(), $model, $request->validated(), true));
     }
 
-    public function revision(Request $request, CurrentTenant $currentTenant, int $normalization, CreateQuotationNormalizationRevision $action): QuotationNormalizationResource
+    public function revision(Request $request, CurrentTenant $currentTenant, int $normalization, CreateQuotationNormalizationRevision $action): JsonResponse
     {
         $model = $this->findTenantNormalization($this->tenantOrAbort($currentTenant), $normalization);
         $this->authorize('createRevision', $model);

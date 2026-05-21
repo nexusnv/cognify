@@ -16,7 +16,8 @@ use Domains\Quotation\States\QuotationNormalizationPricingMode;
 use Domains\Quotation\States\QuotationNormalizationStatus;
 use Domains\Quotation\Support\QuotationNormalizationIssueCatalog;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class SaveQuotationNormalizationLineMappings
 {
@@ -39,15 +40,21 @@ class SaveQuotationNormalizationLineMappings
                 ->firstOrFail();
 
             if (! $lockedNormalization->isMutable()) {
-                throw new InvalidArgumentException('Quotation normalization is not mutable.');
+                throw new ConflictHttpException('Quotation normalization is not mutable.');
             }
+
+            $allowedRfQLineItemIds = collect($lockedNormalization->quotationVersion?->quotation?->rfq?->line_items ?? [])
+                ->pluck('id')
+                ->filter()
+                ->map(fn ($id) => (string) $id)
+                ->all();
 
             $lockedNormalization->lineGroups()->with('mappings')->get()->each(function (QuotationNormalizationLineGroup $group): void {
                 $group->mappings()->delete();
                 $group->delete();
             });
 
-            foreach ($lineGroups as $groupPayload) {
+            foreach ($lineGroups as $groupIndex => $groupPayload) {
                 $group = QuotationNormalizationLineGroup::query()->create([
                     'tenant_id' => $tenant->id,
                     'normalization_id' => $lockedNormalization->id,
@@ -59,7 +66,13 @@ class SaveQuotationNormalizationLineMappings
                     'notes' => $groupPayload['notes'] ?? null,
                 ]);
 
-                foreach ($groupPayload['mappings'] as $mappingPayload) {
+                foreach ($groupPayload['mappings'] as $mappingIndex => $mappingPayload) {
+                    if (($mappingPayload['rfqLineItemId'] ?? null) !== null && ! in_array((string) $mappingPayload['rfqLineItemId'], $allowedRfQLineItemIds, true)) {
+                        throw ValidationException::withMessages([
+                            "lineGroups.{$groupIndex}.mappings.{$mappingIndex}.rfqLineItemId" => ['The selected RFQ line item is invalid for this normalization.'],
+                        ]);
+                    }
+
                     QuotationNormalizationLineMapping::query()->create([
                         'tenant_id' => $tenant->id,
                         'quotation_normalization_line_group_id' => $group->id,

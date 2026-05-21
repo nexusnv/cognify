@@ -2233,6 +2233,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -4573,6 +4576,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -4615,6 +4621,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -4942,6 +4951,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -4994,6 +5006,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -5048,6 +5063,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -5101,6 +5119,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -5144,6 +5165,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
@@ -5183,6 +5207,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"

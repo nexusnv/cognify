@@ -8,7 +8,8 @@ use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Domains\Quotation\States\QuotationNormalizationStatus;
 
 class RetryQuotationNormalization
 {
@@ -21,17 +22,26 @@ class RetryQuotationNormalization
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            NormalizeQuotationVersion::dispatch($tenant->id, $lockedVersion->id)->afterCommit();
-
             $normalization = QuotationNormalization::query()
+                ->with(['quotation', 'quotationVersion', 'fields', 'lineGroups.mappings', 'attachments', 'issues'])
                 ->where('tenant_id', $tenant->id)
                 ->where('quotation_version_id', $lockedVersion->id)
+                ->where('status', QuotationNormalizationStatus::Failed)
                 ->orderByDesc('normalization_revision')
+                ->lockForUpdate()
                 ->first();
 
             if ($normalization === null) {
-                throw new InvalidArgumentException('Quotation normalization could not be queued.');
+                throw new ConflictHttpException('Quotation normalization retry is only available for failed normalizations.');
             }
+
+            $normalization->forceFill([
+                'status' => QuotationNormalizationStatus::Processing,
+                'job_attempt_count' => 0,
+                'last_job_error' => null,
+            ])->save();
+
+            NormalizeQuotationVersion::dispatch($tenant->id, $lockedVersion->id)->afterCommit();
 
             return $normalization->refresh()->load(['quotation', 'quotationVersion', 'fields', 'lineGroups.mappings', 'attachments', 'issues']);
         });

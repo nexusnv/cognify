@@ -160,6 +160,19 @@ class QuotationNormalizationApiTest extends TestCase
         ]);
     }
 
+    public function test_approving_an_already_approved_normalization_returns_conflict(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $normalization = $this->approvedNormalizationForTenant($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/approve", [
+                'approvalNote' => 'Normalization reviewed for comparison.',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+    }
+
     public function test_line_mapping_rejects_missing_line_group_description(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -191,6 +204,81 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('error.code', 'validation_failed')
             ->assertJsonStructure(['error' => ['details' => ['fields' => ['lineGroups.0.description']]]]);
+    }
+
+    public function test_line_mapping_rejects_invalid_rfq_line_item_id(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $normalization = $this->normalizationNeedingReview($tenant, $requester, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/line-mappings", [
+                'lineGroups' => [[
+                    'groupNumber' => 1,
+                    'pricingMode' => 'bundle',
+                    'description' => 'Laptop bundle',
+                    'currency' => 'USD',
+                    'bundleTotalAmount' => '12470.00',
+                    'notes' => 'Vendor bundled laptops and freight.',
+                    'mappings' => [[
+                        'rfqLineItemId' => 'rfq-line-missing',
+                        'quotationVersionLineItemId' => (string) $normalization->quotationVersion->lineItems()->firstOrFail()->id,
+                        'mappingType' => 'bundled',
+                        'quantity' => '10',
+                        'unit' => 'each',
+                        'unitPrice' => null,
+                        'lineTotal' => null,
+                        'buyerNote' => 'Covered by bundle total.',
+                    ]],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonStructure(['error' => ['details' => ['fields' => ['lineGroups.0.mappings.0.rfqLineItemId']]]]);
+    }
+
+    public function test_revision_creation_is_conflict_when_current_draft_already_exists(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $approvedNormalization = $this->approvedNormalizationForTenant($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$approvedNormalization->id}/revisions")
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$approvedNormalization->id}/revisions")
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+
+        $this->assertSame(
+            1,
+            QuotationNormalization::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('quotation_version_id', $approvedNormalization->quotation_version_id)
+                ->where('is_current_for_version', true)
+                ->count()
+        );
+    }
+
+    public function test_retrying_a_failed_normalization_does_not_enqueue_duplicates(): void
+    {
+        Bus::fake();
+
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $failedNormalization = $this->failedNormalizationForTenant($tenant);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-versions/{$failedNormalization->quotation_version_id}/normalization/retry")
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-versions/{$failedNormalization->quotation_version_id}/normalization/retry")
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+
+        Bus::assertDispatchedTimes(NormalizeQuotationVersion::class, 1);
     }
 
     public function test_requester_approver_vendor_and_cross_tenant_users_cannot_access_normalization(): void
@@ -393,6 +481,38 @@ class QuotationNormalizationApiTest extends TestCase
             'quotation_version_id' => $version->id,
             'normalization_revision' => 1,
             'status' => 'pending',
+        ]);
+    }
+
+    private function approvedNormalizationForTenant(Tenant $tenant, User $buyer): QuotationNormalization
+    {
+        [$quotation, $version] = $this->quotationVersionForTenant($tenant);
+
+        return QuotationNormalization::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 1,
+            'status' => QuotationNormalizationStatus::Approved,
+            'is_current_for_version' => true,
+            'approved_at' => now(),
+            'approved_by_user_id' => $buyer->id,
+            'approval_note' => 'Approved for testing.',
+        ]);
+    }
+
+    private function failedNormalizationForTenant(Tenant $tenant): QuotationNormalization
+    {
+        [$quotation, $version] = $this->quotationVersionForTenant($tenant);
+
+        return QuotationNormalization::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 1,
+            'status' => QuotationNormalizationStatus::Failed,
+            'is_current_for_version' => true,
+            'last_job_error' => 'Initial normalization failed.',
         ]);
     }
 
