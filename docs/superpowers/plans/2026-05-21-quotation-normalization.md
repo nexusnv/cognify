@@ -540,7 +540,7 @@ git commit -m "feat: add quotation normalization data model"
 - Create: `apps/api/tests/Unit/QuotationDeterministicNormalizerTest.php`
 - Modify: `apps/api/Domains/Quotation/Actions/CreateQuotationVersionSnapshot.php`
 
-- [ ] **Step 1: Write focused normalizer tests**
+- [x] **Step 1: Write focused normalizer tests**
 
 Create unit tests covering:
 
@@ -554,7 +554,7 @@ public function test_total_mismatch_records_blocking_issue(): void;
 
 Use real `QuotationVersion` and `QuotationVersionLineItem` records with `RefreshDatabase`; avoid mocking Eloquent.
 
-- [ ] **Step 2: Implement issue/provenance helpers**
+- [x] **Step 2: Implement issue/provenance helpers**
 
 `QuotationNormalizationIssueCatalog` must expose constants such as:
 
@@ -570,7 +570,7 @@ public const WARRANTY_TERMS_MISSING = 'warranty_terms_missing';
 public const ATTACHMENT_CHECKSUM_UNAVAILABLE = 'attachment_checksum_unavailable';
 ```
 
-- [ ] **Step 3: Implement `StartQuotationNormalization`**
+- [x] **Step 3: Implement `StartQuotationNormalization`**
 
 Behavior:
 
@@ -580,7 +580,7 @@ Behavior:
 - Record `quotation_normalization.started`.
 - Return the locked normalization for normalizer use.
 
-- [ ] **Step 4: Implement deterministic normalization**
+- [x] **Step 4: Implement deterministic normalization**
 
 `RunDeterministicQuotationNormalizer::handle(Tenant $tenant, QuotationVersion $version, QuotationNormalization $normalization): QuotationNormalization` must:
 
@@ -596,7 +596,7 @@ Behavior:
 - Set status to `ready_for_approval` when no blocking issues remain; otherwise `needs_review`.
 - Record `quotation_normalization.completed` or `quotation_normalization.issue_recorded`.
 
-- [ ] **Step 5: Implement idempotent job**
+- [x] **Step 5: Implement idempotent job**
 
 `NormalizeQuotationVersion` constructor should expose public readonly IDs so tests can assert dispatch:
 
@@ -609,7 +609,7 @@ public function __construct(
 
 `handle()` loads tenant/version by tenant, calls start + run actions, increments `job_attempt_count`, stores `last_job_error` on failure, sets `failed`, audits `quotation_normalization.failed`, and notifies buyer/admin users.
 
-- [ ] **Step 6: Dispatch after version creation commits**
+- [x] **Step 6: Dispatch after version creation commits**
 
 In `CreateQuotationVersionSnapshot`, after the transaction commits, dispatch:
 
@@ -619,7 +619,7 @@ NormalizeQuotationVersion::dispatch($tenant->id, $version->id)->afterCommit();
 
 If the current action returns from inside `DB::transaction`, capture the created version and dispatch after the transaction result is available so the job cannot run before commit.
 
-- [ ] **Step 7: Run tests**
+- [x] **Step 7: Run tests**
 
 ```bash
 php artisan test --filter=QuotationDeterministicNormalizerTest
@@ -629,7 +629,7 @@ php artisan test --filter=QuotationVersionApiTest
 
 Expected: normalizer unit tests pass; API tests still fail where endpoints/actions are missing.
 
-- [ ] **Step 8: Commit normalizer and job**
+- [x] **Step 8: Commit normalizer and job**
 
 ```bash
 git add apps/api/Domains/Quotation apps/api/tests/Unit/QuotationDeterministicNormalizerTest.php apps/api/tests/Feature/QuotationVersionApiTest.php
