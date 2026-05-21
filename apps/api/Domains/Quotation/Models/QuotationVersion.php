@@ -8,6 +8,7 @@ use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\QuotationSubmissionSource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -129,5 +130,23 @@ class QuotationVersion extends Model
     public function lineItems(): HasMany
     {
         return $this->hasMany(QuotationVersionLineItem::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<QuotationNormalization, $this>
+     */
+    public function normalizations(): HasMany
+    {
+        return $this->hasMany(QuotationNormalization::class)->orderByDesc('normalization_revision');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<QuotationNormalization, $this>
+     */
+    public function currentNormalization(): HasOne
+    {
+        return $this->hasOne(QuotationNormalization::class)
+            ->where('is_current_for_version', true)
+            ->latestOfMany('normalization_revision');
     }
 }

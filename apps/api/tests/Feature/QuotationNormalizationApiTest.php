@@ -163,7 +163,9 @@ class QuotationNormalizationApiTest extends TestCase
 
         $normalization = QuotationNormalization::query()->create([
             'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
             'quotation_version_id' => $version->id,
+            'normalization_revision' => 1,
             'status' => 'needs_review',
         ]);
 
@@ -171,10 +173,9 @@ class QuotationNormalizationApiTest extends TestCase
             'tenant_id' => $tenant->id,
             'severity' => 'blocking',
             'status' => 'open',
-            'code' => 'currency_mismatch',
+            'issue_code' => 'currency_mismatch',
             'field_path' => 'manualEntry.currency',
             'message' => 'Currency must be reviewed.',
-            'sort_order' => 1,
         ]);
 
         return $normalization->refresh()->load([
