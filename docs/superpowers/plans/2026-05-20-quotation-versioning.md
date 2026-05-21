@@ -2373,7 +2373,7 @@ Expected final result: exits successfully with no generated-client drift.
 - Modify: `apps/web/features/sourcing/mocks/rfq-invitation-handlers.ts`
 - Modify: `apps/web/features/sourcing/tests/rfq-invitations-workflow.test.tsx`
 
-- [ ] Add buyer API wrappers.
+- [x] Add buyer API wrappers.
 
 In `apps/web/features/sourcing/api/quotation-api.ts`, import generated endpoints and schemas:
 
@@ -2430,7 +2430,7 @@ export async function createQuotationVersion(
 }
 ```
 
-- [ ] Add buyer version hooks.
+- [x] Add buyer version hooks.
 
 Create `apps/web/features/sourcing/hooks/use-quotation-versions.ts`:
 
@@ -2491,7 +2491,7 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
 }
 ```
 
-- [ ] Add buyer version history component.
+- [x] Add buyer version history component.
 
 Create `apps/web/features/sourcing/components/quotation-version-history.tsx`:
 
@@ -2536,7 +2536,7 @@ export function QuotationVersionHistory({
 }
 ```
 
-- [ ] Add buyer selected version detail component.
+- [x] Add buyer selected version detail component.
 
 Create `apps/web/features/sourcing/components/quotation-version-detail.tsx`:
 
@@ -2609,7 +2609,7 @@ export function QuotationVersionDetail({ version }: { version: QuotationVersion 
 }
 ```
 
-- [ ] Render buyer version history from `QuotationEvidencePanel`.
+- [x] Render buyer version history from `QuotationEvidencePanel`.
 
 In `apps/web/features/sourcing/components/quotation-evidence-panel.tsx`, import:
 
@@ -2648,7 +2648,7 @@ Render this block below `QuotationManualEntryPanel` when `quotation` exists:
 <QuotationVersionDetail version={selectedVersionQuery.data ?? versions.find((version) => version.id === selectedVersionId) ?? null} />
 ```
 
-- [ ] Extend sourcing MSW handlers with version state.
+- [x] Extend sourcing MSW handlers with version state.
 
 In `apps/web/features/sourcing/mocks/rfq-invitation-handlers.ts`, add version arrays to the quotation fixture shape. Add handlers:
 
@@ -2700,7 +2700,7 @@ Ensure `updateQuotationManualEntry()` appends a new version object with:
 }
 ```
 
-- [ ] Add buyer workflow test.
+- [x] Add buyer workflow test.
 
 Append to `apps/web/features/sourcing/tests/rfq-invitations-workflow.test.tsx`:
 
@@ -2737,7 +2737,7 @@ it("shows quotation version history after structured buyer revisions", async () 
 });
 ```
 
-- [ ] Run buyer frontend tests.
+- [x] Run buyer frontend tests.
 
 Run:
 

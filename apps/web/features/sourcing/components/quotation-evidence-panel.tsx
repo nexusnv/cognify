@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
 import { Button } from "@cognify/ui";
@@ -10,7 +10,10 @@ import {
   useRfqInvitationQuotation,
   useRfqInvitationQuotationUpload,
 } from "../hooks/use-quotation-upload";
+import { useQuotationVersion, useQuotationVersions } from "../hooks/use-quotation-versions";
 import { QuotationManualEntryPanel } from "./quotation-manual-entry-panel";
+import { QuotationVersionDetail } from "./quotation-version-detail";
+import { QuotationVersionHistory } from "./quotation-version-history";
 
 const uploadableInvitationStatuses = new Set(["sent", "acknowledged"]);
 
@@ -24,10 +27,37 @@ export function QuotationEvidencePanel({
   const quotationQuery = useRfqInvitationQuotation(invitationId);
   const quotation = quotationQuery.data ?? null;
   const attachmentsQuery = useQuotationAttachments(quotation?.id ?? null);
+  const versionsQuery = useQuotationVersions(quotation?.id ?? null);
+  const refetchVersions = versionsQuery.refetch;
   const uploadMutation = useRfqInvitationQuotationUpload(invitationId);
   const createManualEntryMutation = useSaveQuotationManualEntry(invitationId, quotation?.id);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const versions = useMemo(() => {
+    const nextVersions = [...(versionsQuery.data ?? [])];
+    nextVersions.sort((left, right) => {
+      if (left.isCurrent !== right.isCurrent) {
+        return left.isCurrent ? -1 : 1;
+      }
+
+      return right.versionNumber - left.versionNumber;
+    });
+
+    return nextVersions;
+  }, [versionsQuery.data]);
+  const selectedVersion = useMemo(
+    () => versions.find((version) => version.id === selectedVersionId) ?? null,
+    [selectedVersionId, versions],
+  );
+  const selectedVersionQuery = useQuotationVersion(quotation?.id ?? null, selectedVersion?.versionNumber ?? null);
+  const latestVersionId = versions[0]?.id ?? null;
+  const activeSelectedVersionId = selectedVersion?.id ?? latestVersionId;
+  const activeSelectedVersion = selectedVersion ?? versions.find((version) => version.id === latestVersionId) ?? null;
+  const previousSyncRef = useRef<{ quotationId: string | null; versionCount: number | null }>({
+    quotationId: null,
+    versionCount: null,
+  });
 
   const canUpload = uploadableInvitationStatuses.has(invitationStatus);
   const attachments = attachmentsQuery.data ?? quotation?.attachments ?? [];
@@ -36,10 +66,27 @@ export function QuotationEvidencePanel({
   const errorMessage = quotationQuery.isError
     ? getApiErrorMessage(quotationQuery.error)
     : uploadMutation.isError
-      ? getApiErrorMessage(uploadMutation.error)
-      : createManualEntryMutation.isError
-        ? getApiErrorMessage(createManualEntryMutation.error)
+        ? getApiErrorMessage(uploadMutation.error)
+        : createManualEntryMutation.isError
+          ? getApiErrorMessage(createManualEntryMutation.error)
       : null;
+
+  useEffect(() => {
+    if (!quotation?.id) {
+      previousSyncRef.current = { quotationId: null, versionCount: null };
+      return;
+    }
+
+    const currentVersionCount = quotation.versionCount ?? null;
+    const shouldRefetch =
+      previousSyncRef.current.quotationId === quotation.id &&
+      previousSyncRef.current.versionCount !== currentVersionCount;
+    previousSyncRef.current = { quotationId: quotation.id, versionCount: currentVersionCount };
+
+    if (shouldRefetch) {
+      void refetchVersions();
+    }
+  }, [quotation?.id, quotation?.versionCount, refetchVersions]);
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
     setSelectedFile(event.target.files?.[0] ?? null);
@@ -122,11 +169,22 @@ export function QuotationEvidencePanel({
         ) : null}
 
         {quotation ? (
-          <QuotationManualEntryPanel
-            invitationId={invitationId}
-            invitationStatus={invitationStatus}
-            quotation={quotation}
-          />
+          <div className="space-y-3">
+            <QuotationManualEntryPanel
+              invitationId={invitationId}
+              invitationStatus={invitationStatus}
+              quotation={quotation}
+            />
+
+            <div className="space-y-3">
+              <QuotationVersionHistory
+                versions={versions}
+                selectedVersionId={activeSelectedVersionId}
+                onSelectVersion={setSelectedVersionId}
+              />
+              <QuotationVersionDetail version={activeSelectedVersion ?? selectedVersionQuery.data ?? null} />
+            </div>
+          </div>
         ) : (
           <div className="space-y-3 rounded-md border border-dashed p-3">
             <p className="text-sm text-muted-foreground">
