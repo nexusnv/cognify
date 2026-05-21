@@ -14,6 +14,7 @@ import type { QuotationManualEntryForVendor } from "./quotationManualEntryForVen
 import type { QuotationLineItem } from "./quotationLineItem";
 import type { QuotationCompleteness } from "./quotationCompleteness";
 import type { QuotationPermissions } from "./quotationPermissions";
+import type { QuotationVendorPortalCurrentVersion } from "./quotationVendorPortalCurrentVersion";
 
 export interface QuotationVendorPortal {
   id: string;
@@ -34,4 +35,7 @@ export interface QuotationVendorPortal {
   lineItems: QuotationLineItem[];
   completeness: QuotationCompleteness;
   permissions: QuotationPermissions;
+  /** @minimum 0 */
+  versionCount: number;
+  currentVersion: QuotationVendorPortalCurrentVersion;
 }

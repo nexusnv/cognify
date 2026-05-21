@@ -1,11 +1,20 @@
 import {
+  createQuotationVersion as createQuotationVersionEndpoint,
   listQuotationAttachments as listQuotationAttachmentsEndpoint,
+  listQuotationVersions as listQuotationVersionsEndpoint,
   saveRfqInvitationQuotationManualEntry as saveRfqInvitationQuotationManualEntryEndpoint,
   saveQuotationManualEntry as saveQuotationManualEntryEndpoint,
   showRfqInvitationQuotation as showRfqInvitationQuotationEndpoint,
+  showQuotationVersion as showQuotationVersionEndpoint,
   storeRfqInvitationQuotationAttachment as storeRfqInvitationQuotationAttachmentEndpoint,
 } from "@cognify/api-client/endpoints";
-import type { Attachment, Quotation, SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
+import type {
+  Attachment,
+  CreateQuotationRevisionRequest,
+  Quotation,
+  QuotationVersion,
+  SaveQuotationManualEntryRequest,
+} from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
 function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit | undefined {
@@ -49,6 +58,46 @@ export async function fetchQuotationAttachments(
 ): Promise<Attachment[]> {
   const response = await listQuotationAttachmentsEndpoint(quotationId, withActiveTenantHeader(tenantId));
   if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function listQuotationVersions(
+  quotationId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<QuotationVersion[]> {
+  const response = await listQuotationVersionsEndpoint(quotationId, withActiveTenantHeader(tenantId));
+  if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function showQuotationVersion(
+  quotationId: string,
+  versionNumber: number,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<QuotationVersion> {
+  const response = await showQuotationVersionEndpoint(
+    quotationId,
+    versionNumber,
+    withActiveTenantHeader(tenantId),
+  );
+  if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function createQuotationVersion(
+  quotationId: string,
+  payload: CreateQuotationRevisionRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<QuotationVersion> {
+  const response = await createQuotationVersionEndpoint(
+    quotationId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  );
+  if (response.status !== 201) throw response.data;
 
   return response.data.data;
 }

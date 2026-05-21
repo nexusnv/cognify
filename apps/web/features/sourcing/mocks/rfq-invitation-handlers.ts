@@ -5,6 +5,7 @@ import type {
   CreateRfqInvitationsRequest,
   CreateRfqInvitationsRequestContactOverridesOneOfItem,
   Quotation,
+  QuotationVersion,
   RfqInvitation,
   SaveQuotationManualEntryRequest,
   SaveQuotationLineItemRequest,
@@ -18,7 +19,12 @@ let rfqInvitations = structuredClone(rfqInvitationFixtures);
 let invitationSequence = rfqInvitationFixtures.length;
 let quotationSequence = 0;
 let quotationAttachmentSequence = 0;
-let quotationByInvitationId = new Map<string, Quotation | null>();
+type QuotationState = {
+  quotation: Quotation | null;
+  versions: QuotationVersion[];
+};
+
+let quotationByInvitationId = new Map<string, QuotationState>();
 
 export function resetRfqInvitationMockState() {
   rfqInvitations = structuredClone(rfqInvitationFixtures);
@@ -26,7 +32,7 @@ export function resetRfqInvitationMockState() {
   quotationSequence = 0;
   quotationAttachmentSequence = 0;
   quotationByInvitationId = new Map(
-    rfqInvitationFixtures.map((invitation) => [invitation.id, null] as const),
+    rfqInvitationFixtures.map((invitation) => [invitation.id, { quotation: null, versions: [] }] as const),
   );
 }
 
@@ -110,8 +116,16 @@ function findInvitation(invitationId: string) {
 }
 
 function findQuotationById(quotationId: string) {
-  for (const quotation of quotationByInvitationId.values()) {
-    if (quotation?.id === quotationId) return quotation;
+  for (const state of quotationByInvitationId.values()) {
+    if (state.quotation?.id === quotationId) return state.quotation;
+  }
+
+  return null;
+}
+
+function findQuotationStateByQuotationId(quotationId: string) {
+  for (const state of quotationByInvitationId.values()) {
+    if (state.quotation?.id === quotationId) return state;
   }
 
   return null;
@@ -151,7 +165,7 @@ export const rfqInvitationHandlers = [
     );
     rfqInvitations = [...created, ...rfqInvitations];
     created.forEach((invitation) => {
-      quotationByInvitationId.set(invitation.id, null);
+      quotationByInvitationId.set(invitation.id, { quotation: null, versions: [] });
     });
 
     return HttpResponse.json({ data: listInvitations(rfqId) }, { status: 201 });
@@ -161,7 +175,30 @@ export const rfqInvitationHandlers = [
     const invitation = findInvitation(String(params.invitationId));
     if (!invitation) return notFound();
 
-    return HttpResponse.json({ data: cloneQuotation(quotationByInvitationId.get(invitation.id) ?? null) });
+    return HttpResponse.json({
+      data: cloneQuotation(quotationByInvitationId.get(invitation.id)?.quotation ?? null),
+    });
+  }),
+
+  http.get("/api/quotations/:quotationId/versions", ({ params }) => {
+    const state = findQuotationStateByQuotationId(String(params.quotationId));
+    if (!state) return quotationNotFound();
+
+    return HttpResponse.json({ data: structuredClone(state.versions) });
+  }),
+
+  http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+    const state = findQuotationStateByQuotationId(String(params.quotationId));
+    if (!state) return quotationNotFound();
+
+    const versionNumber = Number(params.versionId);
+    const version =
+      state.versions.find((candidate) => candidate.versionNumber === versionNumber) ??
+      state.versions.find((candidate) => candidate.id === String(params.versionId)) ??
+      null;
+    if (!version) return quotationVersionNotFound();
+
+    return HttpResponse.json({ data: structuredClone(version) });
   }),
 
   http.put("/api/rfq-invitations/:invitationId/quotation/manual-entry", async ({ params, request }) => {
@@ -172,12 +209,31 @@ export const rfqInvitationHandlers = [
     }
 
     const payload = (await request.json()) as SaveQuotationManualEntryRequest;
-    const currentQuotation = quotationByInvitationId.get(invitation.id) ?? null;
-    const quotation = currentQuotation ?? buildManualEntryQuotation(++quotationSequence, invitation);
-    const updated = updateQuotationManualEntry(quotation, payload, "buyer_upload");
-    quotationByInvitationId.set(updated.rfqInvitationId, updated);
+    const state = quotationByInvitationId.get(invitation.id) ?? { quotation: null, versions: [] };
 
-    return HttpResponse.json({ data: structuredClone(updated) });
+    if (!state.quotation && isBlankManualEntryPayload(payload)) {
+      const quotation = buildManualEntryQuotation(++quotationSequence, invitation);
+      const decoratedQuotation = decorateQuotationWithVersionSummary(quotation, []);
+
+      quotationByInvitationId.set(invitation.id, {
+        quotation: decoratedQuotation,
+        versions: [],
+      });
+
+      return HttpResponse.json({ data: structuredClone(decoratedQuotation) });
+    }
+
+    const quotation = state.quotation ?? buildManualEntryQuotation(++quotationSequence, invitation);
+    const updated = updateQuotationManualEntry(quotation, payload, "buyer_upload");
+    const versions = appendQuotationVersion(state.versions, updated, "buyer_upload");
+    const decoratedQuotation = decorateQuotationWithVersionSummary(updated, versions);
+
+    quotationByInvitationId.set(updated.rfqInvitationId, {
+      quotation: decoratedQuotation,
+      versions,
+    });
+
+    return HttpResponse.json({ data: structuredClone(decoratedQuotation) });
   }),
 
   http.get("/api/quotations/:quotationId/attachments", ({ params }) => {
@@ -199,10 +255,16 @@ export const rfqInvitationHandlers = [
       return forbidden("Structured quotation entry is only available for sent or acknowledged invitations.");
     }
 
+    const state = quotationByInvitationId.get(existingQuotation.rfqInvitationId) ?? { quotation: existingQuotation, versions: [] };
     const updated = updateQuotationManualEntry(existingQuotation, payload, "buyer_upload");
-    quotationByInvitationId.set(updated.rfqInvitationId, updated);
+    const versions = appendQuotationVersion(state.versions, updated, "buyer_upload");
+    const decoratedQuotation = decorateQuotationWithVersionSummary(updated, versions);
+    quotationByInvitationId.set(updated.rfqInvitationId, {
+      quotation: decoratedQuotation,
+      versions,
+    });
 
-    return HttpResponse.json({ data: structuredClone(updated) });
+    return HttpResponse.json({ data: structuredClone(decoratedQuotation) });
   }),
 
   http.post("/api/rfq-invitations/:invitationId/quotation/attachments", async ({ params, request }) => {
@@ -217,17 +279,22 @@ export const rfqInvitationHandlers = [
       return validationFailed("File is required.");
     }
 
-    const currentQuotation = quotationByInvitationId.get(invitation.id) ?? null;
+    const state = quotationByInvitationId.get(invitation.id) ?? { quotation: null, versions: [] };
     const now = "2026-05-19T12:15:00.000000Z";
-    const quotationId = currentQuotation?.id ?? `quotation-${quotationSequence + 1}`;
+    const quotationId = state.quotation?.id ?? String(quotationSequence + 1);
     const attachment = buildQuotationAttachment(++quotationAttachmentSequence, quotationId, upload, now);
-    const quotation = currentQuotation
-      ? updateQuotation(currentQuotation, attachment, now)
+    const quotation = state.quotation
+      ? updateQuotation(state.quotation, attachment, now)
       : buildQuotation(++quotationSequence, invitation, attachment, now);
+    const versions = appendQuotationVersion(state.versions, quotation, "buyer_upload");
+    const decoratedQuotation = decorateQuotationWithVersionSummary(quotation, versions);
 
-    quotationByInvitationId.set(invitation.id, quotation);
+    quotationByInvitationId.set(invitation.id, {
+      quotation: decoratedQuotation,
+      versions,
+    });
 
-    return HttpResponse.json({ data: cloneQuotation(quotation) }, { status: 201 });
+    return HttpResponse.json({ data: cloneQuotation(decoratedQuotation) }, { status: 201 });
   }),
 
   http.post("/api/rfq-invitations/:invitationId/resend", ({ params }) => {
@@ -363,7 +430,7 @@ function buildQuotation(
   now: string,
 ): Quotation {
   return {
-    id: `quotation-${sequence}`,
+    id: String(sequence),
     rfqId: invitation.rfqId,
     vendorId: invitation.vendor.id,
     rfqInvitationId: invitation.id,
@@ -390,7 +457,10 @@ function buildQuotation(
       canUploadAttachment: true,
       canViewAttachments: true,
       canEditManualEntry: true,
+      canCreateRevision: true,
     },
+    versionCount: 0,
+    currentVersion: null,
   };
 }
 
@@ -402,6 +472,8 @@ function updateQuotation(existing: Quotation, attachment: Attachment, now: strin
     latestReceivedAt: now,
     fileCount: attachments.length,
     attachments,
+    versionCount: existing.versionCount,
+    currentVersion: existing.currentVersion,
   };
 }
 
@@ -409,7 +481,7 @@ function buildManualEntryQuotation(sequence: number, invitation: RfqInvitation):
   const now = "2026-05-19T12:20:00.000000Z";
 
   return {
-    id: `quotation-${sequence}`,
+    id: String(sequence),
     rfqId: invitation.rfqId,
     vendorId: invitation.vendor.id,
     rfqInvitationId: invitation.id,
@@ -436,7 +508,10 @@ function buildManualEntryQuotation(sequence: number, invitation: RfqInvitation):
       canUploadAttachment: true,
       canViewAttachments: true,
       canEditManualEntry: true,
+      canCreateRevision: true,
     },
+    versionCount: 0,
+    currentVersion: null,
   };
 }
 
@@ -476,6 +551,100 @@ function updateQuotationManualEntry(
     },
     lineItems,
     completeness,
+  };
+}
+
+function appendQuotationVersion(
+  versions: QuotationVersion[],
+  quotation: Quotation,
+  source: QuotationVersion["source"],
+) {
+  const now = "2026-05-19T12:20:00.000000Z";
+  const previousVersion = versions[versions.length - 1] ?? null;
+  const nextVersionNumber = previousVersion ? previousVersion.versionNumber + 1 : 1;
+  const nextVersion = buildQuotationVersion(quotation, nextVersionNumber, previousVersion?.id ?? null, now, source);
+  const previousVersionIndex = previousVersion
+    ? versions.findIndex((version) => version.id === previousVersion.id)
+    : -1;
+  const supersededVersions = previousVersionIndex >= 0
+    ? [
+        ...versions.slice(0, previousVersionIndex),
+        {
+          ...versions[previousVersionIndex],
+          isCurrent: false,
+          status: "superseded" as const,
+          supersededAt: now,
+        },
+        ...versions.slice(previousVersionIndex + 1),
+      ]
+    : versions;
+
+  return [...supersededVersions, nextVersion];
+}
+
+function buildQuotationVersion(
+  quotation: Quotation,
+  versionNumber: number,
+  previousVersionId: string | null,
+  submittedAt: string,
+  source: QuotationVersion["source"],
+): QuotationVersion {
+  return {
+    id: `quotation-version-${versionNumber}`,
+    quotationId: quotation.id,
+    versionNumber,
+    status: "received",
+    source,
+    submittedAt,
+    submittedByUser: {
+      id: "user-1",
+      name: "Buyer User",
+    },
+    submittedByVendorContact: null,
+    isCurrent: true,
+    supersededAt: null,
+    previousVersionId,
+    manualEntry: structuredClone(quotation.manualEntry),
+    lineItems: structuredClone(quotation.lineItems),
+    attachments: quotation.attachments.map(toVersionAttachmentSnapshot),
+    attachmentCount: quotation.attachments.length,
+    completeness: structuredClone(quotation.completeness),
+    permissions: {
+      canEdit: false,
+      canCreateRevision: true,
+    },
+  };
+}
+
+function decorateQuotationWithVersionSummary(quotation: Quotation, versions: QuotationVersion[]): Quotation {
+  const currentVersion = versions.find((version) => version.isCurrent) ?? null;
+
+  return {
+    ...quotation,
+    versionCount: versions.length,
+    currentVersion: currentVersion
+      ? {
+          id: currentVersion.id,
+          versionNumber: currentVersion.versionNumber,
+          isCurrent: currentVersion.isCurrent,
+          attachmentCount: currentVersion.attachmentCount,
+        }
+      : null,
+  };
+}
+
+function toVersionAttachmentSnapshot(attachment: Attachment): QuotationVersion["attachments"][number] {
+  return {
+    id: attachment.id,
+    filename: attachment.filename,
+    mimeType: attachment.mimeType,
+    extension: attachment.extension,
+    sizeBytes: attachment.sizeBytes,
+    checksumSha256: null,
+    previewable: attachment.permissions.canPreview,
+    uploadedBy: attachment.uploadedBy ? structuredClone(attachment.uploadedBy) : null,
+    createdAt: attachment.createdAt,
+    available: true,
   };
 }
 
@@ -575,6 +744,40 @@ function buildQuotationAttachment(
 
 function cloneQuotation(quotation: Quotation | null): Quotation | null {
   return quotation ? structuredClone(quotation) : null;
+}
+
+function quotationNotFound() {
+  return HttpResponse.json({ error: { code: "not_found", message: "Quotation not found." } }, { status: 404 });
+}
+
+function quotationVersionNotFound() {
+  return HttpResponse.json(
+    { error: { code: "not_found", message: "Quotation version not found." } },
+    { status: 404 },
+  );
+}
+
+function isBlankManualEntryPayload(payload: SaveQuotationManualEntryRequest) {
+  return (
+    !payload.quotationReference?.trim() &&
+    !payload.quotedAt?.trim() &&
+    !payload.validUntil?.trim() &&
+    !payload.currency?.trim() &&
+    !payload.subtotalAmount?.trim() &&
+    !payload.taxAmount?.trim() &&
+    !payload.freightAmount?.trim() &&
+    !payload.discountAmount?.trim() &&
+    !payload.totalAmount?.trim() &&
+    !payload.paymentTerms?.trim() &&
+    !payload.deliveryTerms?.trim() &&
+    payload.leadTimeDays == null &&
+    !payload.warrantyTerms?.trim() &&
+    !payload.exclusions?.trim() &&
+    !payload.complianceNotes?.trim() &&
+    !payload.buyerNotes?.trim() &&
+    !payload.vendorNotes?.trim() &&
+    (payload.lineItems?.length ?? 0) === 0
+  );
 }
 
 async function parseQuotationUpload(request: Request) {

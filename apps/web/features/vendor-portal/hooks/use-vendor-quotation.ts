@@ -1,9 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SaveQuotationManualEntryRequestForVendor } from "@cognify/api-client/schemas";
+import type {
+  SaveQuotationManualEntryRequestForVendor,
+  VendorCreateQuotationRevisionRequest,
+} from "@cognify/api-client/schemas";
 import {
+  createVendorPortalQuotationVersion,
   fetchVendorPortalQuotation,
+  listVendorPortalQuotationVersions,
   saveVendorPortalQuotationManualEntry,
   uploadVendorPortalQuotationAttachment,
 } from "../api/vendor-portal-api";
@@ -23,7 +28,10 @@ export function useVendorQuotationUpload(token: string) {
 
   return useMutation({
     mutationFn: (file: File) => uploadVendorPortalQuotationAttachment(token, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotation(token) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotation(token) });
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
+    },
   });
 }
 
@@ -35,6 +43,28 @@ export function useVendorQuotationManualEntry(token: string) {
       saveVendorPortalQuotationManualEntry(token, payload),
     onSuccess: (quotation) => {
       queryClient.setQueryData(vendorPortalKeys.quotation(token), quotation);
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
+    },
+  });
+}
+
+export function useVendorQuotationVersions(token: string) {
+  return useQuery({
+    queryKey: vendorPortalKeys.quotationVersions(token),
+    queryFn: () => listVendorPortalQuotationVersions(token),
+    enabled: token.length > 0,
+    retry: false,
+  });
+}
+
+export function useCreateVendorQuotationVersion(token: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: VendorCreateQuotationRevisionRequest) => createVendorPortalQuotationVersion(token, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotation(token) });
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
     },
   });
 }

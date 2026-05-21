@@ -5,11 +5,11 @@ namespace Domains\Quotation\Models;
 use App\Tenancy\Tenant;
 use App\Models\User;
 use Domains\Attachment\Models\Attachment;
-use Domains\Quotation\Models\QuotationLineItem;
 use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\QuotationSubmissionSource;
-use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\QuotationLineItem;
+use Domains\Quotation\Models\RfqInvitation;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +25,8 @@ class Quotation extends Model
         'rfq_id',
         'vendor_id',
         'rfq_invitation_id',
+        'current_version_id',
+        'version_count',
         'number',
         'status',
         'submission_source',
@@ -64,6 +66,7 @@ class Quotation extends Model
             'submission_source' => QuotationSubmissionSource::class,
             'submitted_at' => 'immutable_datetime',
             'submitted_by_vendor_contact' => 'array',
+            'version_count' => 'integer',
             'file_count' => 'integer',
             'latest_received_at' => 'immutable_datetime',
             'quoted_at' => 'immutable_date',
@@ -122,6 +125,19 @@ class Quotation extends Model
                         throw new InvalidArgumentException('Quotation invitation must belong to the same tenant, RFQ, and vendor.');
                     }
                 }
+
+                if ($quotation->current_version_id !== null && ($quotation->isDirty('current_version_id') || $quotation->isDirty('tenant_id'))) {
+                    $belongsToQuotation = QuotationVersion::query()
+                        ->whereKey($quotation->current_version_id)
+                        ->where('tenant_id', $quotation->tenant_id)
+                        ->where('quotation_id', $quotation->id)
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToQuotation) {
+                        throw new InvalidArgumentException('Quotation current version must belong to the same quotation and tenant.');
+                    }
+                }
             });
         });
     }
@@ -159,6 +175,14 @@ class Quotation extends Model
     }
 
     /**
+     * @return BelongsTo<QuotationVersion, $this>
+     */
+    public function currentVersion(): BelongsTo
+    {
+        return $this->belongsTo(QuotationVersion::class, 'current_version_id');
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function submittedByUser(): BelongsTo
@@ -180,5 +204,13 @@ class Quotation extends Model
     public function lineItems(): HasMany
     {
         return $this->hasMany(QuotationLineItem::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<QuotationVersion, $this>
+     */
+    public function versions(): HasMany
+    {
+        return $this->hasMany(QuotationVersion::class)->orderByDesc('version_number');
     }
 }

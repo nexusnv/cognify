@@ -15,6 +15,7 @@ import type { QuotationManualEntry } from "./quotationManualEntry";
 import type { QuotationLineItem } from "./quotationLineItem";
 import type { QuotationCompleteness } from "./quotationCompleteness";
 import type { QuotationPermissions } from "./quotationPermissions";
+import type { QuotationCurrentVersion } from "./quotationCurrentVersion";
 
 export interface Quotation {
   id: string;
@@ -35,4 +36,7 @@ export interface Quotation {
   lineItems: QuotationLineItem[];
   completeness: QuotationCompleteness;
   permissions: QuotationPermissions;
+  /** @minimum 0 */
+  versionCount: number;
+  currentVersion: QuotationCurrentVersion;
 }

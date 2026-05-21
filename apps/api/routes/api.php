@@ -22,10 +22,12 @@ use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\RfqInvitationController;
+use Domains\Quotation\Http\Controllers\QuotationVersionController;
 use Domains\Quotation\Http\Controllers\RfqInvitationQuotationController;
 use Domains\Quotation\Http\Controllers\RfqInvitationPortalController;
 use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
 use Domains\Quotation\Http\Controllers\VendorPortalQuotationController;
+use Domains\Quotation\Http\Controllers\VendorPortalQuotationVersionController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
 use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
@@ -52,6 +54,10 @@ Route::middleware('throttle:5,1')->group(function (): void {
 Route::get('/vendor-portal/rfq-invitations/{token}', [RfqInvitationPortalController::class, 'show'])
     ->middleware('throttle:60,1');
 Route::get('/vendor-portal/rfq-invitations/{token}/quotation', [VendorPortalQuotationController::class, 'show'])
+    ->middleware('throttle:60,1');
+Route::get('/vendor-portal/rfq-invitations/{token}/quotation/versions', [VendorPortalQuotationVersionController::class, 'index'])
+    ->middleware('throttle:60,1');
+Route::post('/vendor-portal/rfq-invitations/{token}/quotation/versions', [VendorPortalQuotationVersionController::class, 'store'])
     ->middleware('throttle:60,1');
 Route::post('/vendor-portal/rfq-invitations/{token}/quotation/attachments', [VendorPortalQuotationController::class, 'storeAttachment'])
     ->middleware('throttle:60,1');
@@ -119,6 +125,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/rfq-invitations/{invitation}/quotation/attachments', [RfqInvitationQuotationController::class, 'storeAttachment']);
         Route::get('/quotations/{quotation}/attachments', [RfqInvitationQuotationController::class, 'attachments']);
         Route::put('/quotations/{quotation}/manual-entry', [RfqInvitationQuotationController::class, 'saveManualEntry']);
+        Route::get('/quotations/{quotation}/versions', [QuotationVersionController::class, 'index']);
+        Route::get('/quotations/{quotation}/versions/{version}', [QuotationVersionController::class, 'show']);
+        Route::post('/quotations/{quotation}/versions', [QuotationVersionController::class, 'store']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);

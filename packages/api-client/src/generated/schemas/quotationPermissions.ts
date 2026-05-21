@@ -9,4 +9,5 @@ export interface QuotationPermissions {
   canUploadAttachment: boolean;
   canViewAttachments: boolean;
   canEditManualEntry: boolean;
+  canCreateRevision: boolean;
 }

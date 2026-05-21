@@ -190,7 +190,7 @@ describe("RFQ invitation workflow", () => {
 
     await waitFor(() => {
       expect(card.getByText("Quotation received")).toBeInTheDocument();
-      expect(card.getByText("buyer-received-quotation.pdf")).toBeInTheDocument();
+      expect(card.getAllByText("buyer-received-quotation.pdf").length).toBeGreaterThan(0);
       expect(card.getByText("1 file received")).toBeInTheDocument();
     });
   });
@@ -223,6 +223,47 @@ describe("RFQ invitation workflow", () => {
     expect(await card.findByText("Structured quotation saved.")).toBeInTheDocument();
     expect(card.getByText("Ready for evaluation")).toBeInTheDocument();
     expect(card.getByDisplayValue("NW-Q-2026-041")).toBeInTheDocument();
+  });
+
+  it("lets a buyer compare quotation version totals across revisions", async () => {
+    const user = userEvent.setup();
+
+    render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
+
+    const invitationCard = (await screen.findByText("Northwind Traders")).closest(
+      "[data-testid='rfq-invitation-card']",
+    );
+    expect(invitationCard).toBeTruthy();
+    const card = within(invitationCard as HTMLElement);
+
+    await user.click(card.getByRole("button", { name: "Create structured quotation" }));
+    await user.clear(await card.findByLabelText("Quotation reference"));
+    await user.type(card.getByLabelText("Quotation reference"), "NW-Q-2026-041");
+    await user.clear(card.getByLabelText("Currency"));
+    await user.type(card.getByLabelText("Currency"), "USD");
+    await user.clear(card.getByLabelText("Total amount"));
+    await user.type(card.getByLabelText("Total amount"), "12470.00");
+    await user.click(card.getByRole("button", { name: "Add quoted line" }));
+    await user.type(card.getByLabelText("Line 1 description"), "Developer laptop");
+    await user.type(card.getByLabelText("Line 1 quantity"), "10");
+    await user.type(card.getByLabelText("Line 1 unit price"), "1200.00");
+    await user.click(card.getByRole("button", { name: "Save structured quotation" }));
+
+    expect(await card.findByRole("button", { name: "Version 1 current" })).toBeInTheDocument();
+    expect(card.getByTestId("quotation-version-total")).toHaveTextContent("12470.00");
+
+    await user.clear(card.getByLabelText("Total amount"));
+    await user.type(card.getByLabelText("Total amount"), "11990.00");
+    await user.click(card.getByRole("button", { name: "Save structured quotation" }));
+
+    expect(await card.findByRole("button", { name: "Version 2 current" })).toBeInTheDocument();
+    expect(card.getByTestId("quotation-version-total")).toHaveTextContent("11990.00");
+
+    await user.click(card.getByRole("button", { name: "Version 1" }));
+    expect(card.getByTestId("quotation-version-total")).toHaveTextContent("12470.00");
+
+    await user.click(card.getByRole("button", { name: "Version 2 current" }));
+    expect(card.getByTestId("quotation-version-total")).toHaveTextContent("11990.00");
   });
 
   it("rejects direct manual-entry updates after an invitation becomes terminal", async () => {

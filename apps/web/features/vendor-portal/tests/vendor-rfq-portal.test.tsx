@@ -3,7 +3,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  appendVendorPortalQuotationVersion,
   expiredVendorPortalToken,
+  getVendorPortalQuotationFixture,
   unavailableVendorPortalToken,
   resetVendorPortalMockState,
   validVendorPortalToken,
@@ -88,6 +90,51 @@ describe("vendor RFQ portal", () => {
     expect(await screen.findByText("Quotation details saved.")).toBeInTheDocument();
     expect(screen.getByText("Ready for evaluation")).toBeInTheDocument();
     expect(screen.queryByLabelText("Buyer notes")).not.toBeInTheDocument();
+  });
+
+  it("shows vendor-safe quotation version history after vendor revisions", async () => {
+    const user = userEvent.setup();
+    render(<VendorRfqInvitationPage token={validVendorPortalToken} />, { wrapper: TestProviders });
+
+    expect(await screen.findByRole("heading", { name: "Field laptop refresh RFQ" })).toBeInTheDocument();
+    await user.clear(await screen.findByLabelText("Quotation reference"));
+    await user.type(screen.getByLabelText("Quotation reference"), "NW-Q-2026-041");
+    await user.clear(screen.getByLabelText("Currency"));
+    await user.type(screen.getByLabelText("Currency"), "USD");
+    await user.clear(screen.getByLabelText("Total amount"));
+    await user.type(screen.getByLabelText("Total amount"), "12470.00");
+    await user.type(screen.getByLabelText("Vendor notes"), "Initial vendor submission.");
+    await user.click(screen.getByRole("button", { name: "Add quoted line" }));
+    await user.type(screen.getByLabelText("Line 1 description"), "Developer laptop");
+    await user.type(screen.getByLabelText("Line 1 quantity"), "10");
+    await user.click(screen.getByRole("button", { name: "Save quotation details" }));
+
+    expect(await screen.findByText("Version 1 current")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Buyer notes")).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("Total amount"));
+    await user.type(screen.getByLabelText("Total amount"), "11990.00");
+    await user.click(screen.getByRole("button", { name: "Save quotation details" }));
+
+    expect(await screen.findByText("Version 2 current")).toBeInTheDocument();
+    expect(screen.getByText("Version 1")).toBeInTheDocument();
+    expect(screen.getByText("12470.00")).toBeInTheDocument();
+    expect(screen.queryByText("Internal buyer note")).not.toBeInTheDocument();
+  });
+
+  it("keeps vendor quotation version summary in sync when snapshots deduplicate", () => {
+    const version = appendVendorPortalQuotationVersion(validManualEntryPayload());
+    const deduplicatedVersion = appendVendorPortalQuotationVersion(validManualEntryPayload());
+    const quotation = getVendorPortalQuotationFixture();
+
+    expect(deduplicatedVersion).toBe(version);
+    expect(quotation?.versionCount).toBe(1);
+    expect(quotation?.currentVersion).toEqual({
+      id: version.id,
+      versionNumber: version.versionNumber,
+      isCurrent: true,
+      attachmentCount: version.attachmentCount,
+    });
   });
 
   it("returns conflict when a vendor saves manual entry with an expired portal token", async () => {

@@ -154,7 +154,7 @@ Tenant and permission rules:
 
 - Create: `apps/api/tests/Feature/QuotationVersionApiTest.php`
 
-- [ ] Add the backend feature test class.
+- [x] Add the backend feature test class.
 
 Create `apps/api/tests/Feature/QuotationVersionApiTest.php` with this starting content. The helper block for this test class is included in the next step and must be appended before the final class closing brace.
 
@@ -473,7 +473,7 @@ class QuotationVersionApiTest extends TestCase
 }
 ```
 
-- [ ] Append helper methods to `QuotationVersionApiTest`.
+- [x] Append helper methods to `QuotationVersionApiTest`.
 
 Append these helper methods below `validRevisionPayload()` and before the class closing brace:
 
@@ -637,7 +637,7 @@ private function validManualEntryPayload(array $overrides = []): array
 }
 ```
 
-- [ ] Run the backend test before implementation.
+- [x] Run the backend test before implementation.
 
 Run:
 
@@ -660,7 +660,7 @@ Expected result: tests fail because `QuotationVersion`, version routes, version 
 - Create: `apps/api/Domains/Quotation/Models/QuotationVersionLineItem.php`
 - Modify: `apps/api/Domains/Quotation/Models/Quotation.php`
 
-- [ ] Add the quotation versions migration.
+- [x] Add the quotation versions migration.
 
 Create `apps/api/database/migrations/2026_05_20_040000_create_quotation_versions_table.php`:
 
@@ -725,7 +725,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add the quotation version line items migration.
+- [x] Add the quotation version line items migration.
 
 Create `apps/api/database/migrations/2026_05_20_041000_create_quotation_version_line_items_table.php`:
 
@@ -774,7 +774,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add current version fields to quotations.
+- [x] Add current version fields to quotations.
 
 Create `apps/api/database/migrations/2026_05_20_042000_add_current_version_to_quotations_table.php`:
 
@@ -810,7 +810,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add the `QuotationVersion` model.
+- [x] Add the `QuotationVersion` model.
 
 Create `apps/api/Domains/Quotation/Models/QuotationVersion.php`:
 
@@ -940,7 +940,7 @@ class QuotationVersion extends Model
 }
 ```
 
-- [ ] Add the `QuotationVersionLineItem` model.
+- [x] Add the `QuotationVersionLineItem` model.
 
 Create `apps/api/Domains/Quotation/Models/QuotationVersionLineItem.php`:
 
@@ -1026,7 +1026,7 @@ class QuotationVersionLineItem extends Model
 }
 ```
 
-- [ ] Extend `Quotation`.
+- [x] Extend `Quotation`.
 
 In `apps/api/Domains/Quotation/Models/Quotation.php`, add these imports:
 
@@ -1067,7 +1067,7 @@ public function versions(): HasMany
 }
 ```
 
-- [ ] Run backend tests for the data model milestone.
+- [x] Run backend tests for the data model milestone.
 
 Run:
 
@@ -1088,7 +1088,7 @@ Expected result: tests still fail because version actions, resources, and routes
 - Modify: `apps/api/Domains/Quotation/Actions/StoreQuotationAttachment.php`
 - Modify: `apps/api/Domains/Quotation/Actions/SaveQuotationManualEntry.php`
 
-- [ ] Add attachment snapshot data.
+- [x] Add attachment snapshot data.
 
 Create `apps/api/Domains/Quotation/Data/QuotationVersionAttachmentSnapshotData.php`:
 
@@ -1125,7 +1125,7 @@ class QuotationVersionAttachmentSnapshotData
 }
 ```
 
-- [ ] Add the version snapshot action.
+- [x] Add the version snapshot action.
 
 Create `apps/api/Domains/Quotation/Actions/CreateQuotationVersionSnapshot.php`:
 
@@ -1334,7 +1334,7 @@ class CreateQuotationVersionSnapshot
 }
 ```
 
-- [ ] Wire snapshots into quotation uploads.
+- [x] Wire snapshots into quotation uploads.
 
 Modify the constructor of `apps/api/Domains/Quotation/Actions/StoreQuotationAttachment.php`:
 
@@ -1374,7 +1374,7 @@ $quotation->refresh()->load([
 ]);
 ```
 
-- [ ] Wire snapshots into manual entry.
+- [x] Wire snapshots into manual entry.
 
 Modify the constructor of `apps/api/Domains/Quotation/Actions/SaveQuotationManualEntry.php`:
 
@@ -1407,7 +1407,7 @@ $quotation->forceFill([
 
 Add `currentVersion.lineItems` to the final relation load list.
 
-- [ ] Run backend tests for automatic snapshot creation.
+- [x] Run backend tests for automatic snapshot creation.
 
 Run:
 
@@ -1433,7 +1433,7 @@ Expected result: version tests should pass for initial upload/manual entry paths
 - Modify: `apps/api/Domains/Quotation/Http/Resources/QuotationResource.php`
 - Modify: `apps/api/routes/api.php`
 
-- [ ] Add the revision request.
+- [x] Add the revision request.
 
 Create `apps/api/Domains/Quotation/Http/Requests/CreateQuotationRevisionRequest.php`:
 
@@ -1511,7 +1511,7 @@ class CreateQuotationRevisionRequest extends FormRequest
 }
 ```
 
-- [ ] Add version line item resource.
+- [x] Add version line item resource.
 
 Create `apps/api/Domains/Quotation/Http/Resources/QuotationVersionLineItemResource.php`:
 
@@ -1555,7 +1555,7 @@ class QuotationVersionLineItemResource extends JsonResource
 }
 ```
 
-- [ ] Add version resource.
+- [x] Add version resource.
 
 Create `apps/api/Domains/Quotation/Http/Resources/QuotationVersionResource.php`:
 
@@ -1635,7 +1635,7 @@ class QuotationVersionResource extends JsonResource
 }
 ```
 
-- [ ] Add buyer version controller.
+- [x] Add buyer version controller.
 
 Create `apps/api/Domains/Quotation/Http/Controllers/QuotationVersionController.php`:
 
@@ -1821,7 +1821,7 @@ class QuotationVersionController extends Controller
 }
 ```
 
-- [ ] Add vendor portal version controller.
+- [x] Add vendor portal version controller.
 
 Create `apps/api/Domains/Quotation/Http/Controllers/VendorPortalQuotationVersionController.php` using the buyer controller patterns, with these required differences:
 
@@ -1979,7 +1979,7 @@ class VendorPortalQuotationVersionController extends Controller
 }
 ```
 
-- [ ] Extend `QuotationResource`.
+- [x] Extend `QuotationResource`.
 
 Add `currentVersion` and `versionCount` to the response in `apps/api/Domains/Quotation/Http/Resources/QuotationResource.php`:
 
@@ -2003,7 +2003,7 @@ Add `canCreateRevision` to the `permissions` object:
 
 Update quotation loads in `RfqInvitationQuotationController` and `VendorPortalQuotationController` to include `currentVersion.lineItems`.
 
-- [ ] Register routes.
+- [x] Register routes.
 
 In `apps/api/routes/api.php`, add the vendor portal route near existing vendor portal quotation routes:
 
@@ -2029,7 +2029,7 @@ Route::get('/quotations/{quotation}/versions/{version}', [QuotationVersionContro
 Route::post('/quotations/{quotation}/versions', [QuotationVersionController::class, 'store']);
 ```
 
-- [ ] Run backend tests for endpoint implementation.
+- [x] Run backend tests for endpoint implementation.
 
 Run:
 
@@ -2051,7 +2051,7 @@ Expected result: all listed backend suites pass.
 - Modify: `apps/api/storage/openapi/openapi.json`
 - Generated: `packages/api-client/src/generated/**`
 
-- [ ] Add OpenAPI schemas.
+- [x] Add OpenAPI schemas.
 
 Add these component schemas to `apps/api/storage/openapi/openapi.json`:
 
@@ -2215,7 +2215,7 @@ Add `QuotationCurrentVersionSummary`:
 
 Add `canCreateRevision` to `QuotationPermissions`.
 
-- [ ] Add OpenAPI operations.
+- [x] Add OpenAPI operations.
 
 Add these paths:
 
@@ -2343,7 +2343,7 @@ Add these paths:
 }
 ```
 
-- [ ] Generate and verify API client.
+- [x] Generate and verify API client.
 
 Run:
 
@@ -2373,7 +2373,7 @@ Expected final result: exits successfully with no generated-client drift.
 - Modify: `apps/web/features/sourcing/mocks/rfq-invitation-handlers.ts`
 - Modify: `apps/web/features/sourcing/tests/rfq-invitations-workflow.test.tsx`
 
-- [ ] Add buyer API wrappers.
+- [x] Add buyer API wrappers.
 
 In `apps/web/features/sourcing/api/quotation-api.ts`, import generated endpoints and schemas:
 
@@ -2430,7 +2430,7 @@ export async function createQuotationVersion(
 }
 ```
 
-- [ ] Add buyer version hooks.
+- [x] Add buyer version hooks.
 
 Create `apps/web/features/sourcing/hooks/use-quotation-versions.ts`:
 
@@ -2491,7 +2491,7 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
 }
 ```
 
-- [ ] Add buyer version history component.
+- [x] Add buyer version history component.
 
 Create `apps/web/features/sourcing/components/quotation-version-history.tsx`:
 
@@ -2536,7 +2536,7 @@ export function QuotationVersionHistory({
 }
 ```
 
-- [ ] Add buyer selected version detail component.
+- [x] Add buyer selected version detail component.
 
 Create `apps/web/features/sourcing/components/quotation-version-detail.tsx`:
 
@@ -2609,7 +2609,7 @@ export function QuotationVersionDetail({ version }: { version: QuotationVersion 
 }
 ```
 
-- [ ] Render buyer version history from `QuotationEvidencePanel`.
+- [x] Render buyer version history from `QuotationEvidencePanel`.
 
 In `apps/web/features/sourcing/components/quotation-evidence-panel.tsx`, import:
 
@@ -2648,7 +2648,7 @@ Render this block below `QuotationManualEntryPanel` when `quotation` exists:
 <QuotationVersionDetail version={selectedVersionQuery.data ?? versions.find((version) => version.id === selectedVersionId) ?? null} />
 ```
 
-- [ ] Extend sourcing MSW handlers with version state.
+- [x] Extend sourcing MSW handlers with version state.
 
 In `apps/web/features/sourcing/mocks/rfq-invitation-handlers.ts`, add version arrays to the quotation fixture shape. Add handlers:
 
@@ -2700,7 +2700,7 @@ Ensure `updateQuotationManualEntry()` appends a new version object with:
 }
 ```
 
-- [ ] Add buyer workflow test.
+- [x] Add buyer workflow test.
 
 Append to `apps/web/features/sourcing/tests/rfq-invitations-workflow.test.tsx`:
 
@@ -2737,7 +2737,7 @@ it("shows quotation version history after structured buyer revisions", async () 
 });
 ```
 
-- [ ] Run buyer frontend tests.
+- [x] Run buyer frontend tests.
 
 Run:
 
@@ -2761,7 +2761,7 @@ Expected result: sourcing workflow tests pass.
 - Modify: `apps/web/features/vendor-portal/mocks/vendor-portal-handlers.ts`
 - Modify: `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`
 
-- [ ] Add vendor portal API wrappers.
+- [x] Add vendor portal API wrappers.
 
 In `apps/web/features/vendor-portal/api/vendor-portal-api.ts`, import generated endpoints and schemas:
 
@@ -2794,7 +2794,7 @@ export async function createVendorPortalQuotationVersion(
 }
 ```
 
-- [ ] Add vendor portal version hooks.
+- [x] Add vendor portal version hooks.
 
 In `apps/web/features/vendor-portal/hooks/use-vendor-quotation.ts`, add:
 
@@ -2831,7 +2831,7 @@ export function useCreateVendorQuotationVersion(token: string) {
 }
 ```
 
-- [ ] Add vendor version history component.
+- [x] Add vendor version history component.
 
 Create `apps/web/features/vendor-portal/components/vendor-quotation-version-history.tsx`:
 
@@ -2869,7 +2869,7 @@ export function VendorQuotationVersionHistory({ versions }: { versions: Quotatio
 }
 ```
 
-- [ ] Render vendor version history.
+- [x] Render vendor version history.
 
 In `apps/web/features/vendor-portal/components/vendor-quotation-upload-panel.tsx`, import:
 
@@ -2891,7 +2891,7 @@ Render below `VendorQuotationManualEntryPanel`:
 <VendorQuotationVersionHistory versions={versions} />
 ```
 
-- [ ] Extend vendor portal mocks.
+- [x] Extend vendor portal mocks.
 
 In `apps/web/features/vendor-portal/mocks/vendor-portal-fixtures.ts`, add `vendorPortalQuotationVersions` state and reset it in `resetVendorPortalMockState()`. Update `updateVendorPortalQuotationManualEntry()` so each save appends a vendor-safe `QuotationVersion` with `buyerNotes: null`.
 
@@ -2956,7 +2956,7 @@ export function appendVendorPortalQuotationVersion(payload: CreateQuotationRevis
 }
 ```
 
-- [ ] Add vendor portal version handlers.
+- [x] Add vendor portal version handlers.
 
 In `apps/web/features/vendor-portal/mocks/vendor-portal-handlers.ts`, add:
 
@@ -2991,7 +2991,7 @@ http.post("/api/vendor-portal/rfq-invitations/:token/quotation/versions", async 
 }),
 ```
 
-- [ ] Add vendor portal workflow test.
+- [x] Add vendor portal workflow test.
 
 Append to `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`:
 
@@ -3026,7 +3026,7 @@ it("shows vendor-safe quotation version history after vendor revisions", async (
 });
 ```
 
-- [ ] Run vendor portal frontend tests.
+- [x] Run vendor portal frontend tests.
 
 Run:
 
@@ -3044,7 +3044,7 @@ Expected result: vendor RFQ portal tests pass.
 
 - Verify all touched API, generated-client, web, and docs surfaces.
 
-- [ ] Run focused backend tests.
+- [x] Run focused backend tests.
 
 Run:
 
@@ -3058,7 +3058,7 @@ php artisan test --filter=SearchApiTest
 
 Expected result: all listed backend tests pass.
 
-- [ ] Run focused frontend tests.
+- [x] Run focused frontend tests.
 
 Run:
 
@@ -3069,7 +3069,7 @@ pnpm --dir apps/web exec vitest run features/vendor-portal/tests/vendor-rfq-port
 
 Expected result: sourcing and vendor portal suites pass.
 
-- [ ] Run contract, type, lint, build, and whitespace checks.
+- [x] Run contract, type, lint, build, and whitespace checks.
 
 Run:
 
@@ -3083,7 +3083,7 @@ git diff --check
 
 Expected result: all commands exit successfully. If `pnpm build` fails with the known Turbopack `binding to a port` sandbox error, rerun the same command with sandbox escalation and record both outputs.
 
-- [ ] Run placeholder scan.
+- [x] Run placeholder scan.
 
 Run:
 
@@ -3103,7 +3103,7 @@ Expected result: no matches introduced by this implementation.
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: `docs/superpowers/plans/2026-05-20-quotation-versioning.md`
 
-- [ ] Confirm P1-28 links to this implementation plan.
+- [x] Confirm P1-28 links to this implementation plan.
 
 Expected P1-28 row values:
 
@@ -3111,11 +3111,11 @@ Expected P1-28 row values:
 | P1-28 | Quotation Versioning | Track revised quotations and preserve prior versions. Procurement comparisons must show which vendor price and terms were evaluated at decision time. | Fully Implemented | 2026-05-20-quotation-versioning-design.md | 2026-05-20-quotation-versioning.md |  | Implemented as Epic 6 slice 4 with immutable buyer and vendor quotation version history. |
 ```
 
-- [ ] Leave P1-29 as `Not Implemented`.
+- [x] Leave P1-29 as `Not Implemented`.
 
 Do not update P1-29 implementation plan or status during this slice.
 
-- [ ] Mark completed plan checkboxes after verification passes.
+- [x] Mark completed plan checkboxes after verification passes.
 
 Use only `- [x]` for tasks actually completed and verified in the implementation session.
 
@@ -3123,18 +3123,18 @@ Use only `- [x]` for tasks actually completed and verified in the implementation
 
 ## Task 10: Self-Review Checklist
 
-- [ ] `Quotation` remains the current response container and `QuotationVersion` owns immutable snapshots.
-- [ ] First upload or manual entry creates version 1.
-- [ ] Buyer and vendor revisions create version N+1 and supersede the prior current version in one transaction.
-- [ ] Exactly one version per quotation is current after each mutation.
-- [ ] Previous versions have no mutation endpoints and resources return `permissions.canEdit: false`.
-- [ ] Attachment snapshots preserve historical metadata even though files remain owned by the attachment domain.
-- [ ] Vendor portal version responses redact buyer notes and internal user identity.
-- [ ] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
-- [ ] Vendor routes use portal token resolution and do not rely on `X-Tenant-Id`.
-- [ ] Cross-tenant version list/show/create requests fail.
-- [ ] Terminal invitation states block vendor-created versions.
-- [ ] Audit events include `quotation.version_created`, `quotation.version_superseded`, and `quotation.current_version_changed`.
-- [ ] Generated client endpoints and schemas are used by frontend code.
-- [ ] UI components do not import mock fixtures directly.
-- [ ] Quotation normalization, comparison, scoring, award, OCR, and AI extraction remain outside this slice.
+- [x] `Quotation` remains the current response container and `QuotationVersion` owns immutable snapshots.
+- [x] First upload or manual entry creates version 1.
+- [x] Buyer and vendor revisions create version N+1 and supersede the prior current version in one transaction.
+- [x] Exactly one version per quotation is current after each mutation.
+- [x] Previous versions have no mutation endpoints and resources return `permissions.canEdit: false`.
+- [x] Attachment snapshots preserve historical metadata even though files remain owned by the attachment domain.
+- [x] Vendor portal version responses redact buyer notes and internal user identity.
+- [x] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
+- [x] Vendor routes use portal token resolution and do not rely on `X-Tenant-Id`.
+- [x] Cross-tenant version list/show/create requests fail.
+- [x] Terminal invitation states block vendor-created versions.
+- [x] Audit events include `quotation.version_created`, `quotation.version_superseded`, and `quotation.current_version_changed`.
+- [x] Generated client endpoints and schemas are used by frontend code.
+- [x] UI components do not import mock fixtures directly.
+- [x] Quotation normalization, comparison, scoring, award, OCR, and AI extraction remain outside this slice.

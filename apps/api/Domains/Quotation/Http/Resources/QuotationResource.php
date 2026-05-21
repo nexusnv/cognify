@@ -43,6 +43,7 @@ class QuotationResource extends JsonResource
             'submittedAt' => $quotation->submitted_at?->toISOString(),
             'latestReceivedAt' => $quotation->latest_received_at?->toISOString(),
             'fileCount' => $quotation->file_count,
+            'versionCount' => (int) $quotation->version_count,
             'submittedByUser' => ! $redactInternalIdentity && $quotation->submittedByUser ? [
                 'id' => (string) $quotation->submittedByUser->id,
                 'name' => $quotation->submittedByUser->name,
@@ -70,6 +71,15 @@ class QuotationResource extends JsonResource
             'lineItems' => $quotation->relationLoaded('lineItems')
                 ? QuotationLineItemResource::collection($quotation->lineItems)
                 : [],
+            'currentVersion' => $quotation->relationLoaded('currentVersion') && $quotation->currentVersion ? [
+                'id' => (string) $quotation->currentVersion->id,
+                'versionNumber' => $quotation->currentVersion->version_number,
+                'isCurrent' => (bool) $quotation->currentVersion->is_current,
+                'attachmentCount' => count($quotation->currentVersion->attachment_snapshots ?? []),
+                'lineItems' => $quotation->currentVersion->relationLoaded('lineItems')
+                    ? QuotationVersionLineItemResource::collection($quotation->currentVersion->lineItems)
+                    : [],
+            ] : null,
             'completeness' => [
                 'isComplete' => (bool) $quotation->manual_entry_complete,
                 'missingFields' => $quotation->manual_entry_missing_fields ?? [],
@@ -82,6 +92,7 @@ class QuotationResource extends JsonResource
                 'canUploadAttachment' => $canUploadAttachment,
                 'canViewAttachments' => $canViewAttachments,
                 'canEditManualEntry' => $canEditManualEntry,
+                'canCreateRevision' => $canEditManualEntry,
             ],
         ];
     }
