@@ -18,6 +18,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class NormalizeQuotationVersion implements ShouldQueue
@@ -39,72 +40,57 @@ class NormalizeQuotationVersion implements ShouldQueue
         AuditRecorder $auditRecorder,
         NotificationRecorder $notificationRecorder,
     ): void {
-        $normalization = null;
+        $tenant = Tenant::query()->whereKey($this->tenantId)->firstOrFail();
+        $version = QuotationVersion::query()
+            ->with(['quotation', 'lineItems'])
+            ->whereKey($this->quotationVersionId)
+            ->where('tenant_id', $tenant->id)
+            ->firstOrFail();
+
+        $claimedNormalization = $this->claimNormalization($starter->handle($tenant, $version));
+
+        if ($claimedNormalization === null) {
+            return;
+        }
 
         try {
-            $tenant = Tenant::query()->whereKey($this->tenantId)->firstOrFail();
-            $version = QuotationVersion::query()
-                ->with(['quotation', 'lineItems'])
-                ->whereKey($this->quotationVersionId)
-                ->where('tenant_id', $tenant->id)
-                ->firstOrFail();
+            $normalized = $normalizer->handle($tenant, $version, $claimedNormalization);
 
-            $normalization = $starter->handle($tenant, $version);
-
-            $attemptCount = (int) $normalization->job_attempt_count;
-            $isRunnableStatus = in_array($normalization->status, [
-                QuotationNormalizationStatus::Pending,
-                QuotationNormalizationStatus::Processing,
-                QuotationNormalizationStatus::Failed,
-            ], true);
-
-            if ($normalization->status === QuotationNormalizationStatus::Processing && $attemptCount > 0) {
-                return;
-            }
-
-            if ($isRunnableStatus) {
-                $normalization->forceFill([
-                    'job_attempt_count' => $attemptCount + 1,
-                ])->save();
-
-                $normalized = $normalizer->handle($tenant, $version, $normalization);
-
-                if ($normalized->status === QuotationNormalizationStatus::NeedsReview) {
-                    $this->notifyBestEffort(
-                        $tenant,
-                        $normalized,
-                        $notificationRecorder,
-                        NotificationPreferenceDefaults::EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW,
-                        'Quotation normalization needs review',
-                        'The quotation normalization requires buyer review.',
-                    );
-                }
+            if ($normalized->status === QuotationNormalizationStatus::NeedsReview) {
+                $this->notifyBestEffort(
+                    $tenant,
+                    $normalized,
+                    $notificationRecorder,
+                    NotificationPreferenceDefaults::EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW,
+                    'Quotation normalization needs review',
+                    'The quotation normalization requires buyer review.',
+                );
             }
         } catch (Throwable $throwable) {
-            if ($normalization instanceof QuotationNormalization) {
-                $normalization->forceFill([
+            if ($claimedNormalization instanceof QuotationNormalization) {
+                $claimedNormalization->forceFill([
                     'status' => QuotationNormalizationStatus::Failed,
                     'last_job_error' => $throwable->getMessage(),
                 ])->save();
 
                 $auditRecorder->record(new AuditEventData(
-                    tenant: $normalization->tenant,
+                    tenant: $claimedNormalization->tenant,
                     actor: null,
                     action: 'quotation_normalization.failed',
-                    subject: $normalization,
+                    subject: $claimedNormalization,
                     metadata: [
-                        'quotationId' => (string) $normalization->quotation_id,
-                        'quotationVersionId' => (string) $normalization->quotation_version_id,
-                        'normalizationId' => (string) $normalization->id,
-                        'jobAttemptCount' => $normalization->job_attempt_count,
+                        'quotationId' => (string) $claimedNormalization->quotation_id,
+                        'quotationVersionId' => (string) $claimedNormalization->quotation_version_id,
+                        'normalizationId' => (string) $claimedNormalization->id,
+                        'jobAttemptCount' => $claimedNormalization->job_attempt_count,
                         'error' => $throwable->getMessage(),
                     ],
-                    subjectDisplay: $normalization->quotation?->number,
+                    subjectDisplay: $claimedNormalization->quotation?->number,
                 ));
 
                 $this->notifyBestEffort(
-                    $normalization->tenant,
-                    $normalization,
+                    $claimedNormalization->tenant,
+                    $claimedNormalization,
                     $notificationRecorder,
                     NotificationPreferenceDefaults::EVENT_QUOTATION_NORMALIZATION_FAILED,
                     'Quotation normalization failed',
@@ -114,6 +100,48 @@ class NormalizeQuotationVersion implements ShouldQueue
 
             throw $throwable;
         }
+    }
+
+    private function claimNormalization(QuotationNormalization $normalization): ?QuotationNormalization
+    {
+        return DB::transaction(function () use ($normalization): ?QuotationNormalization {
+            $claimed = QuotationNormalization::query()
+                ->with(['quotation', 'quotationVersion'])
+                ->whereKey($normalization->id)
+                ->where('tenant_id', $normalization->tenant_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($claimed === null) {
+                return null;
+            }
+
+            if (in_array($claimed->status, [
+                QuotationNormalizationStatus::ReadyForApproval,
+                QuotationNormalizationStatus::NeedsReview,
+                QuotationNormalizationStatus::Superseded,
+            ], true)) {
+                return null;
+            }
+
+            if ($claimed->status === QuotationNormalizationStatus::Processing && (int) $claimed->job_attempt_count > 0) {
+                return null;
+            }
+
+            if (! in_array($claimed->status, [
+                QuotationNormalizationStatus::Pending,
+                QuotationNormalizationStatus::Processing,
+                QuotationNormalizationStatus::Failed,
+            ], true)) {
+                return null;
+            }
+
+            $claimed->forceFill([
+                'job_attempt_count' => ((int) $claimed->job_attempt_count) + 1,
+            ])->save();
+
+            return $claimed->refresh()->load(['quotation', 'quotationVersion']);
+        });
     }
 
     private function notifyBestEffort(

@@ -238,6 +238,47 @@ class QuotationDeterministicNormalizerTest extends TestCase
         ]);
     }
 
+    public function test_second_delivery_after_claim_skips_without_rerunning_normalizer(): void
+    {
+        [$tenant, $version] = $this->quotableVersionFixture();
+
+        $this->mock(RunDeterministicQuotationNormalizer::class, function ($mock): void {
+            $mock->shouldReceive('handle')
+                ->once()
+                ->andReturnUsing(function (Tenant $tenant, QuotationVersion $version, QuotationNormalization $normalization): QuotationNormalization {
+                    $normalization->forceFill([
+                        'status' => QuotationNormalizationStatus::ReadyForApproval,
+                    ])->save();
+
+                    return $normalization->refresh();
+                });
+        });
+
+        $job = new NormalizeQuotationVersion($tenant->id, $version->id);
+
+        $job->handle(
+            app(StartQuotationNormalization::class),
+            app(RunDeterministicQuotationNormalizer::class),
+            app(AuditRecorder::class),
+            app(NotificationRecorder::class),
+        );
+        $job->handle(
+            app(StartQuotationNormalization::class),
+            app(RunDeterministicQuotationNormalizer::class),
+            app(AuditRecorder::class),
+            app(NotificationRecorder::class),
+        );
+
+        $normalization = QuotationNormalization::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('quotation_version_id', $version->id)
+            ->firstOrFail();
+
+        $this->assertSame(1, (int) $normalization->job_attempt_count);
+        $this->assertSame(QuotationNormalizationStatus::ReadyForApproval, $normalization->status);
+        $this->assertDatabaseCount('quotation_normalizations', 1);
+    }
+
     public function test_notification_failure_does_not_fail_successful_normalization(): void
     {
         [$tenant, $version, $normalization] = $this->normalizationFixture([
