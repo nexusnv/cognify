@@ -54,17 +54,23 @@ class NormalizeQuotationVersion implements ShouldQueue
                 'job_attempt_count' => ((int) $normalization->job_attempt_count) + 1,
             ])->save();
 
-            $normalized = $normalizer->handle($tenant, $version, $normalization);
+            if (in_array($normalization->status, [
+                QuotationNormalizationStatus::Pending,
+                QuotationNormalizationStatus::Processing,
+                QuotationNormalizationStatus::Failed,
+            ], true)) {
+                $normalized = $normalizer->handle($tenant, $version, $normalization);
 
-            if ($normalized->status === QuotationNormalizationStatus::NeedsReview) {
-                $this->notifyReviewers(
-                    $tenant,
-                    $normalized,
-                    $notificationRecorder,
-                    NotificationPreferenceDefaults::EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW,
-                    'Quotation normalization needs review',
-                    'The quotation normalization requires buyer review.',
-                );
+                if ($normalized->status === QuotationNormalizationStatus::NeedsReview) {
+                    $this->notifyBestEffort(
+                        $tenant,
+                        $normalized,
+                        $notificationRecorder,
+                        NotificationPreferenceDefaults::EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW,
+                        'Quotation normalization needs review',
+                        'The quotation normalization requires buyer review.',
+                    );
+                }
             }
         } catch (Throwable $throwable) {
             if ($normalization instanceof QuotationNormalization) {
@@ -88,7 +94,7 @@ class NormalizeQuotationVersion implements ShouldQueue
                     subjectDisplay: $normalization->quotation?->number,
                 ));
 
-                $this->notifyReviewers(
+                $this->notifyBestEffort(
                     $normalization->tenant,
                     $normalization,
                     $notificationRecorder,
@@ -97,6 +103,30 @@ class NormalizeQuotationVersion implements ShouldQueue
                     $throwable->getMessage(),
                 );
             }
+
+            throw $throwable;
+        }
+    }
+
+    private function notifyBestEffort(
+        Tenant $tenant,
+        QuotationNormalization $normalization,
+        NotificationRecorder $notificationRecorder,
+        string $eventType,
+        string $title,
+        string $body,
+    ): void {
+        try {
+            $this->notifyReviewers(
+                $tenant,
+                $normalization,
+                $notificationRecorder,
+                $eventType,
+                $title,
+                $body,
+            );
+        } catch (Throwable $notificationThrowable) {
+            report($notificationThrowable);
         }
     }
 

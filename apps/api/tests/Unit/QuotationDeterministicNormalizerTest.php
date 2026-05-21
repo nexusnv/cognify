@@ -3,7 +3,11 @@
 namespace Tests\Unit;
 
 use App\Tenancy\Tenant;
+use App\Audit\AuditRecorder;
+use App\Notifications\NotificationRecorder;
 use Domains\Quotation\Actions\RunDeterministicQuotationNormalizer;
+use Domains\Quotation\Actions\StartQuotationNormalization;
+use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
@@ -175,6 +179,144 @@ class QuotationDeterministicNormalizerTest extends TestCase
             'issue_code' => QuotationNormalizationIssueCatalog::TOTAL_RECONCILIATION_MISMATCH,
             'severity' => QuotationNormalizationIssueSeverity::Blocking->value,
         ]);
+    }
+
+    public function test_starting_the_same_version_twice_returns_the_existing_normalization_revision(): void
+    {
+        [$tenant, $version] = $this->quotableVersionFixture();
+
+        $starter = app(StartQuotationNormalization::class);
+
+        $first = $starter->handle($tenant, $version);
+        $second = $starter->handle($tenant, $version);
+
+        $this->assertSame($first->id, $second->id);
+        $this->assertSame($first->normalization_revision, $second->normalization_revision);
+        $this->assertDatabaseCount('quotation_normalizations', 1);
+        $this->assertDatabaseCount('audit_events', 1);
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'event_type' => 'quotation_normalization.started',
+        ]);
+    }
+
+    public function test_duplicate_job_delivery_does_not_create_another_normalization_revision(): void
+    {
+        [$tenant, $version] = $this->quotableVersionFixture();
+
+        $job = new NormalizeQuotationVersion($tenant->id, $version->id);
+
+        $job->handle(
+            app(StartQuotationNormalization::class),
+            app(RunDeterministicQuotationNormalizer::class),
+            app(AuditRecorder::class),
+            app(NotificationRecorder::class),
+        );
+        $job->handle(
+            app(StartQuotationNormalization::class),
+            app(RunDeterministicQuotationNormalizer::class),
+            app(AuditRecorder::class),
+            app(NotificationRecorder::class),
+        );
+
+        $this->assertDatabaseCount('quotation_normalizations', 1);
+        $this->assertDatabaseHas('quotation_normalizations', [
+            'tenant_id' => $tenant->id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 1,
+        ]);
+    }
+
+    public function test_notification_failure_does_not_fail_successful_normalization(): void
+    {
+        [$tenant, $version, $normalization] = $this->normalizationFixture([
+            'currency' => null,
+            'subtotal_amount' => '12000.00',
+            'tax_amount' => '720.00',
+            'freight_amount' => '250.00',
+            'discount_amount' => '500.00',
+            'total_amount' => null,
+            'payment_terms' => null,
+            'warranty_terms' => '3 years onsite',
+        ]);
+
+        $this->mock(NotificationRecorder::class, function ($mock): void {
+            $mock->shouldReceive('record')
+                ->once()
+                ->andThrow(new \RuntimeException('notification failed'));
+        });
+
+        $job = new NormalizeQuotationVersion($tenant->id, $version->id);
+
+        $job->handle(
+            app(StartQuotationNormalization::class),
+            app(RunDeterministicQuotationNormalizer::class),
+            app(AuditRecorder::class),
+            app(NotificationRecorder::class),
+        );
+
+        $this->assertDatabaseHas('quotation_normalizations', [
+            'id' => $normalization->id,
+            'tenant_id' => $tenant->id,
+            'status' => QuotationNormalizationStatus::NeedsReview->value,
+        ]);
+    }
+
+    public function test_job_failure_marks_failed_and_rethrows(): void
+    {
+        [$tenant, $version] = $this->quotableVersionFixture();
+
+        $this->mock(RunDeterministicQuotationNormalizer::class, function ($mock): void {
+            $mock->shouldReceive('handle')
+                ->once()
+                ->andThrow(new \RuntimeException('normalizer exploded'));
+        });
+
+        $job = new NormalizeQuotationVersion($tenant->id, $version->id);
+
+        try {
+            $job->handle(
+                app(StartQuotationNormalization::class),
+                app(RunDeterministicQuotationNormalizer::class),
+                app(AuditRecorder::class),
+                app(NotificationRecorder::class),
+            );
+
+            $this->fail('Expected the normalization job to rethrow the failure.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('normalizer exploded', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('quotation_normalizations', [
+            'tenant_id' => $tenant->id,
+            'quotation_version_id' => $version->id,
+            'status' => QuotationNormalizationStatus::Failed->value,
+            'last_job_error' => 'normalizer exploded',
+        ]);
+    }
+
+    /**
+     * @return array{Tenant, QuotationVersion}
+     */
+    private function quotableVersionFixture(): array
+    {
+        [$tenant, $version, ] = $this->normalizationFixture([
+            'currency' => 'usd',
+            'subtotal_amount' => '12000.00',
+            'tax_amount' => '720.00',
+            'freight_amount' => '250.00',
+            'discount_amount' => '500.00',
+            'total_amount' => '12470.00',
+            'payment_terms' => null,
+            'warranty_terms' => '3 years onsite',
+        ]);
+
+        QuotationNormalization::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('quotation_version_id', $version->id)
+            ->delete();
+
+        return [$tenant, $version];
     }
 
     /**

@@ -40,16 +40,23 @@ class StartQuotationNormalization
                 throw new InvalidArgumentException('Quotation normalization version must belong to the same tenant and quotation.');
             }
 
-            QuotationNormalization::query()
+            $existingNormalization = QuotationNormalization::query()
                 ->where('tenant_id', $tenant->id)
                 ->where('quotation_version_id', $lockedVersion->id)
+                ->whereIn('status', [
+                    QuotationNormalizationStatus::Pending->value,
+                    QuotationNormalizationStatus::Processing->value,
+                    QuotationNormalizationStatus::NeedsReview->value,
+                    QuotationNormalizationStatus::ReadyForApproval->value,
+                    QuotationNormalizationStatus::Failed->value,
+                ])
                 ->lockForUpdate()
-                ->get()
-                ->each(function (QuotationNormalization $existing): void {
-                    $existing->forceFill([
-                        'is_current_for_version' => false,
-                    ])->save();
-                });
+                ->orderByDesc('normalization_revision')
+                ->first();
+
+            if ($existingNormalization !== null) {
+                return $existingNormalization->refresh()->load(['quotationVersion', 'quotation']);
+            }
 
             QuotationNormalization::query()
                 ->where('tenant_id', $tenant->id)
@@ -107,7 +114,7 @@ class StartQuotationNormalization
                 subjectDisplay: $quotation->number,
             ));
 
-            return $normalization->refresh();
+            return $normalization->refresh()->load(['quotationVersion', 'quotation']);
         });
     }
 }
