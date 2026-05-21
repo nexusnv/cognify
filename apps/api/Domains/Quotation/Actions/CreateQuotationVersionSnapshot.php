@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Data\QuotationVersionAttachmentSnapshotData;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
@@ -34,7 +35,7 @@ class CreateQuotationVersionSnapshot
         ?array $attachmentIds = null,
         array $metadata = [],
     ): QuotationVersion {
-        return DB::transaction(function () use ($tenant, $quotation, $actor, $source, $attachmentIds, $metadata): QuotationVersion {
+        $version = DB::transaction(function () use ($tenant, $quotation, $actor, $source, $attachmentIds, $metadata): QuotationVersion {
             $lockedQuotation = Quotation::query()
                 ->with([
                     'attachments' => fn ($query) => $query->with('uploader')->latest('created_at'),
@@ -129,6 +130,10 @@ class CreateQuotationVersionSnapshot
 
             return $version->refresh()->load(['lineItems', 'submittedByUser', 'quotation']);
         });
+
+        NormalizeQuotationVersion::dispatch($tenant->id, $version->id)->afterCommit();
+
+        return $version;
     }
 
     /**

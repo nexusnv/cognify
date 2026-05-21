@@ -11,6 +11,7 @@ use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\Models\SourcingIntakeReview;
+use Domains\Quotation\States\QuotationNormalizationStatus;
 use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Quotation\States\SourcingIntakeStatus;
@@ -250,13 +251,31 @@ class QuotationNormalizationApiTest extends TestCase
         $quotation = Quotation::query()->where('rfq_invitation_id', $invitation->id)->firstOrFail();
         $version = QuotationVersion::query()->whereKey($quotation->current_version_id)->firstOrFail();
 
-        $normalization = QuotationNormalization::query()->create([
-            'tenant_id' => $tenant->id,
-            'quotation_id' => $quotation->id,
-            'quotation_version_id' => $version->id,
-            'normalization_revision' => 1,
-            'status' => 'needs_review',
-        ]);
+        $normalization = QuotationNormalization::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('quotation_version_id', $version->id)
+            ->latest('normalization_revision')
+            ->first();
+
+        if ($normalization === null) {
+            $normalization = QuotationNormalization::query()->create([
+                'tenant_id' => $tenant->id,
+                'quotation_id' => $quotation->id,
+                'quotation_version_id' => $version->id,
+                'normalization_revision' => 1,
+                'status' => QuotationNormalizationStatus::NeedsReview,
+                'is_current_for_version' => true,
+            ]);
+        } else {
+            $normalization->fields()->delete();
+            $normalization->attachments()->delete();
+            $normalization->lineGroups()->delete();
+            $normalization->issues()->delete();
+            $normalization->forceFill([
+                'status' => QuotationNormalizationStatus::NeedsReview,
+                'is_current_for_version' => true,
+            ])->save();
+        }
 
         $normalization->issues()->create([
             'tenant_id' => $tenant->id,
