@@ -154,7 +154,7 @@ Tenant and permission rules:
 
 - Create: `apps/api/tests/Feature/QuotationVersionApiTest.php`
 
-- [ ] Add the backend feature test class.
+- [x] Add the backend feature test class.
 
 Create `apps/api/tests/Feature/QuotationVersionApiTest.php` with this starting content. The helper block for this test class is included in the next step and must be appended before the final class closing brace.
 
@@ -473,7 +473,7 @@ class QuotationVersionApiTest extends TestCase
 }
 ```
 
-- [ ] Append helper methods to `QuotationVersionApiTest`.
+- [x] Append helper methods to `QuotationVersionApiTest`.
 
 Append these helper methods below `validRevisionPayload()` and before the class closing brace:
 
@@ -637,7 +637,7 @@ private function validManualEntryPayload(array $overrides = []): array
 }
 ```
 
-- [ ] Run the backend test before implementation.
+- [x] Run the backend test before implementation.
 
 Run:
 
