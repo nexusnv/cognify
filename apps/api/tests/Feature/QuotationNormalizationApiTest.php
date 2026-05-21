@@ -173,6 +173,35 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertJsonPath('error.code', 'conflict');
     }
 
+    public function test_corrections_reject_foreign_issue_id_with_conflict_not_500(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $normalization = $this->normalizationNeedingReview($tenant, $requester, $buyer);
+        $foreignNormalization = $this->normalizationForTenant($tenant);
+        $foreignIssue = $foreignNormalization->issues()->create([
+            'tenant_id' => $tenant->id,
+            'severity' => 'warning',
+            'status' => 'open',
+            'issue_code' => 'format_hint',
+            'field_path' => 'manualEntry.currency',
+            'message' => 'Foreign issue for testing.',
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/corrections", [
+                'corrections' => [[
+                    'issueId' => (string) $foreignIssue->id,
+                    'fieldPath' => 'manualEntry.currency',
+                    'correctedValue' => 'USD',
+                    'correctionNote' => 'Supplier quote is USD.',
+                    'resolutionNote' => 'Currency confirmed against submitted quotation.',
+                ]],
+            ])
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+    }
+
     public function test_line_mapping_rejects_missing_line_group_description(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

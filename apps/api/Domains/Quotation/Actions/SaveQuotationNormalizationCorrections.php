@@ -52,7 +52,7 @@ class SaveQuotationNormalizationCorrections
                         ->first();
 
                     if ($issue === null) {
-                        throw new InvalidArgumentException('Quotation normalization correction issue must belong to the same tenant and normalization.');
+                        throw new ConflictHttpException('Quotation normalization correction issue must belong to the same tenant and normalization.');
                     }
                 }
 
