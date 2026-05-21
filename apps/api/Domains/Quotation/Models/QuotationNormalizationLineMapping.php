@@ -46,11 +46,12 @@ class QuotationNormalizationLineMapping extends Model
 
             DB::transaction(function () use ($mapping): void {
                 $lineGroup = QuotationNormalizationLineGroup::query()
+                    ->with('normalization')
                     ->whereKey($mapping->quotation_normalization_line_group_id)
                     ->lockForUpdate()
                     ->first();
 
-                if ($lineGroup === null) {
+                if ($lineGroup === null || $lineGroup->normalization === null) {
                     throw new InvalidArgumentException('Quotation normalization line mapping must belong to the same tenant as the line group.');
                 }
 
@@ -68,8 +69,12 @@ class QuotationNormalizationLineMapping extends Model
                         ->lockForUpdate()
                         ->first();
 
-                    if ($lineItem === null || $lineItem->tenant_id !== $mapping->tenant_id) {
-                        throw new InvalidArgumentException('Quotation normalization line mapping version line item must belong to the same tenant.');
+                    if (
+                        $lineItem === null
+                        || $lineItem->tenant_id !== $mapping->tenant_id
+                        || $lineItem->quotation_version_id !== $lineGroup->normalization->quotation_version_id
+                    ) {
+                        throw new InvalidArgumentException('Quotation normalization line mapping version line item must belong to the same tenant and source quotation version.');
                     }
                 }
             });

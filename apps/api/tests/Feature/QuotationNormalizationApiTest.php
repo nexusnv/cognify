@@ -190,12 +190,49 @@ class QuotationNormalizationApiTest extends TestCase
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Quotation normalization line mapping version line item must belong to the same tenant.');
+        $this->expectExceptionMessage('Quotation normalization line mapping version line item must belong to the same tenant and source quotation version.');
 
         $lineGroupA->mappings()->create([
             'tenant_id' => $tenantA->id,
             'rfq_line_item_id' => 'rfq-line-1',
             'quotation_version_line_item_id' => $foreignLineItem->id,
+            'mapping_type' => 'full',
+        ]);
+    }
+
+    public function test_line_mapping_rejects_same_tenant_different_source_version_line_item(): void
+    {
+        [$tenant] = $this->tenantUser('buyer');
+        $normalization = $this->normalizationForTenant($tenant);
+        $lineGroup = $normalization->lineGroups()->create([
+            'tenant_id' => $tenant->id,
+            'group_number' => 1,
+            'pricing_mode' => 'bundle',
+        ]);
+
+        $sourceQuotation = Quotation::query()->whereKey($normalization->quotation_id)->firstOrFail();
+        $versionTwo = QuotationVersion::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $sourceQuotation->id,
+            'version_number' => 2,
+            'status' => 'draft',
+        ]);
+
+        $foreignVersionLineItem = $versionTwo->lineItems()->create([
+            'tenant_id' => $tenant->id,
+            'description' => 'Different version line',
+            'quantity' => '1.0000',
+            'unit' => 'each',
+            'position' => 1,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Quotation normalization line mapping version line item must belong to the same tenant and source quotation version.');
+
+        $lineGroup->mappings()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_line_item_id' => 'rfq-line-1',
+            'quotation_version_line_item_id' => $foreignVersionLineItem->id,
             'mapping_type' => 'full',
         ]);
     }
