@@ -660,7 +660,7 @@ Expected result: tests fail because `QuotationVersion`, version routes, version 
 - Create: `apps/api/Domains/Quotation/Models/QuotationVersionLineItem.php`
 - Modify: `apps/api/Domains/Quotation/Models/Quotation.php`
 
-- [ ] Add the quotation versions migration.
+- [x] Add the quotation versions migration.
 
 Create `apps/api/database/migrations/2026_05_20_040000_create_quotation_versions_table.php`:
 
@@ -725,7 +725,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add the quotation version line items migration.
+- [x] Add the quotation version line items migration.
 
 Create `apps/api/database/migrations/2026_05_20_041000_create_quotation_version_line_items_table.php`:
 
@@ -774,7 +774,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add current version fields to quotations.
+- [x] Add current version fields to quotations.
 
 Create `apps/api/database/migrations/2026_05_20_042000_add_current_version_to_quotations_table.php`:
 
@@ -810,7 +810,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] Add the `QuotationVersion` model.
+- [x] Add the `QuotationVersion` model.
 
 Create `apps/api/Domains/Quotation/Models/QuotationVersion.php`:
 
@@ -940,7 +940,7 @@ class QuotationVersion extends Model
 }
 ```
 
-- [ ] Add the `QuotationVersionLineItem` model.
+- [x] Add the `QuotationVersionLineItem` model.
 
 Create `apps/api/Domains/Quotation/Models/QuotationVersionLineItem.php`:
 
@@ -1026,7 +1026,7 @@ class QuotationVersionLineItem extends Model
 }
 ```
 
-- [ ] Extend `Quotation`.
+- [x] Extend `Quotation`.
 
 In `apps/api/Domains/Quotation/Models/Quotation.php`, add these imports:
 
