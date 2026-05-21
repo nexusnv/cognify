@@ -7,6 +7,8 @@ use Domains\Quotation\States\QuotationNormalizationPricingMode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class QuotationNormalizationLineGroup extends Model
 {
@@ -28,6 +30,34 @@ class QuotationNormalizationLineGroup extends Model
             'bundle_total_amount' => 'decimal:2',
             'group_number' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $lineGroup): void {
+            if ($lineGroup->exists && ! $lineGroup->isDirty('tenant_id') && ! $lineGroup->isDirty('normalization_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($lineGroup): void {
+                $normalization = QuotationNormalization::query()
+                    ->whereKey($lineGroup->normalization_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($normalization === null) {
+                    throw new InvalidArgumentException('Quotation normalization line group must belong to the same tenant as the normalization.');
+                }
+
+                if ($lineGroup->tenant_id === null) {
+                    $lineGroup->tenant_id = $normalization->tenant_id;
+                }
+
+                if ($lineGroup->tenant_id !== $normalization->tenant_id) {
+                    throw new InvalidArgumentException('Quotation normalization line group must belong to the same tenant as the normalization.');
+                }
+            });
+        });
     }
 
     /**

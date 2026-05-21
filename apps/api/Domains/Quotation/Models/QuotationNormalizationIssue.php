@@ -9,6 +9,8 @@ use Domains\Quotation\States\QuotationNormalizationIssueStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class QuotationNormalizationIssue extends Model
 {
@@ -36,6 +38,34 @@ class QuotationNormalizationIssue extends Model
             'suggested_value' => 'array',
             'resolved_at' => 'immutable_datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $issue): void {
+            if ($issue->exists && ! $issue->isDirty('tenant_id') && ! $issue->isDirty('normalization_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($issue): void {
+                $normalization = QuotationNormalization::query()
+                    ->whereKey($issue->normalization_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($normalization === null) {
+                    throw new InvalidArgumentException('Quotation normalization issue must belong to the same tenant as the normalization.');
+                }
+
+                if ($issue->tenant_id === null) {
+                    $issue->tenant_id = $normalization->tenant_id;
+                }
+
+                if ($issue->tenant_id !== $normalization->tenant_id) {
+                    throw new InvalidArgumentException('Quotation normalization issue must belong to the same tenant as the normalization.');
+                }
+            });
+        });
     }
 
     /**

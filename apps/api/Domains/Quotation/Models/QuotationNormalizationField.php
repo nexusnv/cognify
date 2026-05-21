@@ -5,6 +5,8 @@ namespace Domains\Quotation\Models;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class QuotationNormalizationField extends Model
 {
@@ -29,6 +31,34 @@ class QuotationNormalizationField extends Model
             'provenance' => 'array',
             'confidence' => 'decimal:4',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $field): void {
+            if ($field->exists && ! $field->isDirty('tenant_id') && ! $field->isDirty('normalization_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($field): void {
+                $normalization = QuotationNormalization::query()
+                    ->whereKey($field->normalization_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($normalization === null) {
+                    throw new InvalidArgumentException('Quotation normalization field must belong to the same tenant as the normalization.');
+                }
+
+                if ($field->tenant_id === null) {
+                    $field->tenant_id = $normalization->tenant_id;
+                }
+
+                if ($field->tenant_id !== $normalization->tenant_id) {
+                    throw new InvalidArgumentException('Quotation normalization field must belong to the same tenant as the normalization.');
+                }
+            });
+        });
     }
 
     /**

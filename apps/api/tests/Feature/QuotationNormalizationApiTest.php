@@ -19,6 +19,7 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -148,6 +149,57 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_root_normalization_rejects_cross_tenant_write(): void
+    {
+        [$tenantA] = $this->tenantUser('buyer');
+        [$tenantB] = $this->tenantUser('buyer');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Quotation normalization quotation must belong to the same tenant.');
+
+        [$quotationB, $versionB] = $this->quotationVersionForTenant($tenantB);
+
+        QuotationNormalization::query()->create([
+            'tenant_id' => $tenantA->id,
+            'quotation_id' => $quotationB->id,
+            'quotation_version_id' => $versionB->id,
+            'normalization_revision' => 1,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_line_mapping_rejects_cross_tenant_version_line_item(): void
+    {
+        [$tenantA] = $this->tenantUser('buyer');
+        [$tenantB] = $this->tenantUser('buyer');
+
+        [, $versionB] = $this->quotationVersionForTenant($tenantB);
+        $normalizationA = $this->normalizationForTenant($tenantA);
+        $lineGroupA = $normalizationA->lineGroups()->create([
+            'tenant_id' => $tenantA->id,
+            'group_number' => 1,
+            'pricing_mode' => 'bundle',
+        ]);
+
+        $foreignLineItem = $versionB->lineItems()->create([
+            'tenant_id' => $tenantB->id,
+            'description' => 'Foreign line',
+            'quantity' => '1.0000',
+            'unit' => 'each',
+            'position' => 1,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Quotation normalization line mapping version line item must belong to the same tenant.');
+
+        $lineGroupA->mappings()->create([
+            'tenant_id' => $tenantA->id,
+            'rfq_line_item_id' => 'rfq-line-1',
+            'quotation_version_line_item_id' => $foreignLineItem->id,
+            'mapping_type' => 'full',
+        ]);
+    }
+
     private function normalizationNeedingReview(Tenant $tenant, User $requester, User $buyer): QuotationNormalization
     {
         $rfq = $this->draftRfq($tenant, $requester, $buyer);
@@ -181,6 +233,41 @@ class QuotationNormalizationApiTest extends TestCase
         return $normalization->refresh()->load([
             'quotationVersion.lineItems',
             'issues',
+        ]);
+    }
+
+    /**
+     * @return array{Quotation, QuotationVersion}
+     */
+    private function quotationVersionForTenant(Tenant $tenant): array
+    {
+        $quotation = Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'number' => 'Q-'.Str::random(8),
+            'status' => 'draft',
+            'currency' => 'USD',
+        ]);
+
+        $version = QuotationVersion::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'version_number' => 1,
+            'status' => 'draft',
+        ]);
+
+        return [$quotation, $version];
+    }
+
+    private function normalizationForTenant(Tenant $tenant): QuotationNormalization
+    {
+        [$quotation, $version] = $this->quotationVersionForTenant($tenant);
+
+        return QuotationNormalization::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 1,
+            'status' => 'pending',
         ]);
     }
 

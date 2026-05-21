@@ -8,6 +8,8 @@ use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class QuotationNormalization extends Model
 {
@@ -41,6 +43,85 @@ class QuotationNormalization extends Model
             'normalization_revision' => 'integer',
             'job_attempt_count' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $normalization): void {
+            if ($normalization->exists
+                && ! $normalization->isDirty('tenant_id')
+                && ! $normalization->isDirty('quotation_id')
+                && ! $normalization->isDirty('quotation_version_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($normalization): void {
+                $quotation = null;
+                $version = null;
+
+                if ($normalization->quotation_id !== null) {
+                    $quotation = Quotation::query()
+                        ->whereKey($normalization->quotation_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($quotation === null) {
+                        throw new InvalidArgumentException('Quotation normalization quotation must belong to the same tenant.');
+                    }
+                }
+
+                if ($normalization->quotation_version_id !== null) {
+                    $version = QuotationVersion::query()
+                        ->whereKey($normalization->quotation_version_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($version === null) {
+                        throw new InvalidArgumentException('Quotation normalization version must belong to the same tenant and quotation.');
+                    }
+                }
+
+                if ($normalization->tenant_id === null) {
+                    $normalization->tenant_id = $quotation?->tenant_id
+                        ?? $version?->tenant_id;
+                }
+
+                if ($normalization->tenant_id === null) {
+                    throw new InvalidArgumentException('Quotation normalization tenant is required.');
+                }
+
+                if ($quotation === null && $normalization->quotation_version_id !== null) {
+                    $quotation = Quotation::query()
+                        ->whereKey($version->quotation_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($quotation === null) {
+                        throw new InvalidArgumentException('Quotation normalization quotation must belong to the same tenant.');
+                    }
+
+                    $normalization->quotation_id = $quotation->id;
+                }
+
+                if ($quotation !== null && $quotation->tenant_id !== $normalization->tenant_id) {
+                    throw new InvalidArgumentException('Quotation normalization quotation must belong to the same tenant.');
+                }
+
+                if ($version !== null) {
+                    if ($version->tenant_id !== $normalization->tenant_id) {
+                        throw new InvalidArgumentException('Quotation normalization version must belong to the same tenant and quotation.');
+                    }
+
+                    if ($normalization->quotation_id === null) {
+                        $normalization->quotation_id = $version->quotation_id;
+                    }
+
+                    if ($version->quotation_id !== $normalization->quotation_id) {
+                        throw new InvalidArgumentException('Quotation normalization version must belong to the same tenant and quotation.');
+                    }
+                }
+            });
+        });
     }
 
     /**

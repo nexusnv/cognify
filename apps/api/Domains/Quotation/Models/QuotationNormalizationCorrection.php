@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class QuotationNormalizationCorrection extends Model
 {
@@ -28,6 +30,48 @@ class QuotationNormalizationCorrection extends Model
             'previous_normalized_value' => 'array',
             'corrected_value' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $correction): void {
+            if ($correction->exists
+                && ! $correction->isDirty('tenant_id')
+                && ! $correction->isDirty('normalization_id')
+                && ! $correction->isDirty('issue_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($correction): void {
+                $normalization = QuotationNormalization::query()
+                    ->whereKey($correction->normalization_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($normalization === null) {
+                    throw new InvalidArgumentException('Quotation normalization correction must belong to the same tenant as the normalization.');
+                }
+
+                if ($correction->tenant_id === null) {
+                    $correction->tenant_id = $normalization->tenant_id;
+                }
+
+                if ($correction->tenant_id !== $normalization->tenant_id) {
+                    throw new InvalidArgumentException('Quotation normalization correction must belong to the same tenant as the normalization.');
+                }
+
+                if ($correction->issue_id !== null) {
+                    $issue = QuotationNormalizationIssue::query()
+                        ->whereKey($correction->issue_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($issue === null || $issue->tenant_id !== $correction->tenant_id || $issue->normalization_id !== $correction->normalization_id) {
+                        throw new InvalidArgumentException('Quotation normalization correction issue must belong to the same tenant and normalization.');
+                    }
+                }
+            });
+        });
     }
 
     /**
