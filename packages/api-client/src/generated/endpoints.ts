@@ -19,6 +19,8 @@ import type {
   ApprovalTaskActionRequest,
   ApprovalTaskQueueResponse,
   ApprovalTaskResponse,
+  ApproveQuotationNormalizationRequest,
+  ApproveQuotationNormalizationWithWarningsRequest,
   AttachmentListResponse,
   AttachmentResponse,
   AttachmentUploadRequest,
@@ -43,6 +45,7 @@ import type {
   ListGlobalSearchParams,
   ListNotificationsParams,
   ListProjectsParams,
+  ListQuotationNormalizationsParams,
   ListRequisitionActivity200,
   ListRequisitionLineItemSuggestionsParams,
   ListRequisitionsParams,
@@ -59,6 +62,8 @@ import type {
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
+  QuotationNormalizationResponse,
+  QuotationNormalizationSummaryListResponse,
   QuotationNullableResponse,
   QuotationNullableVendorPortalResponse,
   QuotationResponse,
@@ -83,6 +88,8 @@ import type {
   RouteRequisitionApprovalResponse,
   SaveQuotationManualEntryRequest,
   SaveQuotationManualEntryRequestForVendor,
+  SaveQuotationNormalizationCorrectionsRequest,
+  SaveQuotationNormalizationLineMappingsRequest,
   SearchResponse,
   SetCurrentTenantRequest,
   SourcingIntakeReviewCloseRequest,
@@ -2822,6 +2829,11 @@ export type createRequisitionCommentResponse404 = {
   status: 404;
 };
 
+export type createRequisitionCommentResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type createRequisitionCommentResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
@@ -2834,6 +2846,7 @@ export type createRequisitionCommentResponseError = (
   | createRequisitionCommentResponse401
   | createRequisitionCommentResponse403
   | createRequisitionCommentResponse404
+  | createRequisitionCommentResponse409
   | createRequisitionCommentResponse422
 ) & {
   headers: Headers;
@@ -5704,6 +5717,11 @@ export type storeRfqInvitationQuotationAttachmentResponse404 = {
   status: 404;
 };
 
+export type storeRfqInvitationQuotationAttachmentResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type storeRfqInvitationQuotationAttachmentResponse422 = {
   data: ValidationFailedResponse;
   status: 422;
@@ -5717,6 +5735,7 @@ export type storeRfqInvitationQuotationAttachmentResponseError = (
   | storeRfqInvitationQuotationAttachmentResponse401
   | storeRfqInvitationQuotationAttachmentResponse403
   | storeRfqInvitationQuotationAttachmentResponse404
+  | storeRfqInvitationQuotationAttachmentResponse409
   | storeRfqInvitationQuotationAttachmentResponse422
 ) & {
   headers: Headers;
@@ -5769,6 +5788,11 @@ export type listQuotationAttachmentsResponse404 = {
   status: 404;
 };
 
+export type listQuotationAttachmentsResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
 export type listQuotationAttachmentsResponseSuccess = listQuotationAttachmentsResponse200 & {
   headers: Headers;
 };
@@ -5776,6 +5800,7 @@ export type listQuotationAttachmentsResponseError = (
   | listQuotationAttachmentsResponse401
   | listQuotationAttachmentsResponse403
   | listQuotationAttachmentsResponse404
+  | listQuotationAttachmentsResponse409
 ) & {
   headers: Headers;
 };
@@ -6009,6 +6034,535 @@ export const showQuotationVersion = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary List quotation normalizations
+ */
+export type listQuotationNormalizationsResponse200 = {
+  data: QuotationNormalizationSummaryListResponse;
+  status: 200;
+};
+
+export type listQuotationNormalizationsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listQuotationNormalizationsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listQuotationNormalizationsResponseSuccess = listQuotationNormalizationsResponse200 & {
+  headers: Headers;
+};
+export type listQuotationNormalizationsResponseError = (
+  | listQuotationNormalizationsResponse401
+  | listQuotationNormalizationsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listQuotationNormalizationsResponse =
+  | listQuotationNormalizationsResponseSuccess
+  | listQuotationNormalizationsResponseError;
+
+export const getListQuotationNormalizationsUrl = (params?: ListQuotationNormalizationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["status"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : v.toString());
+      });
+      return;
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/quotation-normalizations?${stringifiedParams}`
+    : `/api/quotation-normalizations`;
+};
+
+export const listQuotationNormalizations = async (
+  params?: ListQuotationNormalizationsParams,
+  options?: RequestInit,
+): Promise<listQuotationNormalizationsResponse> => {
+  return cognifyFetch<listQuotationNormalizationsResponse>(
+    getListQuotationNormalizationsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Show quotation normalization
+ */
+export type showQuotationNormalizationResponse200 = {
+  data: QuotationNormalizationResponse;
+  status: 200;
+};
+
+export type showQuotationNormalizationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showQuotationNormalizationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showQuotationNormalizationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showQuotationNormalizationResponseSuccess = showQuotationNormalizationResponse200 & {
+  headers: Headers;
+};
+export type showQuotationNormalizationResponseError = (
+  | showQuotationNormalizationResponse401
+  | showQuotationNormalizationResponse403
+  | showQuotationNormalizationResponse404
+) & {
+  headers: Headers;
+};
+
+export type showQuotationNormalizationResponse =
+  | showQuotationNormalizationResponseSuccess
+  | showQuotationNormalizationResponseError;
+
+export const getShowQuotationNormalizationUrl = (normalization: string) => {
+  return `/api/quotation-normalizations/${normalization}`;
+};
+
+export const showQuotationNormalization = async (
+  normalization: string,
+  options?: RequestInit,
+): Promise<showQuotationNormalizationResponse> => {
+  return cognifyFetch<showQuotationNormalizationResponse>(
+    getShowQuotationNormalizationUrl(normalization),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Save quotation normalization corrections
+ */
+export type saveQuotationNormalizationCorrectionsResponse200 = {
+  data: QuotationNormalizationResponse;
+  status: 200;
+};
+
+export type saveQuotationNormalizationCorrectionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type saveQuotationNormalizationCorrectionsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type saveQuotationNormalizationCorrectionsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type saveQuotationNormalizationCorrectionsResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type saveQuotationNormalizationCorrectionsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type saveQuotationNormalizationCorrectionsResponseSuccess =
+  saveQuotationNormalizationCorrectionsResponse200 & {
+    headers: Headers;
+  };
+export type saveQuotationNormalizationCorrectionsResponseError = (
+  | saveQuotationNormalizationCorrectionsResponse401
+  | saveQuotationNormalizationCorrectionsResponse403
+  | saveQuotationNormalizationCorrectionsResponse404
+  | saveQuotationNormalizationCorrectionsResponse409
+  | saveQuotationNormalizationCorrectionsResponse422
+) & {
+  headers: Headers;
+};
+
+export type saveQuotationNormalizationCorrectionsResponse =
+  | saveQuotationNormalizationCorrectionsResponseSuccess
+  | saveQuotationNormalizationCorrectionsResponseError;
+
+export const getSaveQuotationNormalizationCorrectionsUrl = (normalization: string) => {
+  return `/api/quotation-normalizations/${normalization}/corrections`;
+};
+
+export const saveQuotationNormalizationCorrections = async (
+  normalization: string,
+  saveQuotationNormalizationCorrectionsRequest: SaveQuotationNormalizationCorrectionsRequest,
+  options?: RequestInit,
+): Promise<saveQuotationNormalizationCorrectionsResponse> => {
+  return cognifyFetch<saveQuotationNormalizationCorrectionsResponse>(
+    getSaveQuotationNormalizationCorrectionsUrl(normalization),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationNormalizationCorrectionsRequest),
+    },
+  );
+};
+
+/**
+ * @summary Save quotation normalization line mappings
+ */
+export type saveQuotationNormalizationLineMappingsResponse200 = {
+  data: QuotationNormalizationResponse;
+  status: 200;
+};
+
+export type saveQuotationNormalizationLineMappingsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type saveQuotationNormalizationLineMappingsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type saveQuotationNormalizationLineMappingsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type saveQuotationNormalizationLineMappingsResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type saveQuotationNormalizationLineMappingsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type saveQuotationNormalizationLineMappingsResponseSuccess =
+  saveQuotationNormalizationLineMappingsResponse200 & {
+    headers: Headers;
+  };
+export type saveQuotationNormalizationLineMappingsResponseError = (
+  | saveQuotationNormalizationLineMappingsResponse401
+  | saveQuotationNormalizationLineMappingsResponse403
+  | saveQuotationNormalizationLineMappingsResponse404
+  | saveQuotationNormalizationLineMappingsResponse409
+  | saveQuotationNormalizationLineMappingsResponse422
+) & {
+  headers: Headers;
+};
+
+export type saveQuotationNormalizationLineMappingsResponse =
+  | saveQuotationNormalizationLineMappingsResponseSuccess
+  | saveQuotationNormalizationLineMappingsResponseError;
+
+export const getSaveQuotationNormalizationLineMappingsUrl = (normalization: string) => {
+  return `/api/quotation-normalizations/${normalization}/line-mappings`;
+};
+
+export const saveQuotationNormalizationLineMappings = async (
+  normalization: string,
+  saveQuotationNormalizationLineMappingsRequest: SaveQuotationNormalizationLineMappingsRequest,
+  options?: RequestInit,
+): Promise<saveQuotationNormalizationLineMappingsResponse> => {
+  return cognifyFetch<saveQuotationNormalizationLineMappingsResponse>(
+    getSaveQuotationNormalizationLineMappingsUrl(normalization),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationNormalizationLineMappingsRequest),
+    },
+  );
+};
+
+/**
+ * @summary Approve quotation normalization
+ */
+export type approveQuotationNormalizationResponse200 = {
+  data: QuotationNormalizationResponse;
+  status: 200;
+};
+
+export type approveQuotationNormalizationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type approveQuotationNormalizationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type approveQuotationNormalizationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type approveQuotationNormalizationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type approveQuotationNormalizationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type approveQuotationNormalizationResponseSuccess =
+  approveQuotationNormalizationResponse200 & {
+    headers: Headers;
+  };
+export type approveQuotationNormalizationResponseError = (
+  | approveQuotationNormalizationResponse401
+  | approveQuotationNormalizationResponse403
+  | approveQuotationNormalizationResponse404
+  | approveQuotationNormalizationResponse409
+  | approveQuotationNormalizationResponse422
+) & {
+  headers: Headers;
+};
+
+export type approveQuotationNormalizationResponse =
+  | approveQuotationNormalizationResponseSuccess
+  | approveQuotationNormalizationResponseError;
+
+export const getApproveQuotationNormalizationUrl = (normalization: string) => {
+  return `/api/quotation-normalizations/${normalization}/approve`;
+};
+
+export const approveQuotationNormalization = async (
+  normalization: string,
+  approveQuotationNormalizationRequest?: ApproveQuotationNormalizationRequest,
+  options?: RequestInit,
+): Promise<approveQuotationNormalizationResponse> => {
+  return cognifyFetch<approveQuotationNormalizationResponse>(
+    getApproveQuotationNormalizationUrl(normalization),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(approveQuotationNormalizationRequest),
+    },
+  );
+};
+
+/**
+ * @summary Approve quotation normalization with warnings
+ */
+export type approveQuotationNormalizationWithWarningsResponse200 = {
+  data: QuotationNormalizationResponse;
+  status: 200;
+};
+
+export type approveQuotationNormalizationWithWarningsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type approveQuotationNormalizationWithWarningsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type approveQuotationNormalizationWithWarningsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type approveQuotationNormalizationWithWarningsResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type approveQuotationNormalizationWithWarningsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type approveQuotationNormalizationWithWarningsResponseSuccess =
+  approveQuotationNormalizationWithWarningsResponse200 & {
+    headers: Headers;
+  };
+export type approveQuotationNormalizationWithWarningsResponseError = (
+  | approveQuotationNormalizationWithWarningsResponse401
+  | approveQuotationNormalizationWithWarningsResponse403
+  | approveQuotationNormalizationWithWarningsResponse404
+  | approveQuotationNormalizationWithWarningsResponse409
+  | approveQuotationNormalizationWithWarningsResponse422
+) & {
+  headers: Headers;
+};
+
+export type approveQuotationNormalizationWithWarningsResponse =
+  | approveQuotationNormalizationWithWarningsResponseSuccess
+  | approveQuotationNormalizationWithWarningsResponseError;
+
+export const getApproveQuotationNormalizationWithWarningsUrl = (normalization: string) => {
+  return `/api/quotation-normalizations/${normalization}/approve-with-warnings`;
+};
+
+export const approveQuotationNormalizationWithWarnings = async (
+  normalization: string,
+  approveQuotationNormalizationWithWarningsRequest: ApproveQuotationNormalizationWithWarningsRequest,
+  options?: RequestInit,
+): Promise<approveQuotationNormalizationWithWarningsResponse> => {
+  return cognifyFetch<approveQuotationNormalizationWithWarningsResponse>(
+    getApproveQuotationNormalizationWithWarningsUrl(normalization),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(approveQuotationNormalizationWithWarningsRequest),
+    },
+  );
+};
+
+/**
+ * @summary Create quotation normalization revision
+ */
+export type createQuotationNormalizationRevisionResponse201 = {
+  data: QuotationNormalizationResponse;
+  status: 201;
+};
+
+export type createQuotationNormalizationRevisionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createQuotationNormalizationRevisionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createQuotationNormalizationRevisionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createQuotationNormalizationRevisionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createQuotationNormalizationRevisionResponseSuccess =
+  createQuotationNormalizationRevisionResponse201 & {
+    headers: Headers;
+  };
+export type createQuotationNormalizationRevisionResponseError = (
+  | createQuotationNormalizationRevisionResponse401
+  | createQuotationNormalizationRevisionResponse403
+  | createQuotationNormalizationRevisionResponse404
+  | createQuotationNormalizationRevisionResponse409
+) & {
+  headers: Headers;
+};
+
+export type createQuotationNormalizationRevisionResponse =
+  | createQuotationNormalizationRevisionResponseSuccess
+  | createQuotationNormalizationRevisionResponseError;
+
+export const getCreateQuotationNormalizationRevisionUrl = (normalization: string) => {
+  return `/api/quotation-normalizations/${normalization}/revisions`;
+};
+
+export const createQuotationNormalizationRevision = async (
+  normalization: string,
+  options?: RequestInit,
+): Promise<createQuotationNormalizationRevisionResponse> => {
+  return cognifyFetch<createQuotationNormalizationRevisionResponse>(
+    getCreateQuotationNormalizationRevisionUrl(normalization),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Retry quotation version normalization
+ */
+export type retryQuotationVersionNormalizationResponse200 = {
+  data: QuotationNormalizationResponse;
+  status: 200;
+};
+
+export type retryQuotationVersionNormalizationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type retryQuotationVersionNormalizationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type retryQuotationVersionNormalizationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type retryQuotationVersionNormalizationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type retryQuotationVersionNormalizationResponseSuccess =
+  retryQuotationVersionNormalizationResponse200 & {
+    headers: Headers;
+  };
+export type retryQuotationVersionNormalizationResponseError = (
+  | retryQuotationVersionNormalizationResponse401
+  | retryQuotationVersionNormalizationResponse403
+  | retryQuotationVersionNormalizationResponse404
+  | retryQuotationVersionNormalizationResponse409
+) & {
+  headers: Headers;
+};
+
+export type retryQuotationVersionNormalizationResponse =
+  | retryQuotationVersionNormalizationResponseSuccess
+  | retryQuotationVersionNormalizationResponseError;
+
+export const getRetryQuotationVersionNormalizationUrl = (version: number) => {
+  return `/api/quotation-versions/${version}/normalization/retry`;
+};
+
+export const retryQuotationVersionNormalization = async (
+  version: number,
+  options?: RequestInit,
+): Promise<retryQuotationVersionNormalizationResponse> => {
+  return cognifyFetch<retryQuotationVersionNormalizationResponse>(
+    getRetryQuotationVersionNormalizationUrl(version),
+    {
+      ...options,
+      method: "POST",
     },
   );
 };
