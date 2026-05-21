@@ -2051,7 +2051,7 @@ Expected result: all listed backend suites pass.
 - Modify: `apps/api/storage/openapi/openapi.json`
 - Generated: `packages/api-client/src/generated/**`
 
-- [ ] Add OpenAPI schemas.
+- [x] Add OpenAPI schemas.
 
 Add these component schemas to `apps/api/storage/openapi/openapi.json`:
 
@@ -2215,7 +2215,7 @@ Add `QuotationCurrentVersionSummary`:
 
 Add `canCreateRevision` to `QuotationPermissions`.
 
-- [ ] Add OpenAPI operations.
+- [x] Add OpenAPI operations.
 
 Add these paths:
 
@@ -2343,7 +2343,7 @@ Add these paths:
 }
 ```
 
-- [ ] Generate and verify API client.
+- [x] Generate and verify API client.
 
 Run:
 

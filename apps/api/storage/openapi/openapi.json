@@ -251,11 +251,11 @@
           "409": {
             "$ref": "#/components/responses/InvalidState"
           },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequests"
-          },
           "422": {
             "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }
@@ -4244,6 +4244,89 @@
         }
       }
     },
+    "/api/vendor-portal/rfq-invitations/{token}/quotation/versions": {
+      "get": {
+        "operationId": "listVendorPortalQuotationVersions",
+        "tags": [
+          "Vendor Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor-safe quotation versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVersionListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createVendorPortalQuotationVersion",
+        "tags": [
+          "Vendor Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuotationRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created vendor quotation version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVersionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
     "/api/vendor-portal/rfq-invitations/{token}/quotation/manual-entry": {
       "put": {
         "operationId": "saveVendorPortalQuotationManualEntry",
@@ -4591,6 +4674,136 @@
           },
           "422": {
             "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotations/{quotation}/versions": {
+      "get": {
+        "operationId": "listQuotationVersions",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "quotation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotation versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVersionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createQuotationVersion",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "quotation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuotationRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created quotation version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVersionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotations/{quotation}/versions/{version}": {
+      "get": {
+        "operationId": "showQuotationVersion",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "quotation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotation version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationVersionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -9442,7 +9655,9 @@
           "manualEntry",
           "lineItems",
           "completeness",
-          "permissions"
+          "permissions",
+          "versionCount",
+          "currentVersion"
         ],
         "properties": {
           "id": {
@@ -9538,6 +9753,20 @@
           },
           "permissions": {
             "$ref": "#/components/schemas/QuotationPermissions"
+          },
+          "versionCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currentVersion": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationCurrentVersionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -9560,7 +9789,9 @@
           "manualEntry",
           "lineItems",
           "completeness",
-          "permissions"
+          "permissions",
+          "versionCount",
+          "currentVersion"
         ],
         "properties": {
           "id": {
@@ -9649,6 +9880,20 @@
           },
           "permissions": {
             "$ref": "#/components/schemas/QuotationPermissions"
+          },
+          "versionCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currentVersion": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationCurrentVersionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -9693,7 +9938,8 @@
         "required": [
           "canUploadAttachment",
           "canViewAttachments",
-          "canEditManualEntry"
+          "canEditManualEntry",
+          "canCreateRevision"
         ],
         "properties": {
           "canUploadAttachment": {
@@ -9704,8 +9950,281 @@
           },
           "canEditManualEntry": {
             "type": "boolean"
+          },
+          "canCreateRevision": {
+            "type": "boolean"
           }
         }
+      },
+      "QuotationCurrentVersionSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "versionNumber",
+          "isCurrent",
+          "attachmentCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "QuotationVersionAttachment": {
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "mimeType",
+          "extension",
+          "sizeBytes",
+          "checksumSha256",
+          "previewable",
+          "uploadedBy",
+          "createdAt",
+          "available"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "extension": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checksumSha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previewable": {
+            "type": "boolean"
+          },
+          "uploadedBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "available": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotationVersionPermissions": {
+        "type": "object",
+        "required": [
+          "canEdit",
+          "canCreateRevision"
+        ],
+        "properties": {
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canCreateRevision": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotationVersion": {
+        "type": "object",
+        "required": [
+          "id",
+          "quotationId",
+          "versionNumber",
+          "status",
+          "source",
+          "submittedAt",
+          "submittedByUser",
+          "submittedByVendorContact",
+          "isCurrent",
+          "supersededAt",
+          "previousVersionId",
+          "manualEntry",
+          "lineItems",
+          "attachments",
+          "attachmentCount",
+          "completeness",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "quotationId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "withdrawn",
+              "superseded"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "vendor_portal",
+              "buyer_upload",
+              null
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "submittedByUser": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "submittedByVendorContact": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVendorContact"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "supersededAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "previousVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manualEntry": {
+            "$ref": "#/components/schemas/QuotationManualEntry"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationLineItem"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationVersionAttachment"
+            }
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/QuotationCompleteness"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationVersionPermissions"
+          }
+        }
+      },
+      "QuotationVersionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuotationVersion"
+          }
+        }
+      },
+      "QuotationVersionListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationVersion"
+            }
+          }
+        }
+      },
+      "CreateQuotationRevisionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SaveQuotationManualEntryRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "attachmentIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ]
       },
       "QuotationManualEntry": {
         "type": "object",

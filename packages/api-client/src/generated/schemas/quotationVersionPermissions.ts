@@ -5,9 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface QuotationPermissions {
-  canUploadAttachment: boolean;
-  canViewAttachments: boolean;
-  canEditManualEntry: boolean;
+export interface QuotationVersionPermissions {
+  canEdit: boolean;
   canCreateRevision: boolean;
 }

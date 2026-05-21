@@ -28,6 +28,7 @@ import type {
   CollaborationCommentResponse,
   CollaborationMentionCandidateListResponse,
   CreateCollaborationCommentRequest,
+  CreateQuotationRevisionRequest,
   CreateRequisitionRequest,
   CreateRfqInvitationsRequest,
   CurrentUserResponse,
@@ -62,6 +63,8 @@ import type {
   QuotationNullableVendorPortalResponse,
   QuotationResponse,
   QuotationVendorPortalResponse,
+  QuotationVersionListResponse,
+  QuotationVersionResponse,
   ReasonedRequisitionActionRequest,
   RejectApprovalTaskRequest,
   RequestApprovalChangesRequest,
@@ -5316,6 +5319,109 @@ export const showVendorPortalQuotation = async (
   });
 };
 
+export type listVendorPortalQuotationVersionsResponse200 = {
+  data: QuotationVersionListResponse;
+  status: 200;
+};
+
+export type listVendorPortalQuotationVersionsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listVendorPortalQuotationVersionsResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type listVendorPortalQuotationVersionsResponseSuccess =
+  listVendorPortalQuotationVersionsResponse200 & {
+    headers: Headers;
+  };
+export type listVendorPortalQuotationVersionsResponseError = (
+  | listVendorPortalQuotationVersionsResponse404
+  | listVendorPortalQuotationVersionsResponse409
+) & {
+  headers: Headers;
+};
+
+export type listVendorPortalQuotationVersionsResponse =
+  | listVendorPortalQuotationVersionsResponseSuccess
+  | listVendorPortalQuotationVersionsResponseError;
+
+export const getListVendorPortalQuotationVersionsUrl = (token: string) => {
+  return `/api/vendor-portal/rfq-invitations/${token}/quotation/versions`;
+};
+
+export const listVendorPortalQuotationVersions = async (
+  token: string,
+  options?: RequestInit,
+): Promise<listVendorPortalQuotationVersionsResponse> => {
+  return cognifyFetch<listVendorPortalQuotationVersionsResponse>(
+    getListVendorPortalQuotationVersionsUrl(token),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type createVendorPortalQuotationVersionResponse201 = {
+  data: QuotationVersionResponse;
+  status: 201;
+};
+
+export type createVendorPortalQuotationVersionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createVendorPortalQuotationVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createVendorPortalQuotationVersionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createVendorPortalQuotationVersionResponseSuccess =
+  createVendorPortalQuotationVersionResponse201 & {
+    headers: Headers;
+  };
+export type createVendorPortalQuotationVersionResponseError = (
+  | createVendorPortalQuotationVersionResponse404
+  | createVendorPortalQuotationVersionResponse409
+  | createVendorPortalQuotationVersionResponse422
+) & {
+  headers: Headers;
+};
+
+export type createVendorPortalQuotationVersionResponse =
+  | createVendorPortalQuotationVersionResponseSuccess
+  | createVendorPortalQuotationVersionResponseError;
+
+export const getCreateVendorPortalQuotationVersionUrl = (token: string) => {
+  return `/api/vendor-portal/rfq-invitations/${token}/quotation/versions`;
+};
+
+export const createVendorPortalQuotationVersion = async (
+  token: string,
+  createQuotationRevisionRequest: CreateQuotationRevisionRequest,
+  options?: RequestInit,
+): Promise<createVendorPortalQuotationVersionResponse> => {
+  return cognifyFetch<createVendorPortalQuotationVersionResponse>(
+    getCreateVendorPortalQuotationVersionUrl(token),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createQuotationRevisionRequest),
+    },
+  );
+};
+
 /**
  * @summary Save vendor portal quotation manual entry
  */
@@ -5754,6 +5860,154 @@ export const saveQuotationManualEntry = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(saveQuotationManualEntryRequest),
   });
+};
+
+export type listQuotationVersionsResponse200 = {
+  data: QuotationVersionListResponse;
+  status: 200;
+};
+
+export type listQuotationVersionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listQuotationVersionsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listQuotationVersionsResponseSuccess = listQuotationVersionsResponse200 & {
+  headers: Headers;
+};
+export type listQuotationVersionsResponseError = (
+  | listQuotationVersionsResponse401
+  | listQuotationVersionsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listQuotationVersionsResponse =
+  | listQuotationVersionsResponseSuccess
+  | listQuotationVersionsResponseError;
+
+export const getListQuotationVersionsUrl = (quotation: number) => {
+  return `/api/quotations/${quotation}/versions`;
+};
+
+export const listQuotationVersions = async (
+  quotation: number,
+  options?: RequestInit,
+): Promise<listQuotationVersionsResponse> => {
+  return cognifyFetch<listQuotationVersionsResponse>(getListQuotationVersionsUrl(quotation), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type createQuotationVersionResponse201 = {
+  data: QuotationVersionResponse;
+  status: 201;
+};
+
+export type createQuotationVersionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createQuotationVersionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createQuotationVersionResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createQuotationVersionResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createQuotationVersionResponseSuccess = createQuotationVersionResponse201 & {
+  headers: Headers;
+};
+export type createQuotationVersionResponseError = (
+  | createQuotationVersionResponse401
+  | createQuotationVersionResponse404
+  | createQuotationVersionResponse409
+  | createQuotationVersionResponse422
+) & {
+  headers: Headers;
+};
+
+export type createQuotationVersionResponse =
+  | createQuotationVersionResponseSuccess
+  | createQuotationVersionResponseError;
+
+export const getCreateQuotationVersionUrl = (quotation: number) => {
+  return `/api/quotations/${quotation}/versions`;
+};
+
+export const createQuotationVersion = async (
+  quotation: number,
+  createQuotationRevisionRequest: CreateQuotationRevisionRequest,
+  options?: RequestInit,
+): Promise<createQuotationVersionResponse> => {
+  return cognifyFetch<createQuotationVersionResponse>(getCreateQuotationVersionUrl(quotation), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createQuotationRevisionRequest),
+  });
+};
+
+export type showQuotationVersionResponse200 = {
+  data: QuotationVersionResponse;
+  status: 200;
+};
+
+export type showQuotationVersionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showQuotationVersionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showQuotationVersionResponseSuccess = showQuotationVersionResponse200 & {
+  headers: Headers;
+};
+export type showQuotationVersionResponseError = (
+  | showQuotationVersionResponse401
+  | showQuotationVersionResponse404
+) & {
+  headers: Headers;
+};
+
+export type showQuotationVersionResponse =
+  | showQuotationVersionResponseSuccess
+  | showQuotationVersionResponseError;
+
+export const getShowQuotationVersionUrl = (quotation: number, version: number) => {
+  return `/api/quotations/${quotation}/versions/${version}`;
+};
+
+export const showQuotationVersion = async (
+  quotation: number,
+  version: number,
+  options?: RequestInit,
+): Promise<showQuotationVersionResponse> => {
+  return cognifyFetch<showQuotationVersionResponse>(
+    getShowQuotationVersionUrl(quotation, version),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
