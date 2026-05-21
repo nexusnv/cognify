@@ -1,10 +1,9 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   ApproveQuotationNormalizationRequest,
   ApproveQuotationNormalizationWithWarningsRequest,
-  ListQuotationNormalizationsParams,
   QuotationNormalization,
   SaveQuotationNormalizationCorrectionsRequest,
   SaveQuotationNormalizationLineMappingsRequest,
@@ -13,34 +12,11 @@ import {
   approveQuotationNormalization,
   approveQuotationNormalizationWithWarnings,
   createQuotationNormalizationRevision,
-  listQuotationNormalizations,
   retryQuotationVersionNormalization,
   saveQuotationNormalizationCorrections,
   saveQuotationNormalizationLineMappings,
-  showQuotationNormalization,
 } from "../api/quotation-normalization-api";
-
-export const quotationNormalizationKeys = {
-  all: ["quotation-normalizations"] as const,
-  list: (filters: Record<string, unknown>) => [...quotationNormalizationKeys.all, "list", filters] as const,
-  detail: (normalizationId: string) =>
-    [...quotationNormalizationKeys.all, "detail", normalizationId] as const,
-};
-
-export function useQuotationNormalizations(filters: ListQuotationNormalizationsParams = {}) {
-  return useQuery({
-    queryKey: quotationNormalizationKeys.list(filters),
-    queryFn: () => listQuotationNormalizations(filters),
-  });
-}
-
-export function useQuotationNormalization(normalizationId: string | null | undefined) {
-  return useQuery({
-    queryKey: quotationNormalizationKeys.detail(normalizationId ?? "no-normalization"),
-    queryFn: () => showQuotationNormalization(normalizationId as string),
-    enabled: Boolean(normalizationId),
-  });
-}
+import { quotationNormalizationKeys } from "./use-quotation-normalization-queue";
 
 function invalidateQuotationNormalization(queryClient: ReturnType<typeof useQueryClient>, normalization: QuotationNormalization) {
   queryClient.invalidateQueries({ queryKey: quotationNormalizationKeys.all });

@@ -27,10 +27,10 @@ vi.mock("../api/quotation-normalization-api", () => ({
 
 import {
   quotationNormalizationKeys,
-  useApproveQuotationNormalization,
-  useQuotationNormalization,
   useQuotationNormalizations,
-} from "../hooks/use-quotation-normalizations";
+} from "../hooks/use-quotation-normalization-queue";
+import { useQuotationNormalization } from "../hooks/use-quotation-normalization";
+import { useApproveQuotationNormalization } from "../hooks/use-quotation-normalization-actions";
 
 describe("quotation normalization hooks", () => {
   beforeEach(() => {
@@ -47,6 +47,11 @@ describe("quotation normalization hooks", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mocks.listQuotationNormalizationsMock).toHaveBeenCalledWith({ status: ["pending"] });
+    expect(quotationNormalizationKeys.list({ status: ["pending"] })).toEqual([
+      "quotation-normalizations",
+      "list",
+      { status: ["pending"] },
+    ]);
   });
 
   it("passes the normalization id to the detail query", async () => {
