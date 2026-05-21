@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { useVendorQuotation, useVendorQuotationUpload } from "../hooks/use-vendor-quotation";
+import { useVendorQuotation, useVendorQuotationUpload, useVendorQuotationVersions } from "../hooks/use-vendor-quotation";
 import { VendorQuotationManualEntryPanel } from "./vendor-quotation-manual-entry-panel";
+import { VendorQuotationVersionHistory } from "./vendor-quotation-version-history";
 
 const acceptedFileGuidance = "Accepted file types: PDF, DOC, DOCX, XLS, XLSX, or CSV.";
 const acceptedFileTypes = [
@@ -23,12 +24,14 @@ const acceptedFileTypes = [
 
 export function VendorQuotationUploadPanel({ token }: { token: string }) {
   const quotationQuery = useVendorQuotation(token);
+  const versionsQuery = useVendorQuotationVersions(token);
   const uploadMutation = useVendorQuotationUpload(token);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const quotation = quotationQuery.data;
+  const versions = versionsQuery.data ?? [];
   const attachments = quotation?.attachments ?? [];
   const uploadDisabled = quotation?.permissions.canUploadAttachment === false || uploadMutation.isPending;
   const statusLabel = formatQuotationStatus(quotation?.status);
@@ -153,7 +156,10 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
         )}
 
         {quotationQuery.isLoading ? null : (
-          <VendorQuotationManualEntryPanel token={token} quotation={quotation ?? null} />
+          <>
+            <VendorQuotationManualEntryPanel token={token} quotation={quotation ?? null} />
+            <VendorQuotationVersionHistory versions={versions} />
+          </>
         )}
       </div>
     </section>

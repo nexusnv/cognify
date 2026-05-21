@@ -1,12 +1,15 @@
 import { http, HttpResponse } from "msw";
 import type {
   AttachmentVendorPortal,
+  CreateQuotationRevisionRequest,
   SaveQuotationManualEntryRequestForVendor,
 } from "@cognify/api-client/schemas";
 import {
+  appendVendorPortalQuotationVersion,
   appendVendorPortalQuotationAttachment,
   expiredVendorPortalToken,
   getVendorPortalQuotationFixture,
+  getVendorPortalQuotationVersionsFixture,
   updateVendorPortalQuotationManualEntry,
   unavailableVendorPortalToken,
   validVendorPortalToken,
@@ -127,6 +130,35 @@ export const vendorPortalHandlers = [
     const quotation = updateVendorPortalQuotationManualEntry(payload);
 
     return HttpResponse.json({ data: structuredClone(quotation) });
+  }),
+
+  http.get("/api/vendor-portal/rfq-invitations/:token/quotation/versions", ({ params }) => {
+    const token = String(params.token);
+
+    if (token !== validVendorPortalToken) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "This vendor portal link could not be found." } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({ data: structuredClone(getVendorPortalQuotationVersionsFixture()) });
+  }),
+
+  http.post("/api/vendor-portal/rfq-invitations/:token/quotation/versions", async ({ request, params }) => {
+    const token = String(params.token);
+
+    if (token !== validVendorPortalToken) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "This vendor portal link could not be found." } },
+        { status: 404 },
+      );
+    }
+
+    const payload = (await request.json()) as CreateQuotationRevisionRequest;
+    const version = appendVendorPortalQuotationVersion(payload);
+
+    return HttpResponse.json({ data: structuredClone(version) }, { status: 201 });
   }),
 ];
 

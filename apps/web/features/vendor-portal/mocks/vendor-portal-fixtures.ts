@@ -1,6 +1,8 @@
 import type {
   AttachmentVendorPortal,
+  CreateQuotationRevisionRequest,
   QuotationVendorPortal,
+  QuotationVersion,
   SaveQuotationManualEntryRequestForVendor,
   VendorPortalRfqInvitation,
 } from "@cognify/api-client/schemas";
@@ -56,10 +58,12 @@ export const vendorPortalQuotationFixture: QuotationVendorPortal | null = null;
 
 let vendorPortalQuotation: QuotationVendorPortal | null = structuredClone(vendorPortalQuotationFixture);
 let vendorPortalQuotationAttachmentSequence = 0;
+let vendorPortalQuotationVersions: QuotationVersion[] = [];
 
 export function resetVendorPortalMockState() {
   vendorPortalQuotation = structuredClone(vendorPortalQuotationFixture);
   vendorPortalQuotationAttachmentSequence = 0;
+  vendorPortalQuotationVersions = [];
 }
 
 export function getVendorPortalQuotationFixture() {
@@ -71,10 +75,15 @@ export function setVendorPortalQuotationFixture(nextQuotation: QuotationVendorPo
   vendorPortalQuotationAttachmentSequence = nextQuotation?.attachments.length ?? 0;
 }
 
+export function getVendorPortalQuotationVersionsFixture() {
+  return vendorPortalQuotationVersions;
+}
+
 export function appendVendorPortalQuotationAttachment(attachment: AttachmentVendorPortal) {
   if (!vendorPortalQuotation) {
     vendorPortalQuotation = buildVendorPortalQuotationFixture([attachment]);
     vendorPortalQuotationAttachmentSequence = 1;
+    appendVendorPortalQuotationVersionSnapshot(vendorPortalQuotation);
     return vendorPortalQuotation;
   }
 
@@ -89,10 +98,18 @@ export function appendVendorPortalQuotationAttachment(attachment: AttachmentVend
     attachments: [attachment, ...vendorPortalQuotation.attachments],
   };
 
+  appendVendorPortalQuotationVersionSnapshot(vendorPortalQuotation);
   return vendorPortalQuotation;
 }
 
 export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntryRequestForVendor) {
+  const quotation = applyVendorPortalQuotationManualEntry(payload);
+  appendVendorPortalQuotationVersionSnapshot(quotation);
+
+  return quotation;
+}
+
+function applyVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntryRequestForVendor) {
   if (!vendorPortalQuotation) {
     vendorPortalQuotation = buildVendorPortalQuotationFixture();
   }
@@ -159,6 +176,87 @@ export function updateVendorPortalQuotationManualEntry(payload: SaveQuotationMan
   };
 
   return vendorPortalQuotation;
+}
+
+export function appendVendorPortalQuotationVersion(payload: CreateQuotationRevisionRequest) {
+  const quotation = applyVendorPortalQuotationManualEntry({
+    ...payload,
+    buyerNotes: null,
+  });
+  return appendVendorPortalQuotationVersionSnapshot(quotation);
+}
+
+function appendVendorPortalQuotationVersionSnapshot(quotation: QuotationVendorPortal) {
+  const previousVersion = vendorPortalQuotationVersions[0] ?? null;
+  const now = new Date().toISOString();
+  const attachments = quotation.attachments.map((attachment) => ({
+    id: attachment.id,
+    filename: attachment.filename,
+    mimeType: attachment.mimeType,
+    extension: attachment.extension,
+    sizeBytes: attachment.sizeBytes,
+    checksumSha256: null,
+    previewable: attachment.previewable,
+    uploadedBy: null,
+    createdAt: attachment.createdAt,
+    available: true,
+  }));
+  const manualEntry = {
+    ...quotation.manualEntry,
+    buyerNotes: null,
+  };
+
+  if (
+    previousVersion &&
+    sameVendorPortalVersionSnapshot(previousVersion, manualEntry, quotation.lineItems, attachments)
+  ) {
+    return previousVersion;
+  }
+
+  vendorPortalQuotationVersions = [
+    {
+      id: `vendor-quotation-version-${vendorPortalQuotationVersions.length + 1}`,
+      quotationId: quotation.id,
+      versionNumber: vendorPortalQuotationVersions.length + 1,
+      status: "received",
+      source: "vendor_portal",
+      submittedAt: now,
+      submittedByUser: null,
+      submittedByVendorContact: quotation.submittedByVendorContact,
+      isCurrent: true,
+      supersededAt: null,
+      previousVersionId: previousVersion?.id ?? null,
+      manualEntry,
+      lineItems: quotation.lineItems,
+      attachments,
+      attachmentCount: quotation.attachments.length,
+      completeness: quotation.completeness,
+      permissions: {
+        canEdit: false,
+        canCreateRevision: true,
+      },
+    },
+    ...vendorPortalQuotationVersions.map((version) => ({
+      ...version,
+      isCurrent: false,
+      supersededAt: now,
+    })),
+  ];
+
+  return vendorPortalQuotationVersions[0];
+}
+
+function sameVendorPortalVersionSnapshot(
+  version: QuotationVersion,
+  manualEntry: QuotationVersion["manualEntry"],
+  lineItems: QuotationVersion["lineItems"],
+  attachments: QuotationVersion["attachments"],
+) {
+  return (
+    JSON.stringify(version.manualEntry) === JSON.stringify(manualEntry) &&
+    JSON.stringify(version.lineItems) === JSON.stringify(lineItems) &&
+    JSON.stringify(version.attachments) === JSON.stringify(attachments)
+  );
 }
 
 export function buildVendorPortalQuotationFixture(

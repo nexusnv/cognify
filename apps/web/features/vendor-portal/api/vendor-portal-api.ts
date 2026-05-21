@@ -1,11 +1,15 @@
 import {
+  createVendorPortalQuotationVersion as createVendorPortalQuotationVersionEndpoint,
+  listVendorPortalQuotationVersions as listVendorPortalQuotationVersionsEndpoint,
   saveVendorPortalQuotationManualEntry as saveVendorPortalQuotationManualEntryEndpoint,
   showVendorPortalQuotation,
   showVendorPortalRfqInvitation,
   storeVendorPortalQuotationAttachment,
 } from "@cognify/api-client/endpoints";
 import type {
+  CreateQuotationRevisionRequest,
   QuotationVendorPortal,
+  QuotationVersion,
   SaveQuotationManualEntryRequestForVendor,
   VendorPortalRfqInvitation,
 } from "@cognify/api-client/schemas";
@@ -46,6 +50,23 @@ export async function saveVendorPortalQuotationManualEntry(
 ): Promise<QuotationVendorPortal> {
   const response = await saveVendorPortalQuotationManualEntryEndpoint(token, payload);
   if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function listVendorPortalQuotationVersions(token: string): Promise<QuotationVersion[]> {
+  const response = await listVendorPortalQuotationVersionsEndpoint(token);
+  if (response.status !== 200) throw response.data;
+
+  return response.data.data;
+}
+
+export async function createVendorPortalQuotationVersion(
+  token: string,
+  payload: CreateQuotationRevisionRequest,
+): Promise<QuotationVersion> {
+  const response = await createVendorPortalQuotationVersionEndpoint(token, payload);
+  if (response.status !== 201) throw response.data;
 
   return response.data.data;
 }

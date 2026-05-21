@@ -2761,7 +2761,7 @@ Expected result: sourcing workflow tests pass.
 - Modify: `apps/web/features/vendor-portal/mocks/vendor-portal-handlers.ts`
 - Modify: `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`
 
-- [ ] Add vendor portal API wrappers.
+- [x] Add vendor portal API wrappers.
 
 In `apps/web/features/vendor-portal/api/vendor-portal-api.ts`, import generated endpoints and schemas:
 
@@ -2794,7 +2794,7 @@ export async function createVendorPortalQuotationVersion(
 }
 ```
 
-- [ ] Add vendor portal version hooks.
+- [x] Add vendor portal version hooks.
 
 In `apps/web/features/vendor-portal/hooks/use-vendor-quotation.ts`, add:
 
@@ -2831,7 +2831,7 @@ export function useCreateVendorQuotationVersion(token: string) {
 }
 ```
 
-- [ ] Add vendor version history component.
+- [x] Add vendor version history component.
 
 Create `apps/web/features/vendor-portal/components/vendor-quotation-version-history.tsx`:
 
@@ -2869,7 +2869,7 @@ export function VendorQuotationVersionHistory({ versions }: { versions: Quotatio
 }
 ```
 
-- [ ] Render vendor version history.
+- [x] Render vendor version history.
 
 In `apps/web/features/vendor-portal/components/vendor-quotation-upload-panel.tsx`, import:
 
@@ -2891,7 +2891,7 @@ Render below `VendorQuotationManualEntryPanel`:
 <VendorQuotationVersionHistory versions={versions} />
 ```
 
-- [ ] Extend vendor portal mocks.
+- [x] Extend vendor portal mocks.
 
 In `apps/web/features/vendor-portal/mocks/vendor-portal-fixtures.ts`, add `vendorPortalQuotationVersions` state and reset it in `resetVendorPortalMockState()`. Update `updateVendorPortalQuotationManualEntry()` so each save appends a vendor-safe `QuotationVersion` with `buyerNotes: null`.
 
@@ -2956,7 +2956,7 @@ export function appendVendorPortalQuotationVersion(payload: CreateQuotationRevis
 }
 ```
 
-- [ ] Add vendor portal version handlers.
+- [x] Add vendor portal version handlers.
 
 In `apps/web/features/vendor-portal/mocks/vendor-portal-handlers.ts`, add:
 
@@ -2991,7 +2991,7 @@ http.post("/api/vendor-portal/rfq-invitations/:token/quotation/versions", async 
 }),
 ```
 
-- [ ] Add vendor portal workflow test.
+- [x] Add vendor portal workflow test.
 
 Append to `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`:
 
@@ -3026,7 +3026,7 @@ it("shows vendor-safe quotation version history after vendor revisions", async (
 });
 ```
 
-- [ ] Run vendor portal frontend tests.
+- [x] Run vendor portal frontend tests.
 
 Run:
 
