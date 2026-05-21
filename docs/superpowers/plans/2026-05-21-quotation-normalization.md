@@ -647,7 +647,7 @@ git commit -m "feat: normalize quotation versions asynchronously"
 - Modify: `apps/api/app/Auth/Permissions/TenantPermissionResolver.php`
 - Modify: `apps/api/storage/openapi/openapi.json`
 
-- [ ] **Step 1: Add permission flag tests**
+- [x] **Step 1: Add permission flag tests**
 
 Extend `apps/api/tests/Feature/QuotationNormalizationApiTest.php`:
 
@@ -675,11 +675,11 @@ public function test_current_user_permissions_include_normalization_review_for_b
 }
 ```
 
-- [ ] **Step 2: Update permission resolver**
+- [x] **Step 2: Update permission resolver**
 
 Add `canReviewQuotationNormalization` to every role branch in `TenantPermissionResolver.php`.
 
-- [ ] **Step 3: Implement policy**
+- [x] **Step 3: Implement policy**
 
 `QuotationNormalizationPolicy` must:
 
@@ -689,7 +689,7 @@ Add `canReviewQuotationNormalization` to every role branch in `TenantPermissionR
 - Reject mutations when `isMutable()` is false, except creating a new revision from approved records.
 - Reject approval when unresolved blocking issues exist.
 
-- [ ] **Step 4: Implement requests**
+- [x] **Step 4: Implement requests**
 
 Validation highlights:
 
@@ -698,7 +698,7 @@ Validation highlights:
 - `SaveQuotationNormalizationLineMappingsRequest`: `lineGroups` required array; each group requires `groupNumber`, `pricingMode`, `description`, optional `currency`, optional `bundleTotalAmount`, and non-empty `mappings` array.
 - `ApproveQuotationNormalizationRequest`: `approvalNote` nullable for normal approval, required for approve-with-warnings.
 
-- [ ] **Step 5: Implement resources**
+- [x] **Step 5: Implement resources**
 
 `QuotationNormalizationResource` must include:
 
@@ -739,7 +739,7 @@ Validation highlights:
 
 Keep response keys camelCase to match existing generated client conventions.
 
-- [ ] **Step 6: Add routes**
+- [x] **Step 6: Add routes**
 
 Inside the protected tenant route group in `apps/api/routes/api.php`:
 
@@ -756,7 +756,7 @@ Route::post('/quotation-versions/{version}/normalization/retry', [QuotationVersi
 
 Do not add vendor portal normalization routes.
 
-- [ ] **Step 7: Update OpenAPI manually**
+- [x] **Step 7: Update OpenAPI manually**
 
 Add schemas and paths to `apps/api/storage/openapi/openapi.json` before generating the client. Required generated schema names:
 
@@ -771,7 +771,7 @@ Add schemas and paths to `apps/api/storage/openapi/openapi.json` before generati
 - `SaveQuotationNormalizationLineMappingsRequest`
 - `ApproveQuotationNormalizationRequest`
 
-- [ ] **Step 8: Run API tests and route check**
+- [x] **Step 8: Run API tests and route check**
 
 ```bash
 php artisan route:list --path=api/quotation-normalizations
@@ -782,7 +782,7 @@ php artisan test --filter=QuotationVersionApiTest
 
 Expected: route list includes the new endpoints; feature tests pass.
 
-- [ ] **Step 9: Commit API review surface**
+- [x] **Step 9: Commit API review surface**
 
 ```bash
 git add apps/api/storage/openapi/openapi.json
