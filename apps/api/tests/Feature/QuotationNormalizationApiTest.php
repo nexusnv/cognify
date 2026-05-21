@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Quotation\Jobs\NormalizeQuotationVersion;
@@ -30,6 +31,41 @@ use Tests\TestCase;
 class QuotationNormalizationApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_normalization_review_permission_flags_follow_tenant_role_matrix(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
+
+        $requester = User::factory()->create(['password' => Hash::make('secret123')]);
+        $buyer = User::factory()->create(['password' => Hash::make('secret123')]);
+        $approver = User::factory()->create(['password' => Hash::make('secret123')]);
+        $admin = User::factory()->create(['password' => Hash::make('secret123')]);
+
+        $tenant->users()->attach($requester->id, ['role' => TenantRole::Requester->value]);
+        $tenant->users()->attach($buyer->id, ['role' => TenantRole::Buyer->value]);
+        $tenant->users()->attach($approver->id, ['role' => TenantRole::Approver->value]);
+        $tenant->users()->attach($admin->id, ['role' => TenantRole::Admin->value]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.permissions.canReviewQuotationNormalization', false);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.permissions.canReviewQuotationNormalization', true);
+
+        $this->actingAsTenant($tenant, $approver)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.permissions.canReviewQuotationNormalization', false);
+
+        $this->actingAsTenant($tenant, $admin)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.permissions.canReviewQuotationNormalization', true);
+    }
 
     public function test_new_current_quotation_version_dispatches_normalization(): void
     {

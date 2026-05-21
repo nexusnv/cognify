@@ -4808,6 +4808,388 @@
         }
       }
     },
+    "/api/quotation-normalizations": {
+      "get": {
+        "operationId": "listQuotationNormalizations",
+        "summary": "List quotation normalizations",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "processing",
+                  "needs_review",
+                  "ready_for_approval",
+                  "approved",
+                  "approved_with_warnings",
+                  "failed",
+                  "superseded"
+                ]
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotation normalization queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationSummaryListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/quotation-normalizations/{normalization}": {
+      "get": {
+        "operationId": "showQuotationNormalization",
+        "summary": "Show quotation normalization",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "normalization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotation normalization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/quotation-normalizations/{normalization}/corrections": {
+      "post": {
+        "operationId": "saveQuotationNormalizationCorrections",
+        "summary": "Save quotation normalization corrections",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "normalization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationNormalizationCorrectionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated quotation normalization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotation-normalizations/{normalization}/line-mappings": {
+      "post": {
+        "operationId": "saveQuotationNormalizationLineMappings",
+        "summary": "Save quotation normalization line mappings",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "normalization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationNormalizationLineMappingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated quotation normalization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotation-normalizations/{normalization}/approve": {
+      "post": {
+        "operationId": "approveQuotationNormalization",
+        "summary": "Approve quotation normalization",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "normalization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveQuotationNormalizationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approved quotation normalization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotation-normalizations/{normalization}/approve-with-warnings": {
+      "post": {
+        "operationId": "approveQuotationNormalizationWithWarnings",
+        "summary": "Approve quotation normalization with warnings",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "normalization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveQuotationNormalizationWithWarningsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approved quotation normalization with warnings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/quotation-normalizations/{normalization}/revisions": {
+      "post": {
+        "operationId": "createQuotationNormalizationRevision",
+        "summary": "Create quotation normalization revision",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "normalization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created quotation normalization revision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/quotation-versions/{version}/normalization/retry": {
+      "post": {
+        "operationId": "retryQuotationVersionNormalization",
+        "summary": "Retry quotation version normalization",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retried quotation normalization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationNormalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/rfq-invitations/{invitation}/resend": {
       "post": {
         "operationId": "resendRfqInvitation",
@@ -6454,7 +6836,8 @@
           "canUpdateOwnDraftRequisition",
           "canSubmitOwnDraftRequisition",
           "canAccessAdmin",
-          "canManageSourcingIntake"
+          "canManageSourcingIntake",
+          "canReviewQuotationNormalization"
         ],
         "properties": {
           "canCreateRequisition": {
@@ -6473,6 +6856,9 @@
             "type": "boolean"
           },
           "canManageSourcingIntake": {
+            "type": "boolean"
+          },
+          "canReviewQuotationNormalization": {
             "type": "boolean"
           }
         }
@@ -10205,6 +10591,748 @@
             "items": {
               "$ref": "#/components/schemas/QuotationVersion"
             }
+          }
+        }
+      },
+      "QuotationNormalizationPermissions": {
+        "type": "object",
+        "required": [
+          "canEdit",
+          "canApprove",
+          "canApproveWithWarnings",
+          "canRetry",
+          "canCreateRevision"
+        ],
+        "properties": {
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canApproveWithWarnings": {
+            "type": "boolean"
+          },
+          "canRetry": {
+            "type": "boolean"
+          },
+          "canCreateRevision": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotationNormalizationSource": {
+        "type": "object",
+        "required": [
+          "quotationId",
+          "quotationVersionId",
+          "quotationNumber",
+          "versionNumber",
+          "rfqId",
+          "rfqNumber",
+          "vendorId",
+          "vendorName"
+        ],
+        "properties": {
+          "quotationId": {
+            "type": "string"
+          },
+          "quotationVersionId": {
+            "type": "string"
+          },
+          "quotationNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNumber": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rfqId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationNormalizationSummaryCounts": {
+        "type": "object",
+        "required": [
+          "blockingIssueCount",
+          "warningIssueCount",
+          "infoIssueCount"
+        ],
+        "properties": {
+          "blockingIssueCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "warningIssueCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "infoIssueCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "QuotationNormalizationField": {
+        "type": "object",
+        "required": [
+          "id",
+          "fieldPath",
+          "rawValue",
+          "normalizedValue",
+          "dataType",
+          "currency",
+          "confidence",
+          "source",
+          "provenance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "type": "string"
+          },
+          "rawValue": {},
+          "normalizedValue": {},
+          "dataType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provenance": {
+            "type": "object"
+          }
+        }
+      },
+      "QuotationNormalizationLineMapping": {
+        "type": "object",
+        "required": [
+          "id",
+          "rfqLineItemId",
+          "quotationVersionLineItemId",
+          "mappingType",
+          "quantity",
+          "unit",
+          "unitPrice",
+          "lineTotal",
+          "buyerNote"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rfqLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quotationVersionLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mappingType": {
+            "type": "string",
+            "enum": [
+              "full",
+              "partial",
+              "bundled"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineTotal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyerNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationNormalizationLineGroup": {
+        "type": "object",
+        "required": [
+          "id",
+          "groupNumber",
+          "pricingMode",
+          "description",
+          "currency",
+          "bundleTotalAmount",
+          "notes",
+          "mappings"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "groupNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pricingMode": {
+            "type": "string",
+            "enum": [
+              "per_line",
+              "bundle",
+              "included",
+              "unknown"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bundleTotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationNormalizationLineMapping"
+            }
+          }
+        }
+      },
+      "QuotationNormalizationAttachment": {
+        "type": "object",
+        "required": [
+          "id",
+          "quotationVersionAttachmentId",
+          "filename",
+          "mimeType",
+          "extension",
+          "sizeBytes",
+          "checksumSha256",
+          "available",
+          "source",
+          "uploadedAt",
+          "evidenceRole",
+          "issueSummary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "quotationVersionAttachmentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "extension": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeBytes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "checksumSha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uploadedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "evidenceRole": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issueSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationNormalizationIssue": {
+        "type": "object",
+        "required": [
+          "id",
+          "severity",
+          "fieldPath",
+          "issueCode",
+          "message",
+          "rawValue",
+          "suggestedValue",
+          "status",
+          "resolvedByUserId",
+          "resolvedAt",
+          "resolutionNote"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "blocking",
+              "warning",
+              "info"
+            ]
+          },
+          "fieldPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issueCode": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "rawValue": {},
+          "suggestedValue": {},
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved",
+              "acknowledged"
+            ]
+          },
+          "resolvedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resolutionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationNormalizationSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "normalizationRevision",
+          "algorithmVersion",
+          "source",
+          "summary",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "needs_review",
+              "ready_for_approval",
+              "approved",
+              "approved_with_warnings",
+              "failed",
+              "superseded"
+            ]
+          },
+          "normalizationRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "algorithmVersion": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/QuotationNormalizationSource"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/QuotationNormalizationSummaryCounts"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationNormalizationPermissions"
+          }
+        }
+      },
+      "QuotationNormalization": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QuotationNormalizationSummary"
+          },
+          {
+            "type": "object",
+            "required": [
+              "fields",
+              "lineGroups",
+              "attachments",
+              "issues"
+            ],
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QuotationNormalizationField"
+                }
+              },
+              "lineGroups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QuotationNormalizationLineGroup"
+                }
+              },
+              "attachments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QuotationNormalizationAttachment"
+                }
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QuotationNormalizationIssue"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "QuotationNormalizationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuotationNormalization"
+          }
+        }
+      },
+      "QuotationNormalizationSummaryListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationNormalizationSummary"
+            }
+          }
+        }
+      },
+      "SaveQuotationNormalizationCorrectionsRequest": {
+        "type": "object",
+        "required": [
+          "corrections"
+        ],
+        "properties": {
+          "corrections": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "fieldPath",
+                "correctedValue",
+                "correctionNote"
+              ],
+              "properties": {
+                "fieldPath": {
+                  "type": "string"
+                },
+                "correctedValue": {},
+                "issueId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "correctionNote": {
+                  "type": "string"
+                },
+                "resolutionNote": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "SaveQuotationNormalizationLineMappingsRequest": {
+        "type": "object",
+        "required": [
+          "lineGroups"
+        ],
+        "properties": {
+          "lineGroups": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "groupNumber",
+                "pricingMode",
+                "mappings"
+              ],
+              "properties": {
+                "groupNumber": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "pricingMode": {
+                  "type": "string",
+                  "enum": [
+                    "per_line",
+                    "bundle",
+                    "included",
+                    "unknown"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "bundleTotalAmount": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "notes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mappings": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "mappingType"
+                    ],
+                    "properties": {
+                      "rfqLineItemId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "quotationVersionLineItemId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "mappingType": {
+                        "type": "string",
+                        "enum": [
+                          "full",
+                          "partial",
+                          "bundled"
+                        ]
+                      },
+                      "quantity": {
+                        "type": [
+                          "number",
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "unit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "unitPrice": {
+                        "type": [
+                          "number",
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "lineTotal": {
+                        "type": [
+                          "number",
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "buyerNote": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ApproveQuotationNormalizationRequest": {
+        "type": "object",
+        "properties": {
+          "approvalNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ApproveQuotationNormalizationWithWarningsRequest": {
+        "type": "object",
+        "required": [
+          "approvalNote"
+        ],
+        "properties": {
+          "approvalNote": {
+            "type": "string"
           }
         }
       },

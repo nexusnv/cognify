@@ -14,6 +14,7 @@ class NotificationPreferenceDefaults
     public const EVENT_COLLABORATION_MENTIONED = 'collaboration.mentioned';
     public const EVENT_QUOTATION_NORMALIZATION_FAILED = 'quotation_normalization.failed';
     public const EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW = 'quotation_normalization.needs_review';
+    public const EVENT_QUOTATION_NORMALIZATION_APPROVED = 'quotation_normalization.approved';
     public const EVENT_SYSTEM_ANNOUNCEMENT = 'system.announcement';
 
     public const EVENTS = [
@@ -27,6 +28,7 @@ class NotificationPreferenceDefaults
         self::EVENT_COLLABORATION_MENTIONED,
         self::EVENT_QUOTATION_NORMALIZATION_FAILED,
         self::EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW,
+        self::EVENT_QUOTATION_NORMALIZATION_APPROVED,
         self::EVENT_SYSTEM_ANNOUNCEMENT,
     ];
 
@@ -46,6 +48,7 @@ class NotificationPreferenceDefaults
             self::EVENT_COLLABORATION_MENTIONED => ['inApp' => true],
             self::EVENT_QUOTATION_NORMALIZATION_FAILED => ['inApp' => true],
             self::EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW => ['inApp' => true],
+            self::EVENT_QUOTATION_NORMALIZATION_APPROVED => ['inApp' => true],
             self::EVENT_SYSTEM_ANNOUNCEMENT => ['inApp' => true],
         ];
     }
