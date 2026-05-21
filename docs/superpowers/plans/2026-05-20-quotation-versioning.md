@@ -3044,7 +3044,7 @@ Expected result: vendor RFQ portal tests pass.
 
 - Verify all touched API, generated-client, web, and docs surfaces.
 
-- [ ] Run focused backend tests.
+- [x] Run focused backend tests.
 
 Run:
 
@@ -3058,7 +3058,7 @@ php artisan test --filter=SearchApiTest
 
 Expected result: all listed backend tests pass.
 
-- [ ] Run focused frontend tests.
+- [x] Run focused frontend tests.
 
 Run:
 
@@ -3083,7 +3083,7 @@ git diff --check
 
 Expected result: all commands exit successfully. If `pnpm build` fails with the known Turbopack `binding to a port` sandbox error, rerun the same command with sandbox escalation and record both outputs.
 
-- [ ] Run placeholder scan.
+- [x] Run placeholder scan.
 
 Run:
 
@@ -3103,7 +3103,7 @@ Expected result: no matches introduced by this implementation.
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: `docs/superpowers/plans/2026-05-20-quotation-versioning.md`
 
-- [ ] Confirm P1-28 links to this implementation plan.
+- [x] Confirm P1-28 links to this implementation plan.
 
 Expected P1-28 row values:
 
@@ -3111,11 +3111,11 @@ Expected P1-28 row values:
 | P1-28 | Quotation Versioning | Track revised quotations and preserve prior versions. Procurement comparisons must show which vendor price and terms were evaluated at decision time. | Fully Implemented | 2026-05-20-quotation-versioning-design.md | 2026-05-20-quotation-versioning.md |  | Implemented as Epic 6 slice 4 with immutable buyer and vendor quotation version history. |
 ```
 
-- [ ] Leave P1-29 as `Not Implemented`.
+- [x] Leave P1-29 as `Not Implemented`.
 
 Do not update P1-29 implementation plan or status during this slice.
 
-- [ ] Mark completed plan checkboxes after verification passes.
+- [x] Mark completed plan checkboxes after verification passes.
 
 Use only `- [x]` for tasks actually completed and verified in the implementation session.
 
@@ -3123,18 +3123,18 @@ Use only `- [x]` for tasks actually completed and verified in the implementation
 
 ## Task 10: Self-Review Checklist
 
-- [ ] `Quotation` remains the current response container and `QuotationVersion` owns immutable snapshots.
-- [ ] First upload or manual entry creates version 1.
-- [ ] Buyer and vendor revisions create version N+1 and supersede the prior current version in one transaction.
-- [ ] Exactly one version per quotation is current after each mutation.
-- [ ] Previous versions have no mutation endpoints and resources return `permissions.canEdit: false`.
-- [ ] Attachment snapshots preserve historical metadata even though files remain owned by the attachment domain.
-- [ ] Vendor portal version responses redact buyer notes and internal user identity.
-- [ ] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
-- [ ] Vendor routes use portal token resolution and do not rely on `X-Tenant-Id`.
-- [ ] Cross-tenant version list/show/create requests fail.
-- [ ] Terminal invitation states block vendor-created versions.
-- [ ] Audit events include `quotation.version_created`, `quotation.version_superseded`, and `quotation.current_version_changed`.
-- [ ] Generated client endpoints and schemas are used by frontend code.
-- [ ] UI components do not import mock fixtures directly.
-- [ ] Quotation normalization, comparison, scoring, award, OCR, and AI extraction remain outside this slice.
+- [x] `Quotation` remains the current response container and `QuotationVersion` owns immutable snapshots.
+- [x] First upload or manual entry creates version 1.
+- [x] Buyer and vendor revisions create version N+1 and supersede the prior current version in one transaction.
+- [x] Exactly one version per quotation is current after each mutation.
+- [x] Previous versions have no mutation endpoints and resources return `permissions.canEdit: false`.
+- [x] Attachment snapshots preserve historical metadata even though files remain owned by the attachment domain.
+- [x] Vendor portal version responses redact buyer notes and internal user identity.
+- [x] Buyer routes require `auth:sanctum` and `ResolveCurrentTenant`.
+- [x] Vendor routes use portal token resolution and do not rely on `X-Tenant-Id`.
+- [x] Cross-tenant version list/show/create requests fail.
+- [x] Terminal invitation states block vendor-created versions.
+- [x] Audit events include `quotation.version_created`, `quotation.version_superseded`, and `quotation.current_version_changed`.
+- [x] Generated client endpoints and schemas are used by frontend code.
+- [x] UI components do not import mock fixtures directly.
+- [x] Quotation normalization, comparison, scoring, award, OCR, and AI extraction remain outside this slice.

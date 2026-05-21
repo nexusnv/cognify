@@ -179,10 +179,10 @@ function applyVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntry
 }
 
 export function appendVendorPortalQuotationVersion(payload: CreateQuotationRevisionRequest) {
-  const quotation = applyVendorPortalQuotationManualEntry({
-    ...payload,
-    buyerNotes: null,
-  });
+  const vendorPayload = { ...payload };
+  delete vendorPayload.buyerNotes;
+  delete vendorPayload.attachmentIds;
+  const quotation = applyVendorPortalQuotationManualEntry(vendorPayload);
   return appendVendorPortalQuotationVersionSnapshot(quotation);
 }
 
@@ -307,6 +307,9 @@ export function buildVendorPortalQuotationFixture(
       canUploadAttachment: true,
       canViewAttachments: true,
       canEditManualEntry: true,
+      canCreateRevision: true,
     },
+    versionCount: 0,
+    currentVersion: null,
   };
 }

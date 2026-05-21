@@ -81,6 +81,9 @@ function quotationWithReference(quotationReference: string, currency: string): Q
       canUploadAttachment: true,
       canViewAttachments: true,
       canEditManualEntry: true,
+      canCreateRevision: true,
     },
+    versionCount: 0,
+    currentVersion: null,
   };
 }
