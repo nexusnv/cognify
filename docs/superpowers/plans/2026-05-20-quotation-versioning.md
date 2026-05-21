@@ -3069,7 +3069,7 @@ pnpm --dir apps/web exec vitest run features/vendor-portal/tests/vendor-rfq-port
 
 Expected result: sourcing and vendor portal suites pass.
 
-- [ ] Run contract, type, lint, build, and whitespace checks.
+- [x] Run contract, type, lint, build, and whitespace checks.
 
 Run:
 
