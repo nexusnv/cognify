@@ -27,7 +27,7 @@ class SaveQuotationNormalizationLineMappingsRequest extends FormRequest
             'lineGroups' => ['required', 'array', 'min:1'],
             'lineGroups.*.groupNumber' => ['required', 'integer', 'min:1'],
             'lineGroups.*.pricingMode' => ['required', 'string', Rule::enum(QuotationNormalizationPricingMode::class)],
-            'lineGroups.*.description' => ['sometimes', 'nullable', 'string'],
+            'lineGroups.*.description' => ['required', 'string', 'max:5000'],
             'lineGroups.*.currency' => ['sometimes', 'nullable', 'string', 'size:3'],
             'lineGroups.*.bundleTotalAmount' => ['sometimes', 'nullable', 'numeric'],
             'lineGroups.*.notes' => ['sometimes', 'nullable', 'string'],

@@ -160,6 +160,39 @@ class QuotationNormalizationApiTest extends TestCase
         ]);
     }
 
+    public function test_line_mapping_rejects_missing_line_group_description(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $normalization = $this->normalizationNeedingReview($tenant, $requester, $buyer);
+
+        $versionLineId = (string) $normalization->quotationVersion->lineItems()->firstOrFail()->id;
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/line-mappings", [
+                'lineGroups' => [[
+                    'groupNumber' => 1,
+                    'pricingMode' => 'bundle',
+                    'currency' => 'USD',
+                    'bundleTotalAmount' => '12470.00',
+                    'notes' => 'Vendor bundled laptops and freight.',
+                    'mappings' => [[
+                        'rfqLineItemId' => 'rfq-line-1',
+                        'quotationVersionLineItemId' => $versionLineId,
+                        'mappingType' => 'bundled',
+                        'quantity' => '10',
+                        'unit' => 'each',
+                        'unitPrice' => null,
+                        'lineTotal' => null,
+                        'buyerNote' => 'Covered by bundle total.',
+                    ]],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonStructure(['error' => ['details' => ['fields' => ['lineGroups.0.description']]]]);
+    }
+
     public function test_requester_approver_vendor_and_cross_tenant_users_cannot_access_normalization(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

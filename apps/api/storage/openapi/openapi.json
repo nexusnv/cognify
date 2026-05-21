@@ -11203,6 +11203,7 @@
               "required": [
                 "groupNumber",
                 "pricingMode",
+                "description",
                 "mappings"
               ],
               "properties": {
@@ -11220,10 +11221,7 @@
                   ]
                 },
                 "description": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 },
                 "currency": {
                   "type": [
