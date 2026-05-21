@@ -19,6 +19,7 @@ class SaveQuotationManualEntry
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly CreateOrRevealQuotationForInvitation $createOrRevealQuotationForInvitation,
+        private readonly CreateQuotationVersionSnapshot $createQuotationVersionSnapshot,
     ) {
     }
 
@@ -143,6 +144,20 @@ class SaveQuotationManualEntry
                 ));
             }
 
+            $version = $this->createQuotationVersionSnapshot->handle(
+                $tenant,
+                $quotation,
+                $actor,
+                $source,
+                null,
+                ['trigger' => 'manual_entry_save'],
+            );
+
+            $quotation->forceFill([
+                'current_version_id' => $version->id,
+                'version_count' => $version->version_number,
+            ])->save();
+
             $quotation = $quotation->refresh()->load([
                 'attachments' => fn ($query) => $query->with('uploader')->latest('created_at'),
                 'lineItems',
@@ -150,6 +165,7 @@ class SaveQuotationManualEntry
                 'rfq',
                 'vendor',
                 'rfqInvitation',
+                'currentVersion.lineItems',
             ]);
 
             $quotation->wasRecentlyCreated = false;

@@ -76,7 +76,7 @@ class VendorPortalQuotationController extends Controller
     private function findTenantQuotationByInvitation(Tenant $tenant, int $invitationId): ?Quotation
     {
         return Quotation::query()
-            ->with(['attachments' => fn ($query) => $query->with('uploader')->latest('created_at'), 'lineItems', 'submittedByUser', 'rfq', 'vendor', 'rfqInvitation'])
+            ->with(['attachments' => fn ($query) => $query->with('uploader')->latest('created_at'), 'lineItems', 'submittedByUser', 'rfq', 'vendor', 'rfqInvitation', 'currentVersion.lineItems'])
             ->where('tenant_id', $tenant->id)
             ->where('rfq_invitation_id', $invitationId)
             ->first();

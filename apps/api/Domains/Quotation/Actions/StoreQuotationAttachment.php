@@ -23,6 +23,7 @@ class StoreQuotationAttachment
         private readonly AuditRecorder $auditRecorder,
         private readonly AttachmentStorage $storage,
         private readonly CreateOrRevealQuotationForInvitation $createOrRevealQuotationForInvitation,
+        private readonly CreateQuotationVersionSnapshot $createQuotationVersionSnapshot,
     ) {
     }
 
@@ -110,6 +111,28 @@ class StoreQuotationAttachment
                         subjectDisplay: $quotation->number,
                     ));
                 }
+
+                $version = $this->createQuotationVersionSnapshot->handle(
+                    $tenant,
+                    $quotation,
+                    $actor,
+                    $source,
+                    [(string) $attachment->id],
+                    ['trigger' => 'attachment_upload'],
+                );
+
+                $quotation->forceFill([
+                    'current_version_id' => $version->id,
+                    'version_count' => $version->version_number,
+                ])->save();
+                $quotation = $quotation->refresh()->load([
+                    'attachments' => fn ($query) => $query->with('uploader')->latest('created_at'),
+                    'submittedByUser',
+                    'rfq',
+                    'vendor',
+                    'rfqInvitation',
+                    'currentVersion.lineItems',
+                ]);
 
                 return $quotation;
             });

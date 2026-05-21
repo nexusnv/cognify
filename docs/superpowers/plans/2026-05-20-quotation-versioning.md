@@ -1067,7 +1067,7 @@ public function versions(): HasMany
 }
 ```
 
-- [ ] Run backend tests for the data model milestone.
+- [x] Run backend tests for the data model milestone.
 
 Run:
 
@@ -1088,7 +1088,7 @@ Expected result: tests still fail because version actions, resources, and routes
 - Modify: `apps/api/Domains/Quotation/Actions/StoreQuotationAttachment.php`
 - Modify: `apps/api/Domains/Quotation/Actions/SaveQuotationManualEntry.php`
 
-- [ ] Add attachment snapshot data.
+- [x] Add attachment snapshot data.
 
 Create `apps/api/Domains/Quotation/Data/QuotationVersionAttachmentSnapshotData.php`:
 
@@ -1125,7 +1125,7 @@ class QuotationVersionAttachmentSnapshotData
 }
 ```
 
-- [ ] Add the version snapshot action.
+- [x] Add the version snapshot action.
 
 Create `apps/api/Domains/Quotation/Actions/CreateQuotationVersionSnapshot.php`:
 
@@ -1334,7 +1334,7 @@ class CreateQuotationVersionSnapshot
 }
 ```
 
-- [ ] Wire snapshots into quotation uploads.
+- [x] Wire snapshots into quotation uploads.
 
 Modify the constructor of `apps/api/Domains/Quotation/Actions/StoreQuotationAttachment.php`:
 
@@ -1374,7 +1374,7 @@ $quotation->refresh()->load([
 ]);
 ```
 
-- [ ] Wire snapshots into manual entry.
+- [x] Wire snapshots into manual entry.
 
 Modify the constructor of `apps/api/Domains/Quotation/Actions/SaveQuotationManualEntry.php`:
 
@@ -1407,7 +1407,7 @@ $quotation->forceFill([
 
 Add `currentVersion.lineItems` to the final relation load list.
 
-- [ ] Run backend tests for automatic snapshot creation.
+- [x] Run backend tests for automatic snapshot creation.
 
 Run:
 
@@ -1433,7 +1433,7 @@ Expected result: version tests should pass for initial upload/manual entry paths
 - Modify: `apps/api/Domains/Quotation/Http/Resources/QuotationResource.php`
 - Modify: `apps/api/routes/api.php`
 
-- [ ] Add the revision request.
+- [x] Add the revision request.
 
 Create `apps/api/Domains/Quotation/Http/Requests/CreateQuotationRevisionRequest.php`:
 
@@ -1511,7 +1511,7 @@ class CreateQuotationRevisionRequest extends FormRequest
 }
 ```
 
-- [ ] Add version line item resource.
+- [x] Add version line item resource.
 
 Create `apps/api/Domains/Quotation/Http/Resources/QuotationVersionLineItemResource.php`:
 
@@ -1555,7 +1555,7 @@ class QuotationVersionLineItemResource extends JsonResource
 }
 ```
 
-- [ ] Add version resource.
+- [x] Add version resource.
 
 Create `apps/api/Domains/Quotation/Http/Resources/QuotationVersionResource.php`:
 
@@ -1635,7 +1635,7 @@ class QuotationVersionResource extends JsonResource
 }
 ```
 
-- [ ] Add buyer version controller.
+- [x] Add buyer version controller.
 
 Create `apps/api/Domains/Quotation/Http/Controllers/QuotationVersionController.php`:
 
@@ -1821,7 +1821,7 @@ class QuotationVersionController extends Controller
 }
 ```
 
-- [ ] Add vendor portal version controller.
+- [x] Add vendor portal version controller.
 
 Create `apps/api/Domains/Quotation/Http/Controllers/VendorPortalQuotationVersionController.php` using the buyer controller patterns, with these required differences:
 
@@ -1979,7 +1979,7 @@ class VendorPortalQuotationVersionController extends Controller
 }
 ```
 
-- [ ] Extend `QuotationResource`.
+- [x] Extend `QuotationResource`.
 
 Add `currentVersion` and `versionCount` to the response in `apps/api/Domains/Quotation/Http/Resources/QuotationResource.php`:
 
@@ -2003,7 +2003,7 @@ Add `canCreateRevision` to the `permissions` object:
 
 Update quotation loads in `RfqInvitationQuotationController` and `VendorPortalQuotationController` to include `currentVersion.lineItems`.
 
-- [ ] Register routes.
+- [x] Register routes.
 
 In `apps/api/routes/api.php`, add the vendor portal route near existing vendor portal quotation routes:
 
@@ -2029,7 +2029,7 @@ Route::get('/quotations/{quotation}/versions/{version}', [QuotationVersionContro
 Route::post('/quotations/{quotation}/versions', [QuotationVersionController::class, 'store']);
 ```
 
-- [ ] Run backend tests for endpoint implementation.
+- [x] Run backend tests for endpoint implementation.
 
 Run:
 
