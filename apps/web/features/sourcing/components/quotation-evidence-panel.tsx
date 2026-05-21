@@ -10,7 +10,7 @@ import {
   useRfqInvitationQuotation,
   useRfqInvitationQuotationUpload,
 } from "../hooks/use-quotation-upload";
-import { useQuotationVersion, useQuotationVersions } from "../hooks/use-quotation-versions";
+import { useQuotationVersions } from "../hooks/use-quotation-versions";
 import { QuotationManualEntryPanel } from "./quotation-manual-entry-panel";
 import { QuotationVersionDetail } from "./quotation-version-detail";
 import { QuotationVersionHistory } from "./quotation-version-history";
@@ -50,7 +50,6 @@ export function QuotationEvidencePanel({
     () => versions.find((version) => version.id === selectedVersionId) ?? null,
     [selectedVersionId, versions],
   );
-  const selectedVersionQuery = useQuotationVersion(quotation?.id ?? null, selectedVersion?.versionNumber ?? null);
   const latestVersionId = versions[0]?.id ?? null;
   const activeSelectedVersionId = selectedVersion?.id ?? latestVersionId;
   const activeSelectedVersion = selectedVersion ?? versions.find((version) => version.id === latestVersionId) ?? null;
@@ -63,13 +62,11 @@ export function QuotationEvidencePanel({
   const attachments = attachmentsQuery.data ?? quotation?.attachments ?? [];
   const hasQuotation = quotation !== null;
   const fileCount = quotation?.fileCount ?? attachments.length;
-  const errorMessage = quotationQuery.isError
-    ? getApiErrorMessage(quotationQuery.error)
-    : uploadMutation.isError
-        ? getApiErrorMessage(uploadMutation.error)
-        : createManualEntryMutation.isError
-          ? getApiErrorMessage(createManualEntryMutation.error)
-      : null;
+  const errorMessage = resolveQuotationError({
+    quotationQuery,
+    uploadMutation,
+    createManualEntryMutation,
+  });
 
   useEffect(() => {
     if (!quotation?.id) {
@@ -182,7 +179,7 @@ export function QuotationEvidencePanel({
                 selectedVersionId={activeSelectedVersionId}
                 onSelectVersion={setSelectedVersionId}
               />
-              <QuotationVersionDetail version={activeSelectedVersion ?? selectedVersionQuery.data ?? null} />
+              <QuotationVersionDetail version={activeSelectedVersion ?? null} />
             </div>
           </div>
         ) : (
@@ -203,4 +200,28 @@ export function QuotationEvidencePanel({
       </div>
     </section>
   );
+}
+
+function resolveQuotationError({
+  quotationQuery,
+  uploadMutation,
+  createManualEntryMutation,
+}: {
+  quotationQuery: ReturnType<typeof useRfqInvitationQuotation>;
+  uploadMutation: ReturnType<typeof useRfqInvitationQuotationUpload>;
+  createManualEntryMutation: ReturnType<typeof useSaveQuotationManualEntry>;
+}): string | null {
+  if (quotationQuery.isError) {
+    return getApiErrorMessage(quotationQuery.error);
+  }
+
+  if (uploadMutation.isError) {
+    return getApiErrorMessage(uploadMutation.error);
+  }
+
+  if (createManualEntryMutation.isError) {
+    return getApiErrorMessage(createManualEntryMutation.error);
+  }
+
+  return null;
 }

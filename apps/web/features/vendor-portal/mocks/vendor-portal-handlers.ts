@@ -1,8 +1,8 @@
 import { http, HttpResponse } from "msw";
 import type {
   AttachmentVendorPortal,
-  CreateQuotationRevisionRequest,
   SaveQuotationManualEntryRequestForVendor,
+  VendorCreateQuotationRevisionRequest,
 } from "@cognify/api-client/schemas";
 import {
   appendVendorPortalQuotationVersion,
@@ -155,7 +155,7 @@ export const vendorPortalHandlers = [
       );
     }
 
-    const payload = (await request.json()) as CreateQuotationRevisionRequest;
+    const payload = (await request.json()) as VendorCreateQuotationRevisionRequest;
     const version = appendVendorPortalQuotationVersion(payload);
 
     return HttpResponse.json({ data: structuredClone(version) }, { status: 201 });

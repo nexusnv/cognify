@@ -75,6 +75,10 @@ class QuotationVersion extends Model
     protected static function booted(): void
     {
         static::saving(function (self $version): void {
+            if (! $version->isDirty('quotation_id') && ! $version->isDirty('tenant_id')) {
+                return;
+            }
+
             DB::transaction(function () use ($version): void {
                 if ($version->tenant_id === null && $version->quotation_id !== null) {
                     $version->tenant_id = Quotation::query()

@@ -4266,7 +4266,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuotationVersionListResponse"
+                  "$ref": "#/components/schemas/VendorQuotationVersionListResponse"
                 }
               }
             }
@@ -4299,7 +4299,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateQuotationRevisionRequest"
+                "$ref": "#/components/schemas/VendorCreateQuotationRevisionRequest"
               }
             }
           }
@@ -4310,7 +4310,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuotationVersionResponse"
+                  "$ref": "#/components/schemas/VendorQuotationVersionResponse"
                 }
               }
             }
@@ -4690,7 +4690,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4724,7 +4724,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4776,7 +4776,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "string"
             }
           },
           {
@@ -10208,6 +10208,196 @@
           }
         }
       },
+      "VendorQuotationVersionAttachment": {
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "mimeType",
+          "extension",
+          "sizeBytes",
+          "checksumSha256",
+          "previewable",
+          "createdAt",
+          "available"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "extension": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checksumSha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previewable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "available": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VendorQuotationVersion": {
+        "type": "object",
+        "required": [
+          "id",
+          "quotationId",
+          "versionNumber",
+          "status",
+          "source",
+          "submittedAt",
+          "submittedByVendorContact",
+          "isCurrent",
+          "supersededAt",
+          "previousVersionId",
+          "manualEntry",
+          "lineItems",
+          "attachments",
+          "attachmentCount",
+          "completeness",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "quotationId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "withdrawn",
+              "superseded"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "vendor_portal",
+              "buyer_upload",
+              null
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "submittedByVendorContact": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVendorContact"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "supersededAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "previousVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manualEntry": {
+            "$ref": "#/components/schemas/QuotationManualEntryForVendor"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationLineItem"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VendorQuotationVersionAttachment"
+            }
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/QuotationCompleteness"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationVersionPermissions"
+          }
+        }
+      },
+      "VendorQuotationVersionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/VendorQuotationVersion"
+          }
+        }
+      },
+      "VendorQuotationVersionListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VendorQuotationVersion"
+            }
+          }
+        }
+      },
       "CreateQuotationRevisionRequest": {
         "allOf": [
           {
@@ -10219,7 +10409,25 @@
               "attachmentIds": {
                 "type": "array",
                 "items": {
-                  "type": "integer"
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "VendorCreateQuotationRevisionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SaveQuotationManualEntryRequestForVendor"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "attachmentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 }
               }
             }

@@ -2,8 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  CreateQuotationRevisionRequest,
   SaveQuotationManualEntryRequestForVendor,
+  VendorCreateQuotationRevisionRequest,
 } from "@cognify/api-client/schemas";
 import {
   createVendorPortalQuotationVersion,
@@ -30,7 +30,7 @@ export function useVendorQuotationUpload(token: string) {
     mutationFn: (file: File) => uploadVendorPortalQuotationAttachment(token, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotation(token) });
-      void queryClient.refetchQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
     },
   });
 }
@@ -43,7 +43,7 @@ export function useVendorQuotationManualEntry(token: string) {
       saveVendorPortalQuotationManualEntry(token, payload),
     onSuccess: (quotation) => {
       queryClient.setQueryData(vendorPortalKeys.quotation(token), quotation);
-      void queryClient.refetchQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
     },
   });
 }
@@ -61,10 +61,10 @@ export function useCreateVendorQuotationVersion(token: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateQuotationRevisionRequest) => createVendorPortalQuotationVersion(token, payload),
+    mutationFn: (payload: VendorCreateQuotationRevisionRequest) => createVendorPortalQuotationVersion(token, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotation(token) });
-      void queryClient.refetchQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
+      queryClient.invalidateQueries({ queryKey: vendorPortalKeys.quotationVersions(token) });
     },
   });
 }

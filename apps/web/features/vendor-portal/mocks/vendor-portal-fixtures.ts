@@ -1,10 +1,10 @@
 import type {
   AttachmentVendorPortal,
-  CreateQuotationRevisionRequest,
   QuotationVendorPortal,
-  QuotationVersion,
   SaveQuotationManualEntryRequestForVendor,
+  VendorCreateQuotationRevisionRequest,
   VendorPortalRfqInvitation,
+  VendorQuotationVersion,
 } from "@cognify/api-client/schemas";
 
 export const validVendorPortalToken = "vendor-portal-valid-token";
@@ -58,7 +58,7 @@ export const vendorPortalQuotationFixture: QuotationVendorPortal | null = null;
 
 let vendorPortalQuotation: QuotationVendorPortal | null = structuredClone(vendorPortalQuotationFixture);
 let vendorPortalQuotationAttachmentSequence = 0;
-let vendorPortalQuotationVersions: QuotationVersion[] = [];
+let vendorPortalQuotationVersions: VendorQuotationVersion[] = [];
 
 export function resetVendorPortalMockState() {
   vendorPortalQuotation = structuredClone(vendorPortalQuotationFixture);
@@ -178,9 +178,8 @@ function applyVendorPortalQuotationManualEntry(payload: SaveQuotationManualEntry
   return vendorPortalQuotation;
 }
 
-export function appendVendorPortalQuotationVersion(payload: CreateQuotationRevisionRequest) {
+export function appendVendorPortalQuotationVersion(payload: VendorCreateQuotationRevisionRequest) {
   const vendorPayload = { ...payload };
-  delete vendorPayload.buyerNotes;
   delete vendorPayload.attachmentIds;
   const quotation = applyVendorPortalQuotationManualEntry(vendorPayload);
   return appendVendorPortalQuotationVersionSnapshot(quotation);
@@ -197,14 +196,10 @@ function appendVendorPortalQuotationVersionSnapshot(quotation: QuotationVendorPo
     sizeBytes: attachment.sizeBytes,
     checksumSha256: null,
     previewable: attachment.previewable,
-    uploadedBy: null,
     createdAt: attachment.createdAt,
     available: true,
   }));
-  const manualEntry = {
-    ...quotation.manualEntry,
-    buyerNotes: null,
-  };
+  const manualEntry = quotation.manualEntry;
 
   if (
     previousVersion &&
@@ -221,7 +216,6 @@ function appendVendorPortalQuotationVersionSnapshot(quotation: QuotationVendorPo
       status: "received",
       source: "vendor_portal",
       submittedAt: now,
-      submittedByUser: null,
       submittedByVendorContact: quotation.submittedByVendorContact,
       isCurrent: true,
       supersededAt: null,
@@ -247,10 +241,10 @@ function appendVendorPortalQuotationVersionSnapshot(quotation: QuotationVendorPo
 }
 
 function sameVendorPortalVersionSnapshot(
-  version: QuotationVersion,
-  manualEntry: QuotationVersion["manualEntry"],
-  lineItems: QuotationVersion["lineItems"],
-  attachments: QuotationVersion["attachments"],
+  version: VendorQuotationVersion,
+  manualEntry: VendorQuotationVersion["manualEntry"],
+  lineItems: VendorQuotationVersion["lineItems"],
+  attachments: VendorQuotationVersion["attachments"],
 ) {
   return (
     JSON.stringify(version.manualEntry) === JSON.stringify(manualEntry) &&

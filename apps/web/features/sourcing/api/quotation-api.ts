@@ -66,7 +66,7 @@ export async function listQuotationVersions(
   quotationId: string,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationVersion[]> {
-  const response = await listQuotationVersionsEndpoint(Number(quotationId), withActiveTenantHeader(tenantId));
+  const response = await listQuotationVersionsEndpoint(quotationId, withActiveTenantHeader(tenantId));
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -78,7 +78,7 @@ export async function showQuotationVersion(
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationVersion> {
   const response = await showQuotationVersionEndpoint(
-    Number(quotationId),
+    quotationId,
     versionNumber,
     withActiveTenantHeader(tenantId),
   );
@@ -93,7 +93,7 @@ export async function createQuotationVersion(
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationVersion> {
   const response = await createQuotationVersionEndpoint(
-    Number(quotationId),
+    quotationId,
     payload,
     withActiveTenantHeader(tenantId),
   );

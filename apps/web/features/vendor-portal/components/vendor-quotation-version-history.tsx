@@ -1,9 +1,9 @@
 "use client";
 
-import type { QuotationVersion } from "@cognify/api-client/schemas";
+import type { VendorQuotationVersion } from "@cognify/api-client/schemas";
 import { Badge } from "@cognify/ui";
 
-export function VendorQuotationVersionHistory({ versions }: { versions: QuotationVersion[] }) {
+export function VendorQuotationVersionHistory({ versions }: { versions: VendorQuotationVersion[] }) {
   return (
     <section className="rounded-md border p-4">
       <h3 className="text-base font-semibold">Quotation versions</h3>

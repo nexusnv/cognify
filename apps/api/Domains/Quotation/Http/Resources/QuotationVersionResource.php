@@ -17,6 +17,7 @@ class QuotationVersionResource extends JsonResource
     public function toArray(Request $request): array
     {
         $vendorPortal = (bool) $request->attributes->get('vendor_portal', false);
+        $previousVersionId = data_get($this->metadata, 'previousVersionId');
 
         return [
             'id' => (string) $this->id,
@@ -32,7 +33,7 @@ class QuotationVersionResource extends JsonResource
             'submittedByVendorContact' => $this->submitted_by_vendor_contact,
             'isCurrent' => (bool) $this->is_current,
             'supersededAt' => $this->superseded_at?->toISOString(),
-            'previousVersionId' => data_get($this->metadata, 'previousVersionId'),
+            'previousVersionId' => $previousVersionId === null ? null : (string) $previousVersionId,
             'manualEntry' => [
                 'quotationReference' => $this->quotation_reference,
                 'quotedAt' => $this->quoted_at?->toDateString(),

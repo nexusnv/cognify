@@ -107,8 +107,11 @@ import type {
   UpdateRequisitionRequest,
   UpdateRfqInvitationStatusRequest,
   ValidationFailedResponse,
+  VendorCreateQuotationRevisionRequest,
   VendorPickerListResponse,
   VendorPortalRfqInvitationResponse,
+  VendorQuotationVersionListResponse,
+  VendorQuotationVersionResponse,
 } from "./schemas";
 
 import { cognifyFetch } from "../client";
@@ -5320,7 +5323,7 @@ export const showVendorPortalQuotation = async (
 };
 
 export type listVendorPortalQuotationVersionsResponse200 = {
-  data: QuotationVersionListResponse;
+  data: VendorQuotationVersionListResponse;
   status: 200;
 };
 
@@ -5367,7 +5370,7 @@ export const listVendorPortalQuotationVersions = async (
 };
 
 export type createVendorPortalQuotationVersionResponse201 = {
-  data: QuotationVersionResponse;
+  data: VendorQuotationVersionResponse;
   status: 201;
 };
 
@@ -5408,7 +5411,7 @@ export const getCreateVendorPortalQuotationVersionUrl = (token: string) => {
 
 export const createVendorPortalQuotationVersion = async (
   token: string,
-  createQuotationRevisionRequest: CreateQuotationRevisionRequest,
+  vendorCreateQuotationRevisionRequest: VendorCreateQuotationRevisionRequest,
   options?: RequestInit,
 ): Promise<createVendorPortalQuotationVersionResponse> => {
   return cognifyFetch<createVendorPortalQuotationVersionResponse>(
@@ -5417,7 +5420,7 @@ export const createVendorPortalQuotationVersion = async (
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(createQuotationRevisionRequest),
+      body: JSON.stringify(vendorCreateQuotationRevisionRequest),
     },
   );
 };
@@ -5891,12 +5894,12 @@ export type listQuotationVersionsResponse =
   | listQuotationVersionsResponseSuccess
   | listQuotationVersionsResponseError;
 
-export const getListQuotationVersionsUrl = (quotation: number) => {
+export const getListQuotationVersionsUrl = (quotation: string) => {
   return `/api/quotations/${quotation}/versions`;
 };
 
 export const listQuotationVersions = async (
-  quotation: number,
+  quotation: string,
   options?: RequestInit,
 ): Promise<listQuotationVersionsResponse> => {
   return cognifyFetch<listQuotationVersionsResponse>(getListQuotationVersionsUrl(quotation), {
@@ -5946,12 +5949,12 @@ export type createQuotationVersionResponse =
   | createQuotationVersionResponseSuccess
   | createQuotationVersionResponseError;
 
-export const getCreateQuotationVersionUrl = (quotation: number) => {
+export const getCreateQuotationVersionUrl = (quotation: string) => {
   return `/api/quotations/${quotation}/versions`;
 };
 
 export const createQuotationVersion = async (
-  quotation: number,
+  quotation: string,
   createQuotationRevisionRequest: CreateQuotationRevisionRequest,
   options?: RequestInit,
 ): Promise<createQuotationVersionResponse> => {
@@ -5992,12 +5995,12 @@ export type showQuotationVersionResponse =
   | showQuotationVersionResponseSuccess
   | showQuotationVersionResponseError;
 
-export const getShowQuotationVersionUrl = (quotation: number, version: number) => {
+export const getShowQuotationVersionUrl = (quotation: string, version: number) => {
   return `/api/quotations/${quotation}/versions/${version}`;
 };
 
 export const showQuotationVersion = async (
-  quotation: number,
+  quotation: string,
   version: number,
   options?: RequestInit,
 ): Promise<showQuotationVersionResponse> => {

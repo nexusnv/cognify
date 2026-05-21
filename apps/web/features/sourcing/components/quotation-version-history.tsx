@@ -27,7 +27,7 @@ export function QuotationVersionHistory({
             variant={selectedVersionId === version.id ? "default" : "outline"}
             size="sm"
             aria-pressed={selectedVersionId === version.id}
-            aria-current={version.isCurrent ? "true" : undefined}
+            aria-current={version.isCurrent ? "step" : undefined}
             onClick={() => onSelectVersion(version.id)}
             className="h-auto min-h-0 py-2"
           >

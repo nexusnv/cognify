@@ -563,17 +563,20 @@ function appendQuotationVersion(
   const previousVersion = versions[versions.length - 1] ?? null;
   const nextVersionNumber = previousVersion ? previousVersion.versionNumber + 1 : 1;
   const nextVersion = buildQuotationVersion(quotation, nextVersionNumber, previousVersion?.id ?? null, now, source);
-  const supersededVersions = previousVersion
-    ? versions.map((version) =>
-        version.id === previousVersion.id
-          ? {
-              ...version,
-              isCurrent: false,
-              status: "superseded" as const,
-              supersededAt: now,
-            }
-          : version,
-      )
+  const previousVersionIndex = previousVersion
+    ? versions.findIndex((version) => version.id === previousVersion.id)
+    : -1;
+  const supersededVersions = previousVersionIndex >= 0
+    ? [
+        ...versions.slice(0, previousVersionIndex),
+        {
+          ...versions[previousVersionIndex],
+          isCurrent: false,
+          status: "superseded" as const,
+          supersededAt: now,
+        },
+        ...versions.slice(previousVersionIndex + 1),
+      ]
     : versions;
 
   return [...supersededVersions, nextVersion];

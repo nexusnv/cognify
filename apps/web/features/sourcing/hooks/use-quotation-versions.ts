@@ -52,8 +52,13 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
   const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (payload: CreateQuotationRevisionRequest) =>
-      createQuotationVersion(quotationId as string, payload, tenantId),
+    mutationFn: (payload: CreateQuotationRevisionRequest) => {
+      if (!quotationId) {
+        throw new Error("Cannot create a quotation version without a quotation id.");
+      }
+
+      return createQuotationVersion(quotationId, payload, tenantId);
+    },
     onSuccess: (version) => {
       if (!quotationId) return;
 

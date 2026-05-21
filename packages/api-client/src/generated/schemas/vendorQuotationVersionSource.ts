@@ -5,6 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CreateQuotationRevisionRequestAllOf = {
-  attachmentIds?: string[];
-};
+export type VendorQuotationVersionSource = "vendor_portal" | "buyer_upload" | null;

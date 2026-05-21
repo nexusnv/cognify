@@ -47,6 +47,10 @@ class QuotationVersionLineItem extends Model
     protected static function booted(): void
     {
         static::saving(function (self $lineItem): void {
+            if (! $lineItem->isDirty('quotation_version_id') && ! $lineItem->isDirty('tenant_id')) {
+                return;
+            }
+
             DB::transaction(function () use ($lineItem): void {
                 if ($lineItem->tenant_id === null && $lineItem->quotation_version_id !== null) {
                     $lineItem->tenant_id = QuotationVersion::query()
