@@ -801,7 +801,7 @@ git commit -m "feat: expose quotation normalization review API"
 - Create hooks listed in the web file map.
 - Modify: `apps/web/features/identity/mocks/identity-fixtures.ts`
 
-- [ ] **Step 1: Regenerate and check contract**
+- [x] **Step 1: Regenerate and check contract**
 
 ```bash
 pnpm generate:api
@@ -810,7 +810,7 @@ pnpm check:api-contract
 
 Expected: generated endpoints and schemas include the normalization routes and `IdentityPermissions.canReviewQuotationNormalization`.
 
-- [ ] **Step 2: Create generated-client wrappers**
+- [x] **Step 2: Create generated-client wrappers**
 
 `apps/web/features/quotations/api/quotation-normalization-api.ts` must import only generated endpoints/schemas:
 
@@ -842,7 +842,7 @@ function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantI
 
 Add exported functions for list/show/corrections/line-mappings/approve/approve-with-warnings/revision/retry. Throw `response.data` on non-success, following `apps/web/features/sourcing/api/quotation-api.ts`.
 
-- [ ] **Step 3: Create TanStack Query hooks**
+- [x] **Step 3: Create TanStack Query hooks**
 
 Use query keys:
 
@@ -856,7 +856,7 @@ export const quotationNormalizationKeys = {
 
 After each mutation, invalidate `all` and the detail key. Do not store duplicated API response types in app code.
 
-- [ ] **Step 4: Update identity fixtures**
+- [x] **Step 4: Update identity fixtures**
 
 Add `canReviewQuotationNormalization` to all mock permission objects:
 
@@ -872,7 +872,7 @@ permissions: {
 }
 ```
 
-- [ ] **Step 5: Run typecheck for generated contract consumers**
+- [x] **Step 5: Run typecheck for generated contract consumers**
 
 ```bash
 pnpm --filter @cognify/web typecheck
@@ -881,7 +881,7 @@ pnpm check:api-contract
 
 Expected: typecheck fails only if endpoint names differ from generated names. If names differ, adjust wrapper imports to the generated names; do not hand-write schemas.
 
-- [ ] **Step 6: Commit contract and wrappers**
+- [x] **Step 6: Commit contract and wrappers**
 
 ```bash
 git add packages/api-client apps/web/features/quotations/api apps/web/features/quotations/hooks apps/web/features/identity/mocks
