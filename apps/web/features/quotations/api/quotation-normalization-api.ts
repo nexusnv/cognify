@@ -29,11 +29,19 @@ function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantI
   };
 }
 
+function throwResponseData(error: unknown): never {
+  if (typeof error === "object" && error !== null && "data" in error) {
+    throw (error as { data: unknown }).data;
+  }
+
+  throw error;
+}
+
 export async function listQuotationNormalizations(
   params: ListQuotationNormalizationsParams = {},
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalizationSummary[]> {
-  const response = await listEndpoint(params, withActiveTenantHeader(tenantId));
+  const response = await listEndpoint(params, withActiveTenantHeader(tenantId)).catch(throwResponseData);
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -43,7 +51,7 @@ export async function showQuotationNormalization(
   normalizationId: string,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await getEndpoint(normalizationId, withActiveTenantHeader(tenantId));
+  const response = await getEndpoint(normalizationId, withActiveTenantHeader(tenantId)).catch(throwResponseData);
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -54,7 +62,9 @@ export async function saveQuotationNormalizationCorrections(
   payload: SaveQuotationNormalizationCorrectionsRequest,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await saveCorrectionsEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId));
+  const response = await saveCorrectionsEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -65,7 +75,9 @@ export async function saveQuotationNormalizationLineMappings(
   payload: SaveQuotationNormalizationLineMappingsRequest,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await saveLineMappingsEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId));
+  const response = await saveLineMappingsEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -76,7 +88,9 @@ export async function approveQuotationNormalization(
   payload: ApproveQuotationNormalizationRequest = {},
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await approveEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId));
+  const response = await approveEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -87,7 +101,9 @@ export async function approveQuotationNormalizationWithWarnings(
   payload: ApproveQuotationNormalizationWithWarningsRequest,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await approveWithWarningsEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId));
+  const response = await approveWithWarningsEndpoint(normalizationId, payload, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
   if (response.status !== 200) throw response.data;
 
   return response.data.data;
@@ -97,7 +113,9 @@ export async function createQuotationNormalizationRevision(
   normalizationId: string,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await createRevisionEndpoint(normalizationId, withActiveTenantHeader(tenantId));
+  const response = await createRevisionEndpoint(normalizationId, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
   if (response.status !== 201) throw response.data;
 
   return response.data.data;
@@ -107,7 +125,7 @@ export async function retryQuotationVersionNormalization(
   version: number,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await retryEndpoint(version, withActiveTenantHeader(tenantId));
+  const response = await retryEndpoint(version, withActiveTenantHeader(tenantId)).catch(throwResponseData);
   if (response.status !== 200) throw response.data;
 
   return response.data.data;

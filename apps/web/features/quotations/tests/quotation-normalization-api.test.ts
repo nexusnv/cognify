@@ -39,8 +39,8 @@ describe("quotation normalization api", () => {
       }),
     );
 
-    await expect(showQuotationNormalization("norm-1")).rejects.toMatchObject({
-      data: { error: { code: "conflict", message: "Normalization has changed." } },
+    await expect(showQuotationNormalization("norm-1")).rejects.toEqual({
+      error: { code: "conflict", message: "Normalization has changed." },
     });
   });
 });
