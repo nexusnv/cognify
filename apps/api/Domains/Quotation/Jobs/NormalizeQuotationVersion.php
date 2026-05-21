@@ -50,15 +50,23 @@ class NormalizeQuotationVersion implements ShouldQueue
                 ->firstOrFail();
 
             $normalization = $starter->handle($tenant, $version);
-            $normalization->forceFill([
-                'job_attempt_count' => ((int) $normalization->job_attempt_count) + 1,
-            ])->save();
 
-            if (in_array($normalization->status, [
+            $attemptCount = (int) $normalization->job_attempt_count;
+            $isRunnableStatus = in_array($normalization->status, [
                 QuotationNormalizationStatus::Pending,
                 QuotationNormalizationStatus::Processing,
                 QuotationNormalizationStatus::Failed,
-            ], true)) {
+            ], true);
+
+            if ($normalization->status === QuotationNormalizationStatus::Processing && $attemptCount > 0) {
+                return;
+            }
+
+            if ($isRunnableStatus) {
+                $normalization->forceFill([
+                    'job_attempt_count' => $attemptCount + 1,
+                ])->save();
+
                 $normalized = $normalizer->handle($tenant, $version, $normalization);
 
                 if ($normalized->status === QuotationNormalizationStatus::NeedsReview) {

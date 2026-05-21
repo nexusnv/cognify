@@ -131,9 +131,41 @@ class CreateQuotationVersionSnapshot
             return $version->refresh()->load(['lineItems', 'submittedByUser', 'quotation']);
         });
 
-        NormalizeQuotationVersion::dispatch($tenant->id, $version->id)->afterCommit();
+        $this->dispatchNormalizationJob($tenant, $version);
 
         return $version;
+    }
+
+    protected function dispatchNormalizationJob(Tenant $tenant, QuotationVersion $version): void
+    {
+        try {
+            $this->queueNormalizationJob($tenant, $version);
+        } catch (\Throwable $throwable) {
+            report($throwable);
+            $this->runNormalizationSynchronously($tenant, $version);
+        }
+    }
+
+    protected function queueNormalizationJob(Tenant $tenant, QuotationVersion $version): void
+    {
+        NormalizeQuotationVersion::dispatch($tenant->id, $version->id)->afterCommit();
+    }
+
+    protected function runNormalizationSynchronously(Tenant $tenant, QuotationVersion $version): void
+    {
+        app()->call(function (
+            \Domains\Quotation\Actions\StartQuotationNormalization $starter,
+            \Domains\Quotation\Actions\RunDeterministicQuotationNormalizer $normalizer,
+            \App\Audit\AuditRecorder $auditRecorder,
+            \App\Notifications\NotificationRecorder $notificationRecorder,
+        ) use ($tenant, $version): void {
+            (new NormalizeQuotationVersion($tenant->id, $version->id))->handle(
+                $starter,
+                $normalizer,
+                $auditRecorder,
+                $notificationRecorder,
+            );
+        });
     }
 
     /**

@@ -5,14 +5,17 @@ namespace Tests\Unit;
 use App\Tenancy\Tenant;
 use App\Audit\AuditRecorder;
 use App\Notifications\NotificationRecorder;
+use Domains\Quotation\Actions\CreateQuotationVersionSnapshot;
 use Domains\Quotation\Actions\RunDeterministicQuotationNormalizer;
 use Domains\Quotation\Actions\StartQuotationNormalization;
 use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationLineItem;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\QuotationVersionLineItem;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\States\QuotationSubmissionSource;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
 use Domains\Quotation\States\QuotationNormalizationStatus;
 use Domains\Quotation\States\RfqStatus;
@@ -181,23 +184,31 @@ class QuotationDeterministicNormalizerTest extends TestCase
         ]);
     }
 
-    public function test_starting_the_same_version_twice_returns_the_existing_normalization_revision(): void
+    public function test_existing_processing_normalization_with_attempts_is_not_re_normalized(): void
     {
         [$tenant, $version] = $this->quotableVersionFixture();
 
-        $starter = app(StartQuotationNormalization::class);
+        $normalization = $this->seedProcessingNormalization($tenant, $version, 1);
 
-        $first = $starter->handle($tenant, $version);
-        $second = $starter->handle($tenant, $version);
+        $this->mock(RunDeterministicQuotationNormalizer::class, function ($mock): void {
+            $mock->shouldNotReceive('handle');
+        });
 
-        $this->assertSame($first->id, $second->id);
-        $this->assertSame($first->normalization_revision, $second->normalization_revision);
-        $this->assertDatabaseCount('quotation_normalizations', 1);
-        $this->assertDatabaseCount('audit_events', 1);
-        $this->assertDatabaseHas('audit_events', [
-            'tenant_id' => $tenant->id,
-            'event_type' => 'quotation_normalization.started',
-        ]);
+        $job = new NormalizeQuotationVersion($tenant->id, $version->id);
+
+        $job->handle(
+            app(StartQuotationNormalization::class),
+            app(RunDeterministicQuotationNormalizer::class),
+            app(AuditRecorder::class),
+            app(NotificationRecorder::class),
+        );
+
+        $this->assertSame(1, (int) $normalization->refresh()->job_attempt_count);
+        $this->assertSame(1, $normalization->fields()->count());
+        $this->assertSame(1, $normalization->issues()->count());
+        $this->assertSame(0, $normalization->lineGroups()->count());
+        $this->assertSame(0, $normalization->attachments()->count());
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     public function test_duplicate_job_delivery_does_not_create_another_normalization_revision(): void
@@ -295,6 +306,35 @@ class QuotationDeterministicNormalizerTest extends TestCase
         ]);
     }
 
+    public function test_snapshot_dispatch_falls_back_to_synchronous_normalization_on_queue_failure(): void
+    {
+        [$tenant, $quotation] = $this->quotationSnapshotFixture();
+
+        $service = new class(app(AuditRecorder::class)) extends CreateQuotationVersionSnapshot {
+            public bool $fallbackCalled = false;
+
+            protected function queueNormalizationJob(Tenant $tenant, QuotationVersion $version): void
+            {
+                throw new \RuntimeException('queue unavailable');
+            }
+
+            protected function runNormalizationSynchronously(Tenant $tenant, QuotationVersion $version): void
+            {
+                $this->fallbackCalled = true;
+            }
+        };
+
+        $result = $service->handle(
+            $tenant,
+            $quotation,
+            null,
+            QuotationSubmissionSource::BuyerUpload,
+        );
+
+        $this->assertSame(1, $result->version_number);
+        $this->assertTrue($service->fallbackCalled);
+    }
+
     /**
      * @return array{Tenant, QuotationVersion}
      */
@@ -317,6 +357,134 @@ class QuotationDeterministicNormalizerTest extends TestCase
             ->delete();
 
         return [$tenant, $version];
+    }
+
+    /**
+     * @return array{Tenant, Quotation}
+     */
+    private function quotationSnapshotFixture(): array
+    {
+        $tenant = Tenant::query()->create([
+            'name' => 'Tenant '.Str::uuid(),
+        ]);
+
+        $vendor = Vendor::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Vendor '.Str::uuid(),
+            'status' => 'active',
+            'category' => 'IT Hardware',
+            'risk_rating' => 'low',
+            'metadata' => [
+                'contactName' => 'Vendor Contact',
+                'contactEmail' => 'vendor@example.test',
+            ],
+        ]);
+
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'number' => 'RFQ-'.Str::random(8),
+            'title' => 'Laptop refresh RFQ',
+            'status' => RfqStatus::Draft,
+            'line_items' => [
+                [
+                    'id' => 'rfq-line-1',
+                    'name' => 'Developer laptop',
+                    'description' => 'Developer laptop',
+                    'quantity' => '10.0000',
+                    'unit' => 'each',
+                    'estimated_unit_price' => '1100.00',
+                    'currency' => 'USD',
+                ],
+            ],
+        ]);
+
+        $quotation = Quotation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $vendor->id,
+            'number' => 'Q-'.Str::random(8),
+            'status' => 'draft',
+            'currency' => 'USD',
+            'subtotal_amount' => '12000.00',
+            'tax_amount' => '720.00',
+            'freight_amount' => '250.00',
+            'discount_amount' => '500.00',
+            'total_amount' => '12470.00',
+            'payment_terms' => null,
+            'delivery_terms' => 'Delivered to site',
+            'lead_time_days' => 21,
+            'warranty_terms' => '3 years onsite',
+            'exclusions' => 'Installation not included',
+            'compliance_notes' => 'Meets requested hardware specification',
+            'buyer_notes' => null,
+            'vendor_notes' => 'Subject to stock availability',
+        ]);
+
+        QuotationLineItem::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'rfq_line_item_id' => 'rfq-line-1',
+            'description' => 'Developer laptop',
+            'quantity' => '10.0000',
+            'unit' => 'each',
+            'unit_price' => '1200.00',
+            'subtotal_amount' => '12000.00',
+            'tax_amount' => '720.00',
+            'total_amount' => '12720.00',
+            'lead_time_days' => 21,
+            'manufacturer' => 'Lenovo',
+            'model_number' => 'ThinkPad T-series',
+            'alternate_offered' => false,
+            'compliance_status' => 'compliant',
+            'notes' => 'Quoted as requested',
+            'position' => 1,
+        ]);
+
+        return [$tenant, $quotation->refresh()->load(['lineItems', 'rfq', 'vendor'])];
+    }
+
+    private function seedProcessingNormalization(Tenant $tenant, QuotationVersion $version, int $attempts): QuotationNormalization
+    {
+        $normalization = QuotationNormalization::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $version->quotation_id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 1,
+            'status' => 'processing',
+            'is_current_for_version' => true,
+            'job_attempt_count' => $attempts,
+            'algorithm_version' => 'deterministic-v1',
+        ]);
+
+        $normalization->fields()->create([
+            'tenant_id' => $tenant->id,
+            'field_path' => 'manualEntry.currency',
+            'raw_value' => ['value' => 'usd'],
+            'normalized_value' => ['value' => 'USD'],
+            'data_type' => 'text',
+            'currency' => 'USD',
+            'confidence' => 1.0,
+            'source' => 'quotation_version',
+            'provenance' => [
+                'sourceQuotationVersionId' => (string) $version->id,
+                'sourceFieldPath' => 'manualEntry.currency',
+                'rawValue' => ['value' => 'usd'],
+                'normalizedValue' => ['value' => 'USD'],
+                'algorithmVersion' => 'deterministic-v1',
+                'source' => 'quotation_version',
+            ],
+        ]);
+
+        $normalization->issues()->create([
+            'tenant_id' => $tenant->id,
+            'severity' => 'warning',
+            'field_path' => 'manualEntry.paymentTerms',
+            'issue_code' => QuotationNormalizationIssueCatalog::PAYMENT_TERMS_UNSTRUCTURED,
+            'message' => 'Payment terms are free text and require review.',
+            'status' => 'open',
+        ]);
+
+        return $normalization->refresh();
     }
 
     /**
