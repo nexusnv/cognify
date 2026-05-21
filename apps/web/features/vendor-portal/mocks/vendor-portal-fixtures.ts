@@ -205,6 +205,7 @@ function appendVendorPortalQuotationVersionSnapshot(quotation: QuotationVendorPo
     previousVersion &&
     sameVendorPortalVersionSnapshot(previousVersion, manualEntry, quotation.lineItems, attachments)
   ) {
+    syncVendorPortalQuotationVersionSummary(previousVersion);
     return previousVersion;
   }
 
@@ -237,7 +238,24 @@ function appendVendorPortalQuotationVersionSnapshot(quotation: QuotationVendorPo
     })),
   ];
 
-  return vendorPortalQuotationVersions[0];
+  return syncVendorPortalQuotationVersionSummary(vendorPortalQuotationVersions[0]);
+}
+
+function syncVendorPortalQuotationVersionSummary(version: VendorQuotationVersion) {
+  if (vendorPortalQuotation) {
+    vendorPortalQuotation = {
+      ...vendorPortalQuotation,
+      versionCount: vendorPortalQuotationVersions.length,
+      currentVersion: {
+        id: version.id,
+        versionNumber: version.versionNumber,
+        isCurrent: version.isCurrent,
+        attachmentCount: version.attachmentCount,
+      },
+    };
+  }
+
+  return version;
 }
 
 function sameVendorPortalVersionSnapshot(

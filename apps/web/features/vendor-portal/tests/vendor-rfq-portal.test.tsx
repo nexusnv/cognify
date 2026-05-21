@@ -3,7 +3,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  appendVendorPortalQuotationVersion,
   expiredVendorPortalToken,
+  getVendorPortalQuotationFixture,
   unavailableVendorPortalToken,
   resetVendorPortalMockState,
   validVendorPortalToken,
@@ -118,6 +120,21 @@ describe("vendor RFQ portal", () => {
     expect(screen.getByText("Version 1")).toBeInTheDocument();
     expect(screen.getByText("12470.00")).toBeInTheDocument();
     expect(screen.queryByText("Internal buyer note")).not.toBeInTheDocument();
+  });
+
+  it("keeps vendor quotation version summary in sync when snapshots deduplicate", () => {
+    const version = appendVendorPortalQuotationVersion(validManualEntryPayload());
+    const deduplicatedVersion = appendVendorPortalQuotationVersion(validManualEntryPayload());
+    const quotation = getVendorPortalQuotationFixture();
+
+    expect(deduplicatedVersion).toBe(version);
+    expect(quotation?.versionCount).toBe(1);
+    expect(quotation?.currentVersion).toEqual({
+      id: version.id,
+      versionNumber: version.versionNumber,
+      isCurrent: true,
+      attachmentCount: version.attachmentCount,
+    });
   });
 
   it("returns conflict when a vendor saves manual entry with an expired portal token", async () => {
