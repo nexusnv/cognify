@@ -59,6 +59,18 @@ class ApproveQuotationNormalization
                 throw new ConflictHttpException('Quotation normalization has unresolved blocking issues.');
             }
 
+            $hasUnresolvedWarnings = $lockedNormalization->issues->contains(function ($issue): bool {
+                $severity = $issue->severity instanceof QuotationNormalizationIssueSeverity
+                    ? $issue->severity
+                    : QuotationNormalizationIssueSeverity::from($issue->severity);
+
+                return $severity === QuotationNormalizationIssueSeverity::Warning && ($issue->status?->value ?? $issue->status) !== 'resolved';
+            });
+
+            if ($withWarnings && ! $hasUnresolvedWarnings) {
+                throw new ConflictHttpException('Quotation normalization has no unresolved warning issues.');
+            }
+
             $status = $withWarnings ? QuotationNormalizationStatus::ApprovedWithWarnings : QuotationNormalizationStatus::Approved;
             $lockedNormalization->forceFill([
                 'status' => $status,

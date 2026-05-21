@@ -173,6 +173,64 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertJsonPath('error.code', 'conflict');
     }
 
+    public function test_approve_with_warnings_rejects_review_ready_normalization_without_unresolved_warnings(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $normalization = tap($this->normalizationForTenant($tenant), function (QuotationNormalization $normalization) use ($tenant): void {
+            $normalization->forceFill([
+                'status' => QuotationNormalizationStatus::ReadyForApproval,
+                'is_current_for_version' => true,
+            ])->save();
+
+            $normalization->issues()->create([
+                'tenant_id' => $tenant->id,
+                'severity' => 'warning',
+                'status' => 'resolved',
+                'issue_code' => 'format_hint',
+                'field_path' => 'manualEntry.paymentTerms',
+                'message' => 'Payment terms should be clarified.',
+            ]);
+        })->refresh()->load(['issues']);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/approve-with-warnings", [
+                'approvalNote' => 'Approved with warnings.',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+
+        $this->assertSame(QuotationNormalizationStatus::ReadyForApproval->value, $normalization->refresh()->status->value);
+    }
+
+    public function test_approve_with_warnings_accepts_review_ready_normalization_with_unresolved_warnings_and_no_blocking_issues(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $normalization = tap($this->normalizationForTenant($tenant), function (QuotationNormalization $normalization) use ($tenant): void {
+            $normalization->forceFill([
+                'status' => QuotationNormalizationStatus::ReadyForApproval,
+                'is_current_for_version' => true,
+            ])->save();
+
+            $normalization->issues()->create([
+                'tenant_id' => $tenant->id,
+                'severity' => 'warning',
+                'status' => 'open',
+                'issue_code' => 'format_hint',
+                'field_path' => 'manualEntry.paymentTerms',
+                'message' => 'Payment terms should be clarified.',
+            ]);
+        })->refresh()->load(['issues']);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/approve-with-warnings", [
+                'approvalNote' => 'Approved with warning note.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved_with_warnings');
+
+        $this->assertSame(QuotationNormalizationStatus::ApprovedWithWarnings->value, $normalization->refresh()->status->value);
+    }
+
     public function test_non_review_ready_normalizations_reject_approval_and_keep_status(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
