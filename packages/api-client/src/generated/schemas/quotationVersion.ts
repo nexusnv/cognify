@@ -16,6 +16,7 @@ import type { QuotationLineItem } from "./quotationLineItem";
 import type { QuotationVersionAttachment } from "./quotationVersionAttachment";
 import type { QuotationCompleteness } from "./quotationCompleteness";
 import type { QuotationVersionPermissions } from "./quotationVersionPermissions";
+import type { QuotationVersionActiveNormalization } from "./quotationVersionActiveNormalization";
 
 export interface QuotationVersion {
   id: string;
@@ -37,4 +38,5 @@ export interface QuotationVersion {
   attachmentCount: number;
   completeness: QuotationCompleteness;
   permissions: QuotationVersionPermissions;
+  activeNormalization?: QuotationVersionActiveNormalization;
 }

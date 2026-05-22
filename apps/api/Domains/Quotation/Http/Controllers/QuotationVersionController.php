@@ -29,7 +29,7 @@ class QuotationVersionController extends Controller
 
         return QuotationVersionResource::collection(
             QuotationVersion::query()
-                ->with(['lineItems', 'submittedByUser', 'quotation.rfq'])
+                ->with(['lineItems', 'submittedByUser', 'quotation.rfq', 'currentNormalization'])
                 ->where('tenant_id', $tenant->id)
                 ->where('quotation_id', $model->id)
                 ->orderByDesc('version_number')
@@ -45,7 +45,7 @@ class QuotationVersionController extends Controller
 
         return new QuotationVersionResource(
             QuotationVersion::query()
-                ->with(['lineItems', 'submittedByUser', 'quotation.rfq'])
+                ->with(['lineItems', 'submittedByUser', 'quotation.rfq', 'currentNormalization'])
                 ->where('tenant_id', $tenant->id)
                 ->where('quotation_id', $model->id)
                 ->findOrFail($version)

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqInvitation;
@@ -200,6 +201,47 @@ class QuotationVersionApiTest extends TestCase
             ->assertJsonPath('data.isCurrent', false)
             ->assertJsonPath('data.permissions.canEdit', false)
             ->assertJsonPath('data.manualEntry.totalAmount', '12470.00');
+    }
+
+    public function test_current_version_exposes_active_normalization_summary(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+        $invitation = $this->invitation($tenant, $rfq, $vendor);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->putJson("/api/rfq-invitations/{$invitation->id}/quotation/manual-entry", $this->validManualEntryPayload([
+                'quotationReference' => 'NW-Q-2026-041',
+                'totalAmount' => '12470.00',
+            ]))
+            ->assertOk();
+
+        $quotation = Quotation::query()->where('rfq_invitation_id', $invitation->id)->firstOrFail();
+        $version = QuotationVersion::query()->whereKey($quotation->current_version_id)->firstOrFail();
+
+        QuotationNormalization::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 2,
+            'status' => 'ready_for_approval',
+            'is_current_for_version' => true,
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/quotations/{$quotation->id}/versions")
+            ->assertOk()
+            ->assertJsonPath('data.0.activeNormalization.id', fn ($value) => $value !== null)
+            ->assertJsonPath('data.0.activeNormalization.status', 'ready_for_approval')
+            ->assertJsonPath('data.0.activeNormalization.normalizationRevision', 2);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->id}")
+            ->assertOk()
+            ->assertJsonPath('data.activeNormalization.status', 'ready_for_approval')
+            ->assertJsonPath('data.activeNormalization.normalizationRevision', 2);
     }
 
     public function test_vendor_portal_revision_creates_vendor_safe_current_version(): void

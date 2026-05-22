@@ -250,6 +250,10 @@ describe("RFQ invitation workflow", () => {
     await user.click(card.getByRole("button", { name: "Save structured quotation" }));
 
     expect(await card.findByRole("button", { name: "Version 1 current" })).toBeInTheDocument();
+    expect(card.getByRole("link", { name: "Review normalization" })).toHaveAttribute(
+      "href",
+      "/quotations/normalizations/norm-version-1",
+    );
     expect(card.getByTestId("quotation-version-total")).toHaveTextContent("12470.00");
 
     await user.clear(card.getByLabelText("Total amount"));
@@ -257,6 +261,10 @@ describe("RFQ invitation workflow", () => {
     await user.click(card.getByRole("button", { name: "Save structured quotation" }));
 
     expect(await card.findByRole("button", { name: "Version 2 current" })).toBeInTheDocument();
+    expect(card.getByRole("link", { name: "Review normalization" })).toHaveAttribute(
+      "href",
+      "/quotations/normalizations/norm-version-2",
+    );
     expect(card.getByTestId("quotation-version-total")).toHaveTextContent("11990.00");
 
     await user.click(card.getByRole("button", { name: "Version 1" }));

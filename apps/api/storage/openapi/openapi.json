@@ -10474,6 +10474,36 @@
           }
         }
       },
+      "QuotationVersionActiveNormalizationSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "normalizationRevision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "needs_review",
+              "ready_for_approval",
+              "approved",
+              "approved_with_warnings",
+              "failed",
+              "superseded"
+            ]
+          },
+          "normalizationRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
       "QuotationVersion": {
         "type": "object",
         "required": [
@@ -10593,6 +10623,16 @@
           },
           "permissions": {
             "$ref": "#/components/schemas/QuotationVersionPermissions"
+          },
+          "activeNormalization": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVersionActiveNormalizationSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },

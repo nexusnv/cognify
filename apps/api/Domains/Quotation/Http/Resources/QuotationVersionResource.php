@@ -78,6 +78,13 @@ class QuotationVersionResource extends JsonResource
                     ? (bool) $request->attributes->get('vendor_portal_can_edit_quotation', false)
                     : ($request->user()?->can('view', $this->quotation?->rfq) ?? false),
             ],
+            'activeNormalization' => $vendorPortal || ! $this->relationLoaded('currentNormalization') || $this->currentNormalization === null
+                ? null
+                : [
+                    'id' => (string) $this->currentNormalization->id,
+                    'status' => $this->currentNormalization->status?->value ?? $this->currentNormalization->status,
+                    'normalizationRevision' => $this->currentNormalization->normalization_revision,
+                ],
         ];
     }
 }
