@@ -110,7 +110,7 @@ describe("Quotation normalization workspace", () => {
       http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
         requestedVersionId = String(params.versionId);
 
-        if (requestedVersionId !== "101") {
+        if (requestedVersionId !== "2") {
           return HttpResponse.json(
             { error: { code: "not_found", message: "Quotation version not found." } },
             { status: 404 },
@@ -198,7 +198,7 @@ describe("Quotation normalization workspace", () => {
     });
 
     const lineMappings = await screen.findByTestId("normalization-line-mappings");
-    expect(requestedVersionId).toBe("101");
+    expect(requestedVersionId).toBe("2");
     expect(screen.queryByRole("option", { name: "Mock detail line that should be ignored" })).not.toBeInTheDocument();
     expect(await screen.findByRole("option", { name: "Fetched line from quotation version route" })).toBeInTheDocument();
     await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
@@ -212,7 +212,7 @@ describe("Quotation normalization workspace", () => {
     await user.click(within(lineMappings).getByRole("button", { name: "Save line mapping" }));
 
     await waitFor(() => {
-      expect(requestedVersionId).toBe("101");
+      expect(requestedVersionId).toBe("2");
       expect(screen.getByText("Bundle confirmed against vendor submission.")).toBeInTheDocument();
     });
   });
@@ -298,7 +298,7 @@ describe("Quotation normalization workspace", () => {
         });
       }),
       http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
-        if (String(params.versionId) !== "909") {
+        if (String(params.versionId) !== "9") {
           return HttpResponse.json(
             { error: { code: "not_found", message: "Quotation version not found." } },
             { status: 404 },
@@ -692,7 +692,7 @@ describe("Quotation normalization workspace", () => {
     await waitFor(() => {
       expect(within(lineMappings).getByLabelText("Bundle description")).toHaveValue("Developer laptop bundle");
     });
-    expect(requestedVersionId).toBe("101");
+    expect(requestedVersionId).toBe("2");
     await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");

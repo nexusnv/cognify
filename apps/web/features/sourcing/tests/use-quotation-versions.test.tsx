@@ -48,7 +48,7 @@ describe("useCreateQuotationVersion", () => {
 
     expect(mocks.createQuotationVersionMock).toHaveBeenCalledWith("quotation-1", {}, "tenant-1");
     expect(setQueryData).toHaveBeenCalledWith(
-      quotationVersionKeys.detail("quotation-1", 501, "tenant-1"),
+      quotationVersionKeys.detail("quotation-1", 7, "tenant-1"),
       createdVersion,
     );
   });

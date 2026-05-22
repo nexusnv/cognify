@@ -17,9 +17,9 @@ export const quotationVersionKeys = {
     [...quotationVersionKeys.byQuotation(quotationId, tenantId), "list"] as const,
   detail: (
     quotationId: string,
-    versionId: number,
+    versionNumber: number,
     tenantId: string | null = getStoredActiveTenantId(),
-  ) => [...quotationVersionKeys.byQuotation(quotationId, tenantId), "detail", versionId] as const,
+  ) => [...quotationVersionKeys.byQuotation(quotationId, tenantId), "detail", versionNumber] as const,
 };
 
 export function useQuotationVersions(quotationId: string | null | undefined) {
@@ -35,22 +35,22 @@ export function useQuotationVersions(quotationId: string | null | undefined) {
 
 export function useQuotationVersion(
   quotationId: string | null | undefined,
-  versionId: number | null | undefined,
+  versionNumber: number | null | undefined,
 ) {
   const tenantId = getStoredActiveTenantId();
-  const hasFiniteVersionId = typeof versionId === "number" && Number.isFinite(versionId);
-  const versionKey = hasFiniteVersionId ? versionId : -1;
+  const hasFiniteVersionNumber = typeof versionNumber === "number" && Number.isFinite(versionNumber);
+  const versionKey = hasFiniteVersionNumber ? versionNumber : -1;
 
   return useQuery({
     queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionKey, tenantId),
     queryFn: () => {
-      if (!quotationId || !hasFiniteVersionId) {
-        throw new Error("Cannot fetch quotation version without a finite version id.");
+      if (!quotationId || !hasFiniteVersionNumber) {
+        throw new Error("Cannot fetch quotation version without a finite version number.");
       }
 
-      return showQuotationVersion(quotationId, versionId, tenantId);
+      return showQuotationVersion(quotationId, versionNumber, tenantId);
     },
-    enabled: Boolean(quotationId) && hasFiniteVersionId,
+    enabled: Boolean(quotationId) && hasFiniteVersionNumber,
     retry: false,
   });
 }
@@ -70,10 +70,9 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
     onSuccess: (version) => {
       if (!quotationId) return;
 
-      const versionId = Number(version.id);
-      if (Number.isFinite(versionId)) {
+      if (Number.isFinite(version.versionNumber)) {
         queryClient.setQueryData(
-          quotationVersionKeys.detail(quotationId, versionId, tenantId),
+          quotationVersionKeys.detail(quotationId, version.versionNumber, tenantId),
           version,
         );
       }

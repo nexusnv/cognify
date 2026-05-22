@@ -138,7 +138,7 @@ export const quotationNormalizationHandlers = [
     const normalization = normalizations.find(
       (fixture) =>
         fixture.source.quotationId === quotationId &&
-        fixture.source.quotationVersionId === versionId,
+        String(fixture.source.versionNumber) === versionId,
     );
     if (!normalization) return notFound();
 
