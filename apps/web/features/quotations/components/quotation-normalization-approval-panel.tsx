@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getApiErrorMessage } from "@cognify/api-client";
 import { Button, Textarea } from "@cognify/ui";
 import type { QuotationNormalization } from "@cognify/api-client/schemas";
 
@@ -17,6 +18,7 @@ export function QuotationNormalizationApprovalPanel({
 }) {
   const [approvalNote, setApprovalNote] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!canEdit && (normalization.status === "approved" || normalization.status === "approved_with_warnings")) {
     return (
@@ -25,6 +27,21 @@ export function QuotationNormalizationApprovalPanel({
         <p className="mt-2 text-sm text-muted-foreground">Read-only approved record</p>
       </section>
     );
+  }
+
+  async function submitApproval(action: (approvalNote: string) => Promise<void>) {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setLocalError(null);
+
+    try {
+      await action(approvalNote);
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : getApiErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -55,22 +72,22 @@ export function QuotationNormalizationApprovalPanel({
       <div className="mt-4 flex flex-wrap gap-2">
         <Button
           type="button"
-          disabled={!normalization.permissions.canApprove}
-          onClick={() => void onApprove(approvalNote)}
+          disabled={!normalization.permissions.canApprove || isSubmitting}
+          onClick={() => void submitApproval(onApprove)}
         >
           Approve normalization
         </Button>
         <Button
           type="button"
           variant="outline"
-          disabled={!normalization.permissions.canApproveWithWarnings}
+          disabled={!normalization.permissions.canApproveWithWarnings || isSubmitting}
           onClick={() => {
             if (!approvalNote.trim()) {
               setLocalError("Add an acknowledgement note before approving with warnings.");
               return;
             }
 
-            void onApproveWithWarnings(approvalNote);
+            void submitApproval(onApproveWithWarnings);
           }}
         >
           Approve with warnings

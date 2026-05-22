@@ -225,6 +225,66 @@ describe("Quotation normalization queue", () => {
     });
   });
 
+  it("re-enables a row and surfaces an error when retry fails", async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("/api/quotation-normalizations", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "norm-failed",
+              status: "failed",
+              normalizationRevision: 1,
+              algorithmVersion: "rules-v1",
+              updatedAt: "2026-05-22T07:05:00.000Z",
+              lastJobError: "Normalizer could not parse the uploaded workbook.",
+              source: {
+                quotationId: "quotation-2",
+                quotationVersionId: "103",
+                quotationNumber: "QT-2026-099",
+                versionNumber: 3,
+                rfqId: "rfq-1",
+                rfqNumber: "RFQ-2026-000001",
+                vendorId: "vendor-2",
+                vendorName: "Atlas Workplace Supply",
+              },
+              summary: {
+                blockingIssueCount: 0,
+                warningIssueCount: 0,
+                infoIssueCount: 0,
+              },
+              permissions: {
+                canEdit: false,
+                canApprove: false,
+                canApproveWithWarnings: false,
+                canRetry: true,
+                canCreateRevision: false,
+              },
+            },
+          ],
+        }),
+      ),
+      http.post("/api/quotation-versions/:version/normalization/retry", () =>
+        HttpResponse.json(
+          { error: { code: "conflict", message: "Retry job already queued." } },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    render(<QuotationNormalizationQueuePage />, { wrapper: TestProviders });
+
+    const failedRow = await screen.findByRole("row", { name: /Atlas Workplace Supply/i });
+    const retryButton = within(failedRow).getByRole("button", { name: "Retry normalization" });
+    await user.click(retryButton);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Retry failed: Retry job already queued.");
+    await waitFor(() => {
+      expect(within(failedRow).getByRole("button", { name: "Retry normalization" })).not.toBeDisabled();
+    });
+  });
+
   it("shows a permission error state instead of queue actions when the list request is forbidden", async () => {
     server.use(
       http.get("/api/quotation-normalizations", () =>

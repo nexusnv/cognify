@@ -217,6 +217,386 @@ describe("Quotation normalization workspace", () => {
     });
   });
 
+  it("saves line mapping values from the selected quotation line and current form fields", async () => {
+    const user = userEvent.setup();
+    let submittedPayload: unknown = null;
+
+    server.use(
+      http.get("/api/quotation-normalizations/:normalizationId", ({ params }) => {
+        return HttpResponse.json({
+          data: {
+            id: String(params.normalizationId),
+            status: "needs_review",
+            normalizationRevision: 1,
+            algorithmVersion: "rules-v1",
+            updatedAt: "2026-05-22T09:15:00.000Z",
+            lastJobError: null,
+            source: {
+              quotationId: "quotation-9",
+              quotationVersionId: "909",
+              quotationNumber: "QT-2026-900",
+              versionNumber: 9,
+              rfqId: "rfq-9",
+              rfqNumber: "RFQ-2026-000009",
+              vendorId: "vendor-9",
+              vendorName: "Contoso Supplies",
+            },
+            summary: {
+              blockingIssueCount: 1,
+              warningIssueCount: 0,
+              infoIssueCount: 0,
+            },
+            fields: [],
+            lineGroups: [
+              {
+                id: "line-group-3",
+                groupNumber: 3,
+                pricingMode: "bundle",
+                description: "Industrial fasteners",
+                currency: "EUR",
+                bundleTotalAmount: "247.50",
+                notes: "Pre-existing buyer mapping.",
+                mappings: [
+                  {
+                    id: "mapping-3-1",
+                    rfqLineItemId: "rfq-line-9",
+                    quotationVersionLineItemId: "quote-line-9",
+                    mappingType: "partial",
+                    quantity: "3.5000",
+                    unit: "box",
+                    unitPrice: null,
+                    lineTotal: "247.50",
+                    buyerNote: "Existing mapping note.",
+                  },
+                ],
+              },
+            ],
+            attachments: [],
+            issues: [
+              {
+                id: "issue-line-mapping",
+                severity: "blocking",
+                fieldPath: "lineItems.bundle",
+                issueCode: "line_mapping_required",
+                message: "Map the quotation bundle to an RFQ line before approval.",
+                rawValue: "Industrial fasteners",
+                suggestedValue: null,
+                status: "open",
+                resolvedByUserId: null,
+                resolvedAt: null,
+                resolutionNote: null,
+              },
+            ],
+            permissions: {
+              canEdit: true,
+              canApprove: false,
+              canApproveWithWarnings: false,
+              canRetry: false,
+              canCreateRevision: false,
+            },
+          },
+        });
+      }),
+      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+        if (String(params.versionId) !== "909") {
+          return HttpResponse.json(
+            { error: { code: "not_found", message: "Quotation version not found." } },
+            { status: 404 },
+          );
+        }
+
+        return HttpResponse.json({
+          data: {
+            id: "909",
+            quotationId: String(params.quotationId),
+            versionNumber: 9,
+            status: "received",
+            source: "buyer_upload",
+            submittedAt: "2026-05-22T09:15:00.000Z",
+            submittedByUser: {
+              id: "buyer-9",
+              name: "Priya Buyer",
+            },
+            submittedByVendorContact: null,
+            isCurrent: true,
+            supersededAt: null,
+            previousVersionId: null,
+            manualEntry: {
+              quotationReference: "QT-2026-900",
+              quotedAt: "2026-05-22",
+              validUntil: "2026-06-30",
+              currency: "EUR",
+              subtotalAmount: "247.50",
+              taxAmount: "0.00",
+              freightAmount: "0.00",
+              discountAmount: "0.00",
+              totalAmount: "247.50",
+              paymentTerms: null,
+              deliveryTerms: "DAP",
+              leadTimeDays: 21,
+              warrantyTerms: "12 months",
+              exclusions: null,
+              complianceNotes: null,
+              buyerNotes: null,
+              vendorNotes: null,
+            },
+            lineItems: [
+              {
+                id: "quote-line-9",
+                rfqLineItemId: "rfq-line-9",
+                description: "Industrial fasteners",
+                quantity: "3.5000",
+                unit: "box",
+                unitPrice: "70.7143",
+                subtotalAmount: "247.50",
+                taxAmount: "0.00",
+                totalAmount: "247.50",
+                leadTimeDays: 21,
+                manufacturer: "FabCo",
+                modelNumber: "FX-7",
+                alternateOffered: false,
+                complianceStatus: "compliant",
+                notes: "Packed in boxes of 3.5 units.",
+              },
+            ],
+            attachments: [],
+            attachmentCount: 0,
+            completeness: {
+              isComplete: true,
+              missingFields: [],
+              lineItemCount: 1,
+            },
+            permissions: {
+              canEdit: false,
+              canCreateRevision: true,
+            },
+          },
+        });
+      }),
+      http.post("/api/quotation-normalizations/:normalizationId/line-mappings", async ({ request }) => {
+        submittedPayload = await request.json();
+        return HttpResponse.json({
+          data: {
+            id: "norm-9",
+            status: "needs_review",
+            normalizationRevision: 1,
+            algorithmVersion: "rules-v1",
+            updatedAt: "2026-05-22T10:10:00.000Z",
+            lastJobError: null,
+            source: {
+              quotationId: "quotation-9",
+              quotationVersionId: "909",
+              quotationNumber: "QT-2026-900",
+              versionNumber: 9,
+              rfqId: "rfq-9",
+              rfqNumber: "RFQ-2026-000009",
+              vendorId: "vendor-9",
+              vendorName: "Contoso Supplies",
+            },
+            summary: {
+              blockingIssueCount: 1,
+              warningIssueCount: 0,
+              infoIssueCount: 0,
+            },
+            fields: [],
+            lineGroups: [],
+            attachments: [],
+            issues: [],
+            permissions: {
+              canEdit: true,
+              canApprove: false,
+              canApproveWithWarnings: false,
+              canRetry: false,
+              canCreateRevision: false,
+            },
+          },
+        });
+      }),
+    );
+
+    render(<QuotationNormalizationWorkspace normalizationId="norm-9" />, {
+      wrapper: TestProviders,
+    });
+
+    const lineMappings = await screen.findByTestId("normalization-line-mappings");
+    await screen.findByRole("option", { name: "Industrial fasteners" });
+    await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-9");
+    await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-9");
+    await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");
+    await user.clear(within(lineMappings).getByLabelText("Currency"));
+    await user.type(within(lineMappings).getByLabelText("Currency"), "EUR");
+    await user.clear(within(lineMappings).getByLabelText("Quantity"));
+    await user.type(within(lineMappings).getByLabelText("Quantity"), "4.2500");
+    await user.clear(within(lineMappings).getByLabelText("Unit"));
+    await user.type(within(lineMappings).getByLabelText("Unit"), "carton");
+    await user.clear(within(lineMappings).getByLabelText("Bundle total"));
+    await user.type(within(lineMappings).getByLabelText("Bundle total"), "298.75");
+    await user.click(within(lineMappings).getByRole("button", { name: "Save line mapping" }));
+
+    await waitFor(() => {
+      expect(submittedPayload).not.toBeNull();
+    });
+
+    expect(submittedPayload).toEqual({
+      lineGroups: [
+        {
+          groupNumber: 3,
+          pricingMode: "bundle",
+          description: "Industrial fasteners",
+          currency: "EUR",
+          bundleTotalAmount: "298.75",
+          notes: "Existing mapping note.",
+          mappings: [
+            {
+              rfqLineItemId: "rfq-line-9",
+              quotationVersionLineItemId: "quote-line-9",
+              mappingType: "partial",
+              quantity: "4.2500",
+              unit: "carton",
+              lineTotal: "298.75",
+              buyerNote: "Existing mapping note.",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("disables line mapping save when no RFQ line can be selected", async () => {
+    server.use(
+      http.get("/api/quotation-normalizations/:normalizationId", ({ params }) => {
+        return HttpResponse.json({
+          data: {
+            id: String(params.normalizationId),
+            status: "needs_review",
+            normalizationRevision: 1,
+            algorithmVersion: "rules-v1",
+            updatedAt: "2026-05-22T09:15:00.000Z",
+            lastJobError: null,
+            source: {
+              quotationId: "quotation-10",
+              quotationVersionId: "1001",
+              quotationNumber: "QT-2026-901",
+              versionNumber: 10,
+              rfqId: "rfq-10",
+              rfqNumber: "RFQ-2026-000010",
+              vendorId: "vendor-10",
+              vendorName: "Fabrikam",
+            },
+            summary: {
+              blockingIssueCount: 1,
+              warningIssueCount: 0,
+              infoIssueCount: 0,
+            },
+            fields: [],
+            lineGroups: [],
+            attachments: [],
+            issues: [
+              {
+                id: "issue-line-mapping",
+                severity: "blocking",
+                fieldPath: "lineItems.bundle",
+                issueCode: "line_mapping_required",
+                message: "Map the quotation bundle to an RFQ line before approval.",
+                rawValue: "Office chairs",
+                suggestedValue: null,
+                status: "open",
+                resolvedByUserId: null,
+                resolvedAt: null,
+                resolutionNote: null,
+              },
+            ],
+            permissions: {
+              canEdit: true,
+              canApprove: false,
+              canApproveWithWarnings: false,
+              canRetry: false,
+              canCreateRevision: false,
+            },
+          },
+        });
+      }),
+      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+        return HttpResponse.json({
+          data: {
+            id: String(params.versionId),
+            quotationId: String(params.quotationId),
+            versionNumber: 10,
+            status: "received",
+            source: "buyer_upload",
+            submittedAt: "2026-05-22T09:15:00.000Z",
+            submittedByUser: {
+              id: "buyer-10",
+              name: "Priya Buyer",
+            },
+            submittedByVendorContact: null,
+            isCurrent: true,
+            supersededAt: null,
+            previousVersionId: null,
+            manualEntry: {
+              quotationReference: "QT-2026-901",
+              quotedAt: "2026-05-22",
+              validUntil: "2026-06-30",
+              currency: "USD",
+              subtotalAmount: "188.00",
+              taxAmount: "0.00",
+              freightAmount: "0.00",
+              discountAmount: "0.00",
+              totalAmount: "188.00",
+              paymentTerms: null,
+              deliveryTerms: "DAP",
+              leadTimeDays: 14,
+              warrantyTerms: "12 months",
+              exclusions: null,
+              complianceNotes: null,
+              buyerNotes: null,
+              vendorNotes: null,
+            },
+            lineItems: [
+              {
+                id: "quote-line-10",
+                rfqLineItemId: null,
+                description: "Office chairs",
+                quantity: "2.0000",
+                unit: "each",
+                unitPrice: "94.00",
+                subtotalAmount: "188.00",
+                taxAmount: "0.00",
+                totalAmount: "188.00",
+                leadTimeDays: 14,
+                manufacturer: "Steelcase",
+                modelNumber: "K-1",
+                alternateOffered: false,
+                complianceStatus: "compliant",
+                notes: null,
+              },
+            ],
+            attachments: [],
+            attachmentCount: 0,
+            completeness: {
+              isComplete: true,
+              missingFields: [],
+              lineItemCount: 1,
+            },
+            permissions: {
+              canEdit: false,
+              canCreateRevision: true,
+            },
+          },
+        });
+      }),
+    );
+
+    render(<QuotationNormalizationWorkspace normalizationId="norm-10" />, {
+      wrapper: TestProviders,
+    });
+
+    const lineMappings = await screen.findByTestId("normalization-line-mappings");
+    expect(within(lineMappings).getByText("No RFQ line items are available to map this quotation version.")).toBeInTheDocument();
+    expect(within(lineMappings).getByRole("button", { name: "Save line mapping" })).toBeDisabled();
+    expect(within(lineMappings).getByLabelText("RFQ line")).toBeDisabled();
+  });
+
   it("disables approval while blocking issues remain and allows approval after they are resolved", async () => {
     const user = userEvent.setup();
     let requestedVersionId: string | null = null;

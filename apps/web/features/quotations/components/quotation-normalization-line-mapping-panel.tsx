@@ -8,19 +8,77 @@ type DraftState = {
   quotationVersionLineItemId: string;
   rfqLineItemId: string;
   pricingMode: "bundle" | "per_line" | "included" | "unknown";
+  mappingType: "full" | "partial" | "bundled";
   description: string;
+  currency: string;
+  quantity: string;
+  unit: string;
   bundleTotalAmount: string;
   buyerNote: string;
 };
 
+function extractRfqLineItemId(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value.trim() || null;
+  }
+
+  if (value && typeof value === "object") {
+    const maybeObject = value as { rfqLineItemId?: unknown; value?: unknown };
+
+    if (typeof maybeObject.rfqLineItemId === "string" && maybeObject.rfqLineItemId.trim()) {
+      return maybeObject.rfqLineItemId.trim();
+    }
+
+    if (typeof maybeObject.value === "string" && maybeObject.value.trim()) {
+      return maybeObject.value.trim();
+    }
+
+    if (maybeObject.value && typeof maybeObject.value === "object") {
+      const nestedValue = maybeObject.value as { rfqLineItemId?: unknown };
+      if (typeof nestedValue.rfqLineItemId === "string" && nestedValue.rfqLineItemId.trim()) {
+        return nestedValue.rfqLineItemId.trim();
+      }
+    }
+  }
+
+  return null;
+}
+
+function getDraftState(
+  normalization: QuotationNormalization,
+  versionLines: QuotationLineItem[],
+  rfqOptions: string[],
+  quotationCurrency: string | null | undefined,
+): DraftState {
+  const firstGroup = normalization.lineGroups[0] ?? null;
+  const firstMapping = firstGroup?.mappings[0] ?? null;
+  const selectedLine =
+    versionLines.find((line) => line.id === firstMapping?.quotationVersionLineItemId) ?? versionLines[0] ?? null;
+
+  return {
+    quotationVersionLineItemId: firstMapping?.quotationVersionLineItemId ?? selectedLine?.id ?? "",
+    rfqLineItemId: firstMapping?.rfqLineItemId ?? selectedLine?.rfqLineItemId ?? rfqOptions[0] ?? "",
+    pricingMode: (firstGroup?.pricingMode ?? "bundle") as DraftState["pricingMode"],
+    mappingType: (firstMapping?.mappingType ?? "bundled") as DraftState["mappingType"],
+    description: firstGroup?.description ?? selectedLine?.description ?? "",
+    currency: firstGroup?.currency ?? quotationCurrency ?? "",
+    quantity: firstMapping?.quantity ?? selectedLine?.quantity ?? "",
+    unit: firstMapping?.unit ?? selectedLine?.unit ?? "",
+    bundleTotalAmount: firstGroup?.bundleTotalAmount ?? selectedLine?.totalAmount ?? "",
+    buyerNote: firstMapping?.buyerNote ?? "",
+  };
+}
+
 export function QuotationNormalizationLineMappingPanel({
   normalization,
   versionLines,
+  quotationCurrency,
   canEdit,
   onSave,
 }: {
   normalization: QuotationNormalization;
   versionLines: QuotationLineItem[];
+  quotationCurrency?: string | null;
   canEdit: boolean;
   onSave: (group: DraftState) => Promise<void>;
 }) {
@@ -34,30 +92,34 @@ export function QuotationNormalizationLineMappingPanel({
         if (mapping.rfqLineItemId) ids.add(mapping.rfqLineItemId);
       }
     }
+    for (const issue of normalization.issues) {
+      const suggestedRfqLineItemId = extractRfqLineItemId(issue.suggestedValue);
+      if (suggestedRfqLineItemId) ids.add(suggestedRfqLineItemId);
+    }
     return [...ids];
-  }, [normalization.lineGroups, versionLines]);
+  }, [normalization.issues, normalization.lineGroups, versionLines]);
 
-  const firstGroup = normalization.lineGroups[0] ?? null;
-  const firstMapping = firstGroup?.mappings[0] ?? null;
-  const [draft, setDraft] = useState<DraftState>({
-    quotationVersionLineItemId: firstMapping?.quotationVersionLineItemId ?? versionLines[0]?.id ?? "",
-    rfqLineItemId: firstMapping?.rfqLineItemId ?? rfqOptions[0] ?? "",
-    pricingMode: (firstGroup?.pricingMode ?? "bundle") as DraftState["pricingMode"],
-    description: firstGroup?.description ?? versionLines[0]?.description ?? "",
-    bundleTotalAmount: firstGroup?.bundleTotalAmount ?? versionLines[0]?.totalAmount ?? "",
-    buyerNote: firstMapping?.buyerNote ?? "",
-  });
+  const [draft, setDraft] = useState<DraftState>(() => getDraftState(normalization, versionLines, rfqOptions, quotationCurrency));
 
   useEffect(() => {
-    setDraft({
-      quotationVersionLineItemId: firstMapping?.quotationVersionLineItemId ?? versionLines[0]?.id ?? "",
-      rfqLineItemId: firstMapping?.rfqLineItemId ?? rfqOptions[0] ?? "",
-      pricingMode: (firstGroup?.pricingMode ?? "bundle") as DraftState["pricingMode"],
-      description: firstGroup?.description ?? versionLines[0]?.description ?? "",
-      bundleTotalAmount: firstGroup?.bundleTotalAmount ?? versionLines[0]?.totalAmount ?? "",
-      buyerNote: firstMapping?.buyerNote ?? "",
-    });
-  }, [firstGroup, firstMapping, rfqOptions, versionLines]);
+    setDraft(getDraftState(normalization, versionLines, rfqOptions, quotationCurrency));
+  }, [normalization, quotationCurrency, rfqOptions, versionLines]);
+
+  function updateSelectedQuotationLine(lineId: string) {
+    const nextLine = versionLines.find((line) => line.id === lineId) ?? null;
+
+    setDraft((current) => ({
+      ...current,
+      quotationVersionLineItemId: lineId,
+      rfqLineItemId: nextLine?.rfqLineItemId ?? current.rfqLineItemId ?? "",
+      description: nextLine?.description ?? current.description,
+      quantity: nextLine?.quantity ?? current.quantity,
+      unit: nextLine?.unit ?? current.unit,
+      bundleTotalAmount: nextLine?.totalAmount ?? current.bundleTotalAmount,
+    }));
+  }
+
+  const hasSelectableRfqLines = rfqOptions.length > 0;
 
   return (
     <section id="line-mappings" data-testid="normalization-line-mappings" className="rounded-md border p-4">
@@ -91,7 +153,7 @@ export function QuotationNormalizationLineMappingPanel({
             <NativeSelect
               className="mt-1 min-h-11 w-full"
               value={draft.quotationVersionLineItemId}
-              onChange={(event) => setDraft((current) => ({ ...current, quotationVersionLineItemId: event.target.value }))}
+              onChange={(event) => updateSelectedQuotationLine(event.target.value)}
             >
               {versionLines.map((line) => (
                 <option key={line.id} value={line.id}>
@@ -105,13 +167,19 @@ export function QuotationNormalizationLineMappingPanel({
             <NativeSelect
               className="mt-1 min-h-11 w-full"
               value={draft.rfqLineItemId}
+              disabled={!hasSelectableRfqLines}
+              aria-describedby={!hasSelectableRfqLines ? "rfq-line-unavailable" : undefined}
               onChange={(event) => setDraft((current) => ({ ...current, rfqLineItemId: event.target.value }))}
             >
-              {rfqOptions.map((rfqLineId) => (
-                <option key={rfqLineId} value={rfqLineId}>
-                  {rfqLineId}
-                </option>
-              ))}
+              {hasSelectableRfqLines ? (
+                rfqOptions.map((rfqLineId) => (
+                  <option key={rfqLineId} value={rfqLineId}>
+                    {rfqLineId}
+                  </option>
+                ))
+              ) : (
+                <option value="">No selectable RFQ lines</option>
+              )}
             </NativeSelect>
           </label>
           <label className="text-sm font-medium">
@@ -130,11 +198,49 @@ export function QuotationNormalizationLineMappingPanel({
             </NativeSelect>
           </label>
           <label className="text-sm font-medium">
+            Mapping type
+            <NativeSelect
+              className="mt-1 min-h-11 w-full"
+              value={draft.mappingType}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, mappingType: event.target.value as DraftState["mappingType"] }))
+              }
+            >
+              <option value="bundled">bundled</option>
+              <option value="partial">partial</option>
+              <option value="full">full</option>
+            </NativeSelect>
+          </label>
+          <label className="text-sm font-medium">
+            Currency
+            <input
+              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+              value={draft.currency}
+              onChange={(event) => setDraft((current) => ({ ...current, currency: event.target.value }))}
+            />
+          </label>
+          <label className="text-sm font-medium">
             Bundle description
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={draft.description}
               onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Quantity
+            <input
+              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+              value={draft.quantity}
+              onChange={(event) => setDraft((current) => ({ ...current, quantity: event.target.value }))}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Unit
+            <input
+              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+              value={draft.unit}
+              onChange={(event) => setDraft((current) => ({ ...current, unit: event.target.value }))}
             />
           </label>
           <label className="text-sm font-medium">
@@ -153,10 +259,23 @@ export function QuotationNormalizationLineMappingPanel({
               onChange={(event) => setDraft((current) => ({ ...current, buyerNote: event.target.value }))}
             />
           </label>
+          {!hasSelectableRfqLines ? (
+            <p id="rfq-line-unavailable" className="text-sm text-amber-700 lg:col-span-2">
+              No RFQ line items are available to map this quotation version.
+            </p>
+          ) : null}
           <div className="lg:col-span-2">
             <Button
               type="button"
-              disabled={!draft.quotationVersionLineItemId || !draft.rfqLineItemId || !draft.description}
+              disabled={
+                !draft.quotationVersionLineItemId ||
+                !draft.rfqLineItemId ||
+                !draft.description.trim() ||
+                !draft.currency.trim() ||
+                !draft.quantity.trim() ||
+                !draft.unit.trim() ||
+                !hasSelectableRfqLines
+              }
               onClick={() => void onSave(draft)}
             >
               Save line mapping

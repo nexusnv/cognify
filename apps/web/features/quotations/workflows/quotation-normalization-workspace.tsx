@@ -153,25 +153,27 @@ export function QuotationNormalizationWorkspace({
       <QuotationNormalizationLineMappingPanel
         normalization={normalization}
         versionLines={versionLines}
+        quotationCurrency={versionQuery.data?.manualEntry.currency ?? null}
         canEdit={canEdit}
         onSave={async (draft) => {
+          const firstGroup = normalization.lineGroups[0] ?? null;
           await saveMappings.mutateAsync({
             lineGroups: [
               {
-                groupNumber: 1,
+                groupNumber: firstGroup?.groupNumber ?? normalization.lineGroups.length + 1,
                 pricingMode: draft.pricingMode,
-                description: draft.description,
-                currency: "USD",
-                bundleTotalAmount: draft.bundleTotalAmount,
+                description: draft.description.trim(),
+                currency: draft.currency.trim() || undefined,
+                bundleTotalAmount: draft.bundleTotalAmount.trim() || undefined,
                 notes: draft.buyerNote,
                 mappings: [
                   {
                     rfqLineItemId: draft.rfqLineItemId,
                     quotationVersionLineItemId: draft.quotationVersionLineItemId,
-                    mappingType: "bundled",
-                    quantity: "10.0000",
-                    unit: "each",
-                    lineTotal: draft.bundleTotalAmount,
+                    mappingType: draft.mappingType,
+                    quantity: draft.quantity.trim() || undefined,
+                    unit: draft.unit.trim() || undefined,
+                    lineTotal: draft.bundleTotalAmount.trim() || undefined,
                     buyerNote: draft.buyerNote,
                   },
                 ],

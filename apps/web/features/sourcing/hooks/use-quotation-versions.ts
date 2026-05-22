@@ -62,10 +62,13 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
     onSuccess: (version) => {
       if (!quotationId) return;
 
-      queryClient.setQueryData(
-        quotationVersionKeys.detail(quotationId, version.versionNumber, tenantId),
-        version,
-      );
+      const versionId = Number(version.id);
+      if (!Number.isNaN(versionId)) {
+        queryClient.setQueryData(
+          quotationVersionKeys.detail(quotationId, versionId, tenantId),
+          version,
+        );
+      }
       queryClient.invalidateQueries({ queryKey: quotationVersionKeys.byQuotation(quotationId, tenantId) });
       queryClient.invalidateQueries({ queryKey: quotationKeys.byInvitation(invitationId, tenantId) });
     },
