@@ -38,11 +38,19 @@ export function useQuotationVersion(
   versionNumber: number | null | undefined,
 ) {
   const tenantId = getStoredActiveTenantId();
+  const hasFiniteVersionNumber = typeof versionNumber === "number" && Number.isFinite(versionNumber);
+  const versionKey = hasFiniteVersionNumber ? versionNumber : -1;
 
   return useQuery({
-    queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionNumber ?? -1, tenantId),
-    queryFn: () => showQuotationVersion(quotationId as string, versionNumber as number, tenantId),
-    enabled: Boolean(quotationId && versionNumber !== null && versionNumber !== undefined),
+    queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionKey, tenantId),
+    queryFn: () => {
+      if (!quotationId || !hasFiniteVersionNumber) {
+        throw new Error("Cannot fetch quotation version without a finite version number.");
+      }
+
+      return showQuotationVersion(quotationId, versionNumber, tenantId);
+    },
+    enabled: Boolean(quotationId) && hasFiniteVersionNumber,
     retry: false,
   });
 }
@@ -62,10 +70,12 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
     onSuccess: (version) => {
       if (!quotationId) return;
 
-      queryClient.setQueryData(
-        quotationVersionKeys.detail(quotationId, version.versionNumber, tenantId),
-        version,
-      );
+      if (Number.isFinite(version.versionNumber)) {
+        queryClient.setQueryData(
+          quotationVersionKeys.detail(quotationId, version.versionNumber, tenantId),
+          version,
+        );
+      }
       queryClient.invalidateQueries({ queryKey: quotationVersionKeys.byQuotation(quotationId, tenantId) });
       queryClient.invalidateQueries({ queryKey: quotationKeys.byInvitation(invitationId, tenantId) });
     },

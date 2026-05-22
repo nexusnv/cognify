@@ -24,6 +24,11 @@ describe("shell route helpers", () => {
       { label: "Sourcing intake", href: "/sourcing/intake" },
       { label: "Intake review" },
     ]);
+    expect(getBreadcrumbs("/quotations/normalizations")).toEqual([{ label: "Quotations" }]);
+    expect(getBreadcrumbs("/quotations/normalizations/norm-1")).toEqual([
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Normalization workspace" },
+    ]);
     expect(getBreadcrumbs("/system")).toEqual([{ label: "System" }]);
   });
 
@@ -42,6 +47,7 @@ describe("shell route helpers", () => {
     expect(labels).not.toContain("Audit");
     expect(labels).not.toContain("System");
     expect(labels).not.toContain("Sourcing intake");
+    expect(labels).not.toContain("Quotations");
   });
 
   it("shows the System nav item for admin permissions", () => {
@@ -62,5 +68,15 @@ describe("shell route helpers", () => {
     const labels = groups.flatMap((group) => group.items.map((item) => item.label));
 
     expect(labels).toContain("Sourcing intake");
+  });
+
+  it("shows quotations only for normalization review permissions", () => {
+    const groups = getVisibleNavGroups(shellNavGroups, {
+      ...requesterIdentity.permissions,
+      canReviewQuotationNormalization: true,
+    });
+    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
+
+    expect(labels).toContain("Quotations");
   });
 });

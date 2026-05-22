@@ -24,6 +24,7 @@ export const requesterIdentity: CurrentUserContext = {
     canSubmitOwnDraftRequisition: true,
     canAccessAdmin: false,
     canManageSourcingIntake: false,
+    canReviewQuotationNormalization: false,
   },
 };
 
@@ -42,5 +43,6 @@ export const multiTenantIdentity: CurrentUserContext = {
     canSubmitOwnDraftRequisition: false,
     canAccessAdmin: false,
     canManageSourcingIntake: false,
+    canReviewQuotationNormalization: false,
   },
 };

@@ -53,6 +53,26 @@ describe("vendor RFQ portal", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("does not render buyer normalization details in the vendor portal", async () => {
+    render(<VendorRfqInvitationPage token={validVendorPortalToken} />, { wrapper: TestProviders });
+
+    expect(await screen.findByRole("heading", { name: "Field laptop refresh RFQ" })).toBeInTheDocument();
+
+    for (const text of [
+      "needs review",
+      "ready for approval",
+      "approved with warnings",
+      "Approve normalization",
+      "Approve with warnings",
+      "Corrected value",
+      "Correction note",
+      "Blocking issues must be resolved before approval.",
+      "No normalization issues remain.",
+    ]) {
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+    }
+  });
+
   it("uploads a quotation file and shows the received state", async () => {
     const user = userEvent.setup();
 

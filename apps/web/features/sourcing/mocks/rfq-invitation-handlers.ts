@@ -613,6 +613,11 @@ function buildQuotationVersion(
       canEdit: false,
       canCreateRevision: true,
     },
+    activeNormalization: {
+      id: versionNumber > 1 ? "norm-ready-for-approval" : "norm-needs-review",
+      status: versionNumber > 1 ? "ready_for_approval" : "needs_review",
+      normalizationRevision: 1,
+    },
   };
 }
 

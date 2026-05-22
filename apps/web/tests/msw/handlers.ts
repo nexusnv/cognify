@@ -13,6 +13,7 @@ import { sourcingHandlers } from "@/features/sourcing/mocks/sourcing-handlers";
 import { rfqHandlers } from "@/features/sourcing/mocks/rfq-handlers";
 import { vendorHandlers } from "@/features/sourcing/mocks/vendor-handlers";
 import { rfqInvitationHandlers } from "@/features/sourcing/mocks/rfq-invitation-handlers";
+import { quotationNormalizationHandlers } from "@/features/quotations/mocks/quotation-normalization-handlers";
 
 export const handlers = [
   http.get("/api/health", () => {
@@ -29,6 +30,7 @@ export const handlers = [
   ...vendorHandlers,
   ...rfqHandlers,
   ...rfqInvitationHandlers,
+  ...quotationNormalizationHandlers,
   ...searchHandlers,
   ...attachmentHandlers,
   ...identityHandlers,

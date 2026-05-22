@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Data\QuotationVersionAttachmentSnapshotData;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
@@ -34,7 +35,7 @@ class CreateQuotationVersionSnapshot
         ?array $attachmentIds = null,
         array $metadata = [],
     ): QuotationVersion {
-        return DB::transaction(function () use ($tenant, $quotation, $actor, $source, $attachmentIds, $metadata): QuotationVersion {
+        $version = DB::transaction(function () use ($tenant, $quotation, $actor, $source, $attachmentIds, $metadata): QuotationVersion {
             $lockedQuotation = Quotation::query()
                 ->with([
                     'attachments' => fn ($query) => $query->with('uploader')->latest('created_at'),
@@ -128,6 +129,42 @@ class CreateQuotationVersionSnapshot
             $this->recordAuditEvents($tenant, $actor, $lockedQuotation, $version, $previousVersion, $source);
 
             return $version->refresh()->load(['lineItems', 'submittedByUser', 'quotation']);
+        });
+
+        $this->dispatchNormalizationJob($tenant, $version);
+
+        return $version;
+    }
+
+    protected function dispatchNormalizationJob(Tenant $tenant, QuotationVersion $version): void
+    {
+        try {
+            $this->queueNormalizationJob($tenant, $version);
+        } catch (\Throwable $throwable) {
+            report($throwable);
+            $this->runNormalizationSynchronously($tenant, $version);
+        }
+    }
+
+    protected function queueNormalizationJob(Tenant $tenant, QuotationVersion $version): void
+    {
+        NormalizeQuotationVersion::dispatch($tenant->id, $version->id)->afterCommit();
+    }
+
+    protected function runNormalizationSynchronously(Tenant $tenant, QuotationVersion $version): void
+    {
+        app()->call(function (
+            \Domains\Quotation\Actions\StartQuotationNormalization $starter,
+            \Domains\Quotation\Actions\RunDeterministicQuotationNormalizer $normalizer,
+            \App\Audit\AuditRecorder $auditRecorder,
+            \App\Notifications\NotificationRecorder $notificationRecorder,
+        ) use ($tenant, $version): void {
+            (new NormalizeQuotationVersion($tenant->id, $version->id))->handle(
+                $starter,
+                $normalizer,
+                $auditRecorder,
+                $notificationRecorder,
+            );
         });
     }
 

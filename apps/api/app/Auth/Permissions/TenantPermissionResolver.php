@@ -19,6 +19,7 @@ class TenantPermissionResolver
                 'canSubmitOwnDraftRequisition' => true,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => false,
+                'canReviewQuotationNormalization' => false,
             ],
             TenantRole::Buyer->value => [
                 'canCreateRequisition' => false,
@@ -27,6 +28,7 @@ class TenantPermissionResolver
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => true,
+                'canReviewQuotationNormalization' => true,
             ],
             TenantRole::Approver->value => [
                 'canCreateRequisition' => false,
@@ -35,6 +37,7 @@ class TenantPermissionResolver
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => false,
+                'canReviewQuotationNormalization' => false,
             ],
             TenantRole::Admin->value => [
                 'canCreateRequisition' => true,
@@ -43,6 +46,7 @@ class TenantPermissionResolver
                 'canSubmitOwnDraftRequisition' => true,
                 'canAccessAdmin' => true,
                 'canManageSourcingIntake' => true,
+                'canReviewQuotationNormalization' => true,
             ],
             default => [
                 'canCreateRequisition' => false,
@@ -51,6 +55,7 @@ class TenantPermissionResolver
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => false,
+                'canReviewQuotationNormalization' => false,
             ],
         };
     }

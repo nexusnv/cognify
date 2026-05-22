@@ -23,6 +23,8 @@ const canUseRequisitions = (permissions: IdentityPermissions) =>
 
 const canUseAudit = (permissions: IdentityPermissions) => permissions.canAccessAdmin;
 const canUseSourcingIntake = (permissions: IdentityPermissions) => permissions.canManageSourcingIntake;
+const canUseQuotationNormalizations = (permissions: IdentityPermissions) =>
+  permissions.canReviewQuotationNormalization;
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
@@ -31,6 +33,7 @@ const APPROVAL_POLICY_WORKSPACE_PATH = /^\/approval-policies\/[^/]+$/;
 const PROJECT_WORKSPACE_EDIT_PATH = /^\/projects\/([^/]+)\/edit$/;
 const PROJECT_WORKSPACE_PATH = /^\/projects\/[^/]+$/;
 const RFQ_WORKSPACE_PATH = /^\/sourcing\/rfqs\/[^/]+$/;
+const QUOTATION_NORMALIZATION_WORKSPACE_PATH = /^\/quotations\/normalizations\/[^/]+$/;
 
 export const shellNavGroups: ShellNavGroup[] = [
   {
@@ -67,7 +70,13 @@ export const shellNavGroups: ShellNavGroup[] = [
         permission: canUseSourcingIntake,
       },
       { label: "Vendors", href: "/vendors", icon: Building2, implemented: false },
-      { label: "Quotations", href: "/quotations", icon: ReceiptText, implemented: false },
+      {
+        label: "Quotations",
+        href: "/quotations/normalizations",
+        icon: ReceiptText,
+        implemented: true,
+        permission: canUseQuotationNormalizations,
+      },
       { label: "Comparison", href: "/comparison", icon: Scale, implemented: false },
     ],
   },
@@ -135,12 +144,23 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return [{ label: "Sourcing intake" }];
   }
 
+  if (normalizedPathname === "/quotations/normalizations") {
+    return [{ label: "Quotations" }];
+  }
+
   if (/^\/sourcing\/intake\/[^/]+$/.test(normalizedPathname)) {
     return [{ label: "Sourcing intake", href: "/sourcing/intake" }, { label: "Intake review" }];
   }
 
   if (RFQ_WORKSPACE_PATH.test(normalizedPathname)) {
     return [{ label: "Sourcing intake", href: "/sourcing/intake" }, { label: "RFQ draft" }];
+  }
+
+  if (QUOTATION_NORMALIZATION_WORKSPACE_PATH.test(normalizedPathname)) {
+    return [
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Normalization workspace" },
+    ];
   }
 
   if (APPROVAL_TASK_WORKSPACE_PATH.test(normalizedPathname)) {

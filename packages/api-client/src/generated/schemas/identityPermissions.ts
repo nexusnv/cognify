@@ -12,4 +12,5 @@ export interface IdentityPermissions {
   canSubmitOwnDraftRequisition: boolean;
   canAccessAdmin: boolean;
   canManageSourcingIntake: boolean;
+  canReviewQuotationNormalization: boolean;
 }

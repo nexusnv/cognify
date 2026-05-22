@@ -11,7 +11,9 @@ use Domains\Project\Models\ProcurementProject;
 use Domains\Project\Policies\ProcurementProjectPolicy;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqInvitation;
+use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\SourcingIntakeReview;
+use Domains\Quotation\Policies\QuotationNormalizationPolicy;
 use Domains\Quotation\Policies\RfqPolicy;
 use Domains\Quotation\Policies\RfqInvitationPolicy;
 use Domains\Quotation\Policies\SourcingIntakeReviewPolicy;
@@ -38,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Requisition::class, RequisitionPolicy::class);
         Gate::policy(ProcurementProject::class, ProcurementProjectPolicy::class);
         Gate::policy(SourcingIntakeReview::class, SourcingIntakeReviewPolicy::class);
+        Gate::policy(QuotationNormalization::class, QuotationNormalizationPolicy::class);
         Gate::policy(Rfq::class, RfqPolicy::class);
         Gate::policy(RfqInvitation::class, RfqInvitationPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);

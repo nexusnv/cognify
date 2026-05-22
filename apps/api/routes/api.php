@@ -22,6 +22,8 @@ use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\RfqInvitationController;
+use Domains\Quotation\Http\Controllers\QuotationNormalizationController;
+use Domains\Quotation\Http\Controllers\QuotationVersionNormalizationController;
 use Domains\Quotation\Http\Controllers\QuotationVersionController;
 use Domains\Quotation\Http\Controllers\RfqInvitationQuotationController;
 use Domains\Quotation\Http\Controllers\RfqInvitationPortalController;
@@ -128,6 +130,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/quotations/{quotation}/versions', [QuotationVersionController::class, 'index']);
         Route::get('/quotations/{quotation}/versions/{version}', [QuotationVersionController::class, 'show']);
         Route::post('/quotations/{quotation}/versions', [QuotationVersionController::class, 'store']);
+        Route::get('/quotation-normalizations', [QuotationNormalizationController::class, 'index']);
+        Route::get('/quotation-normalizations/{normalization}', [QuotationNormalizationController::class, 'show']);
+        Route::post('/quotation-normalizations/{normalization}/corrections', [QuotationNormalizationController::class, 'corrections']);
+        Route::post('/quotation-normalizations/{normalization}/line-mappings', [QuotationNormalizationController::class, 'lineMappings']);
+        Route::post('/quotation-normalizations/{normalization}/approve', [QuotationNormalizationController::class, 'approve']);
+        Route::post('/quotation-normalizations/{normalization}/approve-with-warnings', [QuotationNormalizationController::class, 'approveWithWarnings']);
+        Route::post('/quotation-normalizations/{normalization}/revisions', [QuotationNormalizationController::class, 'revision']);
+        Route::post('/quotation-versions/{version}/normalization/retry', [QuotationVersionNormalizationController::class, 'retry']);
 
         Route::get('/requisition-templates', [RequisitionTemplateController::class, 'index']);
         Route::get('/requisition-line-item-suggestions', [RequisitionItemSuggestionController::class, 'index']);
