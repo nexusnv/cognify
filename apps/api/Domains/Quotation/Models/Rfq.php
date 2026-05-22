@@ -139,4 +139,12 @@ class Rfq extends Model
     {
         return $this->hasMany(RfqInvitation::class);
     }
+
+    /**
+     * @return HasMany<QuotationComparisonNote, $this>
+     */
+    public function comparisonNotes(): HasMany
+    {
+        return $this->hasMany(QuotationComparisonNote::class);
+    }
 }

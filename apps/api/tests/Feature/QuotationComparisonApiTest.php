@@ -44,6 +44,18 @@ class QuotationComparisonApiTest extends TestCase
             ->assertJsonPath('data.readiness.mixedCurrency', false)
             ->assertJsonPath('data.vendors.0.vendorName', 'Acme Supply')
             ->assertJsonPath('data.vendors.0.totalAmount', '12500.00')
+            ->assertJsonPath('data.commercialTerms.0.id', 'subtotalAmount')
+            ->assertJsonPath('data.commercialTerms.1.id', 'taxAmount')
+            ->assertJsonPath('data.commercialTerms.2.id', 'freightAmount')
+            ->assertJsonPath('data.commercialTerms.3.id', 'discountAmount')
+            ->assertJsonPath('data.commercialTerms.4.id', 'totalAmount')
+            ->assertJsonPath('data.commercialTerms.5.id', 'validUntil')
+            ->assertJsonPath('data.commercialTerms.6.id', 'leadTimeDays')
+            ->assertJsonPath('data.commercialTerms.7.id', 'paymentTerms')
+            ->assertJsonPath('data.commercialTerms.8.id', 'deliveryTerms')
+            ->assertJsonPath('data.commercialTerms.9.id', 'warrantyTerms')
+            ->assertJsonPath('data.commercialTerms.10.id', 'exclusions')
+            ->assertJsonPath('data.commercialTerms.11.id', 'complianceNotes')
             ->assertJsonPath('data.permissions.canViewComparison', true)
             ->assertJsonPath('data.permissions.canManageQuotationComparisonNotes', true);
     }
@@ -81,7 +93,7 @@ class QuotationComparisonApiTest extends TestCase
             ->assertJsonPath('data.readiness.approvedNormalizationCount', 0)
             ->assertJsonPath('data.vendors.0.readiness', 'normalization_required')
             ->assertJsonPath('data.vendors.0.totalAmount', null)
-            ->assertJsonPath('data.commercialTerms.0.vendorValues.0.value', null);
+            ->assertJsonPath('data.commercialTerms.4.vendorValues.0.value', null);
     }
 
     public function test_comparison_flags_mixed_currencies_and_preserves_bundle_pricing(): void
@@ -124,6 +136,12 @@ class QuotationComparisonApiTest extends TestCase
             ->assertJsonPath('data.note', 'Delivery risk needs buyer follow-up.');
 
         $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/rfqs/{$rfq->id}/comparison")
+            ->assertOk()
+            ->assertJsonPath('data.noteGroups.0.section', 'delivery')
+            ->assertJsonPath('data.noteGroups.0.notes.0.note', 'Delivery risk needs buyer follow-up.');
+
+        $this->actingAsTenant($tenant, $buyer)
             ->deleteJson("/api/rfqs/{$rfq->id}/comparison/notes/{$noteId}")
             ->assertNoContent();
 
@@ -154,6 +172,12 @@ class QuotationComparisonApiTest extends TestCase
         $foreignRfq = $this->rfqWithApprovedQuotation($foreignTenant, $foreignBuyer, 'Foreign Vendor');
         $otherQuotation = Quotation::query()->where('rfq_id', $otherRfq->id)->firstOrFail();
         $foreignQuotation = Quotation::query()->where('rfq_id', $foreignRfq->id)->firstOrFail();
+        $rfqQuotation = Quotation::query()->where('rfq_id', $rfq->id)->firstOrFail();
+        $this->addApprovedQuotation($tenant, $buyer, $rfq, 'Second Same RFQ Vendor', 'USD', '14000.00', 'per_line');
+        $sameRfqOtherQuotation = Quotation::query()
+            ->where('rfq_id', $rfq->id)
+            ->whereKeyNot($rfqQuotation->id)
+            ->firstOrFail();
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
@@ -162,7 +186,7 @@ class QuotationComparisonApiTest extends TestCase
                 'note' => 'Cross-RFQ target should fail.',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['quotationId']);
+            ->assertJsonPath('error.details.fields.quotationId.0', 'The selected quotation must belong to this RFQ.');
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
@@ -171,7 +195,7 @@ class QuotationComparisonApiTest extends TestCase
                 'note' => 'Cross-tenant target should fail.',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['quotationId']);
+            ->assertJsonPath('error.details.fields.quotationId.0', 'The selected quotation must belong to this RFQ.');
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
@@ -180,7 +204,7 @@ class QuotationComparisonApiTest extends TestCase
                 'note' => 'Cross-RFQ vendor target should fail.',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['vendorId']);
+            ->assertJsonPath('error.details.fields.vendorId.0', 'The selected vendor must belong to this RFQ.');
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
@@ -189,7 +213,7 @@ class QuotationComparisonApiTest extends TestCase
                 'note' => 'Cross-tenant vendor target should fail.',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['vendorId']);
+            ->assertJsonPath('error.details.fields.vendorId.0', 'The selected vendor must belong to this RFQ.');
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
@@ -198,7 +222,17 @@ class QuotationComparisonApiTest extends TestCase
                 'note' => 'Cross-RFQ line target should fail.',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['rfqLineItemId']);
+            ->assertJsonPath('error.details.fields.rfqLineItemId.0', 'The selected RFQ line item must belong to this RFQ.');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
+                'section' => 'overall',
+                'quotationId' => (string) $rfqQuotation->id,
+                'vendorId' => (string) $sameRfqOtherQuotation->vendor_id,
+                'note' => 'Mismatched quotation and vendor should fail.',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.details.fields.vendorId.0', 'The selected vendor must match the selected quotation.');
     }
 
     public function test_note_actions_do_not_change_rfq_quotation_or_normalization_state(): void

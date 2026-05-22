@@ -213,4 +213,12 @@ class Quotation extends Model
     {
         return $this->hasMany(QuotationVersion::class)->orderByDesc('version_number');
     }
+
+    /**
+     * @return HasMany<QuotationComparisonNote, $this>
+     */
+    public function comparisonNotes(): HasMany
+    {
+        return $this->hasMany(QuotationComparisonNote::class);
+    }
 }

@@ -22,6 +22,7 @@ use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\RfqInvitationController;
+use Domains\Quotation\Http\Controllers\QuotationComparisonController;
 use Domains\Quotation\Http\Controllers\QuotationNormalizationController;
 use Domains\Quotation\Http\Controllers\QuotationVersionNormalizationController;
 use Domains\Quotation\Http\Controllers\QuotationVersionController;
@@ -115,6 +116,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);
         Route::post('/rfqs/{rfq}/cancel', [RfqController::class, 'cancel']);
+        Route::get('/rfqs/{rfq}/comparison', [QuotationComparisonController::class, 'show']);
+        Route::post('/rfqs/{rfq}/comparison/notes', [QuotationComparisonController::class, 'storeNote']);
+        Route::patch('/rfqs/{rfq}/comparison/notes/{note}', [QuotationComparisonController::class, 'updateNote']);
+        Route::delete('/rfqs/{rfq}/comparison/notes/{note}', [QuotationComparisonController::class, 'deleteNote']);
         Route::get('/vendors', [VendorPickerController::class, 'index']);
         Route::get('/rfqs/{rfq}/invitations', [RfqInvitationController::class, 'index']);
         Route::post('/rfqs/{rfq}/invitations', [RfqInvitationController::class, 'store']);
