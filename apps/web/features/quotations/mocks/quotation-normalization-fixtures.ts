@@ -11,10 +11,7 @@ export type ActiveNormalizationSummary = {
   normalizationRevision: number;
 };
 
-export type QuotationNormalizationFixture = QuotationNormalization & {
-  currentVersionLines: QuotationLineItem[];
-  rfqLineItemIds: string[];
-};
+export type QuotationNormalizationFixture = QuotationNormalization;
 
 const versionLines: QuotationLineItem[] = [
   {
@@ -36,8 +33,15 @@ const versionLines: QuotationLineItem[] = [
   },
 ];
 
+const quotationVersionLinesByNormalizationId: Record<string, QuotationLineItem[]> = {
+  "norm-needs-review": structuredClone(versionLines),
+  "norm-ready-for-approval": structuredClone(versionLines),
+  "norm-failed": [],
+  "norm-approved-with-warnings": structuredClone(versionLines),
+};
+
 function baseNormalization(
-  overrides: Partial<QuotationNormalizationFixture>,
+  overrides: Partial<QuotationNormalization>,
 ): QuotationNormalizationFixture {
   return {
     id: "norm-base",
@@ -169,8 +173,6 @@ function baseNormalization(
       canRetry: false,
       canCreateRevision: false,
     },
-    currentVersionLines: structuredClone(versionLines),
-    rfqLineItemIds: ["rfq-line-1"],
     ...overrides,
   };
 }
@@ -283,8 +285,6 @@ export const quotationNormalizationFixtures: QuotationNormalizationFixture[] = [
       canCreateRevision: false,
     },
     lastJobError: "Normalizer could not parse the uploaded workbook.",
-    currentVersionLines: [],
-    rfqLineItemIds: [],
   }),
   baseNormalization({
     id: "norm-approved-with-warnings",
@@ -362,6 +362,10 @@ export function buildQuotationNormalizationSummaries(
 
 export function createQuotationNormalizationFixtureState() {
   return structuredClone(quotationNormalizationFixtures);
+}
+
+export function getQuotationVersionLines(normalizationId: string) {
+  return structuredClone(quotationVersionLinesByNormalizationId[normalizationId] ?? []);
 }
 
 export function buildActiveNormalizationSummary(

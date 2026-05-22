@@ -1,7 +1,6 @@
 "use client";
 
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
-import type { QuotationLineItem } from "@cognify/api-client/schemas";
 import { useQuotationVersion } from "@/features/sourcing/hooks/use-quotation-versions";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import {
@@ -58,9 +57,7 @@ export function QuotationNormalizationWorkspace({
     );
   }
 
-  const versionLines =
-    versionQuery.data?.lineItems ??
-    ((normalization as { currentVersionLines?: QuotationLineItem[] }).currentVersionLines ?? []);
+  const versionLines = versionQuery.data?.lineItems ?? [];
   const canEdit = normalization.permissions.canEdit;
   const lastJobError = getLastJobError(normalization as { lastJobError?: string | null });
 

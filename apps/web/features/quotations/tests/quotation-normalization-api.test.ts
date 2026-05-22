@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import { server } from "@/tests/msw/server";
 import { storeActiveTenantId } from "@/features/identity/api/identity-api";
+import { resetQuotationNormalizationMockState } from "../mocks/quotation-normalization-handlers";
 import {
   listQuotationNormalizations,
   showQuotationNormalization,
@@ -9,6 +10,7 @@ import {
 
 describe("quotation normalization api", () => {
   beforeEach(() => {
+    resetQuotationNormalizationMockState();
     window.localStorage.clear();
   });
 
@@ -42,5 +44,12 @@ describe("quotation normalization api", () => {
     await expect(showQuotationNormalization("norm-1")).rejects.toEqual({
       error: { code: "conflict", message: "Normalization has changed." },
     });
+  });
+
+  it("keeps mock-only detail state out of the OpenAPI payload", async () => {
+    const normalization = await showQuotationNormalization("norm-needs-review");
+
+    expect((normalization as { currentVersionLines?: unknown }).currentVersionLines).toBeUndefined();
+    expect((normalization as { rfqLineItemIds?: unknown }).rfqLineItemIds).toBeUndefined();
   });
 });

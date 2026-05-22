@@ -54,6 +54,79 @@ describe("Quotation normalization workspace", () => {
     let requestedVersionId: string | null = null;
 
     server.use(
+      http.get("/api/quotation-normalizations/:normalizationId", ({ params }) => {
+        return HttpResponse.json({
+          data: {
+            id: String(params.normalizationId),
+            status: "needs_review",
+            normalizationRevision: 1,
+            algorithmVersion: "rules-v1",
+            updatedAt: "2026-05-22T09:15:00.000Z",
+            lastJobError: null,
+            source: {
+              quotationId: "quotation-1",
+              quotationVersionId: "101",
+              quotationNumber: "QT-2026-041",
+              versionNumber: 2,
+              rfqId: "rfq-1",
+              rfqNumber: "RFQ-2026-000001",
+              vendorId: "vendor-1",
+              vendorName: "Northwind Traders",
+            },
+            summary: {
+              blockingIssueCount: 2,
+              warningIssueCount: 1,
+              infoIssueCount: 1,
+            },
+            fields: [
+              {
+                id: "field-currency",
+                fieldPath: "manualEntry.currency",
+                rawValue: "usd$",
+                normalizedValue: null,
+                dataType: "string",
+                currency: null,
+                confidence: "0.42",
+                source: "manual_entry",
+                provenance: {
+                  sourceQuotationVersionId: "101",
+                  sourceLabel: "Quotation currency",
+                },
+              },
+            ],
+            lineGroups: [],
+            attachments: [],
+            issues: [],
+            permissions: {
+              canEdit: true,
+              canApprove: false,
+              canApproveWithWarnings: false,
+              canRetry: false,
+              canCreateRevision: false,
+            },
+            currentVersionLines: [
+              {
+                id: "quote-line-mock",
+                rfqLineItemId: "rfq-line-mock",
+                description: "Mock detail line that should be ignored",
+                quantity: "10.0000",
+                unit: "each",
+                unitPrice: "1247.00",
+                subtotalAmount: "12470.00",
+                taxAmount: "0.00",
+                totalAmount: "12470.00",
+                leadTimeDays: 14,
+                manufacturer: "Lenovo",
+                modelNumber: "T16",
+                alternateOffered: false,
+                complianceStatus: "compliant",
+                notes: "Mock detail state should never drive the workspace.",
+              },
+            ],
+            rfqLineItemIds: ["rfq-line-mock"],
+          },
+        });
+      }),
       http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
         requestedVersionId = String(params.versionId);
 
@@ -63,6 +136,114 @@ describe("Quotation normalization workspace", () => {
             { status: 404 },
           );
         }
+
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(
+              HttpResponse.json({
+                data: {
+                  id: "101",
+                  quotationId: String(params.quotationId),
+                  versionNumber: 2,
+                  status: "received",
+                  source: "buyer_upload",
+                  submittedAt: "2026-05-22T09:15:00.000Z",
+                  submittedByUser: {
+                    id: "buyer-1",
+                    name: "Priya Buyer",
+                  },
+                  submittedByVendorContact: null,
+                  isCurrent: true,
+                  supersededAt: null,
+                  previousVersionId: null,
+                  manualEntry: {
+                    quotationReference: "QT-2026-041",
+                    quotedAt: "2026-05-22",
+                    validUntil: "2026-06-30",
+                    currency: "USD",
+                    subtotalAmount: "12470.00",
+                    taxAmount: "0.00",
+                    freightAmount: "0.00",
+                    discountAmount: "0.00",
+                    totalAmount: "12470.00",
+                    paymentTerms: null,
+                    deliveryTerms: "DDP",
+                    leadTimeDays: 14,
+                    warrantyTerms: "3 years",
+                    exclusions: null,
+                    complianceNotes: null,
+                    buyerNotes: null,
+                    vendorNotes: null,
+                  },
+                  lineItems: [
+                    {
+                      id: "quote-line-1",
+                      rfqLineItemId: "rfq-line-1",
+                      description: "Fetched line from quotation version route",
+                      quantity: "10.0000",
+                      unit: "each",
+                      unitPrice: "1247.00",
+                      subtotalAmount: "12470.00",
+                      taxAmount: "0.00",
+                      totalAmount: "12470.00",
+                      leadTimeDays: 14,
+                      manufacturer: "Lenovo",
+                      modelNumber: "T16",
+                      alternateOffered: false,
+                      complianceStatus: "compliant",
+                      notes: "Bundle includes freight and setup kits.",
+                    },
+                  ],
+                  attachments: [],
+                  attachmentCount: 0,
+                  completeness: {
+                    isComplete: true,
+                    missingFields: [],
+                    lineItemCount: 1,
+                  },
+                  permissions: {
+                    canEdit: false,
+                    canCreateRevision: true,
+                  },
+                },
+              }),
+            );
+          }, 25);
+        });
+      }),
+    );
+
+    render(<QuotationNormalizationWorkspace normalizationId="norm-needs-review" />, {
+      wrapper: TestProviders,
+    });
+
+    const lineMappings = await screen.findByTestId("normalization-line-mappings");
+    expect(requestedVersionId).toBe("101");
+    expect(screen.queryByRole("option", { name: "Mock detail line that should be ignored" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: "Fetched line from quotation version route" })).toBeInTheDocument();
+    await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
+    await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-1");
+    await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");
+    await user.clear(within(lineMappings).getByLabelText("Bundle description"));
+    await user.type(within(lineMappings).getByLabelText("Bundle description"), "Developer laptop bundle");
+    await user.clear(within(lineMappings).getByLabelText("Bundle total"));
+    await user.type(within(lineMappings).getByLabelText("Bundle total"), "12470.00");
+    await user.type(within(lineMappings).getByLabelText("Buyer note"), "Bundle confirmed against vendor submission.");
+    await user.click(within(lineMappings).getByRole("button", { name: "Save line mapping" }));
+
+    await waitFor(() => {
+      expect(requestedVersionId).toBe("101");
+      expect(screen.getByText("Bundle confirmed against vendor submission.")).toBeInTheDocument();
+    });
+  });
+
+  it("disables approval while blocking issues remain and allows approval after they are resolved", async () => {
+    const user = userEvent.setup();
+    let requestedVersionId: string | null = null;
+
+    server.use(
+      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+        requestedVersionId = String(params.versionId);
 
         return HttpResponse.json({
           data: {
@@ -103,7 +284,7 @@ describe("Quotation normalization workspace", () => {
               {
                 id: "quote-line-1",
                 rfqLineItemId: "rfq-line-1",
-                description: "Fetched line from quotation version route",
+                description: "Developer laptop bundle",
                 quantity: "10.0000",
                 unit: "each",
                 unitPrice: "1247.00",
@@ -138,31 +319,6 @@ describe("Quotation normalization workspace", () => {
       wrapper: TestProviders,
     });
 
-    const lineMappings = await screen.findByTestId("normalization-line-mappings");
-    expect(requestedVersionId).toBe("101");
-    await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
-    await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-1");
-    await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");
-    await user.clear(within(lineMappings).getByLabelText("Bundle description"));
-    await user.type(within(lineMappings).getByLabelText("Bundle description"), "Developer laptop bundle");
-    await user.clear(within(lineMappings).getByLabelText("Bundle total"));
-    await user.type(within(lineMappings).getByLabelText("Bundle total"), "12470.00");
-    await user.type(within(lineMappings).getByLabelText("Buyer note"), "Bundle confirmed against vendor submission.");
-    await user.click(within(lineMappings).getByRole("button", { name: "Save line mapping" }));
-
-    await waitFor(() => {
-      expect(requestedVersionId).toBe("101");
-      expect(screen.getByText("Bundle confirmed against vendor submission.")).toBeInTheDocument();
-    });
-  });
-
-  it("disables approval while blocking issues remain and allows approval after they are resolved", async () => {
-    const user = userEvent.setup();
-
-    render(<QuotationNormalizationWorkspace normalizationId="norm-needs-review" />, {
-      wrapper: TestProviders,
-    });
-
     const approveButton = await screen.findByRole("button", { name: "Approve normalization" });
     expect(approveButton).toBeDisabled();
 
@@ -173,6 +329,10 @@ describe("Quotation normalization workspace", () => {
     await user.click(within(currencyCard).getByRole("button", { name: "Save correction" }));
 
     const lineMappings = screen.getByTestId("normalization-line-mappings");
+    await waitFor(() => {
+      expect(within(lineMappings).getByLabelText("Bundle description")).toHaveValue("Developer laptop bundle");
+    });
+    expect(requestedVersionId).toBe("101");
     await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");

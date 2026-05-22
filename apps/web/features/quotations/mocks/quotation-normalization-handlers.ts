@@ -9,6 +9,7 @@ import type {
 import {
   buildQuotationNormalizationSummaries,
   createQuotationNormalizationFixtureState,
+  getQuotationVersionLines,
   type QuotationNormalizationFixture,
 } from "./quotation-normalization-fixtures";
 
@@ -171,13 +172,13 @@ export const quotationNormalizationHandlers = [
           buyerNotes: null,
           vendorNotes: null,
         },
-        lineItems: structuredClone(normalization.currentVersionLines),
+        lineItems: getQuotationVersionLines(normalization.id),
         attachments: [],
         attachmentCount: 0,
         completeness: {
           isComplete: true,
           missingFields: [],
-          lineItemCount: normalization.currentVersionLines.length,
+          lineItemCount: getQuotationVersionLines(normalization.id).length,
         },
         permissions: {
           canEdit: false,
