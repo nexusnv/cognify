@@ -16,7 +16,7 @@ import { QuotationNormalizationFieldReview } from "../components/quotation-norma
 import { QuotationNormalizationIssueList } from "../components/quotation-normalization-issue-list";
 import { QuotationNormalizationLineMappingPanel } from "../components/quotation-normalization-line-mapping-panel";
 import { QuotationNormalizationStatusBadge } from "../components/quotation-normalization-status-badge";
-import { getLastJobError, isApprovedNormalization } from "../utils/quotation-normalization-ui";
+import { getLastJobError } from "../utils/quotation-normalization-ui";
 
 export function QuotationNormalizationWorkspace({
   normalizationId,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, NativeSelect, Textarea } from "@cognify/ui";
 import type { QuotationLineItem, QuotationNormalization, QuotationNormalizationLineGroup } from "@cognify/api-client/schemas";
 
@@ -99,23 +99,49 @@ export function QuotationNormalizationLineMappingPanel({
     return [...ids];
   }, [normalization.issues, normalization.lineGroups, versionLines]);
 
-  const [draft, setDraft] = useState<DraftState>(() => getDraftState(normalization, versionLines, rfqOptions, quotationCurrency));
+  const initialDraft = getDraftState(normalization, versionLines, rfqOptions, quotationCurrency);
 
-  useEffect(() => {
-    setDraft(getDraftState(normalization, versionLines, rfqOptions, quotationCurrency));
-  }, [normalization, quotationCurrency, rfqOptions, versionLines]);
+  return (
+    <QuotationNormalizationLineMappingDraftPanel
+      normalization={normalization}
+      versionLines={versionLines}
+      rfqOptions={rfqOptions}
+      canEdit={canEdit}
+      onSave={onSave}
+      initialDraft={initialDraft}
+    />
+  );
+}
+
+function QuotationNormalizationLineMappingDraftPanel({
+  normalization,
+  versionLines,
+  rfqOptions,
+  canEdit,
+  onSave,
+  initialDraft,
+}: {
+  normalization: QuotationNormalization;
+  versionLines: QuotationLineItem[];
+  rfqOptions: string[];
+  canEdit: boolean;
+  onSave: (group: DraftState) => Promise<void>;
+  initialDraft: DraftState;
+}) {
+  const [draftOverride, setDraftOverride] = useState<DraftState | null>(null);
+  const draft = draftOverride ?? initialDraft;
 
   function updateSelectedQuotationLine(lineId: string) {
     const nextLine = versionLines.find((line) => line.id === lineId) ?? null;
 
-    setDraft((current) => ({
-      ...current,
+    setDraftOverride((current) => ({
+      ...(current ?? initialDraft),
       quotationVersionLineItemId: lineId,
-      rfqLineItemId: nextLine?.rfqLineItemId ?? current.rfqLineItemId ?? "",
-      description: nextLine?.description ?? current.description,
-      quantity: nextLine?.quantity ?? current.quantity,
-      unit: nextLine?.unit ?? current.unit,
-      bundleTotalAmount: nextLine?.totalAmount ?? current.bundleTotalAmount,
+      rfqLineItemId: nextLine?.rfqLineItemId ?? (current ?? initialDraft).rfqLineItemId ?? "",
+      description: nextLine?.description ?? (current ?? initialDraft).description,
+      quantity: nextLine?.quantity ?? (current ?? initialDraft).quantity,
+      unit: nextLine?.unit ?? (current ?? initialDraft).unit,
+      bundleTotalAmount: nextLine?.totalAmount ?? (current ?? initialDraft).bundleTotalAmount,
     }));
   }
 
@@ -169,7 +195,9 @@ export function QuotationNormalizationLineMappingPanel({
               value={draft.rfqLineItemId}
               disabled={!hasSelectableRfqLines}
               aria-describedby={!hasSelectableRfqLines ? "rfq-line-unavailable" : undefined}
-              onChange={(event) => setDraft((current) => ({ ...current, rfqLineItemId: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), rfqLineItemId: event.target.value }))
+              }
             >
               {hasSelectableRfqLines ? (
                 rfqOptions.map((rfqLineId) => (
@@ -188,7 +216,10 @@ export function QuotationNormalizationLineMappingPanel({
               className="mt-1 min-h-11 w-full"
               value={draft.pricingMode}
               onChange={(event) =>
-                setDraft((current) => ({ ...current, pricingMode: event.target.value as DraftState["pricingMode"] }))
+                setDraftOverride((current) => ({
+                  ...(current ?? initialDraft),
+                  pricingMode: event.target.value as DraftState["pricingMode"],
+                }))
               }
             >
               <option value="bundle">bundle</option>
@@ -203,7 +234,10 @@ export function QuotationNormalizationLineMappingPanel({
               className="mt-1 min-h-11 w-full"
               value={draft.mappingType}
               onChange={(event) =>
-                setDraft((current) => ({ ...current, mappingType: event.target.value as DraftState["mappingType"] }))
+                setDraftOverride((current) => ({
+                  ...(current ?? initialDraft),
+                  mappingType: event.target.value as DraftState["mappingType"],
+                }))
               }
             >
               <option value="bundled">bundled</option>
@@ -216,7 +250,9 @@ export function QuotationNormalizationLineMappingPanel({
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={draft.currency}
-              onChange={(event) => setDraft((current) => ({ ...current, currency: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), currency: event.target.value }))
+              }
             />
           </label>
           <label className="text-sm font-medium">
@@ -224,7 +260,9 @@ export function QuotationNormalizationLineMappingPanel({
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={draft.description}
-              onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), description: event.target.value }))
+              }
             />
           </label>
           <label className="text-sm font-medium">
@@ -232,7 +270,9 @@ export function QuotationNormalizationLineMappingPanel({
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={draft.quantity}
-              onChange={(event) => setDraft((current) => ({ ...current, quantity: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), quantity: event.target.value }))
+              }
             />
           </label>
           <label className="text-sm font-medium">
@@ -240,7 +280,9 @@ export function QuotationNormalizationLineMappingPanel({
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={draft.unit}
-              onChange={(event) => setDraft((current) => ({ ...current, unit: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), unit: event.target.value }))
+              }
             />
           </label>
           <label className="text-sm font-medium">
@@ -248,7 +290,9 @@ export function QuotationNormalizationLineMappingPanel({
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={draft.bundleTotalAmount}
-              onChange={(event) => setDraft((current) => ({ ...current, bundleTotalAmount: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), bundleTotalAmount: event.target.value }))
+              }
             />
           </label>
           <label className="text-sm font-medium lg:col-span-2">
@@ -256,7 +300,9 @@ export function QuotationNormalizationLineMappingPanel({
             <Textarea
               className="mt-1 min-h-24 text-sm"
               value={draft.buyerNote}
-              onChange={(event) => setDraft((current) => ({ ...current, buyerNote: event.target.value }))}
+              onChange={(event) =>
+                setDraftOverride((current) => ({ ...(current ?? initialDraft), buyerNote: event.target.value }))
+              }
             />
           </label>
           {!hasSelectableRfqLines ? (

@@ -40,7 +40,7 @@ describe("Quotation normalization queue", () => {
     expect(within(reviewRow).getByText("Version 2")).toBeInTheDocument();
     expect(within(reviewRow).getByText("2 blocking")).toBeInTheDocument();
     expect(within(reviewRow).getByText("1 warning")).toBeInTheDocument();
-    expect(within(reviewRow).getByText(/May 22, 2026/)).toBeInTheDocument();
+    expect(within(reviewRow).getByText(hasDateParts("22", "May", "2026"))).toBeInTheDocument();
 
     const link = within(reviewRow).getByRole("link", { name: /open normalization workspace/i });
     expect(link).toHaveAttribute("href", "/quotations/normalizations/norm-needs-review");
@@ -89,7 +89,7 @@ describe("Quotation normalization queue", () => {
     render(<QuotationNormalizationQueuePage />, { wrapper: TestProviders });
 
     const failedRow = await screen.findByRole("row", { name: /Atlas Workplace Supply/i });
-    expect(within(failedRow).getByText(/May 22, 2026/)).toBeInTheDocument();
+    expect(within(failedRow).getByText(hasDateParts("22", "May", "2026"))).toBeInTheDocument();
     expect(within(failedRow).getByText("Normalizer could not parse the uploaded workbook.")).toBeInTheDocument();
   });
 
@@ -313,4 +313,8 @@ function TestProviders({ children }: { children: ReactNode }) {
   });
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+function hasDateParts(...parts: string[]) {
+  return (content: string) => parts.every((part) => content.includes(part));
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Textarea } from "@cognify/ui";
 import type { QuotationNormalizationField, QuotationNormalizationIssue } from "@cognify/api-client/schemas";
 import { QuotationNormalizationIssueBadge } from "./quotation-normalization-issue-badge";
@@ -24,10 +24,6 @@ export function QuotationNormalizationFieldReview({
 }) {
   const [correctedValue, setCorrectedValue] = useState(stringifyValue(field.normalizedValue ?? ""));
   const [correctionNote, setCorrectionNote] = useState("");
-
-  useEffect(() => {
-    setCorrectedValue(stringifyValue(field.normalizedValue ?? ""));
-  }, [field.normalizedValue]);
 
   const issue = issues[0];
 

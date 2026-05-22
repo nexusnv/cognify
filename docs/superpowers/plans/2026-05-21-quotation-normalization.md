@@ -1058,7 +1058,7 @@ git commit -m "test: keep normalization internal to buyers"
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: `docs/superpowers/plans/2026-05-21-quotation-normalization.md`
 
-- [ ] **Step 1: Update roadmap after implementation passes**
+- [x] **Step 1: Update roadmap after implementation passes**
 
 Set P1-29:
 
@@ -1074,7 +1074,7 @@ Add a future roadmap row near the P2 extraction items:
 ```
 Do not rename P2-04 or P2-05.
 
-- [ ] **Step 2: Run focused backend verification**
+- [x] **Step 2: Run focused backend verification**
 
 ```bash
 php artisan test --filter=QuotationNormalizationApiTest
@@ -1086,7 +1086,7 @@ php artisan route:list --path=api/quotation-versions
 
 Expected: all pass and route lists include expected endpoints.
 
-- [ ] **Step 3: Run focused frontend verification**
+- [x] **Step 3: Run focused frontend verification**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-normalization
@@ -1098,7 +1098,7 @@ pnpm --filter @cognify/web typecheck
 
 Expected: all pass.
 
-- [ ] **Step 4: Run contract and root verification**
+- [x] **Step 4: Run contract and root verification**
 
 ```bash
 pnpm check:api-contract
@@ -1111,7 +1111,7 @@ git diff --check
 
 Expected: all pass. `pnpm build` is required before claiming completion.
 
-- [ ] **Step 5: Commit docs and final verification state**
+- [x] **Step 5: Commit docs and final verification state**
 
 ```bash
 git add docs/01-product/feature-roadmap.md docs/superpowers/plans/2026-05-21-quotation-normalization.md
