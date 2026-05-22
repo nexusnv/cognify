@@ -11971,7 +11971,15 @@
         ],
         "properties": {
           "section": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "overall",
+              "price",
+              "delivery",
+              "terms",
+              "compliance",
+              "risk"
+            ]
           },
           "quotationId": {
             "type": [

@@ -115,7 +115,7 @@ class BuildQuotationComparison
             'complianceNotes' => $this->field($fields, 'manualEntry.complianceNotes'),
             'issueCounts' => $this->issueCounts($normalization),
             'noteCount' => $notes
-                ->filter(fn ($note): bool => (int) $note->vendor_id === (int) $quotation->vendor_id || (int) $note->quotation_id === (int) $quotation->id)
+                ->filter(fn ($note): bool => $this->noteAppliesToVendor($note, $quotation))
                 ->unique('id')
                 ->count(),
             'links' => [
@@ -123,6 +123,16 @@ class BuildQuotationComparison
                 'normalization' => $normalization !== null ? "/quotations/normalizations/{$normalization->id}" : null,
             ],
         ];
+    }
+
+    private function noteAppliesToVendor(mixed $note, Quotation $quotation): bool
+    {
+        if ($note->vendor_id !== null || $note->quotation_id !== null) {
+            return (int) $note->vendor_id === (int) $quotation->vendor_id
+                || (int) $note->quotation_id === (int) $quotation->id;
+        }
+
+        return $note->rfq_line_item_id !== null;
     }
 
     /**

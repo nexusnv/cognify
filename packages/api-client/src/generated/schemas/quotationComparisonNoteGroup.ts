@@ -4,13 +4,14 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuotationComparisonNoteGroupSection } from "./quotationComparisonNoteGroupSection";
 import type { QuotationComparisonNoteGroupQuotationId } from "./quotationComparisonNoteGroupQuotationId";
 import type { QuotationComparisonNoteGroupVendorId } from "./quotationComparisonNoteGroupVendorId";
 import type { QuotationComparisonNoteGroupRfqLineItemId } from "./quotationComparisonNoteGroupRfqLineItemId";
 import type { QuotationComparisonNote } from "./quotationComparisonNote";
 
 export interface QuotationComparisonNoteGroup {
-  section: string;
+  section: QuotationComparisonNoteGroupSection;
   quotationId?: QuotationComparisonNoteGroupQuotationId;
   vendorId?: QuotationComparisonNoteGroupVendorId;
   rfqLineItemId?: QuotationComparisonNoteGroupRfqLineItemId;

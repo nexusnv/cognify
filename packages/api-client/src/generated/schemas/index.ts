@@ -276,6 +276,7 @@ export * from "./quotationComparisonNoteCreatedAt";
 export * from "./quotationComparisonNoteGroup";
 export * from "./quotationComparisonNoteGroupQuotationId";
 export * from "./quotationComparisonNoteGroupRfqLineItemId";
+export * from "./quotationComparisonNoteGroupSection";
 export * from "./quotationComparisonNoteGroupVendorId";
 export * from "./quotationComparisonNoteQuotationId";
 export * from "./quotationComparisonNoteResponse";

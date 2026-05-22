@@ -163,6 +163,27 @@ class QuotationComparisonApiTest extends TestCase
         ]);
     }
 
+    public function test_line_item_comparison_notes_are_counted_for_vendor_summaries(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
+                'section' => 'price',
+                'rfqLineItemId' => 'rfq-line-1',
+                'note' => 'Line-level comparison context.',
+            ])
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/rfqs/{$rfq->id}/comparison")
+            ->assertOk()
+            ->assertJsonPath('data.vendors.0.noteCount', 1)
+            ->assertJsonPath('data.noteGroups.0.section', 'price')
+            ->assertJsonPath('data.noteGroups.0.rfqLineItemId', 'rfq-line-1');
+    }
+
     public function test_note_targets_must_belong_to_same_rfq_and_tenant(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');

@@ -65,7 +65,13 @@ function groupNotes(notes: QuotationComparisonNote[]): QuotationComparisonNoteGr
 
 function refreshVendorNoteCounts(comparison: QuotationComparison) {
   for (const vendor of comparison.vendors) {
-    vendor.noteCount = comparison.notes.filter((note) => note.vendorId === vendor.vendorId).length;
+    vendor.noteCount = comparison.notes.filter((note) => {
+      if (note.vendorId || note.quotationId) {
+        return note.vendorId === vendor.vendorId || note.quotationId === vendor.quotationId;
+      }
+
+      return Boolean(note.rfqLineItemId);
+    }).length;
   }
 }
 
