@@ -20,7 +20,7 @@ export function QuotationComparisonVendorSummary({
                 <h3 className="font-semibold">{vendor.vendorName}</h3>
                 <p className="text-xs text-muted-foreground">{vendor.quotationNumber}</p>
               </div>
-              <Badge variant={vendor.readiness === "ready" ? "success" : "warning"}>
+              <Badge variant={vendor.readiness === "ready" ? "default" : "secondary"}>
                 {vendor.readiness === "ready" ? "Ready" : "Normalization required"}
               </Badge>
             </div>

@@ -6,6 +6,7 @@ import type {
   QuotationComparisonNoteGroup,
   QuotationComparisonPermissions,
   QuotationComparisonVendor,
+  SaveQuotationComparisonNoteRequest,
 } from "@cognify/api-client/schemas";
 import {
   QuotationComparisonCommercialTermValueReadiness,
@@ -98,7 +99,7 @@ function buildVendor(
     readiness: QuotationComparisonVendorReadiness.ready,
     currency: "USD",
     totalAmount: "12470.00",
-    leadTimeDays: 14,
+    leadTimeDays: "14",
     paymentTerms: "Net 30",
     deliveryTerms: "DDP",
     warrantyTerms: "3 years",
@@ -307,7 +308,7 @@ function createMixedReadinessComparison(): ComparisonFixtureState {
         readiness: QuotationComparisonVendorReadiness.normalization_required,
         currency: "USD",
         totalAmount: "13140.00",
-        leadTimeDays: 18,
+        leadTimeDays: "18",
         issueCounts: { blocking: 1, warning: 1, info: 0 },
         noteCount: 0,
       }),
@@ -322,7 +323,7 @@ function createMixedReadinessComparison(): ComparisonFixtureState {
         normalizationRevision: 1,
         currency: "USD",
         totalAmount: "13990.00",
-        leadTimeDays: 21,
+        leadTimeDays: "21",
         issueCounts: { blocking: 2, warning: 1, info: 1 },
         noteCount: 0,
       }),
@@ -477,7 +478,7 @@ function createMixedCurrencyComparison(): ComparisonFixtureState {
         normalizationRevision: 1,
         currency: "EUR",
         totalAmount: "11900.00",
-        leadTimeDays: 16,
+        leadTimeDays: "16",
         readiness: QuotationComparisonVendorReadiness.ready,
         issueCounts: { blocking: 0, warning: 0, info: 0 },
         links: {
@@ -581,13 +582,7 @@ export function listQuotationComparisonFixtures(): QuotationComparison[] {
 
 export function createQuotationComparisonNoteFixture(
   rfqId: string,
-  payload: {
-    section: QuotationComparisonNote["section"];
-    note: string;
-    quotationId?: string;
-    vendorId?: string;
-    rfqLineItemId?: string;
-  },
+  payload: SaveQuotationComparisonNoteRequest,
 ): QuotationComparisonNote {
   const record = findComparisonRecord(rfqId);
   if (!record) {
@@ -614,13 +609,7 @@ export function createQuotationComparisonNoteFixture(
 export function updateQuotationComparisonNoteFixture(
   rfqId: string,
   noteId: string,
-  payload: {
-    section: QuotationComparisonNote["section"];
-    note: string;
-    quotationId?: string;
-    vendorId?: string;
-    rfqLineItemId?: string;
-  },
+  payload: SaveQuotationComparisonNoteRequest,
 ): QuotationComparisonNote {
   const record = findComparisonRecord(rfqId);
   if (!record) {
@@ -634,9 +623,9 @@ export function updateQuotationComparisonNoteFixture(
 
   note.section = payload.section;
   note.note = payload.note;
-  note.quotationId = payload.quotationId;
-  note.vendorId = payload.vendorId;
-  note.rfqLineItemId = payload.rfqLineItemId;
+  note.quotationId = payload.quotationId ?? undefined;
+  note.vendorId = payload.vendorId ?? undefined;
+  note.rfqLineItemId = payload.rfqLineItemId ?? undefined;
   note.updatedAt = noteTime;
   refreshComparison(record.comparison);
   return structuredClone(note);

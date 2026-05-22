@@ -9,7 +9,6 @@ import {
   Gauge,
   FolderKanban,
   ReceiptText,
-  Scale,
   UserRound,
 } from "lucide-react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
