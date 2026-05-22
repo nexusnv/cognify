@@ -10523,7 +10523,8 @@
           "attachments",
           "attachmentCount",
           "completeness",
-          "permissions"
+          "permissions",
+          "activeNormalization"
         ],
         "properties": {
           "id": {

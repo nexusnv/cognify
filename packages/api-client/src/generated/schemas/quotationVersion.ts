@@ -38,5 +38,5 @@ export interface QuotationVersion {
   attachmentCount: number;
   completeness: QuotationCompleteness;
   permissions: QuotationVersionPermissions;
-  activeNormalization?: QuotationVersionActiveNormalization;
+  activeNormalization: QuotationVersionActiveNormalization;
 }
