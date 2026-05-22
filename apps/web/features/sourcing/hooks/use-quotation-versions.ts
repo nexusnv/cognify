@@ -38,11 +38,19 @@ export function useQuotationVersion(
   versionId: number | null | undefined,
 ) {
   const tenantId = getStoredActiveTenantId();
+  const hasFiniteVersionId = typeof versionId === "number" && Number.isFinite(versionId);
+  const versionKey = hasFiniteVersionId ? versionId : -1;
 
   return useQuery({
-    queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionId ?? -1, tenantId),
-    queryFn: () => showQuotationVersion(quotationId as string, versionId as number, tenantId),
-    enabled: Boolean(quotationId && versionId !== null && versionId !== undefined),
+    queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionKey, tenantId),
+    queryFn: () => {
+      if (!quotationId || !hasFiniteVersionId) {
+        throw new Error("Cannot fetch quotation version without a finite version id.");
+      }
+
+      return showQuotationVersion(quotationId, versionId, tenantId);
+    },
+    enabled: Boolean(quotationId) && hasFiniteVersionId,
     retry: false,
   });
 }
@@ -63,7 +71,7 @@ export function useCreateQuotationVersion(quotationId: string | null | undefined
       if (!quotationId) return;
 
       const versionId = Number(version.id);
-      if (!Number.isNaN(versionId)) {
+      if (Number.isFinite(versionId)) {
         queryClient.setQueryData(
           quotationVersionKeys.detail(quotationId, versionId, tenantId),
           version,

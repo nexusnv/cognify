@@ -20,11 +20,16 @@ export function QuotationNormalizationApprovalPanel({
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!canEdit && (normalization.status === "approved" || normalization.status === "approved_with_warnings")) {
+  if (!canEdit) {
+    const readOnlyLabel =
+      normalization.status === "approved" || normalization.status === "approved_with_warnings"
+        ? "Read-only approved record"
+        : "Read-only approval record";
+
     return (
       <section id="approval" className="rounded-md border p-4">
         <h2 className="text-base font-semibold">Approval</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Read-only approved record</p>
+        <p className="mt-2 text-sm text-muted-foreground">{readOnlyLabel}</p>
       </section>
     );
   }
@@ -72,7 +77,7 @@ export function QuotationNormalizationApprovalPanel({
       <div className="mt-4 flex flex-wrap gap-2">
         <Button
           type="button"
-          disabled={!normalization.permissions.canApprove || isSubmitting}
+          disabled={!canEdit || !normalization.permissions.canApprove || isSubmitting}
           onClick={() => void submitApproval(onApprove)}
         >
           Approve normalization
@@ -80,7 +85,7 @@ export function QuotationNormalizationApprovalPanel({
         <Button
           type="button"
           variant="outline"
-          disabled={!normalization.permissions.canApproveWithWarnings || isSubmitting}
+          disabled={!canEdit || !normalization.permissions.canApproveWithWarnings || isSubmitting}
           onClick={() => {
             if (!approvalNote.trim()) {
               setLocalError("Add an acknowledgement note before approving with warnings.");

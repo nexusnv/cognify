@@ -107,7 +107,12 @@ function touch(normalization: QuotationNormalizationFixture, timestamp: string) 
 
 export const quotationNormalizationHandlers = [
   http.get("/api/quotation-normalizations", async ({ request }) => {
-    const params = Object.fromEntries(new URL(request.url).searchParams.entries()) as ListQuotationNormalizationsParams;
+    const searchParams = new URL(request.url).searchParams;
+    const statuses = searchParams.getAll("status");
+    const params = {
+      ...Object.fromEntries(searchParams.entries()),
+      status: statuses.length > 0 ? statuses : undefined,
+    } as ListQuotationNormalizationsParams;
     const statusFilter = Array.isArray(params.status)
       ? params.status
       : typeof params.status === "string"
@@ -343,8 +348,8 @@ export const quotationNormalizationHandlers = [
     if (!normalization) return notFound();
 
     const revision = structuredClone(normalization);
-    revision.id = `${normalization.id}-revision-2`;
     revision.normalizationRevision = normalization.normalizationRevision + 1;
+    revision.id = `${normalization.id}-revision-${revision.normalizationRevision}`;
     revision.status = "needs_review";
     revision.permissions = {
       canEdit: true,

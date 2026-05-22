@@ -71,6 +71,10 @@ class ApproveQuotationNormalization
                 throw new ConflictHttpException('Quotation normalization has no unresolved warning issues.');
             }
 
+            if (! $withWarnings && $hasUnresolvedWarnings) {
+                throw new ConflictHttpException('Quotation normalization has unresolved warning issues; resolve warnings or approve with warnings.');
+            }
+
             $status = $withWarnings ? QuotationNormalizationStatus::ApprovedWithWarnings : QuotationNormalizationStatus::Approved;
             $lockedNormalization->forceFill([
                 'status' => $status,

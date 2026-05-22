@@ -10,6 +10,7 @@ use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationNormalizationIssue;
 use Domains\Quotation\Models\QuotationNormalizationLineGroup;
 use Domains\Quotation\Models\QuotationNormalizationLineMapping;
+use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
 use Domains\Quotation\States\QuotationNormalizationIssueStatus;
 use Domains\Quotation\States\QuotationNormalizationMappingType;
 use Domains\Quotation\States\QuotationNormalizationPricingMode;
@@ -33,7 +34,7 @@ class SaveQuotationNormalizationLineMappings
     {
         return DB::transaction(function () use ($tenant, $actor, $normalization, $lineGroups): QuotationNormalization {
             $lockedNormalization = QuotationNormalization::query()
-                ->with(['quotation', 'quotationVersion.quotation.rfq', 'issues'])
+                ->with(['quotation', 'quotationVersion.lineItems', 'quotationVersion.quotation.rfq', 'issues'])
                 ->where('tenant_id', $tenant->id)
                 ->whereKey($normalization->id)
                 ->lockForUpdate()
@@ -44,6 +45,11 @@ class SaveQuotationNormalizationLineMappings
             }
 
             $allowedRfQLineItemIds = collect($lockedNormalization->quotationVersion?->quotation?->rfq?->line_items ?? [])
+                ->pluck('id')
+                ->filter()
+                ->map(fn ($id) => (string) $id)
+                ->all();
+            $allowedQuotationVersionLineItemIds = collect($lockedNormalization->quotationVersion?->lineItems ?? [])
                 ->pluck('id')
                 ->filter()
                 ->map(fn ($id) => (string) $id)
@@ -70,6 +76,12 @@ class SaveQuotationNormalizationLineMappings
                     if (($mappingPayload['rfqLineItemId'] ?? null) !== null && ! in_array((string) $mappingPayload['rfqLineItemId'], $allowedRfQLineItemIds, true)) {
                         throw ValidationException::withMessages([
                             "lineGroups.{$groupIndex}.mappings.{$mappingIndex}.rfqLineItemId" => ['The selected RFQ line item is invalid for this normalization.'],
+                        ]);
+                    }
+
+                    if (($mappingPayload['quotationVersionLineItemId'] ?? null) !== null && ! in_array((string) $mappingPayload['quotationVersionLineItemId'], $allowedQuotationVersionLineItemIds, true)) {
+                        throw ValidationException::withMessages([
+                            "lineGroups.{$groupIndex}.mappings.{$mappingIndex}.quotationVersionLineItemId" => ['The selected quotation version line item is invalid for this normalization.'],
                         ]);
                     }
 
@@ -138,6 +150,33 @@ class SaveQuotationNormalizationLineMappings
                         'resolved_at' => now(),
                     ])->save();
                 });
+        } else {
+            $issues = $normalization->issues()
+                ->where('issue_code', QuotationNormalizationIssueCatalog::REQUIRED_RFQ_LINE_UNMAPPED)
+                ->get();
+
+            if ($issues->isEmpty()) {
+                $normalization->issues()->create([
+                    'tenant_id' => $normalization->tenant_id,
+                    'severity' => QuotationNormalizationIssueSeverity::Blocking,
+                    'status' => QuotationNormalizationIssueStatus::Open,
+                    'issue_code' => QuotationNormalizationIssueCatalog::REQUIRED_RFQ_LINE_UNMAPPED,
+                    'field_path' => 'lineGroups',
+                    'message' => 'Required RFQ line items must be mapped before approval.',
+                ]);
+
+                return;
+            }
+
+            $issues->each(function (QuotationNormalizationIssue $issue): void {
+                $issue->forceFill([
+                    'severity' => QuotationNormalizationIssueSeverity::Blocking,
+                    'status' => QuotationNormalizationIssueStatus::Open,
+                    'resolved_by_user_id' => null,
+                    'resolved_at' => null,
+                    'resolution_note' => null,
+                ])->save();
+            });
         }
     }
 

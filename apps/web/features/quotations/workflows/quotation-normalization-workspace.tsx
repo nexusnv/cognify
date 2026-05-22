@@ -59,7 +59,7 @@ export function QuotationNormalizationWorkspace({
 
   const versionLines = versionQuery.data?.lineItems ?? [];
   const canEdit = normalization.permissions.canEdit;
-  const lastJobError = getLastJobError(normalization as { lastJobError?: string | null });
+  const lastJobError = getLastJobError(normalization);
 
   return (
     <RecordWorkspaceLayout

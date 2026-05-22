@@ -16,7 +16,7 @@ vi.mock("../api/quotation-api", () => ({
   showQuotationVersion: mocks.showQuotationVersionMock,
 }));
 
-import { quotationVersionKeys, useCreateQuotationVersion } from "../hooks/use-quotation-versions";
+import { quotationVersionKeys, useCreateQuotationVersion, useQuotationVersion } from "../hooks/use-quotation-versions";
 
 describe("useCreateQuotationVersion", () => {
   beforeEach(() => {
@@ -51,6 +51,16 @@ describe("useCreateQuotationVersion", () => {
       quotationVersionKeys.detail("quotation-1", 501, "tenant-1"),
       createdVersion,
     );
+  });
+
+  it("does not fetch quotation version details for non-finite version ids", () => {
+    storeActiveTenantId("tenant-1");
+
+    renderHook(() => useQuotationVersion("quotation-1", Number.NaN), {
+      wrapper: createWrapper(),
+    });
+
+    expect(mocks.showQuotationVersionMock).not.toHaveBeenCalled();
   });
 });
 

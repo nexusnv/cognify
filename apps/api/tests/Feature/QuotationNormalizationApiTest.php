@@ -17,10 +17,12 @@ use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Quotation\States\SourcingIntakeStatus;
 use Domains\Quotation\States\SourcingPath;
+use Domains\Quotation\Support\QuotationNormalizationIssueCatalog;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Hash;
@@ -231,6 +233,35 @@ class QuotationNormalizationApiTest extends TestCase
         $this->assertSame(QuotationNormalizationStatus::ApprovedWithWarnings->value, $normalization->refresh()->status->value);
     }
 
+    public function test_plain_approval_rejects_unresolved_warnings_and_keeps_draft_status(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $normalization = tap($this->normalizationForTenant($tenant), function (QuotationNormalization $normalization) use ($tenant): void {
+            $normalization->forceFill([
+                'status' => QuotationNormalizationStatus::ReadyForApproval,
+                'is_current_for_version' => true,
+            ])->save();
+
+            $normalization->issues()->create([
+                'tenant_id' => $tenant->id,
+                'severity' => 'warning',
+                'status' => 'open',
+                'issue_code' => 'format_hint',
+                'field_path' => 'manualEntry.paymentTerms',
+                'message' => 'Payment terms should be clarified.',
+            ]);
+        })->refresh()->load(['issues']);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/approve", [
+                'approvalNote' => 'Normalization reviewed for comparison.',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+
+        $this->assertSame(QuotationNormalizationStatus::ReadyForApproval->value, $normalization->refresh()->status->value);
+    }
+
     public function test_non_review_ready_normalizations_reject_approval_and_keep_status(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -402,6 +433,91 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertJsonStructure(['error' => ['details' => ['fields' => ['lineGroups.0.mappings.0.rfqLineItemId']]]]);
     }
 
+    public function test_line_mapping_rejects_invalid_quotation_version_line_item_id(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $normalization = $this->normalizationNeedingReview($tenant, $requester, $buyer);
+
+        [, $foreignVersion] = $this->quotationVersionForTenant($tenant);
+        $foreignLineItem = $foreignVersion->lineItems()->create([
+            'tenant_id' => $tenant->id,
+            'description' => 'Foreign version line',
+            'quantity' => '1.0000',
+            'unit' => 'each',
+            'position' => 1,
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/line-mappings", [
+                'lineGroups' => [[
+                    'groupNumber' => 1,
+                    'pricingMode' => 'bundle',
+                    'description' => 'Laptop bundle',
+                    'currency' => 'USD',
+                    'bundleTotalAmount' => '12470.00',
+                    'notes' => 'Vendor bundled laptops and freight.',
+                    'mappings' => [[
+                        'rfqLineItemId' => 'rfq-line-1',
+                        'quotationVersionLineItemId' => (string) $foreignLineItem->id,
+                        'mappingType' => 'bundled',
+                        'quantity' => '10',
+                        'unit' => 'each',
+                        'unitPrice' => null,
+                        'lineTotal' => null,
+                        'buyerNote' => 'Covered by bundle total.',
+                    ]],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonStructure(['error' => ['details' => ['fields' => ['lineGroups.0.mappings.0.quotationVersionLineItemId']]]]);
+    }
+
+    public function test_line_mapping_reopens_required_rfq_line_issue_when_mapping_is_removed(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $normalization = $this->normalizationNeedingReview($tenant, $requester, $buyer);
+        $versionLineId = (string) $normalization->quotationVersion->lineItems()->firstOrFail()->id;
+
+        $normalization->issues()->where('severity', 'blocking')->update([
+            'status' => 'resolved',
+            'resolved_at' => now(),
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/quotation-normalizations/{$normalization->id}/line-mappings", [
+                'lineGroups' => [[
+                    'groupNumber' => 1,
+                    'pricingMode' => 'bundle',
+                    'description' => 'Laptop bundle',
+                    'currency' => 'USD',
+                    'bundleTotalAmount' => '12470.00',
+                    'notes' => 'Vendor bundled laptops and freight.',
+                    'mappings' => [[
+                        'rfqLineItemId' => null,
+                        'quotationVersionLineItemId' => $versionLineId,
+                        'mappingType' => 'bundled',
+                        'quantity' => '10',
+                        'unit' => 'each',
+                        'unitPrice' => null,
+                        'lineTotal' => null,
+                        'buyerNote' => 'Covered by bundle total.',
+                    ]],
+                ]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'needs_review');
+
+        $this->assertDatabaseHas('quotation_normalization_issues', [
+            'normalization_id' => $normalization->id,
+            'issue_code' => QuotationNormalizationIssueCatalog::REQUIRED_RFQ_LINE_UNMAPPED,
+            'severity' => 'blocking',
+            'status' => 'open',
+        ]);
+    }
+
     public function test_revision_creation_is_conflict_when_current_draft_already_exists(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -469,6 +585,41 @@ class QuotationNormalizationApiTest extends TestCase
 
         $this->postJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/normalizations")
             ->assertNotFound();
+    }
+
+    public function test_buyer_can_login_access_normalization_and_logout_revokes_access(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $buyer->forceFill([
+            'email' => 'quotation-normalization-session@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $normalization = $this->normalizationNeedingReview($tenant, $requester, $buyer);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'quotation-normalization-session@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/quotation-normalizations/{$normalization->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', (string) $normalization->id);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/quotation-normalizations/{$normalization->id}")
+            ->assertUnauthorized();
     }
 
     public function test_vendor_portal_quotation_and_version_endpoints_redact_normalization_data(): void

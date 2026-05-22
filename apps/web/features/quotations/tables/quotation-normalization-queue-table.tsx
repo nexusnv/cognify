@@ -4,7 +4,7 @@ import Link from "next/link";
 import { RotateCw } from "lucide-react";
 import { Button } from "@cognify/ui";
 import type { QuotationNormalizationSummary } from "@cognify/api-client/schemas";
-import { formatDistanceToNowLabel, getUpdatedAt, type QueueRowExtras } from "../utils/quotation-normalization-ui";
+import { formatDistanceToNowLabel, getUpdatedAt } from "../utils/quotation-normalization-ui";
 import {
   formatQuotationNormalizationStatus,
   QuotationNormalizationStatusBadge,
@@ -35,10 +35,9 @@ export function QuotationNormalizationQueueTable({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const rowWithExtras = row as QuotationNormalizationSummary & QueueRowExtras;
-            const updatedAt = getUpdatedAt(rowWithExtras);
+            const updatedAt = getUpdatedAt(row);
             const versionId = row.source.quotationVersionId ?? null;
-            const lastJobError = row.status === "failed" ? rowWithExtras.lastJobError : null;
+            const lastJobError = row.status === "failed" ? row.lastJobError : null;
 
             return (
               <tr key={row.id} className="border-t align-top">

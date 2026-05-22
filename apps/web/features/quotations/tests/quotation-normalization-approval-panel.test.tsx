@@ -106,6 +106,32 @@ describe("QuotationNormalizationApprovalPanel", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Resolve blocking issues before approval.");
   });
+
+  it("renders read-only approval content when editing is not allowed even if permissions are optimistic", () => {
+    const normalization = makeNormalization({
+      status: "ready_for_approval",
+      permissions: {
+        canEdit: false,
+        canApprove: true,
+        canApproveWithWarnings: true,
+        canRetry: false,
+        canCreateRevision: false,
+      },
+    });
+
+    render(
+      <QuotationNormalizationApprovalPanel
+        normalization={normalization}
+        canEdit={false}
+        onApprove={vi.fn(async () => undefined)}
+        onApproveWithWarnings={vi.fn(async () => undefined)}
+      />,
+    );
+
+    expect(screen.getByText("Read-only approval record")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve normalization" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve with warnings" })).not.toBeInTheDocument();
+  });
 });
 
 function makeNormalization(overrides: Partial<QuotationNormalization> = {}): QuotationNormalization {

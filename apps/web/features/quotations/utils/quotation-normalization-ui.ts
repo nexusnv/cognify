@@ -1,16 +1,11 @@
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import type { QuotationNormalization, QuotationNormalizationSummary } from "@cognify/api-client/schemas";
 
-export type QueueRowExtras = {
-  updatedAt?: string | null;
-  lastJobError?: string | null;
-};
-
-export function getUpdatedAt(record: QueueRowExtras) {
+export function getUpdatedAt(record: QuotationNormalizationSummary) {
   return record.updatedAt ?? null;
 }
 
-export function getLastJobError(record: QueueRowExtras) {
+export function getLastJobError(record: QuotationNormalizationSummary) {
   return record.lastJobError ?? null;
 }
 
@@ -28,10 +23,6 @@ export function formatDistanceToNowLabel(value: string) {
 
 export function isApprovedNormalization(normalization: QuotationNormalization) {
   return normalization.status === "approved" || normalization.status === "approved_with_warnings";
-}
-
-export function withQueueExtras(row: QuotationNormalizationSummary) {
-  return row as QuotationNormalizationSummary & QueueRowExtras;
 }
 
 export function getQuotationNormalizationErrorMessage(error: unknown) {

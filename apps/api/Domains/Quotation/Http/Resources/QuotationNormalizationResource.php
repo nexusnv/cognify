@@ -2,8 +2,6 @@
 
 namespace Domains\Quotation\Http\Resources;
 
-use App\Auth\TenantRole;
-use App\Tenancy\CurrentTenant;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
 use Domains\Quotation\States\QuotationNormalizationIssueStatus;
@@ -49,7 +47,10 @@ class QuotationNormalizationResource extends JsonResource
     {
         $quotation = $normalization->relationLoaded('quotation') ? $normalization->quotation : null;
         $version = $normalization->relationLoaded('quotationVersion') ? $normalization->quotationVersion : null;
-        $rfq = $version?->relationLoaded('quotation') ? $version->quotation?->rfq : $quotation?->rfq;
+        $versionQuotation = $version?->relationLoaded('quotation') ? $version->quotation : null;
+        $rfq = $versionQuotation?->relationLoaded('rfq') ? $versionQuotation->rfq : null;
+        $rfq ??= $quotation?->relationLoaded('rfq') ? $quotation->rfq : null;
+        $vendor = $quotation?->relationLoaded('vendor') ? $quotation->vendor : null;
 
         return [
             'quotationId' => (string) $normalization->quotation_id,
@@ -59,7 +60,7 @@ class QuotationNormalizationResource extends JsonResource
             'rfqId' => $quotation?->rfq_id !== null ? (string) $quotation->rfq_id : null,
             'rfqNumber' => $rfq?->number,
             'vendorId' => $quotation?->vendor_id !== null ? (string) $quotation->vendor_id : null,
-            'vendorName' => $quotation?->vendor?->name,
+            'vendorName' => $vendor?->name,
         ];
     }
 
@@ -76,9 +77,7 @@ class QuotationNormalizationResource extends JsonResource
 
     private function permissions(Request $request, QuotationNormalization $normalization): array
     {
-        $tenant = app(CurrentTenant::class)->nullable();
         $user = $request->user();
-        $role = $tenant?->roleFor($user);
         $issues = $normalization->relationLoaded('issues') ? $normalization->issues : collect();
         $hasBlockingIssues = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Blocking->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
         $hasUnresolvedWarnings = $issues->contains(fn ($issue) => $this->issueSeverity($issue) === QuotationNormalizationIssueSeverity::Warning->value && $this->issueStatus($issue) !== QuotationNormalizationIssueStatus::Resolved->value);
@@ -86,14 +85,18 @@ class QuotationNormalizationResource extends JsonResource
             QuotationNormalizationStatus::NeedsReview,
             QuotationNormalizationStatus::ReadyForApproval,
         ], true);
-        $canReview = $tenant !== null && in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true) && (int) $normalization->tenant_id === (int) $tenant->id;
+        $canUpdate = $user?->can('update', $normalization) ?? false;
+        $canApprove = $user?->can('approve', $normalization) ?? false;
+        $canApproveWithWarnings = $user?->can('approveWithWarnings', $normalization) ?? false;
+        $canRetry = $user?->can('retry', $normalization) ?? false;
+        $canCreateRevision = $user?->can('createRevision', $normalization) ?? false;
 
         return [
-            'canEdit' => $canReview && $normalization->isMutable(),
-            'canApprove' => $canReview && $isReviewReady && ! $hasBlockingIssues,
-            'canApproveWithWarnings' => $canReview && $isReviewReady && ! $hasBlockingIssues && $hasUnresolvedWarnings,
-            'canRetry' => $canReview && $normalization->status === QuotationNormalizationStatus::Failed,
-            'canCreateRevision' => $canReview && in_array($normalization->status, [
+            'canEdit' => $canUpdate && $normalization->isMutable(),
+            'canApprove' => $canApprove && $isReviewReady && ! $hasBlockingIssues && ! $hasUnresolvedWarnings,
+            'canApproveWithWarnings' => $canApproveWithWarnings && $isReviewReady && ! $hasBlockingIssues && $hasUnresolvedWarnings,
+            'canRetry' => $canRetry && $normalization->status === QuotationNormalizationStatus::Failed,
+            'canCreateRevision' => $canCreateRevision && in_array($normalization->status, [
                 QuotationNormalizationStatus::Approved,
                 QuotationNormalizationStatus::ApprovedWithWarnings,
             ], true),

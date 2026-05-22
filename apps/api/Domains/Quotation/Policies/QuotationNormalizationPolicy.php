@@ -6,9 +6,6 @@ use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\Quotation\Models\QuotationNormalization;
-use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
-use Domains\Quotation\States\QuotationNormalizationIssueStatus;
-use Domains\Quotation\States\QuotationNormalizationStatus;
 
 class QuotationNormalizationPolicy
 {
@@ -68,22 +65,4 @@ class QuotationNormalizationPolicy
         return $tenant !== null && (int) $normalization->tenant_id === (int) $tenant->id;
     }
 
-    private function hasUnresolvedBlockingIssues(QuotationNormalization $normalization): bool
-    {
-        $issues = $normalization->relationLoaded('issues')
-            ? $normalization->issues
-            : $normalization->issues()->get();
-
-        return $issues->contains(function ($issue): bool {
-            $severity = $issue->severity instanceof QuotationNormalizationIssueSeverity
-                ? $issue->severity
-                : QuotationNormalizationIssueSeverity::from((string) $issue->severity);
-            $status = $issue->status instanceof QuotationNormalizationIssueStatus
-                ? $issue->status
-                : QuotationNormalizationIssueStatus::from((string) $issue->status);
-
-            return $severity === QuotationNormalizationIssueSeverity::Blocking
-                && $status !== QuotationNormalizationIssueStatus::Resolved;
-        });
-    }
 }

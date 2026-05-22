@@ -47,6 +47,7 @@ describe("shell route helpers", () => {
     expect(labels).not.toContain("Audit");
     expect(labels).not.toContain("System");
     expect(labels).not.toContain("Sourcing intake");
+    expect(labels).not.toContain("Quotations");
   });
 
   it("shows the System nav item for admin permissions", () => {

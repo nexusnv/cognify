@@ -24,8 +24,32 @@ export function QuotationNormalizationFieldReview({
 }) {
   const [correctedValue, setCorrectedValue] = useState(stringifyValue(field.normalizedValue ?? ""));
   const [correctionNote, setCorrectionNote] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const issue = issues[0];
+
+  async function handleSave() {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    setLocalError(null);
+
+    try {
+      await onSave({
+        fieldPath: field.fieldPath,
+        correctedValue,
+        issueId: issue?.id,
+        correctionNote,
+        resolutionNote: correctionNote,
+      });
+    } catch (error) {
+      console.error("Failed to save quotation normalization correction.", error);
+      setLocalError(error instanceof Error ? error.message : "Failed to save correction.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <section data-testid={`normalization-field-${field.fieldPath}`} className="rounded-md border p-4">
@@ -55,7 +79,10 @@ export function QuotationNormalizationFieldReview({
             <input
               className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
               value={correctedValue}
-              onChange={(event) => setCorrectedValue(event.target.value)}
+              onChange={(event) => {
+                setCorrectedValue(event.target.value);
+                setLocalError(null);
+              }}
             />
           </label>
           <label className="text-sm font-medium">
@@ -63,26 +90,26 @@ export function QuotationNormalizationFieldReview({
             <Textarea
               className="mt-1 min-h-11 text-sm"
               value={correctionNote}
-              onChange={(event) => setCorrectionNote(event.target.value)}
+              onChange={(event) => {
+                setCorrectionNote(event.target.value);
+                setLocalError(null);
+              }}
             />
           </label>
           <div className="flex items-end">
             <Button
               type="button"
-              disabled={!correctionNote.trim()}
-              onClick={() =>
-                void onSave({
-                  fieldPath: field.fieldPath,
-                  correctedValue,
-                  issueId: issue?.id,
-                  correctionNote,
-                  resolutionNote: correctionNote,
-                })
-              }
+              disabled={!correctionNote.trim() || isSaving}
+              onClick={() => void handleSave()}
             >
               Save correction
             </Button>
           </div>
+          {localError ? (
+            <p role="alert" className="text-sm text-red-700 lg:col-span-3">
+              {localError}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </section>

@@ -93,6 +93,13 @@ describe("Quotation normalization queue", () => {
     expect(within(failedRow).getByText("Normalizer could not parse the uploaded workbook.")).toBeInTheDocument();
   });
 
+  it("honors repeated status query parameters in the mock queue handler", async () => {
+    const response = await fetch("/api/quotation-normalizations?status=needs_review&status=failed");
+    const body = await response.json();
+
+    expect(body.data.map((row: { status: string }) => row.status).sort()).toEqual(["failed", "needs_review"]);
+  });
+
   it("lets a reviewer retry failed rows when the row permissions allow it", async () => {
     const user = userEvent.setup();
     let retriedVersionId: string | null = null;
