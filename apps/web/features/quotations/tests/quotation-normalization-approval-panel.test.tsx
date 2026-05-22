@@ -74,6 +74,38 @@ describe("QuotationNormalizationApprovalPanel", () => {
       expect(screen.getByRole("button", { name: "Approve normalization" })).not.toBeDisabled();
     });
   });
+
+  it("surfaces backend approval payload messages", async () => {
+    const user = userEvent.setup();
+    const normalization = makeNormalization({
+      permissions: {
+        canEdit: true,
+        canApprove: true,
+        canApproveWithWarnings: false,
+        canRetry: false,
+        canCreateRevision: false,
+      },
+    });
+    const onApprove = vi.fn().mockRejectedValue({
+      error: {
+        code: "conflict",
+        message: "Resolve blocking issues before approval.",
+      },
+    });
+
+    render(
+      <QuotationNormalizationApprovalPanel
+        normalization={normalization}
+        canEdit
+        onApprove={onApprove}
+        onApproveWithWarnings={vi.fn(async () => undefined)}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Approve normalization" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Resolve blocking issues before approval.");
+  });
 });
 
 function makeNormalization(overrides: Partial<QuotationNormalization> = {}): QuotationNormalization {

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { getApiErrorMessage } from "@cognify/api-client";
 import { Button, Textarea } from "@cognify/ui";
 import type { QuotationNormalization } from "@cognify/api-client/schemas";
+import { getQuotationNormalizationErrorMessage } from "../utils/quotation-normalization-ui";
 
 export function QuotationNormalizationApprovalPanel({
   normalization,
@@ -38,7 +38,7 @@ export function QuotationNormalizationApprovalPanel({
     try {
       await action(approvalNote);
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : getApiErrorMessage(error));
+      setLocalError(error instanceof Error ? error.message : getQuotationNormalizationErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

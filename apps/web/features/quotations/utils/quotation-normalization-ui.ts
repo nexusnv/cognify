@@ -34,7 +34,7 @@ export function withQueueExtras(row: QuotationNormalizationSummary) {
   return row as QuotationNormalizationSummary & QueueRowExtras;
 }
 
-export function getQuotationNormalizationQueueErrorMessage(error: unknown) {
+export function getQuotationNormalizationErrorMessage(error: unknown) {
   const nestedCode =
     typeof error === "object" &&
     error !== null &&
@@ -59,3 +59,5 @@ export function getQuotationNormalizationQueueErrorMessage(error: unknown) {
     ? (nestedMessage ?? "You do not have access to quotation normalizations.")
     : (nestedMessage ?? getApiErrorMessage(error));
 }
+
+export const getQuotationNormalizationQueueErrorMessage = getQuotationNormalizationErrorMessage;
