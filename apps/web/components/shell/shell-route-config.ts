@@ -34,6 +34,7 @@ const PROJECT_WORKSPACE_EDIT_PATH = /^\/projects\/([^/]+)\/edit$/;
 const PROJECT_WORKSPACE_PATH = /^\/projects\/[^/]+$/;
 const RFQ_WORKSPACE_PATH = /^\/sourcing\/rfqs\/[^/]+$/;
 const QUOTATION_NORMALIZATION_WORKSPACE_PATH = /^\/quotations\/normalizations\/[^/]+$/;
+const QUOTATION_COMPARISON_WORKSPACE_PATH = /^\/quotations\/comparisons\/[^/]+$/;
 
 export const shellNavGroups: ShellNavGroup[] = [
   {
@@ -77,7 +78,6 @@ export const shellNavGroups: ShellNavGroup[] = [
         implemented: true,
         permission: canUseQuotationNormalizations,
       },
-      { label: "Comparison", href: "/comparison", icon: Scale, implemented: false },
     ],
   },
   {
@@ -160,6 +160,13 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return [
       { label: "Quotations", href: "/quotations/normalizations" },
       { label: "Normalization workspace" },
+    ];
+  }
+
+  if (QUOTATION_COMPARISON_WORKSPACE_PATH.test(normalizedPathname)) {
+    return [
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Comparison workspace" },
     ];
   }
 

@@ -29,6 +29,10 @@ describe("shell route helpers", () => {
       { label: "Quotations", href: "/quotations/normalizations" },
       { label: "Normalization workspace" },
     ]);
+    expect(getBreadcrumbs("/quotations/comparisons/rfq-1")).toEqual([
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Comparison workspace" },
+    ]);
     expect(getBreadcrumbs("/system")).toEqual([{ label: "System" }]);
   });
 
@@ -78,5 +82,6 @@ describe("shell route helpers", () => {
     const labels = groups.flatMap((group) => group.items.map((item) => item.label));
 
     expect(labels).toContain("Quotations");
+    expect(labels).not.toContain("Comparison");
   });
 });

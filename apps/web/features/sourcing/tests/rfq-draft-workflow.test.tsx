@@ -73,6 +73,7 @@ describe("RFQ draft workflow", () => {
     const { unmount } = render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
 
     expect(await screen.findByRole("heading", { name: "Field laptop refresh RFQ" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open comparison" })).toHaveAttribute("href", "/quotations/comparisons/rfq-1");
     await user.clear(screen.getByLabelText("Title"));
     await user.type(screen.getByLabelText("Title"), "Updated laptop RFQ");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
