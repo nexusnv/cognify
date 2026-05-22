@@ -471,6 +471,51 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_vendor_portal_quotation_and_version_endpoints_redact_normalization_data(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $vendor = $this->vendor($tenant);
+        $invitation = $this->invitation($tenant, $rfq, $vendor);
+        $token = $this->issuePortalToken($tenant, $buyer, $invitation);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->putJson("/api/rfq-invitations/{$invitation->id}/quotation/manual-entry", $this->validManualEntryPayload([
+                'quotationReference' => 'NW-Q-2026-041',
+                'totalAmount' => '12470.00',
+            ]))
+            ->assertOk();
+
+        $invitationResponse = $this->getJson("/api/vendor-portal/rfq-invitations/{$token}")
+            ->assertOk()
+            ->assertJsonPath('data.invitation.id', (string) $invitation->id);
+        $this->assertVendorPortalNormalizationFieldsAreMissing($invitationResponse);
+
+        $quotationResponse = $this->getJson("/api/vendor-portal/rfq-invitations/{$token}/quotation")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'received');
+        $this->assertVendorPortalNormalizationFieldsAreMissing($quotationResponse);
+
+        $versionResponse = $this->postJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/versions", $this->validRevisionPayload([
+            'quotationReference' => 'NW-Q-2026-041-R2',
+            'totalAmount' => '11990.00',
+            'vendorNotes' => 'Revised from vendor portal.',
+        ]))
+            ->assertCreated()
+            ->assertJsonPath('data.versionNumber', 2)
+            ->assertJsonPath('data.source', 'vendor_portal');
+        $this->assertVendorPortalNormalizationFieldsAreMissing($versionResponse);
+
+        $versionsResponse = $this->getJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/versions")
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.versionNumber', 2)
+            ->assertJsonPath('data.1.versionNumber', 1);
+        $this->assertVendorPortalNormalizationFieldsAreMissing($versionsResponse, 'data.0');
+        $this->assertVendorPortalNormalizationFieldsAreMissing($versionsResponse, 'data.1');
+    }
+
     public function test_root_normalization_rejects_cross_tenant_write(): void
     {
         [$tenantA] = $this->tenantUser('buyer');
@@ -685,6 +730,20 @@ class QuotationNormalizationApiTest extends TestCase
         return array_replace_recursive($this->validManualEntryPayload(), [
             'attachmentIds' => [],
         ], $overrides);
+    }
+
+    private function assertVendorPortalNormalizationFieldsAreMissing(\Illuminate\Testing\TestResponse $response, string $basePath = 'data'): void
+    {
+        foreach ([
+            'normalization',
+            'normalizationStatus',
+            'normalizationIssues',
+            'normalizedFields',
+            'corrections',
+            'approvalStatus',
+        ] as $field) {
+            $response->assertJsonMissingPath("{$basePath}.{$field}");
+        }
     }
 
     private function issuePortalToken(Tenant $tenant, User $buyer, RfqInvitation $invitation): string
