@@ -588,15 +588,16 @@ export function createQuotationComparisonNoteFixture(
   if (!record) {
     throw new Error(`Missing quotation comparison fixture: ${rfqId}`);
   }
+  validateNoteTargets(record.comparison, payload);
 
   const note = baseNote({
     id: `comparison-note-${record.nextNoteSequence}`,
     rfqId,
     section: payload.section,
-    note: payload.note,
-    quotationId: payload.quotationId,
-    vendorId: payload.vendorId,
-    rfqLineItemId: payload.rfqLineItemId,
+    note: payload.note.trim(),
+    quotationId: payload.quotationId ?? undefined,
+    vendorId: payload.vendorId ?? undefined,
+    rfqLineItemId: payload.rfqLineItemId ?? undefined,
     createdAt: noteTime,
     updatedAt: noteTime,
   });
@@ -615,6 +616,7 @@ export function updateQuotationComparisonNoteFixture(
   if (!record) {
     throw new Error(`Missing quotation comparison fixture: ${rfqId}`);
   }
+  validateNoteTargets(record.comparison, payload);
 
   const note = record.comparison.notes.find((entry) => entry.id === noteId);
   if (!note) {
@@ -622,13 +624,34 @@ export function updateQuotationComparisonNoteFixture(
   }
 
   note.section = payload.section;
-  note.note = payload.note;
+  note.note = payload.note.trim();
   note.quotationId = payload.quotationId ?? undefined;
   note.vendorId = payload.vendorId ?? undefined;
   note.rfqLineItemId = payload.rfqLineItemId ?? undefined;
   note.updatedAt = noteTime;
   refreshComparison(record.comparison);
   return structuredClone(note);
+}
+
+function validateNoteTargets(comparison: QuotationComparison, payload: SaveQuotationComparisonNoteRequest) {
+  const quotation = payload.quotationId
+    ? comparison.vendors.find((vendor) => vendor.quotationId === payload.quotationId)
+    : null;
+  if (payload.quotationId && !quotation) {
+    throw new Error(`Missing quotation target fixture: ${payload.quotationId}`);
+  }
+
+  if (payload.vendorId && !comparison.vendors.some((vendor) => vendor.vendorId === payload.vendorId)) {
+    throw new Error(`Missing vendor target fixture: ${payload.vendorId}`);
+  }
+
+  if (quotation && payload.vendorId && quotation.vendorId !== payload.vendorId) {
+    throw new Error("Comparison note vendor must match the selected quotation.");
+  }
+
+  if (payload.rfqLineItemId && !comparison.lineRows.some((line) => line.rfqLineItemId === payload.rfqLineItemId)) {
+    throw new Error(`Missing RFQ line target fixture: ${payload.rfqLineItemId}`);
+  }
 }
 
 export function deleteQuotationComparisonNoteFixture(rfqId: string, noteId: string): void {

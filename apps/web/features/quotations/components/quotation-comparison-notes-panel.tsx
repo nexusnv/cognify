@@ -7,8 +7,9 @@ import type {
   QuotationComparisonNoteGroup,
   SaveQuotationComparisonNoteRequest,
 } from "@cognify/api-client/schemas";
+import { SaveQuotationComparisonNoteRequestSection } from "@cognify/api-client/schemas";
 
-const noteSections = ["overall", "price", "delivery", "terms", "compliance", "risk"] as const;
+const noteSections = Object.values(SaveQuotationComparisonNoteRequestSection);
 
 export function QuotationComparisonNotesPanel({
   notes,
@@ -30,25 +31,32 @@ export function QuotationComparisonNotesPanel({
   const [section, setSection] = useState<SaveQuotationComparisonNoteRequest["section"]>("overall");
   const [noteText, setNoteText] = useState("");
   const [editingNote, setEditingNote] = useState<QuotationComparisonNote | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function submitNote() {
     const payload = { section, note: noteText.trim() };
     if (!payload.note) return;
 
-    if (editingNote) {
-      await onUpdate(editingNote.id, {
-        ...payload,
-        quotationId: editingNote.quotationId,
-        vendorId: editingNote.vendorId,
-        rfqLineItemId: editingNote.rfqLineItemId,
-      });
-      setEditingNote(null);
-    } else {
-      await onCreate(payload);
-    }
+    setError(null);
 
-    setSection("overall");
-    setNoteText("");
+    try {
+      if (editingNote) {
+        await onUpdate(editingNote.id, {
+          ...payload,
+          quotationId: editingNote.quotationId,
+          vendorId: editingNote.vendorId,
+          rfqLineItemId: editingNote.rfqLineItemId,
+        });
+        setEditingNote(null);
+      } else {
+        await onCreate(payload);
+      }
+
+      setSection(SaveQuotationComparisonNoteRequestSection.overall);
+      setNoteText("");
+    } catch (caught) {
+      setError(errorMessage(caught));
+    }
   }
 
   function startEditing(note: QuotationComparisonNote) {
@@ -100,14 +108,16 @@ export function QuotationComparisonNotesPanel({
                 variant="outline"
                 onClick={() => {
                   setEditingNote(null);
-                  setSection("overall");
+                  setSection(SaveQuotationComparisonNoteRequestSection.overall);
                   setNoteText("");
+                  setError(null);
                 }}
               >
                 Cancel edit
               </Button>
             ) : null}
           </div>
+          {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
         </div>
       )}
 
@@ -124,7 +134,16 @@ export function QuotationComparisonNotesPanel({
                   <Button type="button" size="sm" variant="outline" onClick={() => startEditing(note)}>
                     Edit note
                   </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => void onDelete(note.id)} disabled={isPending}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setError(null);
+                      onDelete(note.id).catch((caught) => setError(errorMessage(caught)));
+                    }}
+                    disabled={isPending}
+                  >
                     Delete note
                   </Button>
                 </div>
@@ -143,4 +162,13 @@ function labelSection(section: string) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function errorMessage(error: unknown): string {
+  if (typeof error === "object" && error !== null && "error" in error) {
+    const payload = (error as { error?: { message?: unknown } }).error;
+    if (typeof payload?.message === "string") return payload.message;
+  }
+
+  return error instanceof Error ? error.message : "Comparison note could not be saved.";
 }

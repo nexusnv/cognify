@@ -26,7 +26,7 @@ export function QuotationComparisonVendorSummary({
             </div>
             <dl className="mt-4 grid gap-2 text-sm">
               <SummaryItem label="Total" value={formatMoney(vendor.currency, vendor.totalAmount)} />
-              <SummaryItem label="Lead time" value={vendor.leadTimeDays ? `${vendor.leadTimeDays} days` : "Not available"} />
+              <SummaryItem label="Lead time" value={vendor.leadTimeDays != null ? `${vendor.leadTimeDays} days` : "Not available"} />
               <SummaryItem label="Payment" value={vendor.paymentTerms ?? "Not available"} />
               <SummaryItem label="Delivery" value={vendor.deliveryTerms ?? "Not available"} />
               <SummaryItem label="Notes" value={String(vendor.noteCount)} />

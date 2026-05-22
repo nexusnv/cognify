@@ -19,6 +19,7 @@ use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -291,6 +292,40 @@ class QuotationComparisonApiTest extends TestCase
         $this->assertSame($originalRfqStatus, $rfq->refresh()->status);
         $this->assertSame($originalQuotationStatus, $quotation->refresh()->status);
         $this->assertSame($originalNormalizationStatus->value, $normalization->refresh()->status->value);
+    }
+
+    public function test_buyer_can_login_access_comparison_and_logout_revokes_access(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $buyer->forceFill([
+            'email' => 'quotation-comparison-session@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+        $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'quotation-comparison-session@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/comparison")
+            ->assertOk()
+            ->assertJsonPath('data.rfq.id', (string) $rfq->id);
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/comparison")
+            ->assertUnauthorized();
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self

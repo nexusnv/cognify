@@ -21,7 +21,7 @@ class QuotationComparisonNoteResource extends JsonResource
             'rfqId' => (string) $this->rfq_id,
             'quotationId' => $this->quotation_id !== null ? (string) $this->quotation_id : null,
             'vendorId' => $this->vendor_id !== null ? (string) $this->vendor_id : null,
-            'rfqLineItemId' => $this->rfq_line_item_id,
+            'rfqLineItemId' => $this->rfq_line_item_id !== null ? (string) $this->rfq_line_item_id : null,
             'section' => $this->section?->value ?? $this->section,
             'note' => $this->note,
             'createdByUserId' => (string) $this->created_by_user_id,

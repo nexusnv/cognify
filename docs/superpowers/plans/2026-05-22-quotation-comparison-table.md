@@ -149,6 +149,13 @@ class QuotationComparisonApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Route middleware proof must use real session auth first:
+    // - POST /api/auth/login with Origin and buyer credentials.
+    // - Access GET /api/rfqs/{rfq}/comparison and note mutation routes with X-Tenant-Id.
+    // - POST /api/auth/logout, call Auth::forgetGuards(), then assert the same routes return 401.
+    // - Include negative unauthenticated/session-failure assertions.
+    // Use actingAsTenant only for supplemental role, tenant-boundary, and edge-case setup where route login is impractical.
+
     public function test_buyer_can_view_rfq_comparison_from_approved_normalizations(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -284,6 +291,7 @@ class QuotationComparisonApiTest extends TestCase
 
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
+        // Supplemental helper only. Do not use this as the sole proof that route auth/session middleware works.
         Sanctum::actingAs($user);
         app(\App\Tenancy\CurrentTenant::class)->set($tenant, $user);
 

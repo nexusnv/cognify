@@ -49,6 +49,28 @@ describe("Quotation comparison workspace", () => {
     expect(screen.getAllByText("EUR 11900.00").length).toBeGreaterThan(0);
   });
 
+  it("renders zero-day lead time as an available value", async () => {
+    server.use(
+      http.get("/api/rfqs/rfq-zero-lead-time/comparison", () => {
+        const comparison = getQuotationComparisonFixture("rfq-ready");
+        return HttpResponse.json({
+          data: {
+            ...comparison,
+            rfq: { ...comparison?.rfq, id: "rfq-zero-lead-time" },
+            vendors: comparison?.vendors.map((vendor, index) => (
+              index === 0 ? { ...vendor, leadTimeDays: "0" } : vendor
+            )),
+          },
+        });
+      }),
+    );
+
+    render(<QuotationComparisonWorkspace rfqId="rfq-zero-lead-time" />, { wrapper: TestProviders });
+
+    expect(await screen.findByRole("heading", { name: "Laptop refresh program" })).toBeInTheDocument();
+    expect(screen.getByText("0 days")).toBeInTheDocument();
+  });
+
   it("creates edits and deletes non-decision comparison notes", async () => {
     const user = userEvent.setup();
     render(<QuotationComparisonWorkspace rfqId="rfq-ready" />, { wrapper: TestProviders });
@@ -79,6 +101,28 @@ describe("Quotation comparison workspace", () => {
     await waitFor(() => {
       expect(screen.queryByText("Updated delivery context.")).not.toBeInTheDocument();
     });
+  });
+
+  it("keeps note form state and surfaces an error when note creation fails", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post("/api/rfqs/rfq-ready/comparison/notes", () =>
+        HttpResponse.json(
+          { error: { code: "validation_failed", message: "A comparison note is required." } },
+          { status: 422 },
+        ),
+      ),
+    );
+    render(<QuotationComparisonWorkspace rfqId="rfq-ready" />, { wrapper: TestProviders });
+
+    await screen.findByRole("heading", { name: "Laptop refresh program" });
+    fireEvent.change(screen.getByLabelText("Comparison note"), {
+      target: { value: "Keep this text on failed submit." },
+    });
+    await user.click(screen.getByRole("button", { name: "Add note" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("A comparison note is required.");
+    expect(screen.getByLabelText("Comparison note")).toHaveValue("Keep this text on failed submit.");
   });
 
   it("hides note controls when canManageQuotationComparisonNotes is false", async () => {

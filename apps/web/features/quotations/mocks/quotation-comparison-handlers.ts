@@ -22,6 +22,20 @@ function validationFailed(message: string) {
   return HttpResponse.json({ error: { code: "validation_failed", message } }, { status: 422 });
 }
 
+async function readNotePayload(request: Request): Promise<SaveQuotationComparisonNoteRequest | null> {
+  try {
+    const payload = (await request.json()) as Partial<SaveQuotationComparisonNoteRequest> | null;
+    if (typeof payload?.note !== "string" || payload.note.trim() === "") return null;
+
+    return {
+      ...payload,
+      note: payload.note.trim(),
+    } as SaveQuotationComparisonNoteRequest;
+  } catch {
+    return null;
+  }
+}
+
 export const quotationComparisonHandlers = [
   http.get("/api/rfqs/:rfq/comparison", ({ params }) => {
     const comparison = getQuotationComparisonFixture(String(params.rfq));
@@ -31,8 +45,8 @@ export const quotationComparisonHandlers = [
   }),
 
   http.post("/api/rfqs/:rfq/comparison/notes", async ({ params, request }) => {
-    const payload = (await request.json()) as SaveQuotationComparisonNoteRequest;
-    if (!payload.note.trim()) {
+    const payload = await readNotePayload(request);
+    if (!payload) {
       return validationFailed("A comparison note is required.");
     }
 
@@ -46,8 +60,8 @@ export const quotationComparisonHandlers = [
   }),
 
   http.patch("/api/rfqs/:rfq/comparison/notes/:note", async ({ params, request }) => {
-    const payload = (await request.json()) as SaveQuotationComparisonNoteRequest;
-    if (!payload.note.trim()) {
+    const payload = await readNotePayload(request);
+    if (!payload) {
       return validationFailed("A comparison note is required.");
     }
 

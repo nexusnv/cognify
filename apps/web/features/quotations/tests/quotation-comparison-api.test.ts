@@ -76,4 +76,20 @@ describe("quotation comparison api", () => {
     const comparison = await showQuotationComparison("rfq-ready");
     expect(comparison.notes.some((note) => note.id === created.id)).toBe(false);
   });
+
+  it("returns validation payloads for malformed note requests", async () => {
+    const response = await fetch("/api/rfqs/rfq-ready/comparison/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ section: "overall", note: null }),
+    });
+
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "validation_failed",
+        message: "A comparison note is required.",
+      },
+    });
+    expect(response.status).toBe(422);
+  });
 });
