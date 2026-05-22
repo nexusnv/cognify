@@ -1016,7 +1016,7 @@ git commit -m "feat: add quotation normalization review workspace"
 - Modify: `apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx`
 - Modify: `apps/api/tests/Feature/QuotationNormalizationApiTest.php`
 
-- [ ] **Step 1: Add backend redaction assertions**
+- [x] **Step 1: Add backend redaction assertions**
 
 Extend API tests so vendor portal quotation and version endpoints do not include:
 
@@ -1029,11 +1029,11 @@ Extend API tests so vendor portal quotation and version endpoints do not include
 
 Use `assertJsonMissingPath()` for each path that might be accidentally added.
 
-- [ ] **Step 2: Add web vendor portal regression test**
+- [x] **Step 2: Add web vendor portal regression test**
 
 In `vendor-rfq-portal.test.tsx`, assert that rendered portal pages do not show normalization status, buyer correction text, approval status, or issue labels.
 
-- [ ] **Step 3: Run vendor portal tests**
+- [x] **Step 3: Run vendor portal tests**
 
 ```bash
 php artisan test --filter=QuotationNormalizationApiTest
@@ -1042,7 +1042,7 @@ pnpm --filter @cognify/web test -- vendor-rfq-portal
 
 Expected: pass without changing vendor-facing UX.
 
-- [ ] **Step 4: Commit redaction coverage**
+- [x] **Step 4: Commit redaction coverage**
 
 ```bash
 git add apps/api/tests/Feature/QuotationNormalizationApiTest.php apps/web/features/vendor-portal/tests/vendor-rfq-portal.test.tsx
