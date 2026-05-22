@@ -899,7 +899,7 @@ git commit -m "feat: add quotation normalization client hooks"
 - Modify: `apps/web/components/shell/shell-route-config.test.tsx`
 - Modify: `apps/web/features/sourcing/components/quotation-version-history.tsx`
 
-- [ ] **Step 1: Create MSW fixtures and handlers**
+- [x] **Step 1: Create MSW fixtures and handlers**
 
 Fixtures must be OpenAPI-shaped and include:
 
@@ -910,7 +910,7 @@ Fixtures must be OpenAPI-shaped and include:
 
 Handlers must support list, show, corrections, line mappings, approve, approve-with-warnings, revision, and retry state transitions.
 
-- [ ] **Step 2: Write queue tests first**
+- [x] **Step 2: Write queue tests first**
 
 `quotation-normalization-queue.test.tsx` must assert:
 
@@ -920,7 +920,7 @@ Handlers must support list, show, corrections, line mappings, approve, approve-w
 - Failed rows expose a retry command when permissions allow.
 - Permission denial shows an error state instead of rendering queue actions.
 
-- [ ] **Step 3: Write workspace tests first**
+- [x] **Step 3: Write workspace tests first**
 
 `quotation-normalization-workspace.test.tsx` must assert:
 
@@ -933,7 +933,7 @@ Handlers must support list, show, corrections, line mappings, approve, approve-w
 - Approve-with-warnings requires an acknowledgement note.
 - Approved records are read-only.
 
-- [ ] **Step 4: Build local status/issue badges**
+- [x] **Step 4: Build local status/issue badges**
 
 Use `packages/ui` primitives only for neutral UI; keep Cognify labels in feature code. Suggested status labels:
 
@@ -950,11 +950,11 @@ const STATUS_LABELS = {
 } as const;
 ```
 
-- [ ] **Step 5: Build queue workflow**
+- [x] **Step 5: Build queue workflow**
 
 Use a dense table/list suitable for operational buyer work. Include empty, loading, error, and populated states. Do not make a marketing-style page or explanatory landing page.
 
-- [ ] **Step 6: Build workspace workflow**
+- [x] **Step 6: Build workspace workflow**
 
 Use `RecordWorkspaceLayout`. Sections:
 
@@ -967,7 +967,7 @@ Use `RecordWorkspaceLayout`. Sections:
 
 Use shadcn/Radix controls already available through the local UI layer for dialogs/popovers/selects/tabs. Do not create reusable business-specific primitives in `packages/ui`.
 
-- [ ] **Step 7: Wire shell route and breadcrumbs**
+- [x] **Step 7: Wire shell route and breadcrumbs**
 
 Set `Quotations` to:
 
@@ -983,11 +983,11 @@ Set `Quotations` to:
 
 Add breadcrumbs for `/quotations/normalizations` and `/quotations/normalizations/{id}`.
 
-- [ ] **Step 8: Link from quotation version history**
+- [x] **Step 8: Link from quotation version history**
 
 Where buyer RFQ version history has a current version with active normalization metadata, link to the review workspace. If the existing version API does not expose normalization summary yet, add a small backend/resource field in Task 4 before implementing this link.
 
-- [ ] **Step 9: Run targeted web tests**
+- [x] **Step 9: Run targeted web tests**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-normalization
@@ -998,7 +998,7 @@ pnpm --filter @cognify/web typecheck
 
 Expected: all targeted tests pass.
 
-- [ ] **Step 10: Commit UI work**
+- [x] **Step 10: Commit UI work**
 
 ```bash
 git add apps/web/app apps/web/features/quotations apps/web/components/shell apps/web/features/sourcing/components/quotation-version-history.tsx
