@@ -62,6 +62,8 @@ import type {
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
+  QuotationComparisonNoteResponse,
+  QuotationComparisonResponse,
   QuotationNormalizationResponse,
   QuotationNormalizationSummaryListResponse,
   QuotationNullableResponse,
@@ -86,6 +88,7 @@ import type {
   RfqResponse,
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
+  SaveQuotationComparisonNoteRequest,
   SaveQuotationManualEntryRequest,
   SaveQuotationManualEntryRequestForVendor,
   SaveQuotationNormalizationCorrectionsRequest,
@@ -4990,6 +4993,246 @@ export const updateRfqDraft = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(rfqUpdateRequest),
   });
+};
+
+/**
+ * @summary Show RFQ quotation comparison
+ */
+export type showQuotationComparisonResponse200 = {
+  data: QuotationComparisonResponse;
+  status: 200;
+};
+
+export type showQuotationComparisonResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showQuotationComparisonResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showQuotationComparisonResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showQuotationComparisonResponseSuccess = showQuotationComparisonResponse200 & {
+  headers: Headers;
+};
+export type showQuotationComparisonResponseError = (
+  | showQuotationComparisonResponse401
+  | showQuotationComparisonResponse403
+  | showQuotationComparisonResponse404
+) & {
+  headers: Headers;
+};
+
+export type showQuotationComparisonResponse =
+  | showQuotationComparisonResponseSuccess
+  | showQuotationComparisonResponseError;
+
+export const getShowQuotationComparisonUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/comparison`;
+};
+
+export const showQuotationComparison = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<showQuotationComparisonResponse> => {
+  return cognifyFetch<showQuotationComparisonResponse>(getShowQuotationComparisonUrl(rfq), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create RFQ quotation comparison note
+ */
+export type createQuotationComparisonNoteResponse201 = {
+  data: QuotationComparisonNoteResponse;
+  status: 201;
+};
+
+export type createQuotationComparisonNoteResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createQuotationComparisonNoteResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createQuotationComparisonNoteResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createQuotationComparisonNoteResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createQuotationComparisonNoteResponseSuccess =
+  createQuotationComparisonNoteResponse201 & {
+    headers: Headers;
+  };
+export type createQuotationComparisonNoteResponseError = (
+  | createQuotationComparisonNoteResponse401
+  | createQuotationComparisonNoteResponse403
+  | createQuotationComparisonNoteResponse404
+  | createQuotationComparisonNoteResponse422
+) & {
+  headers: Headers;
+};
+
+export type createQuotationComparisonNoteResponse =
+  | createQuotationComparisonNoteResponseSuccess
+  | createQuotationComparisonNoteResponseError;
+
+export const getCreateQuotationComparisonNoteUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/comparison/notes`;
+};
+
+export const createQuotationComparisonNote = async (
+  rfq: string,
+  saveQuotationComparisonNoteRequest: SaveQuotationComparisonNoteRequest,
+  options?: RequestInit,
+): Promise<createQuotationComparisonNoteResponse> => {
+  return cognifyFetch<createQuotationComparisonNoteResponse>(
+    getCreateQuotationComparisonNoteUrl(rfq),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationComparisonNoteRequest),
+    },
+  );
+};
+
+/**
+ * @summary Update RFQ quotation comparison note
+ */
+export type updateQuotationComparisonNoteResponse200 = {
+  data: QuotationComparisonNoteResponse;
+  status: 200;
+};
+
+export type updateQuotationComparisonNoteResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateQuotationComparisonNoteResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateQuotationComparisonNoteResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateQuotationComparisonNoteResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateQuotationComparisonNoteResponseSuccess =
+  updateQuotationComparisonNoteResponse200 & {
+    headers: Headers;
+  };
+export type updateQuotationComparisonNoteResponseError = (
+  | updateQuotationComparisonNoteResponse401
+  | updateQuotationComparisonNoteResponse403
+  | updateQuotationComparisonNoteResponse404
+  | updateQuotationComparisonNoteResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateQuotationComparisonNoteResponse =
+  | updateQuotationComparisonNoteResponseSuccess
+  | updateQuotationComparisonNoteResponseError;
+
+export const getUpdateQuotationComparisonNoteUrl = (rfq: string, note: string) => {
+  return `/api/rfqs/${rfq}/comparison/notes/${note}`;
+};
+
+export const updateQuotationComparisonNote = async (
+  rfq: string,
+  note: string,
+  saveQuotationComparisonNoteRequest: SaveQuotationComparisonNoteRequest,
+  options?: RequestInit,
+): Promise<updateQuotationComparisonNoteResponse> => {
+  return cognifyFetch<updateQuotationComparisonNoteResponse>(
+    getUpdateQuotationComparisonNoteUrl(rfq, note),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationComparisonNoteRequest),
+    },
+  );
+};
+
+/**
+ * @summary Delete RFQ quotation comparison note
+ */
+export type deleteQuotationComparisonNoteResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type deleteQuotationComparisonNoteResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type deleteQuotationComparisonNoteResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type deleteQuotationComparisonNoteResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type deleteQuotationComparisonNoteResponseSuccess =
+  deleteQuotationComparisonNoteResponse204 & {
+    headers: Headers;
+  };
+export type deleteQuotationComparisonNoteResponseError = (
+  | deleteQuotationComparisonNoteResponse401
+  | deleteQuotationComparisonNoteResponse403
+  | deleteQuotationComparisonNoteResponse404
+) & {
+  headers: Headers;
+};
+
+export type deleteQuotationComparisonNoteResponse =
+  | deleteQuotationComparisonNoteResponseSuccess
+  | deleteQuotationComparisonNoteResponseError;
+
+export const getDeleteQuotationComparisonNoteUrl = (rfq: string, note: string) => {
+  return `/api/rfqs/${rfq}/comparison/notes/${note}`;
+};
+
+export const deleteQuotationComparisonNote = async (
+  rfq: string,
+  note: string,
+  options?: RequestInit,
+): Promise<deleteQuotationComparisonNoteResponse> => {
+  return cognifyFetch<deleteQuotationComparisonNoteResponse>(
+    getDeleteQuotationComparisonNoteUrl(rfq, note),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
 };
 
 /**

@@ -84,6 +84,9 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
           <p className="text-sm text-muted-foreground">
             Edit the draft below, then save. Cancellation is terminal.
           </p>
+          <Link className="text-sm font-medium underline-offset-4 hover:underline" href={`/quotations/comparisons/${rfq.id}`}>
+            Open comparison
+          </Link>
           {rfq.status === "cancelled" ? (
             <p className="text-sm text-red-700">This RFQ is read-only because it was cancelled.</p>
           ) : null}

@@ -3973,6 +3973,199 @@
         }
       }
     },
+    "/api/rfqs/{rfq}/comparison": {
+      "get": {
+        "operationId": "showQuotationComparison",
+        "summary": "Show RFQ quotation comparison",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ quotation comparison",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationComparisonResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/rfqs/{rfq}/comparison/notes": {
+      "post": {
+        "operationId": "createQuotationComparisonNote",
+        "summary": "Create RFQ quotation comparison note",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationComparisonNoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created quotation comparison note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationComparisonNoteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/rfqs/{rfq}/comparison/notes/{note}": {
+      "patch": {
+        "operationId": "updateQuotationComparisonNote",
+        "summary": "Update RFQ quotation comparison note",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "note",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuotationComparisonNoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated quotation comparison note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationComparisonNoteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteQuotationComparisonNote",
+        "summary": "Delete RFQ quotation comparison note",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "note",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted quotation comparison note"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/rfqs/{rfq}/cancel": {
       "post": {
         "operationId": "cancelRfqDraft",
@@ -11225,6 +11418,660 @@
             "items": {
               "$ref": "#/components/schemas/QuotationNormalizationSummary"
             }
+          }
+        }
+      },
+      "QuotationComparisonResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuotationComparison"
+          }
+        }
+      },
+      "QuotationComparison": {
+        "type": "object",
+        "required": [
+          "rfq",
+          "readiness",
+          "vendors",
+          "lineRows",
+          "commercialTerms",
+          "notes",
+          "noteGroups",
+          "permissions"
+        ],
+        "properties": {
+          "rfq": {
+            "$ref": "#/components/schemas/QuotationComparisonRfq"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/QuotationComparisonReadiness"
+          },
+          "vendors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonVendor"
+            }
+          },
+          "lineRows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonLineRow"
+            }
+          },
+          "commercialTerms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonCommercialTerm"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonNote"
+            }
+          },
+          "noteGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonNoteGroup"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/QuotationComparisonPermissions"
+          }
+        }
+      },
+      "QuotationComparisonRfq": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "responseDueAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "scopeSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requisition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RfqRequisitionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RfqProjectSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "QuotationComparisonReadiness": {
+        "type": "object",
+        "required": [
+          "responseCount",
+          "approvedNormalizationCount",
+          "pendingNormalizationCount",
+          "missingResponseCount",
+          "mixedCurrency"
+        ],
+        "properties": {
+          "responseCount": {
+            "type": "integer"
+          },
+          "approvedNormalizationCount": {
+            "type": "integer"
+          },
+          "pendingNormalizationCount": {
+            "type": "integer"
+          },
+          "missingResponseCount": {
+            "type": "integer"
+          },
+          "mixedCurrency": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotationComparisonVendor": {
+        "type": "object",
+        "required": [
+          "vendorId",
+          "vendorName",
+          "quotationId",
+          "quotationNumber",
+          "readiness",
+          "issueCounts",
+          "noteCount",
+          "links"
+        ],
+        "properties": {
+          "vendorId": {
+            "type": "string"
+          },
+          "vendorName": {
+            "type": "string"
+          },
+          "quotationId": {
+            "type": "string"
+          },
+          "quotationNumber": {
+            "type": "string"
+          },
+          "quotationVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "normalizationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "normalizationRevision": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "readiness": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "normalization_required"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "warrantyTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complianceNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issueCounts": {
+            "$ref": "#/components/schemas/QuotationComparisonIssueCounts"
+          },
+          "noteCount": {
+            "type": "integer"
+          },
+          "links": {
+            "$ref": "#/components/schemas/QuotationComparisonLinks"
+          }
+        }
+      },
+      "QuotationComparisonIssueCounts": {
+        "type": "object",
+        "required": [
+          "blocking",
+          "warning",
+          "info"
+        ],
+        "properties": {
+          "blocking": {
+            "type": "integer"
+          },
+          "warning": {
+            "type": "integer"
+          },
+          "info": {
+            "type": "integer"
+          }
+        }
+      },
+      "QuotationComparisonLinks": {
+        "type": "object",
+        "required": [
+          "quotationVersion",
+          "normalization"
+        ],
+        "properties": {
+          "quotationVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "normalization": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationComparisonLineRow": {
+        "type": "object",
+        "required": [
+          "rfqLineItemId",
+          "vendorCells"
+        ],
+        "properties": {
+          "rfqLineItemId": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "number",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorCells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonVendorCell"
+            }
+          }
+        }
+      },
+      "QuotationComparisonVendorCell": {
+        "type": "object",
+        "required": [
+          "vendorId",
+          "readiness"
+        ],
+        "properties": {
+          "vendorId": {
+            "type": "string"
+          },
+          "readiness": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "normalization_required",
+              "unmapped"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pricingMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "per_line",
+              "bundle",
+              "included",
+              "unknown",
+              null
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineTotal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bundleTotalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyerNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QuotationComparisonCommercialTerm": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "vendorValues"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "vendorValues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonCommercialTermValue"
+            }
+          }
+        }
+      },
+      "QuotationComparisonCommercialTermValue": {
+        "type": "object",
+        "required": [
+          "vendorId",
+          "value",
+          "readiness"
+        ],
+        "properties": {
+          "vendorId": {
+            "type": "string"
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "readiness": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "normalization_required"
+            ]
+          }
+        }
+      },
+      "QuotationComparisonNote": {
+        "type": "object",
+        "required": [
+          "id",
+          "rfqId",
+          "section",
+          "note",
+          "createdByUserId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rfqId": {
+            "type": "string"
+          },
+          "quotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "section": {
+            "type": "string",
+            "enum": [
+              "overall",
+              "price",
+              "delivery",
+              "terms",
+              "compliance",
+              "risk"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "createdByUserId": {
+            "type": "string"
+          },
+          "updatedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "QuotationComparisonNoteGroup": {
+        "type": "object",
+        "required": [
+          "section",
+          "notes"
+        ],
+        "properties": {
+          "section": {
+            "type": "string",
+            "enum": [
+              "overall",
+              "price",
+              "delivery",
+              "terms",
+              "compliance",
+              "risk"
+            ]
+          },
+          "quotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationComparisonNote"
+            }
+          }
+        }
+      },
+      "QuotationComparisonNoteResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuotationComparisonNote"
+          }
+        }
+      },
+      "QuotationComparisonPermissions": {
+        "type": "object",
+        "required": [
+          "canViewComparison",
+          "canManageQuotationComparisonNotes"
+        ],
+        "properties": {
+          "canViewComparison": {
+            "type": "boolean"
+          },
+          "canManageQuotationComparisonNotes": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SaveQuotationComparisonNoteRequest": {
+        "type": "object",
+        "required": [
+          "section",
+          "note"
+        ],
+        "properties": {
+          "section": {
+            "type": "string",
+            "enum": [
+              "overall",
+              "price",
+              "delivery",
+              "terms",
+              "compliance",
+              "risk"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "quotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqLineItemId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
