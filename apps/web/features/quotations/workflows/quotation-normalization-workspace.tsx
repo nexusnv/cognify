@@ -28,7 +28,7 @@ export function QuotationNormalizationWorkspace({
   const normalization = normalizationQuery.data;
   const versionQuery = useQuotationVersion(
     normalization?.source.quotationId ?? null,
-    normalization?.source.versionNumber ?? null,
+    normalization?.source.quotationVersionId ? Number(normalization.source.quotationVersionId) : null,
   );
   const saveCorrections = useSaveQuotationNormalizationCorrections(normalizationId);
   const saveMappings = useSaveQuotationNormalizationLineMappings(normalizationId);

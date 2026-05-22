@@ -25,6 +25,8 @@ class QuotationNormalizationResource extends JsonResource
             'status' => $normalization->status?->value ?? $normalization->status,
             'normalizationRevision' => $normalization->normalization_revision,
             'algorithmVersion' => $normalization->algorithm_version,
+            'updatedAt' => $normalization->updated_at?->toISOString(),
+            'lastJobError' => $normalization->last_job_error,
             'source' => $this->sourceSummary($normalization),
             'summary' => $this->summary($normalization),
             'fields' => $normalization->relationLoaded('fields')

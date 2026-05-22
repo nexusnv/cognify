@@ -288,6 +288,26 @@ class QuotationNormalizationApiTest extends TestCase
             ->assertJsonPath('data.2.permissions.canApproveWithWarnings', false);
     }
 
+    public function test_queue_summary_exposes_updated_at_and_last_job_error_fields(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $failedNormalization = $this->failedNormalizationForTenant($tenant);
+        $failedNormalization->forceFill([
+            'updated_at' => now()->setDate(2026, 5, 22)->setTime(7, 5, 0),
+            'last_job_error' => 'Initial normalization failed.',
+        ])->save();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/quotation-normalizations?'.http_build_query([
+                'status' => [QuotationNormalizationStatus::Failed->value],
+            ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', (string) $failedNormalization->id)
+            ->assertJsonPath('data.0.updatedAt', $failedNormalization->fresh()->updated_at?->toJSON())
+            ->assertJsonPath('data.0.lastJobError', 'Initial normalization failed.');
+    }
+
     public function test_corrections_reject_foreign_issue_id_with_conflict_not_500(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');

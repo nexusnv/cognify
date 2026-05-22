@@ -46,8 +46,173 @@ describe("Quotation normalization queue", () => {
     expect(link).toHaveAttribute("href", "/quotations/normalizations/norm-needs-review");
   });
 
+  it("renders updatedAt and lastJobError from the list API contract", async () => {
+    server.use(
+      http.get("/api/quotation-normalizations", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "norm-failed-contract",
+              status: "failed",
+              normalizationRevision: 1,
+              algorithmVersion: "rules-v1",
+              updatedAt: "2026-05-22T07:05:00.000Z",
+              lastJobError: "Normalizer could not parse the uploaded workbook.",
+              source: {
+                quotationId: "quotation-2",
+                quotationVersionId: "103",
+                quotationNumber: "QT-2026-099",
+                versionNumber: 3,
+                rfqId: "rfq-1",
+                rfqNumber: "RFQ-2026-000001",
+                vendorId: "vendor-2",
+                vendorName: "Atlas Workplace Supply",
+              },
+              summary: {
+                blockingIssueCount: 0,
+                warningIssueCount: 0,
+                infoIssueCount: 0,
+              },
+              permissions: {
+                canEdit: false,
+                canApprove: false,
+                canApproveWithWarnings: false,
+                canRetry: true,
+                canCreateRevision: false,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    render(<QuotationNormalizationQueuePage />, { wrapper: TestProviders });
+
+    const failedRow = await screen.findByRole("row", { name: /Atlas Workplace Supply/i });
+    expect(within(failedRow).getByText(/May 22, 2026/)).toBeInTheDocument();
+    expect(within(failedRow).getByText("Normalizer could not parse the uploaded workbook.")).toBeInTheDocument();
+  });
+
   it("lets a reviewer retry failed rows when the row permissions allow it", async () => {
     const user = userEvent.setup();
+    let retriedVersionId: string | null = null;
+    let retried = false;
+
+    server.use(
+      http.get("/api/quotation-normalizations", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "norm-needs-review",
+              status: "needs_review",
+              normalizationRevision: 1,
+              algorithmVersion: "rules-v1",
+              updatedAt: "2026-05-22T09:15:00.000Z",
+              lastJobError: null,
+              source: {
+                quotationId: "quotation-1",
+                quotationVersionId: "101",
+                quotationNumber: "QT-2026-041",
+                versionNumber: 2,
+                rfqId: "rfq-1",
+                rfqNumber: "RFQ-2026-000001",
+                vendorId: "vendor-1",
+                vendorName: "Northwind Traders",
+              },
+              summary: {
+                blockingIssueCount: 2,
+                warningIssueCount: 1,
+                infoIssueCount: 1,
+              },
+              permissions: {
+                canEdit: true,
+                canApprove: false,
+                canApproveWithWarnings: false,
+                canRetry: false,
+                canCreateRevision: false,
+              },
+            },
+            {
+              id: "norm-failed",
+              status: retried ? "processing" : "failed",
+              normalizationRevision: retried ? 2 : 1,
+              algorithmVersion: "rules-v1",
+              updatedAt: retried ? "2026-05-22T10:10:00.000Z" : "2026-05-22T07:05:00.000Z",
+              lastJobError: retried ? null : "Normalizer could not parse the uploaded workbook.",
+              source: {
+                quotationId: "quotation-2",
+                quotationVersionId: "103",
+                quotationNumber: "QT-2026-099",
+                versionNumber: 3,
+                rfqId: "rfq-1",
+                rfqNumber: "RFQ-2026-000001",
+                vendorId: "vendor-2",
+                vendorName: "Atlas Workplace Supply",
+              },
+              summary: {
+                blockingIssueCount: 0,
+                warningIssueCount: 0,
+                infoIssueCount: 0,
+              },
+              permissions: {
+                canEdit: false,
+                canApprove: false,
+                canApproveWithWarnings: false,
+                canRetry: !retried,
+                canCreateRevision: false,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    server.use(
+      http.post("/api/quotation-versions/:version/normalization/retry", ({ params }) => {
+        retriedVersionId = String(params.version);
+        if (retriedVersionId !== "103") {
+          return HttpResponse.json(
+            { error: { code: "not_found", message: "Quotation version not found." } },
+            { status: 404 },
+          );
+        }
+
+        retried = true;
+
+        return HttpResponse.json({
+          data: {
+            id: "norm-failed",
+            status: "processing",
+            normalizationRevision: 2,
+            algorithmVersion: "rules-v1",
+            updatedAt: "2026-05-22T10:10:00.000Z",
+            lastJobError: null,
+            source: {
+              quotationId: "quotation-2",
+              quotationVersionId: "103",
+              quotationNumber: "QT-2026-099",
+              versionNumber: 3,
+              rfqId: "rfq-1",
+              rfqNumber: "RFQ-2026-000001",
+              vendorId: "vendor-2",
+              vendorName: "Atlas Workplace Supply",
+            },
+            summary: {
+              blockingIssueCount: 0,
+              warningIssueCount: 0,
+              infoIssueCount: 0,
+            },
+            permissions: {
+              canEdit: false,
+              canApprove: false,
+              canApproveWithWarnings: false,
+              canRetry: false,
+              canCreateRevision: false,
+            },
+          },
+        });
+      }),
+    );
 
     render(<QuotationNormalizationQueuePage />, { wrapper: TestProviders });
 
@@ -55,6 +220,7 @@ describe("Quotation normalization queue", () => {
     await user.click(within(failedRow).getByRole("button", { name: "Retry normalization" }));
 
     await waitFor(() => {
+      expect(retriedVersionId).toBe("103");
       expect(screen.getAllByText("processing").length).toBeGreaterThan(0);
     });
   });

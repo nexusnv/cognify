@@ -13,11 +13,11 @@ import {
 export function QuotationNormalizationQueueTable({
   rows,
   onRetry,
-  retryingVersionNumber,
+  retryingVersionId,
 }: {
   rows: QuotationNormalizationSummary[];
   onRetry: (row: QuotationNormalizationSummary) => Promise<void>;
-  retryingVersionNumber: number | null;
+  retryingVersionId: string | null;
 }) {
   return (
     <div className="overflow-x-auto rounded-md border">
@@ -35,8 +35,10 @@ export function QuotationNormalizationQueueTable({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const updatedAt = getUpdatedAt(row as QuotationNormalizationSummary & QueueRowExtras);
-            const versionNumber = row.source.versionNumber ?? null;
+            const rowWithExtras = row as QuotationNormalizationSummary & QueueRowExtras;
+            const updatedAt = getUpdatedAt(rowWithExtras);
+            const versionId = row.source.quotationVersionId ?? null;
+            const lastJobError = row.status === "failed" ? rowWithExtras.lastJobError : null;
 
             return (
               <tr key={row.id} className="border-t align-top">
@@ -63,12 +65,12 @@ export function QuotationNormalizationQueueTable({
                     >
                       Open
                     </Link>
-                    {row.permissions.canRetry && versionNumber ? (
+                    {row.permissions.canRetry && versionId ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={retryingVersionNumber === versionNumber}
+                        disabled={retryingVersionId === versionId}
                         onClick={() => void onRetry(row)}
                       >
                         <RotateCw className="mr-1 h-4 w-4" aria-hidden="true" />
@@ -77,6 +79,7 @@ export function QuotationNormalizationQueueTable({
                     ) : null}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{formatQuotationNormalizationStatus(row.status)}</p>
+                  {lastJobError ? <p className="mt-1 text-xs text-red-700">{lastJobError}</p> : null}
                 </td>
               </tr>
             );

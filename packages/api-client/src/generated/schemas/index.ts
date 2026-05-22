@@ -359,6 +359,7 @@ export * from "./quotationNormalizationSourceVendorName";
 export * from "./quotationNormalizationSourceVersionNumber";
 export * from "./quotationNormalizationSummary";
 export * from "./quotationNormalizationSummaryCounts";
+export * from "./quotationNormalizationSummaryLastJobError";
 export * from "./quotationNormalizationSummaryListResponse";
 export * from "./quotationNormalizationSummaryStatus";
 export * from "./quotationNullableResponse";

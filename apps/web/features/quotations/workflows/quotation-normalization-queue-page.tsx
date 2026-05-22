@@ -12,12 +12,14 @@ import { QuotationNormalizationQueueTable } from "../tables/quotation-normalizat
 export function QuotationNormalizationQueuePage() {
   const queryClient = useQueryClient();
   const queueQuery = useQuotationNormalizations();
-  const [retryVersionNumber, setRetryVersionNumber] = useState<number | null>(null);
+  const [retryVersionId, setRetryVersionId] = useState<string | null>(null);
 
   async function handleRetry(row: QuotationNormalizationSummary) {
-    if (!row.source.versionNumber) return;
-    setRetryVersionNumber(row.source.versionNumber);
-    await retryQuotationVersionNormalization(row.source.versionNumber);
+    const versionId = row.source.quotationVersionId;
+    if (!versionId) return;
+
+    setRetryVersionId(versionId);
+    await retryQuotationVersionNormalization(Number(versionId));
     await queryClient.invalidateQueries({ queryKey: quotationNormalizationKeys.all() });
   }
 
@@ -72,7 +74,7 @@ export function QuotationNormalizationQueuePage() {
       {rows.length > 0 ? (
         <QuotationNormalizationQueueTable
           rows={rows}
-          retryingVersionNumber={retryVersionNumber}
+          retryingVersionId={retryVersionId}
           onRetry={handleRetry}
         />
       ) : (

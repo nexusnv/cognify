@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { resetQuotationNormalizationMockState } from "../mocks/quotation-normalization-handlers";
+import { server } from "@/tests/msw/server";
 import { QuotationNormalizationWorkspace } from "../workflows/quotation-normalization-workspace";
 
 describe("Quotation normalization workspace", () => {
@@ -49,12 +51,95 @@ describe("Quotation normalization workspace", () => {
 
   it("lets a buyer save a bundled line mapping from one quotation line to one RFQ line", async () => {
     const user = userEvent.setup();
+    let requestedVersionId: string | null = null;
+
+    server.use(
+      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+        requestedVersionId = String(params.versionId);
+
+        if (requestedVersionId !== "101") {
+          return HttpResponse.json(
+            { error: { code: "not_found", message: "Quotation version not found." } },
+            { status: 404 },
+          );
+        }
+
+        return HttpResponse.json({
+          data: {
+            id: "101",
+            quotationId: String(params.quotationId),
+            versionNumber: 2,
+            status: "received",
+            source: "buyer_upload",
+            submittedAt: "2026-05-22T09:15:00.000Z",
+            submittedByUser: {
+              id: "buyer-1",
+              name: "Priya Buyer",
+            },
+            submittedByVendorContact: null,
+            isCurrent: true,
+            supersededAt: null,
+            previousVersionId: null,
+            manualEntry: {
+              quotationReference: "QT-2026-041",
+              quotedAt: "2026-05-22",
+              validUntil: "2026-06-30",
+              currency: "USD",
+              subtotalAmount: "12470.00",
+              taxAmount: "0.00",
+              freightAmount: "0.00",
+              discountAmount: "0.00",
+              totalAmount: "12470.00",
+              paymentTerms: null,
+              deliveryTerms: "DDP",
+              leadTimeDays: 14,
+              warrantyTerms: "3 years",
+              exclusions: null,
+              complianceNotes: null,
+              buyerNotes: null,
+              vendorNotes: null,
+            },
+            lineItems: [
+              {
+                id: "quote-line-1",
+                rfqLineItemId: "rfq-line-1",
+                description: "Fetched line from quotation version route",
+                quantity: "10.0000",
+                unit: "each",
+                unitPrice: "1247.00",
+                subtotalAmount: "12470.00",
+                taxAmount: "0.00",
+                totalAmount: "12470.00",
+                leadTimeDays: 14,
+                manufacturer: "Lenovo",
+                modelNumber: "T16",
+                alternateOffered: false,
+                complianceStatus: "compliant",
+                notes: "Bundle includes freight and setup kits.",
+              },
+            ],
+            attachments: [],
+            attachmentCount: 0,
+            completeness: {
+              isComplete: true,
+              missingFields: [],
+              lineItemCount: 1,
+            },
+            permissions: {
+              canEdit: false,
+              canCreateRevision: true,
+            },
+          },
+        });
+      }),
+    );
 
     render(<QuotationNormalizationWorkspace normalizationId="norm-needs-review" />, {
       wrapper: TestProviders,
     });
 
     const lineMappings = await screen.findByTestId("normalization-line-mappings");
+    expect(requestedVersionId).toBe("101");
     await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");
@@ -66,7 +151,8 @@ describe("Quotation normalization workspace", () => {
     await user.click(within(lineMappings).getByRole("button", { name: "Save line mapping" }));
 
     await waitFor(() => {
-      expect(screen.getAllByText("Developer laptop bundle").length).toBeGreaterThan(1);
+      expect(requestedVersionId).toBe("101");
+      expect(screen.getByText("Bundle confirmed against vendor submission.")).toBeInTheDocument();
     });
   });
 

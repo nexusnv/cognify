@@ -12,15 +12,8 @@ export type ActiveNormalizationSummary = {
 };
 
 export type QuotationNormalizationFixture = QuotationNormalization & {
-  updatedAt: string;
-  lastJobError?: string | null;
   currentVersionLines: QuotationLineItem[];
   rfqLineItemIds: string[];
-};
-
-export type QuotationNormalizationSummaryFixture = QuotationNormalizationSummary & {
-  updatedAt: string;
-  lastJobError?: string | null;
 };
 
 const versionLines: QuotationLineItem[] = [
@@ -52,9 +45,10 @@ function baseNormalization(
     normalizationRevision: 1,
     algorithmVersion: "rules-v1",
     updatedAt: "2026-05-22T09:15:00.000Z",
+    lastJobError: null,
     source: {
       quotationId: "quotation-1",
-      quotationVersionId: "quotation-version-1",
+      quotationVersionId: "101",
       quotationNumber: "QT-2026-041",
       versionNumber: 2,
       rfqId: "rfq-1",
@@ -78,7 +72,7 @@ function baseNormalization(
         confidence: "0.42",
         source: "manual_entry",
         provenance: {
-          sourceQuotationVersionId: "quotation-version-1",
+          sourceQuotationVersionId: "101",
           sourceLabel: "Quotation currency",
         },
       },
@@ -92,7 +86,7 @@ function baseNormalization(
         confidence: "0.99",
         source: "manual_entry",
         provenance: {
-          sourceQuotationVersionId: "quotation-version-1",
+          sourceQuotationVersionId: "101",
           sourceLabel: "Quoted total",
         },
       },
@@ -206,7 +200,7 @@ export const quotationNormalizationFixtures: QuotationNormalizationFixture[] = [
         confidence: "1.00",
         source: "manual_entry",
         provenance: {
-          sourceQuotationVersionId: "quotation-version-2",
+          sourceQuotationVersionId: "102",
           sourceLabel: "Quotation currency",
         },
       },
@@ -264,7 +258,7 @@ export const quotationNormalizationFixtures: QuotationNormalizationFixture[] = [
     updatedAt: "2026-05-22T07:05:00.000Z",
     source: {
       quotationId: "quotation-2",
-      quotationVersionId: "quotation-version-3",
+      quotationVersionId: "103",
       quotationNumber: "QT-2026-099",
       versionNumber: 3,
       rfqId: "rfq-1",
@@ -352,7 +346,7 @@ export const quotationNormalizationFixtures: QuotationNormalizationFixture[] = [
 
 export function buildQuotationNormalizationSummaries(
   fixtures: QuotationNormalizationFixture[],
-): QuotationNormalizationSummaryFixture[] {
+): QuotationNormalizationSummary[] {
   return fixtures.map((fixture) => ({
     id: fixture.id,
     status: fixture.status,

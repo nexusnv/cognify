@@ -11109,6 +11109,8 @@
           "status",
           "normalizationRevision",
           "algorithmVersion",
+          "updatedAt",
+          "lastJobError",
           "source",
           "summary",
           "permissions"
@@ -11136,6 +11138,16 @@
           },
           "algorithmVersion": {
             "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastJobError": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "source": {
             "$ref": "#/components/schemas/QuotationNormalizationSource"

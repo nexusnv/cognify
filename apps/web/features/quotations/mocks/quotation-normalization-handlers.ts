@@ -128,11 +128,11 @@ export const quotationNormalizationHandlers = [
 
   http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
     const quotationId = String(params.quotationId);
-    const versionNumber = Number(params.versionId);
+    const versionId = String(params.versionId);
     const normalization = normalizations.find(
       (fixture) =>
         fixture.source.quotationId === quotationId &&
-        Number(fixture.source.versionNumber) === versionNumber,
+        fixture.source.quotationVersionId === versionId,
     );
     if (!normalization) return notFound();
 
@@ -140,7 +140,7 @@ export const quotationNormalizationHandlers = [
       data: {
         id: normalization.source.quotationVersionId,
         quotationId,
-        versionNumber,
+        versionNumber: normalization.source.versionNumber ?? null,
         status: "received",
         source: "buyer_upload",
         submittedAt: normalization.updatedAt,
@@ -361,7 +361,7 @@ export const quotationNormalizationHandlers = [
   http.post("/api/quotation-versions/:version/normalization/retry", async ({ params }) => {
     await delay(50);
     const normalization = normalizations.find(
-      (fixture) => String(fixture.source.versionNumber) === String(params.version) && fixture.status === "failed",
+      (fixture) => fixture.source.quotationVersionId === String(params.version) && fixture.status === "failed",
     );
     if (!normalization) return notFound();
 

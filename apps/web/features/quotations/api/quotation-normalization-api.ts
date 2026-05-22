@@ -122,10 +122,10 @@ export async function createQuotationNormalizationRevision(
 }
 
 export async function retryQuotationVersionNormalization(
-  version: number,
+  versionId: number,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<QuotationNormalization> {
-  const response = await retryEndpoint(version, withActiveTenantHeader(tenantId)).catch(throwResponseData);
+  const response = await retryEndpoint(versionId, withActiveTenantHeader(tenantId)).catch(throwResponseData);
   if (response.status !== 200) throw response.data;
 
   return response.data.data;

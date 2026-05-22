@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { QuotationNormalizationSummaryStatus } from "./quotationNormalizationSummaryStatus";
+import type { QuotationNormalizationSummaryLastJobError } from "./quotationNormalizationSummaryLastJobError";
 import type { QuotationNormalizationSource } from "./quotationNormalizationSource";
 import type { QuotationNormalizationSummaryCounts } from "./quotationNormalizationSummaryCounts";
 import type { QuotationNormalizationPermissions } from "./quotationNormalizationPermissions";
@@ -15,6 +16,8 @@ export interface QuotationNormalizationSummary {
   /** @minimum 1 */
   normalizationRevision: number;
   algorithmVersion: string;
+  updatedAt: string;
+  lastJobError: QuotationNormalizationSummaryLastJobError;
   source: QuotationNormalizationSource;
   summary: QuotationNormalizationSummaryCounts;
   permissions: QuotationNormalizationPermissions;

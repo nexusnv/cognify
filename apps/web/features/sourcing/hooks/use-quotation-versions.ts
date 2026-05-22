@@ -17,9 +17,9 @@ export const quotationVersionKeys = {
     [...quotationVersionKeys.byQuotation(quotationId, tenantId), "list"] as const,
   detail: (
     quotationId: string,
-    versionNumber: number,
+    versionId: number,
     tenantId: string | null = getStoredActiveTenantId(),
-  ) => [...quotationVersionKeys.byQuotation(quotationId, tenantId), "detail", versionNumber] as const,
+  ) => [...quotationVersionKeys.byQuotation(quotationId, tenantId), "detail", versionId] as const,
 };
 
 export function useQuotationVersions(quotationId: string | null | undefined) {
@@ -35,14 +35,14 @@ export function useQuotationVersions(quotationId: string | null | undefined) {
 
 export function useQuotationVersion(
   quotationId: string | null | undefined,
-  versionNumber: number | null | undefined,
+  versionId: number | null | undefined,
 ) {
   const tenantId = getStoredActiveTenantId();
 
   return useQuery({
-    queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionNumber ?? -1, tenantId),
-    queryFn: () => showQuotationVersion(quotationId as string, versionNumber as number, tenantId),
-    enabled: Boolean(quotationId && versionNumber !== null && versionNumber !== undefined),
+    queryKey: quotationVersionKeys.detail(quotationId ?? "no-quotation", versionId ?? -1, tenantId),
+    queryFn: () => showQuotationVersion(quotationId as string, versionId as number, tenantId),
+    enabled: Boolean(quotationId && versionId !== null && versionId !== undefined),
     retry: false,
   });
 }
