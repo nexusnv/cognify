@@ -116,7 +116,7 @@ Expected generated schemas:
 
 - Create: `apps/api/tests/Feature/QuotationComparisonApiTest.php`
 
-- [ ] **Step 1: Write failing feature tests**
+- [x] **Step 1: Write failing feature tests**
 
 Create `apps/api/tests/Feature/QuotationComparisonApiTest.php` with focused tests before production code exists. Reuse helper patterns from `QuotationNormalizationApiTest`.
 
@@ -422,7 +422,7 @@ class QuotationComparisonApiTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run:
 
@@ -432,7 +432,7 @@ php artisan test --filter=QuotationComparisonApiTest
 
 Expected: fails because comparison routes, model, actions, and resources do not exist.
 
-- [ ] **Step 3: Commit failing tests**
+- [x] **Step 3: Commit failing tests**
 
 ```bash
 git add apps/api/tests/Feature/QuotationComparisonApiTest.php
@@ -452,7 +452,7 @@ git commit -m "test: cover quotation comparison API boundaries"
 - Modify: `apps/api/Domains/Quotation/Models/Rfq.php`
 - Modify: `apps/api/Domains/Quotation/Models/Quotation.php`
 
-- [ ] **Step 1: Create note section enum**
+- [x] **Step 1: Create note section enum**
 
 Create `apps/api/Domains/Quotation/States/QuotationComparisonNoteSection.php`:
 
@@ -480,7 +480,7 @@ enum QuotationComparisonNoteSection: string
 }
 ```
 
-- [ ] **Step 2: Create migration**
+- [x] **Step 2: Create migration**
 
 Create `apps/api/database/migrations/2026_05_22_000000_create_quotation_comparison_notes_table.php`:
 
@@ -523,7 +523,7 @@ return new class extends Migration {
 };
 ```
 
-- [ ] **Step 3: Create model with tenant invariants**
+- [x] **Step 3: Create model with tenant invariants**
 
 Create `apps/api/Domains/Quotation/Models/QuotationComparisonNote.php`:
 
@@ -637,7 +637,7 @@ class QuotationComparisonNote extends Model
 }
 ```
 
-- [ ] **Step 4: Add relationships**
+- [x] **Step 4: Add relationships**
 
 Modify `apps/api/Domains/Quotation/Models/Rfq.php`:
 
@@ -663,7 +663,7 @@ public function comparisonNotes(): HasMany
 }
 ```
 
-- [ ] **Step 5: Add policy**
+- [x] **Step 5: Add policy**
 
 Create `apps/api/Domains/Quotation/Policies/QuotationComparisonNotePolicy.php`:
 
@@ -697,7 +697,7 @@ class QuotationComparisonNotePolicy
 }
 ```
 
-- [ ] **Step 6: Run migration and test command**
+- [x] **Step 6: Run migration and test command**
 
 Run:
 
@@ -707,7 +707,7 @@ php artisan test --filter=QuotationComparisonApiTest
 
 Expected: still fails because routes/actions/resources are not implemented, but migration/model errors are gone.
 
-- [ ] **Step 7: Commit persistence layer**
+- [x] **Step 7: Commit persistence layer**
 
 ```bash
 git add apps/api/database/migrations/2026_05_22_000000_create_quotation_comparison_notes_table.php apps/api/Domains/Quotation/States/QuotationComparisonNoteSection.php apps/api/Domains/Quotation/Models/QuotationComparisonNote.php apps/api/Domains/Quotation/Policies/QuotationComparisonNotePolicy.php apps/api/Domains/Quotation/Models/Rfq.php apps/api/Domains/Quotation/Models/Quotation.php
@@ -730,7 +730,7 @@ git commit -m "feat: add quotation comparison notes model"
 - Create: `apps/api/Domains/Quotation/Http/Controllers/QuotationComparisonController.php`
 - Modify: `apps/api/routes/api.php`
 
-- [ ] **Step 1: Create request validation**
+- [x] **Step 1: Create request validation**
 
 Create `apps/api/Domains/Quotation/Http/Requests/SaveQuotationComparisonNoteRequest.php`:
 
@@ -763,7 +763,7 @@ class SaveQuotationComparisonNoteRequest extends FormRequest
 }
 ```
 
-- [ ] **Step 2: Create note resource**
+- [x] **Step 2: Create note resource**
 
 Create `apps/api/Domains/Quotation/Http/Resources/QuotationComparisonNoteResource.php`:
 
@@ -798,7 +798,7 @@ class QuotationComparisonNoteResource extends JsonResource
 }
 ```
 
-- [ ] **Step 3: Create read-model builder**
+- [x] **Step 3: Create read-model builder**
 
 Create `apps/api/Domains/Quotation/Actions/BuildQuotationComparison.php`:
 
@@ -1019,7 +1019,7 @@ class BuildQuotationComparison
 }
 ```
 
-- [ ] **Step 4: Create note actions with audit**
+- [x] **Step 4: Create note actions with audit**
 
 Create `CreateQuotationComparisonNote`, `UpdateQuotationComparisonNote`, and `DeleteQuotationComparisonNote` actions. Use this shape:
 
@@ -1068,7 +1068,7 @@ class CreateQuotationComparisonNote
 
 For update, capture `before` and `after` in audit metadata. For delete, set `deleted_by_user_id`, save, then soft delete and audit `quotation_comparison.note_deleted`.
 
-- [ ] **Step 5: Create response resource**
+- [x] **Step 5: Create response resource**
 
 Create `apps/api/Domains/Quotation/Http/Resources/QuotationComparisonResource.php`:
 
@@ -1089,7 +1089,7 @@ class QuotationComparisonResource extends JsonResource
 }
 ```
 
-- [ ] **Step 6: Create controller**
+- [x] **Step 6: Create controller**
 
 Create `apps/api/Domains/Quotation/Http/Controllers/QuotationComparisonController.php`:
 
@@ -1179,7 +1179,7 @@ class QuotationComparisonController extends Controller
 }
 ```
 
-- [ ] **Step 7: Register routes**
+- [x] **Step 7: Register routes**
 
 Modify `apps/api/routes/api.php` imports:
 
@@ -1196,7 +1196,7 @@ Route::patch('/rfqs/{rfq}/comparison/notes/{note}', [QuotationComparisonControll
 Route::delete('/rfqs/{rfq}/comparison/notes/{note}', [QuotationComparisonController::class, 'deleteNote']);
 ```
 
-- [ ] **Step 8: Run API tests**
+- [x] **Step 8: Run API tests**
 
 Run:
 
@@ -1206,7 +1206,7 @@ php artisan test --filter=QuotationComparisonApiTest
 
 Expected: tests pass except any OpenAPI contract assertions that are not added yet.
 
-- [ ] **Step 9: Commit API behavior**
+- [x] **Step 9: Commit API behavior**
 
 ```bash
 git add apps/api/Domains/Quotation/Actions/BuildQuotationComparison.php apps/api/Domains/Quotation/Actions/CreateQuotationComparisonNote.php apps/api/Domains/Quotation/Actions/UpdateQuotationComparisonNote.php apps/api/Domains/Quotation/Actions/DeleteQuotationComparisonNote.php apps/api/Domains/Quotation/Http/Requests/SaveQuotationComparisonNoteRequest.php apps/api/Domains/Quotation/Http/Resources/QuotationComparisonNoteResource.php apps/api/Domains/Quotation/Http/Resources/QuotationComparisonResource.php apps/api/Domains/Quotation/Http/Controllers/QuotationComparisonController.php apps/api/routes/api.php apps/api/tests/Feature/QuotationComparisonApiTest.php
@@ -1222,7 +1222,7 @@ git commit -m "feat: add quotation comparison API"
 - Modify: `apps/api/storage/openapi/openapi.json`
 - Modify generated: `packages/api-client/src/generated/**`
 
-- [ ] **Step 1: Add OpenAPI paths**
+- [x] **Step 1: Add OpenAPI paths**
 
 Add path entries to `apps/api/storage/openapi/openapi.json` for:
 
@@ -1246,7 +1246,7 @@ Add path entries to `apps/api/storage/openapi/openapi.json` for:
 
 Add note mutation paths with operation IDs `createQuotationComparisonNote`, `updateQuotationComparisonNote`, and `deleteQuotationComparisonNote`.
 
-- [ ] **Step 2: Add OpenAPI schemas**
+- [x] **Step 2: Add OpenAPI schemas**
 
 Add schemas for `QuotationComparisonResponse`, `QuotationComparison`, `QuotationComparisonRfq`, `QuotationComparisonReadiness`, `QuotationComparisonVendor`, `QuotationComparisonLineRow`, `QuotationComparisonVendorCell`, `QuotationComparisonCommercialTerm`, `QuotationComparisonNote`, `QuotationComparisonPermissions`, and `SaveQuotationComparisonNoteRequest`.
 
@@ -1278,7 +1278,7 @@ Use this note request shape:
 }
 ```
 
-- [ ] **Step 3: Generate client**
+- [x] **Step 3: Generate client**
 
 Run:
 
@@ -1289,7 +1289,7 @@ pnpm check:api-contract
 
 Expected: generated endpoint and schema files are created under `packages/api-client/src/generated`.
 
-- [ ] **Step 4: Inspect generated names**
+- [x] **Step 4: Inspect generated names**
 
 Run:
 
@@ -1299,7 +1299,7 @@ rg -n "showQuotationComparison|createQuotationComparisonNote|QuotationComparison
 
 Expected: generated endpoint and schema exports exist.
 
-- [ ] **Step 5: Commit contract**
+- [x] **Step 5: Commit contract**
 
 ```bash
 git add apps/api/storage/openapi/openapi.json packages/api-client/src/generated packages/api-client/src/index.ts
@@ -1319,7 +1319,7 @@ git commit -m "feat: add quotation comparison contract"
 - Create: `apps/web/features/quotations/mocks/quotation-comparison-handlers.ts`
 - Create: `apps/web/features/quotations/tests/quotation-comparison-api.test.ts`
 
-- [ ] **Step 1: Write API wrapper tests**
+- [x] **Step 1: Write API wrapper tests**
 
 Create `apps/web/features/quotations/tests/quotation-comparison-api.test.ts`:
 
@@ -1383,7 +1383,7 @@ describe("quotation comparison api", () => {
 });
 ```
 
-- [ ] **Step 2: Run failing web API tests**
+- [x] **Step 2: Run failing web API tests**
 
 Run:
 
@@ -1393,7 +1393,7 @@ pnpm --filter @cognify/web test -- quotation-comparison-api
 
 Expected: fails because wrapper module does not exist.
 
-- [ ] **Step 3: Create API wrapper**
+- [x] **Step 3: Create API wrapper**
 
 Create `apps/web/features/quotations/api/quotation-comparison-api.ts`:
 
@@ -1468,7 +1468,7 @@ export async function deleteQuotationComparisonNote(
 }
 ```
 
-- [ ] **Step 4: Create hooks**
+- [x] **Step 4: Create hooks**
 
 Create `apps/web/features/quotations/hooks/use-quotation-comparison.ts`:
 
@@ -1502,7 +1502,7 @@ export function useQuotationComparison(rfqId: string | null | undefined) {
 
 Create `apps/web/features/quotations/hooks/use-quotation-comparison-notes.ts` with three mutations that call note wrappers and invalidate `quotationComparisonKeys.detail(rfqId, tenantId)`.
 
-- [ ] **Step 5: Create MSW fixtures and handlers**
+- [x] **Step 5: Create MSW fixtures and handlers**
 
 Create `apps/web/features/quotations/mocks/quotation-comparison-fixtures.ts` exporting at least:
 
@@ -1512,7 +1512,7 @@ Create `apps/web/features/quotations/mocks/quotation-comparison-fixtures.ts` exp
 
 Create `apps/web/features/quotations/mocks/quotation-comparison-handlers.ts` with handlers for GET/POST/PATCH/DELETE and an exported `resetQuotationComparisonMockState()`.
 
-- [ ] **Step 6: Run web API tests**
+- [x] **Step 6: Run web API tests**
 
 Run:
 
@@ -1522,7 +1522,7 @@ pnpm --filter @cognify/web test -- quotation-comparison-api
 
 Expected: pass.
 
-- [ ] **Step 7: Commit web API layer**
+- [x] **Step 7: Commit web API layer**
 
 ```bash
 git add apps/web/features/quotations/api/quotation-comparison-api.ts apps/web/features/quotations/hooks/use-quotation-comparison.ts apps/web/features/quotations/hooks/use-quotation-comparison-notes.ts apps/web/features/quotations/mocks/quotation-comparison-fixtures.ts apps/web/features/quotations/mocks/quotation-comparison-handlers.ts apps/web/features/quotations/tests/quotation-comparison-api.test.ts
@@ -1544,7 +1544,7 @@ git commit -m "feat: add quotation comparison web API hooks"
 - Create: `apps/web/features/quotations/components/quotation-comparison-notes-panel.tsx`
 - Create: `apps/web/features/quotations/tests/quotation-comparison-workspace.test.tsx`
 
-- [ ] **Step 1: Write failing workspace tests**
+- [x] **Step 1: Write failing workspace tests**
 
 Create tests covering:
 
@@ -1558,7 +1558,7 @@ it("hides note controls when canManageComparisonNotes is false", async () => {})
 
 Use MSW fixtures from Task 5 and assert text such as `Comparison notes are annotations only`, `Normalization required`, `Mixed currencies`, `Risk scoring not configured`, and `Bundle total`.
 
-- [ ] **Step 2: Run failing workspace tests**
+- [x] **Step 2: Run failing workspace tests**
 
 Run:
 
@@ -1568,7 +1568,7 @@ pnpm --filter @cognify/web test -- quotation-comparison-workspace
 
 Expected: fails because route and components do not exist.
 
-- [ ] **Step 3: Create route**
+- [x] **Step 3: Create route**
 
 Create `apps/web/app/(workspace)/quotations/comparisons/[rfqId]/page.tsx`:
 
@@ -1586,7 +1586,7 @@ export default async function QuotationComparisonPage({
 }
 ```
 
-- [ ] **Step 4: Create workspace shell**
+- [x] **Step 4: Create workspace shell**
 
 Create `quotation-comparison-workspace.tsx` using `RecordWorkspaceLayout`, `useQuotationComparison`, `getApiErrorCode`, and the component files. It must show explicit forbidden/not-found messages and no decision language.
 
@@ -1598,7 +1598,7 @@ Include this static copy in the notes sidebar:
 </p>
 ```
 
-- [ ] **Step 5: Create comparison components**
+- [x] **Step 5: Create comparison components**
 
 Create components with focused responsibilities:
 
@@ -1608,7 +1608,7 @@ Create components with focused responsibilities:
 - `QuotationCommercialTermsTable`: commercial terms rows by vendor.
 - `QuotationComparisonNotesPanel`: controlled form for section/note, edit/delete buttons, disabled state when permission is false.
 
-- [ ] **Step 6: Run workspace tests**
+- [x] **Step 6: Run workspace tests**
 
 Run:
 
@@ -1618,7 +1618,7 @@ pnpm --filter @cognify/web test -- quotation-comparison-workspace
 
 Expected: pass.
 
-- [ ] **Step 7: Commit workspace UI**
+- [x] **Step 7: Commit workspace UI**
 
 ```bash
 git add apps/web/app/\(workspace\)/quotations/comparisons/\[rfqId\]/page.tsx apps/web/features/quotations/workflows/quotation-comparison-workspace.tsx apps/web/features/quotations/components/quotation-comparison-readiness-banner.tsx apps/web/features/quotations/components/quotation-comparison-vendor-summary.tsx apps/web/features/quotations/components/quotation-comparison-table.tsx apps/web/features/quotations/components/quotation-commercial-terms-table.tsx apps/web/features/quotations/components/quotation-comparison-notes-panel.tsx apps/web/features/quotations/tests/quotation-comparison-workspace.test.tsx
@@ -1635,7 +1635,7 @@ git commit -m "feat: add quotation comparison workspace"
 - Modify: `apps/web/components/shell/shell-route-config.ts`
 - Modify: `apps/web/components/shell/shell-route-config.test.tsx`
 
-- [ ] **Step 1: Write/update shell tests**
+- [x] **Step 1: Write/update shell tests**
 
 Add expectations that `/quotations/comparisons/123` breadcrumbs are:
 
@@ -1648,7 +1648,7 @@ Add expectations that `/quotations/comparisons/123` breadcrumbs are:
 
 Assert the sourcing nav still points quotations to `/quotations/normalizations`; do not create a standalone comparison queue nav item.
 
-- [ ] **Step 2: Add breadcrumb pattern**
+- [x] **Step 2: Add breadcrumb pattern**
 
 Modify `shell-route-config.ts`:
 
@@ -1667,7 +1667,7 @@ if (QUOTATION_COMPARISON_WORKSPACE_PATH.test(normalizedPathname)) {
 }
 ```
 
-- [ ] **Step 3: Add RFQ workspace action link**
+- [x] **Step 3: Add RFQ workspace action link**
 
 Modify `apps/web/features/sourcing/workflows/rfq-draft-workspace.tsx` primary actions to include:
 
@@ -1682,7 +1682,7 @@ Modify `apps/web/features/sourcing/workflows/rfq-draft-workspace.tsx` primary ac
 
 Keep it a link only; do not add readiness queue logic.
 
-- [ ] **Step 4: Run shell and sourcing tests**
+- [x] **Step 4: Run shell and sourcing tests**
 
 Run:
 
@@ -1693,7 +1693,7 @@ pnpm --filter @cognify/web test -- rfq-draft-workflow
 
 Expected: pass.
 
-- [ ] **Step 5: Commit navigation**
+- [x] **Step 5: Commit navigation**
 
 ```bash
 git add apps/web/features/sourcing/workflows/rfq-draft-workspace.tsx apps/web/components/shell/shell-route-config.ts apps/web/components/shell/shell-route-config.test.tsx
@@ -1709,7 +1709,7 @@ git commit -m "feat: link RFQs to quotation comparison"
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: `docs/superpowers/plans/2026-05-22-quotation-comparison-table.md`
 
-- [ ] **Step 1: Update roadmap after implementation passes**
+- [x] **Step 1: Update roadmap after implementation passes**
 
 Set P1-30:
 
@@ -1719,7 +1719,7 @@ Set P1-30:
 
 Keep P1-31 through P1-34 as `Not Implemented`.
 
-- [ ] **Step 2: Run API verification**
+- [x] **Step 2: Run API verification**
 
 Run:
 
@@ -1732,7 +1732,7 @@ php artisan route:list --path=api/rfqs
 
 Expected: all tests pass; route list includes `/api/rfqs/{rfq}/comparison` and note mutation routes.
 
-- [ ] **Step 3: Run contract verification**
+- [x] **Step 3: Run contract verification**
 
 Run:
 
@@ -1744,7 +1744,7 @@ pnpm typecheck
 
 Expected: generated client is aligned with OpenAPI and TypeScript passes.
 
-- [ ] **Step 4: Run web verification**
+- [x] **Step 4: Run web verification**
 
 Run:
 
@@ -1759,7 +1759,7 @@ pnpm --filter @cognify/web lint
 
 Expected: all focused web checks pass.
 
-- [ ] **Step 5: Run final hygiene checks**
+- [x] **Step 5: Run final hygiene checks**
 
 Run:
 
@@ -1770,7 +1770,7 @@ rg -n "shortlist|winner|recommended|award decision|score vendor|ranking" apps/ap
 
 Expected: `git diff --check` has no output. The grep should only find non-goal/spec copy or explicit "not implemented/not scored" user-facing copy, not production decisioning behavior.
 
-- [ ] **Step 6: Commit closeout**
+- [x] **Step 6: Commit closeout**
 
 ```bash
 git add docs/01-product/feature-roadmap.md docs/superpowers/plans/2026-05-22-quotation-comparison-table.md
