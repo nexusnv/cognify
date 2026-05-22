@@ -66,6 +66,50 @@ class QuotationComparisonBuilderTest extends TestCase
         $this->assertSame('normalization_required', $comparison['vendors'][1]['readiness']);
     }
 
+    public function test_builder_keeps_using_latest_approved_normalization_when_new_revision_is_in_review(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
+        $buyer = User::factory()->create(['password' => Hash::make('secret123')]);
+        $tenant->users()->attach($buyer->id, ['role' => TenantRole::Buyer->value]);
+        $rfq = Rfq::query()->create([
+            'tenant_id' => $tenant->id,
+            'number' => 'RFQ-REVISION',
+            'title' => 'Revision-safe comparison',
+            'status' => RfqStatus::Draft->value,
+            'line_items' => [[
+                'id' => 'rfq-line-1',
+                'name' => 'Laptop',
+                'quantity' => '10',
+                'unit_of_measure' => 'each',
+            ]],
+        ]);
+
+        $this->quotation($tenant, $buyer, $rfq, 'Revision Vendor', 'USD', '12500.00', true);
+        $quotation = Quotation::query()->where('rfq_id', $rfq->id)->firstOrFail();
+        $version = QuotationVersion::query()->where('quotation_id', $quotation->id)->firstOrFail();
+        QuotationNormalization::query()
+            ->where('quotation_version_id', $version->id)
+            ->where('normalization_revision', 1)
+            ->update(['is_current_for_version' => false, 'superseded_at' => now()]);
+        QuotationNormalization::query()->create([
+            'tenant_id' => $tenant->id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $version->id,
+            'normalization_revision' => 2,
+            'status' => QuotationNormalizationStatus::NeedsReview->value,
+            'is_current_for_version' => true,
+            'algorithm_version' => 'deterministic-v1',
+        ]);
+
+        $comparison = app(BuildQuotationComparison::class)->handle($tenant, $rfq);
+
+        $this->assertSame(1, $comparison['readiness']['approvedNormalizationCount']);
+        $this->assertSame(0, $comparison['readiness']['pendingNormalizationCount']);
+        $this->assertSame('ready', $comparison['vendors'][0]['readiness']);
+        $this->assertSame('12500.00', $comparison['vendors'][0]['totalAmount']);
+        $this->assertSame(1, $comparison['vendors'][0]['normalizationRevision']);
+    }
+
     private function quotation(Tenant $tenant, User $buyer, Rfq $rfq, string $vendorName, string $currency, string $total, bool $approved): void
     {
         $vendor = Vendor::query()->create([

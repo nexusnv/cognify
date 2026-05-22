@@ -163,6 +163,20 @@ class QuotationComparisonApiTest extends TestCase
         ]);
     }
 
+    public function test_comparison_notes_must_have_non_empty_trimmed_content(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/comparison/notes", [
+                'section' => 'overall',
+                'note' => '   ',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.details.fields.note.0', 'A comparison note is required.');
+    }
+
     public function test_line_item_comparison_notes_are_counted_for_vendor_summaries(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');

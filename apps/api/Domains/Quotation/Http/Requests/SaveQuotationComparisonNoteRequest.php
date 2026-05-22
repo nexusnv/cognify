@@ -13,6 +13,13 @@ use Illuminate\Validation\Rule;
 
 class SaveQuotationComparisonNoteRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('note') && is_string($this->input('note'))) {
+            $this->merge(['note' => trim($this->input('note'))]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -29,6 +36,16 @@ class SaveQuotationComparisonNoteRequest extends FormRequest
             'quotationId' => ['nullable', 'integer'],
             'vendorId' => ['nullable', 'integer'],
             'rfqLineItemId' => ['nullable', 'string', 'max:120'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'note.required' => 'A comparison note is required.',
         ];
     }
 

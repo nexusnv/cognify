@@ -22,9 +22,15 @@ class BuildQuotationComparison
         $quotations = Quotation::query()
             ->with([
                 'vendor',
-                'currentVersion.currentNormalization.fields',
-                'currentVersion.currentNormalization.lineGroups.mappings',
-                'currentVersion.currentNormalization.issues',
+                'currentVersion.normalizations' => fn ($query) => $query
+                    ->whereIn('status', [
+                        QuotationNormalizationStatus::Approved->value,
+                        QuotationNormalizationStatus::ApprovedWithWarnings->value,
+                    ])
+                    ->orderByDesc('normalization_revision'),
+                'currentVersion.normalizations.fields',
+                'currentVersion.normalizations.lineGroups.mappings',
+                'currentVersion.normalizations.issues',
             ])
             ->where('tenant_id', $tenant->id)
             ->where('rfq_id', $rfq->id)
@@ -257,7 +263,21 @@ class BuildQuotationComparison
 
     private function approvedNormalization(Quotation $quotation): ?QuotationNormalization
     {
-        $normalization = $quotation->currentVersion?->currentNormalization;
+        $version = $quotation->currentVersion;
+        if ($version === null) {
+            return null;
+        }
+
+        $normalization = $version->relationLoaded('normalizations')
+            ? $version->normalizations->first()
+            : $version->normalizations()
+                ->with(['fields', 'lineGroups.mappings', 'issues'])
+                ->whereIn('status', [
+                    QuotationNormalizationStatus::Approved->value,
+                    QuotationNormalizationStatus::ApprovedWithWarnings->value,
+                ])
+                ->orderByDesc('normalization_revision')
+                ->first();
 
         if (in_array($normalization?->status, [
             QuotationNormalizationStatus::Approved,
