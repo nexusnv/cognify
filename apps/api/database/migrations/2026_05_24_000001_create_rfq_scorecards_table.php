@@ -32,7 +32,6 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['tenant_id', 'rfq_id']);
             $table->unique('rfq_id');
         });
 
