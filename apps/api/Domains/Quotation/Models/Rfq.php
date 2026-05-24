@@ -5,11 +5,13 @@ namespace Domains\Quotation\Models;
 use App\Tenancy\Tenant;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\RfqInvitation;
+use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -146,5 +148,13 @@ class Rfq extends Model
     public function comparisonNotes(): HasMany
     {
         return $this->hasMany(QuotationComparisonNote::class);
+    }
+
+    /**
+     * @return HasOne<RfqScorecard, $this>
+     */
+    public function scorecard(): HasOne
+    {
+        return $this->hasOne(RfqScorecard::class);
     }
 }
