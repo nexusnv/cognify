@@ -80,7 +80,9 @@ class UpdateQuotationScoringTemplate
      */
     private function replaceCriteriaForFutureScorecards(Tenant $tenant, QuotationScoringTemplate $template, array $criteria): void
     {
-        $existingCriteria = $template->criteria()
+        $existingCriteria = QuotationScoringTemplateCriterion::withTrashed()
+            ->where('tenant_id', $tenant->id)
+            ->where('template_id', $template->id)
             ->withCount('scorecardCriteria')
             ->lockForUpdate()
             ->get()
@@ -96,6 +98,7 @@ class UpdateQuotationScoringTemplate
             $existing = $existingCriteria->get($displayOrder);
             if ($existing !== null) {
                 $existing->forceFill($record)->save();
+                $existing->restore();
 
                 continue;
             }
@@ -105,7 +108,6 @@ class UpdateQuotationScoringTemplate
 
         $template->criteria()
             ->whereNotIn('display_order', $incomingOrders)
-            ->whereDoesntHave('scorecardCriteria')
             ->delete();
     }
 

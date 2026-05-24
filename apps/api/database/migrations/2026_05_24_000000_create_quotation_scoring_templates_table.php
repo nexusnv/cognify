@@ -38,6 +38,7 @@ return new class extends Migration
             $table->boolean('is_required')->default(true);
             $table->unsignedInteger('display_order');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique(['template_id', 'display_order']);
         });

@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Auth\TenantRole;
 use App\Models\User;
+use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
+use Domains\Quotation\Actions\UpdateQuotationScoringTemplate;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationScoringTemplate;
 use Domains\Quotation\Models\QuotationScoringTemplateCriterion;
@@ -167,6 +170,51 @@ class QuotationScoringModelTest extends TestCase
         $this->assertNull($entry->refresh()->scored_by_user_id);
     }
 
+    public function test_template_updates_soft_delete_removed_criteria_without_mutating_existing_scorecard_sources(): void
+    {
+        $graph = $this->scoringGraph('Snapshot');
+        app(CurrentTenant::class)->set($graph['tenant']);
+        $removedCriterion = QuotationScoringTemplateCriterion::query()->create([
+            'tenant_id' => $graph['tenant']->id,
+            'template_id' => $graph['template']->id,
+            'category' => QuotationScoringCriterionCategory::Delivery->value,
+            'label' => 'Delivery certainty',
+            'weight' => '50.00',
+            'max_score' => 10,
+            'is_required' => true,
+            'display_order' => 2,
+        ]);
+        $scorecardSource = RfqScorecardCriterion::query()->create([
+            'tenant_id' => $graph['tenant']->id,
+            'scorecard_id' => $graph['scorecard']->id,
+            'source_template_criterion_id' => $removedCriterion->id,
+            'category' => $removedCriterion->category->value,
+            'label' => $removedCriterion->label,
+            'weight' => $removedCriterion->weight,
+            'max_score' => $removedCriterion->max_score,
+            'is_required' => $removedCriterion->is_required,
+            'display_order' => $removedCriterion->display_order,
+        ]);
+
+        app(UpdateQuotationScoringTemplate::class)->handle($graph['tenant'], $graph['user'], $graph['template'], [
+            'name' => 'Snapshot template updated',
+            'description' => 'Removed delivery for future scorecards.',
+            'criteria' => [[
+                'category' => QuotationScoringCriterionCategory::Cost->value,
+                'label' => 'Commercial competitiveness updated',
+                'guidance' => 'Updated guidance.',
+                'weight' => '100.00',
+                'maxScore' => 10,
+                'required' => true,
+                'displayOrder' => 1,
+            ]],
+        ]);
+
+        $this->assertSame($removedCriterion->id, $scorecardSource->refresh()->source_template_criterion_id);
+        $this->assertCount(1, $graph['template']->refresh()->criteria);
+        $this->assertNotNull(QuotationScoringTemplateCriterion::withTrashed()->find($removedCriterion->id)?->deleted_at);
+    }
+
     private function assertInvalidArgument(callable $callback, string $message): void
     {
         try {
@@ -195,6 +243,7 @@ class QuotationScoringModelTest extends TestCase
     {
         $tenant = Tenant::query()->create(['name' => "{$prefix} tenant"]);
         $user = User::factory()->create();
+        $tenant->users()->attach($user->id, ['role' => TenantRole::Admin->value]);
 
         $rfq = Rfq::query()->create([
             'tenant_id' => $tenant->id,
