@@ -66,6 +66,13 @@ class CreateQuotationScoringTemplate
             ]);
         }
 
+        $displayOrders = collect($criteria)->pluck('displayOrder');
+        if ($displayOrders->count() !== $displayOrders->unique()->count()) {
+            throw ValidationException::withMessages([
+                'criteria' => ['Criterion display orders must be unique.'],
+            ]);
+        }
+
         return array_values($criteria);
     }
 

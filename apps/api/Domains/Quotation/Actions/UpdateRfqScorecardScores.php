@@ -201,6 +201,12 @@ class UpdateRfqScorecardScores
         }
 
         return array_map(function (array $entry): array {
+            if (! array_key_exists('quotationId', $entry) || $entry['quotationId'] === null || $entry['quotationId'] === '') {
+                throw ValidationException::withMessages([
+                    'entries' => ['Each score entry must reference a quotation response.'],
+                ]);
+            }
+
             return [
                 'criterionId' => (string) $entry['criterionId'],
                 'vendorId' => (string) $entry['vendorId'],

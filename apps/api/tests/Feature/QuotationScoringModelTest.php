@@ -6,7 +6,9 @@ use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
+use Domains\Quotation\Actions\CreateQuotationScoringTemplate;
 use Domains\Quotation\Actions\UpdateQuotationScoringTemplate;
+use Domains\Quotation\Actions\UpdateRfqScorecardScores;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationScoringTemplate;
 use Domains\Quotation\Models\QuotationScoringTemplateCriterion;
@@ -25,6 +27,7 @@ use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -291,6 +294,82 @@ class QuotationScoringModelTest extends TestCase
         $this->assertNotNull(QuotationScoringTemplateCriterion::withTrashed()->find($removedCriterion->id)?->deleted_at);
     }
 
+    public function test_template_actions_reject_duplicate_active_display_orders(): void
+    {
+        $graph = $this->scoringGraph('Duplicate orders');
+        app(CurrentTenant::class)->set($graph['tenant']);
+
+        $this->assertValidationMessage(
+            fn () => app(CreateQuotationScoringTemplate::class)->handle($graph['tenant'], $graph['user'], [
+                'name' => 'Duplicate display orders',
+                'description' => 'Invalid criterion ordering.',
+                'criteria' => [
+                    [
+                        'category' => QuotationScoringCriterionCategory::Cost->value,
+                        'label' => 'Commercial competitiveness',
+                        'weight' => '50.00',
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                    [
+                        'category' => QuotationScoringCriterionCategory::Delivery->value,
+                        'label' => 'Delivery certainty',
+                        'weight' => '50.00',
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                ],
+            ]),
+            'Criterion display orders must be unique.',
+        );
+
+        $this->assertValidationMessage(
+            fn () => app(UpdateQuotationScoringTemplate::class)->handle($graph['tenant'], $graph['user'], $graph['template'], [
+                'name' => 'Duplicate display orders on update',
+                'description' => 'Invalid criterion ordering.',
+                'criteria' => [
+                    [
+                        'category' => QuotationScoringCriterionCategory::Cost->value,
+                        'label' => 'Commercial competitiveness',
+                        'weight' => '50.00',
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                    [
+                        'category' => QuotationScoringCriterionCategory::Delivery->value,
+                        'label' => 'Delivery certainty',
+                        'weight' => '50.00',
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                ],
+            ]),
+            'Criterion display orders must be unique.',
+        );
+    }
+
+    public function test_score_updates_require_a_quotation_response(): void
+    {
+        $graph = $this->scoringGraph('Missing quotation');
+        app(CurrentTenant::class)->set($graph['tenant']);
+
+        $this->assertValidationMessage(
+            fn () => app(UpdateRfqScorecardScores::class)->handle($graph['tenant'], $graph['user'], $graph['rfq'], $graph['scorecard'], [
+                'entries' => [[
+                    'criterionId' => (string) $graph['scorecardCriterion']->id,
+                    'vendorId' => (string) $graph['vendor']->id,
+                    'score' => '8.00',
+                    'note' => 'Detached score must fail.',
+                ]],
+            ]),
+            'Each score entry must reference a quotation response.',
+        );
+    }
+
     private function assertInvalidArgument(callable $callback, string $message): void
     {
         try {
@@ -298,6 +377,19 @@ class QuotationScoringModelTest extends TestCase
             $this->fail('Expected InvalidArgumentException was not thrown.');
         } catch (InvalidArgumentException $exception) {
             $this->assertSame($message, $exception->getMessage());
+        }
+    }
+
+    private function assertValidationMessage(callable $callback, string $message): void
+    {
+        try {
+            $callback();
+            $this->fail('Expected ValidationException was not thrown.');
+        } catch (ValidationException $exception) {
+            $this->assertTrue(
+                collect($exception->errors())->flatten()->contains($message),
+                "Expected validation message [{$message}] was not present.",
+            );
         }
     }
 
