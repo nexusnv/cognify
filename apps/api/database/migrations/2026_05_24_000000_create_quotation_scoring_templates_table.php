@@ -40,7 +40,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['template_id', 'display_order']);
+            $table->index(['template_id', 'display_order']);
         });
     }
 

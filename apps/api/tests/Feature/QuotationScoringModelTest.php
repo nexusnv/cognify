@@ -215,6 +215,82 @@ class QuotationScoringModelTest extends TestCase
         $this->assertNotNull(QuotationScoringTemplateCriterion::withTrashed()->find($removedCriterion->id)?->deleted_at);
     }
 
+    public function test_reintroduced_template_criteria_do_not_reuse_soft_deleted_snapshot_sources(): void
+    {
+        $graph = $this->scoringGraph('Reintroduced');
+        app(CurrentTenant::class)->set($graph['tenant']);
+        $removedCriterion = QuotationScoringTemplateCriterion::query()->create([
+            'tenant_id' => $graph['tenant']->id,
+            'template_id' => $graph['template']->id,
+            'category' => QuotationScoringCriterionCategory::Delivery->value,
+            'label' => 'Delivery certainty',
+            'weight' => '50.00',
+            'max_score' => 10,
+            'is_required' => true,
+            'display_order' => 2,
+        ]);
+        $scorecardSource = RfqScorecardCriterion::query()->create([
+            'tenant_id' => $graph['tenant']->id,
+            'scorecard_id' => $graph['scorecard']->id,
+            'source_template_criterion_id' => $removedCriterion->id,
+            'category' => $removedCriterion->category->value,
+            'label' => $removedCriterion->label,
+            'weight' => $removedCriterion->weight,
+            'max_score' => $removedCriterion->max_score,
+            'is_required' => $removedCriterion->is_required,
+            'display_order' => $removedCriterion->display_order,
+        ]);
+
+        $action = app(UpdateQuotationScoringTemplate::class);
+        $action->handle($graph['tenant'], $graph['user'], $graph['template'], [
+            'name' => 'Reintroduced template without delivery',
+            'description' => 'Delivery removed.',
+            'criteria' => [[
+                'category' => QuotationScoringCriterionCategory::Cost->value,
+                'label' => 'Commercial competitiveness updated',
+                'guidance' => 'Updated guidance.',
+                'weight' => '100.00',
+                'maxScore' => 10,
+                'required' => true,
+                'displayOrder' => 1,
+            ]],
+        ]);
+        $action->handle($graph['tenant'], $graph['user'], $graph['template']->refresh(), [
+            'name' => 'Reintroduced template with new delivery',
+            'description' => 'Delivery reintroduced.',
+            'criteria' => [
+                [
+                    'category' => QuotationScoringCriterionCategory::Cost->value,
+                    'label' => 'Commercial competitiveness updated again',
+                    'guidance' => 'Updated guidance.',
+                    'weight' => '50.00',
+                    'maxScore' => 10,
+                    'required' => true,
+                    'displayOrder' => 1,
+                ],
+                [
+                    'category' => QuotationScoringCriterionCategory::Delivery->value,
+                    'label' => 'New delivery criterion',
+                    'guidance' => 'New delivery guidance.',
+                    'weight' => '50.00',
+                    'maxScore' => 10,
+                    'required' => true,
+                    'displayOrder' => 2,
+                ],
+            ],
+        ]);
+
+        $activeDelivery = $graph['template']->refresh()
+            ->criteria()
+            ->where('display_order', 2)
+            ->firstOrFail();
+
+        $this->assertSame($removedCriterion->id, $scorecardSource->refresh()->source_template_criterion_id);
+        $this->assertNotSame($removedCriterion->id, $activeDelivery->id);
+        $this->assertSame('New delivery criterion', $activeDelivery->label);
+        $this->assertNotNull(QuotationScoringTemplateCriterion::withTrashed()->find($removedCriterion->id)?->deleted_at);
+    }
+
     private function assertInvalidArgument(callable $callback, string $message): void
     {
         try {
