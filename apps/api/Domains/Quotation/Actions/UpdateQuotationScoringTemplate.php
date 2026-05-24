@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Quotation\Models\QuotationScoringTemplate;
+use Domains\Quotation\Models\QuotationScoringTemplateCriterion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -38,8 +39,7 @@ class UpdateQuotationScoringTemplate
                 'updated_by_user_id' => $actor->id,
             ])->save();
 
-            $lockedTemplate->criteria()->delete();
-            $lockedTemplate->criteria()->createMany($this->criteriaRecords($tenant, $criteria));
+            $this->replaceCriteriaForFutureScorecards($tenant, $lockedTemplate, $criteria);
 
             $lockedTemplate = $lockedTemplate->refresh()->load('criteria');
 
@@ -77,25 +77,56 @@ class UpdateQuotationScoringTemplate
 
     /**
      * @param array<int, array<string, mixed>> $criteria
-     * @return array<int, array<string, mixed>>
      */
-    private function criteriaRecords(Tenant $tenant, array $criteria): array
+    private function replaceCriteriaForFutureScorecards(Tenant $tenant, QuotationScoringTemplate $template, array $criteria): void
     {
-        return array_map(
-            static fn (array $criterion): array => [
-                'tenant_id' => $tenant->id,
-                'category' => $criterion['category'],
-                'label' => trim((string) $criterion['label']),
-                'guidance' => array_key_exists('guidance', $criterion) && $criterion['guidance'] !== null
-                    ? trim((string) $criterion['guidance'])
-                    : null,
-                'weight' => $criterion['weight'],
-                'max_score' => $criterion['maxScore'],
-                'is_required' => (bool) ($criterion['required'] ?? false),
-                'display_order' => $criterion['displayOrder'],
-            ],
-            $criteria,
-        );
+        $existingCriteria = $template->criteria()
+            ->withCount('scorecardCriteria')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('display_order');
+        $incomingOrders = [];
+
+        foreach ($criteria as $criterion) {
+            $record = $this->criteriaRecord($tenant, $criterion);
+            $displayOrder = (int) $record['display_order'];
+            $incomingOrders[] = $displayOrder;
+
+            /** @var QuotationScoringTemplateCriterion|null $existing */
+            $existing = $existingCriteria->get($displayOrder);
+            if ($existing !== null) {
+                $existing->forceFill($record)->save();
+
+                continue;
+            }
+
+            $template->criteria()->create($record);
+        }
+
+        $template->criteria()
+            ->whereNotIn('display_order', $incomingOrders)
+            ->whereDoesntHave('scorecardCriteria')
+            ->delete();
+    }
+
+    /**
+     * @param array<string, mixed> $criterion
+     * @return array<string, mixed>
+     */
+    private function criteriaRecord(Tenant $tenant, array $criterion): array
+    {
+        return [
+            'tenant_id' => $tenant->id,
+            'category' => $criterion['category'],
+            'label' => trim((string) $criterion['label']),
+            'guidance' => array_key_exists('guidance', $criterion) && $criterion['guidance'] !== null
+                ? trim((string) $criterion['guidance'])
+                : null,
+            'weight' => $criterion['weight'],
+            'max_score' => $criterion['maxScore'],
+            'is_required' => (bool) ($criterion['required'] ?? false),
+            'display_order' => $criterion['displayOrder'],
+        ];
     }
 
     /**
