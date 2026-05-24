@@ -74,6 +74,6 @@ class QuotationScoringTemplate extends Model
      */
     public function criteria(): HasMany
     {
-        return $this->hasMany(QuotationScoringTemplateCriterion::class)->orderBy('display_order');
+        return $this->hasMany(QuotationScoringTemplateCriterion::class, 'template_id')->orderBy('display_order');
     }
 }

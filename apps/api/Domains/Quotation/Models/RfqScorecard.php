@@ -131,7 +131,7 @@ class RfqScorecard extends Model
      */
     public function criteria(): HasMany
     {
-        return $this->hasMany(RfqScorecardCriterion::class)->orderBy('display_order');
+        return $this->hasMany(RfqScorecardCriterion::class, 'scorecard_id')->orderBy('display_order');
     }
 
     /**
@@ -139,6 +139,6 @@ class RfqScorecard extends Model
      */
     public function entries(): HasMany
     {
-        return $this->hasMany(RfqScorecardEntry::class);
+        return $this->hasMany(RfqScorecardEntry::class, 'scorecard_id');
     }
 }
