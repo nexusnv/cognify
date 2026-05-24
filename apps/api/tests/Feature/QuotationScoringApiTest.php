@@ -335,8 +335,12 @@ class QuotationScoringApiTest extends TestCase
             ->assertJsonPath('data.vendors.0.rawTotal', '17.00')
             ->assertJsonPath('data.vendors.0.weightedTotal', '8.50')
             ->assertJsonPath('data.vendors.0.missingRequiredCount', 0)
-            ->assertJsonPath('data.entries.0.note', 'Strong commercial position.')
-            ->assertJsonPath('data.entries.1.note', 'Delivery remains acceptable.')
+            ->assertJsonFragment(['note' => 'Strong commercial position.'])
+            ->assertJsonFragment(['note' => 'Delivery remains acceptable.']);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/scorecard/complete")
+            ->assertOk()
             ->assertJsonPath('data.completion.status', 'complete');
     }
 
@@ -528,7 +532,13 @@ class QuotationScoringApiTest extends TestCase
         $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
         [, $requester] = $this->tenantUser('requester', $tenant);
         [, $approver] = $this->tenantUser('approver', $tenant);
-        $vendorUser = User::factory()->create(['password' => Hash::make('secret123')]);
+        $invitation = RfqInvitation::query()->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id)->firstOrFail();
+        $vendorPortalToken = Str::random(64);
+        $invitation->forceFill([
+            'portal_token_hash' => hash('sha256', $vendorPortalToken),
+            'portal_token_created_at' => now(),
+            'portal_token_expires_at' => now()->addDays(7),
+        ])->save();
         [$otherTenant, $otherBuyer] = $this->tenantUser('buyer');
 
         $this->actingAsTenant($tenant, $requester)
@@ -539,9 +549,8 @@ class QuotationScoringApiTest extends TestCase
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertForbidden();
 
-        $this->actingAsTenant($tenant, $vendorUser)
-            ->getJson("/api/rfqs/{$rfq->id}/scorecard")
-            ->assertForbidden();
+        $this->getJson("/api/vendor-portal/rfq-invitations/{$vendorPortalToken}/scorecard")
+            ->assertNotFound();
 
         $this->actingAsTenant($tenant, $requester)
             ->postJson('/api/quotation-scoring/templates', [
@@ -640,6 +649,8 @@ class QuotationScoringApiTest extends TestCase
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
         [, $admin] = $this->tenantUser('admin', $tenant);
+        $secondTenant = Tenant::query()->create(['name' => 'Second tenant '.Str::uuid()]);
+        $secondTenant->users()->attach($buyer->id, ['role' => TenantRole::Buyer->value]);
         $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
         $buyer->forceFill([
             'email' => 'quotation-scoring-session@example.com',
@@ -673,6 +684,16 @@ class QuotationScoringApiTest extends TestCase
                 'password' => 'secret123',
             ])
             ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->getJson("/api/rfqs/{$rfq->id}/scorecard")
+            ->assertStatus(400)
+            ->assertJsonPath('error.code', 'ambiguous_tenant');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) Str::uuid())
+            ->getJson("/api/rfqs/{$rfq->id}/scorecard")
+            ->assertForbidden();
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
