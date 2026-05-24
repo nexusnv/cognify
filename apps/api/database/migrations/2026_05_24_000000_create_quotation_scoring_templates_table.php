@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->foreignIdFor(User::class, 'created_by_user_id')->constrained('users');
-            $table->foreignIdFor(User::class, 'updated_by_user_id')->nullable()->constrained('users');
-            $table->foreignIdFor(User::class, 'deactivated_by_user_id')->nullable()->constrained('users');
+            $table->foreignIdFor(User::class, 'created_by_user_id')->constrained('users')->restrictOnDelete();
+            $table->foreignIdFor(User::class, 'updated_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignIdFor(User::class, 'deactivated_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('deactivated_at')->nullable();
             $table->timestamps();
             $table->unique(['tenant_id', 'name', 'is_active']);

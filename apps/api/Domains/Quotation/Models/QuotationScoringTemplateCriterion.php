@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class QuotationScoringTemplateCriterion extends Model
 {
@@ -38,6 +40,33 @@ class QuotationScoringTemplateCriterion extends Model
             'is_required' => 'boolean',
             'display_order' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $criterion): void {
+            if (! $criterion->isDirty('template_id') && ! $criterion->isDirty('tenant_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($criterion): void {
+                if ($criterion->tenant_id === null && $criterion->template_id !== null) {
+                    $criterion->tenant_id = QuotationScoringTemplate::query()
+                        ->whereKey($criterion->template_id)
+                        ->value('tenant_id');
+                }
+
+                $belongsToTenant = QuotationScoringTemplate::query()
+                    ->whereKey($criterion->template_id)
+                    ->where('tenant_id', $criterion->tenant_id)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Scoring template criterion must belong to the same tenant as the template.');
+                }
+            });
+        });
     }
 
     /**

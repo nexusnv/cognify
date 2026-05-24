@@ -26,13 +26,14 @@ return new class extends Migration
             $table->string('template_name');
             $table->text('template_description')->nullable();
             $table->string('status')->default(RfqScorecardStatus::InProgress->value);
-            $table->foreignIdFor(User::class, 'applied_by_user_id')->constrained('users');
+            $table->foreignIdFor(User::class, 'applied_by_user_id')->constrained('users')->restrictOnDelete();
             $table->timestamp('applied_at');
-            $table->foreignIdFor(User::class, 'completed_by_user_id')->nullable()->constrained('users');
+            $table->foreignIdFor(User::class, 'completed_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
             $table->unique(['tenant_id', 'rfq_id']);
+            $table->unique('rfq_id');
         });
 
         Schema::create('rfq_scorecard_criteria', function (Blueprint $table): void {
@@ -65,7 +66,7 @@ return new class extends Migration
             $table->foreignIdFor(QuotationVersion::class)->nullable()->constrained('quotation_versions')->nullOnDelete();
             $table->decimal('score', 8, 2)->nullable();
             $table->text('note')->nullable();
-            $table->foreignIdFor(User::class, 'scored_by_user_id')->nullable()->constrained('users');
+            $table->foreignIdFor(User::class, 'scored_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('scored_at')->nullable();
             $table->timestamps();
 

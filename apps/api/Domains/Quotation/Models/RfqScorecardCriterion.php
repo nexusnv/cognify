@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class RfqScorecardCriterion extends Model
 {
@@ -39,6 +41,43 @@ class RfqScorecardCriterion extends Model
             'is_required' => 'boolean',
             'display_order' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $criterion): void {
+            DB::transaction(function () use ($criterion): void {
+                if ($criterion->tenant_id === null && $criterion->scorecard_id !== null) {
+                    $criterion->tenant_id = RfqScorecard::query()
+                        ->whereKey($criterion->scorecard_id)
+                        ->value('tenant_id');
+                }
+
+                if ($criterion->scorecard_id !== null && ($criterion->isDirty('scorecard_id') || $criterion->isDirty('tenant_id'))) {
+                    $belongsToTenant = RfqScorecard::query()
+                        ->whereKey($criterion->scorecard_id)
+                        ->where('tenant_id', $criterion->tenant_id)
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('RFQ scorecard criterion must belong to the same tenant as the scorecard.');
+                    }
+                }
+
+                if ($criterion->source_template_criterion_id !== null && ($criterion->isDirty('source_template_criterion_id') || $criterion->isDirty('tenant_id'))) {
+                    $belongsToTenant = QuotationScoringTemplateCriterion::query()
+                        ->whereKey($criterion->source_template_criterion_id)
+                        ->where('tenant_id', $criterion->tenant_id)
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('RFQ scorecard criterion source template criterion must belong to the same tenant.');
+                    }
+                }
+            });
+        });
     }
 
     /**

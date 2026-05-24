@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class RfqScorecard extends Model
 {
@@ -45,6 +47,43 @@ class RfqScorecard extends Model
         return $this->status instanceof RfqScorecardStatus
             ? $this->status
             : RfqScorecardStatus::from((string) $this->getAttribute('status'));
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $scorecard): void {
+            DB::transaction(function () use ($scorecard): void {
+                if ($scorecard->tenant_id === null && $scorecard->rfq_id !== null) {
+                    $scorecard->tenant_id = Rfq::query()
+                        ->whereKey($scorecard->rfq_id)
+                        ->value('tenant_id');
+                }
+
+                if ($scorecard->rfq_id !== null && ($scorecard->isDirty('rfq_id') || $scorecard->isDirty('tenant_id'))) {
+                    $belongsToTenant = Rfq::query()
+                        ->whereKey($scorecard->rfq_id)
+                        ->where('tenant_id', $scorecard->tenant_id)
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('RFQ scorecard must belong to the same tenant as the RFQ.');
+                    }
+                }
+
+                if ($scorecard->template_id !== null && ($scorecard->isDirty('template_id') || $scorecard->isDirty('tenant_id'))) {
+                    $belongsToTenant = QuotationScoringTemplate::query()
+                        ->whereKey($scorecard->template_id)
+                        ->where('tenant_id', $scorecard->tenant_id)
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('RFQ scorecard template must belong to the same tenant.');
+                    }
+                }
+            });
+        });
     }
 
     /**
