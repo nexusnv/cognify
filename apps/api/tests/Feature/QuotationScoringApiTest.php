@@ -234,7 +234,11 @@ class QuotationScoringApiTest extends TestCase
             ->assertJsonPath('data.criteria.0.label', 'Commercial competitiveness')
             ->assertJsonPath('data.criteria.0.weight', '50.00')
             ->assertJsonPath('data.criteria.0.maxScore', 10)
-            ->assertJsonPath('data.criteria.0.required', true);
+            ->assertJsonPath('data.criteria.0.required', true)
+            ->assertJsonPath('data.criteria.1.label', 'Delivery certainty')
+            ->assertJsonPath('data.criteria.1.weight', '50.00')
+            ->assertJsonPath('data.criteria.1.maxScore', 10)
+            ->assertJsonPath('data.criteria.1.required', false);
     }
 
     public function test_buyer_can_update_scores_and_notes_and_receives_weighted_totals(): void
@@ -271,11 +275,14 @@ class QuotationScoringApiTest extends TestCase
             ->assertOk()
             ->json('data.template.id');
 
-        $this->actingAsTenant($tenant, $buyer)
+        $scorecardResponse = $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
                 'templateId' => $templateId,
             ])
             ->assertOk();
+
+        $costCriterionId = $scorecardResponse->json('data.criteria.0.id');
+        $deliveryCriterionId = $scorecardResponse->json('data.criteria.1.id');
 
         $vendors = Vendor::query()
             ->where('tenant_id', $tenant->id)
@@ -287,7 +294,7 @@ class QuotationScoringApiTest extends TestCase
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $costCriterionId,
                         'vendorId' => (string) $vendors[0]->id,
                         'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[0]->id)->firstOrFail()->id,
                         'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[0]->id))->firstOrFail()->id,
@@ -295,7 +302,7 @@ class QuotationScoringApiTest extends TestCase
                         'note' => 'Strong commercial position.',
                     ],
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $deliveryCriterionId,
                         'vendorId' => (string) $vendors[0]->id,
                         'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[0]->id)->firstOrFail()->id,
                         'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[0]->id))->firstOrFail()->id,
@@ -303,7 +310,7 @@ class QuotationScoringApiTest extends TestCase
                         'note' => 'Delivery remains acceptable.',
                     ],
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $costCriterionId,
                         'vendorId' => (string) $vendors[1]->id,
                         'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[1]->id)->firstOrFail()->id,
                         'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[1]->id))->firstOrFail()->id,
@@ -311,7 +318,7 @@ class QuotationScoringApiTest extends TestCase
                         'note' => 'Needs improvement.',
                     ],
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $deliveryCriterionId,
                         'vendorId' => (string) $vendors[1]->id,
                         'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[1]->id)->firstOrFail()->id,
                         'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[1]->id))->firstOrFail()->id,
@@ -325,8 +332,11 @@ class QuotationScoringApiTest extends TestCase
         $this->actingAsTenant($tenant, $buyer)
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertOk()
+            ->assertJsonPath('data.vendors.0.rawTotal', '17.00')
             ->assertJsonPath('data.vendors.0.weightedTotal', '8.50')
             ->assertJsonPath('data.vendors.0.missingRequiredCount', 0)
+            ->assertJsonPath('data.entries.0.note', 'Strong commercial position.')
+            ->assertJsonPath('data.entries.1.note', 'Delivery remains acceptable.')
             ->assertJsonPath('data.completion.status', 'complete');
     }
 
@@ -355,11 +365,13 @@ class QuotationScoringApiTest extends TestCase
             ->assertOk()
             ->json('data.template.id');
 
-        $this->actingAsTenant($tenant, $buyer)
+        $scorecardResponse = $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
                 'templateId' => $templateId,
             ])
             ->assertOk();
+
+        $criterionId = $scorecardResponse->json('data.criteria.0.id');
 
         $quotation = Quotation::query()->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id)->firstOrFail();
         $version = QuotationVersion::query()->where('quotation_id', $quotation->id)->firstOrFail();
@@ -369,7 +381,7 @@ class QuotationScoringApiTest extends TestCase
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $criterionId,
                         'vendorId' => (string) $vendor->id,
                         'quotationId' => (string) $quotation->id,
                         'quotationVersionId' => (string) $version->id,
@@ -416,9 +428,37 @@ class QuotationScoringApiTest extends TestCase
             ->assertOk()
             ->json('data.template.id');
 
-        $this->actingAsTenant($tenant, $buyer)
+        $scorecardResponse = $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
                 'templateId' => $templateId,
+            ])
+            ->assertOk();
+
+        $costCriterionId = $scorecardResponse->json('data.criteria.0.id');
+        $deliveryCriterionId = $scorecardResponse->json('data.criteria.1.id');
+        $vendorId = (string) Vendor::query()->where('tenant_id', $tenant->id)->firstOrFail()->id;
+        $quotationId = (string) Quotation::query()->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id)->firstOrFail()->id;
+        $quotationVersionId = (string) QuotationVersion::query()
+            ->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id))
+            ->firstOrFail()
+            ->id;
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/scorecard/complete")
+            ->assertUnprocessable();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
+                'entries' => [
+                    [
+                        'criterionId' => $costCriterionId,
+                        'vendorId' => $vendorId,
+                        'quotationId' => $quotationId,
+                        'quotationVersionId' => $quotationVersionId,
+                        'score' => 9,
+                        'note' => 'Required score entered.',
+                    ],
+                ],
             ])
             ->assertOk();
 
@@ -430,12 +470,12 @@ class QuotationScoringApiTest extends TestCase
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
-                        'vendorId' => (string) Vendor::query()->where('tenant_id', $tenant->id)->firstOrFail()->id,
-                        'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id)->firstOrFail()->id,
-                        'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id))->firstOrFail()->id,
-                        'score' => 9,
-                        'note' => 'Required score entered.',
+                        'criterionId' => $deliveryCriterionId,
+                        'vendorId' => $vendorId,
+                        'quotationId' => $quotationId,
+                        'quotationVersionId' => $quotationVersionId,
+                        'score' => 8,
+                        'note' => 'Second required score entered.',
                     ],
                 ],
             ])
@@ -450,10 +490,10 @@ class QuotationScoringApiTest extends TestCase
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
-                        'vendorId' => (string) Vendor::query()->where('tenant_id', $tenant->id)->firstOrFail()->id,
-                        'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id)->firstOrFail()->id,
-                        'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id))->firstOrFail()->id,
+                        'criterionId' => $costCriterionId,
+                        'vendorId' => $vendorId,
+                        'quotationId' => $quotationId,
+                        'quotationVersionId' => $quotationVersionId,
                         'score' => 10,
                         'note' => 'Completed scorecard should be read only.',
                     ],
@@ -470,10 +510,10 @@ class QuotationScoringApiTest extends TestCase
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
-                        'vendorId' => (string) Vendor::query()->where('tenant_id', $tenant->id)->firstOrFail()->id,
-                        'quotationId' => (string) Quotation::query()->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id)->firstOrFail()->id,
-                        'quotationVersionId' => (string) QuotationVersion::query()->whereHas('quotation', fn ($query) => $query->where('rfq_id', $rfq->id)->where('tenant_id', $tenant->id))->firstOrFail()->id,
+                        'criterionId' => $costCriterionId,
+                        'vendorId' => $vendorId,
+                        'quotationId' => $quotationId,
+                        'quotationVersionId' => $quotationVersionId,
                         'score' => 8,
                         'note' => 'Edits should be allowed after reopen.',
                     ],
@@ -488,6 +528,7 @@ class QuotationScoringApiTest extends TestCase
         $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
         [, $requester] = $this->tenantUser('requester', $tenant);
         [, $approver] = $this->tenantUser('approver', $tenant);
+        $vendorUser = User::factory()->create(['password' => Hash::make('secret123')]);
         [$otherTenant, $otherBuyer] = $this->tenantUser('buyer');
 
         $this->actingAsTenant($tenant, $requester)
@@ -495,6 +536,10 @@ class QuotationScoringApiTest extends TestCase
             ->assertForbidden();
 
         $this->actingAsTenant($tenant, $approver)
+            ->getJson("/api/rfqs/{$rfq->id}/scorecard")
+            ->assertForbidden();
+
+        $this->actingAsTenant($tenant, $vendorUser)
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertForbidden();
 
@@ -559,17 +604,19 @@ class QuotationScoringApiTest extends TestCase
             ->assertOk()
             ->json('data.template.id');
 
-        $this->actingAsTenant($tenant, $buyer)
+        $scorecardResponse = $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
                 'templateId' => $templateId,
             ])
             ->assertOk();
 
+        $criterionId = $scorecardResponse->json('data.criteria.0.id');
+
         $this->actingAsTenant($tenant, $buyer)
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $criterionId,
                         'vendorId' => (string) $quotation->vendor_id,
                         'quotationId' => (string) $quotation->id,
                         'quotationVersionId' => (string) $version->id,
@@ -592,11 +639,33 @@ class QuotationScoringApiTest extends TestCase
     public function test_scoring_routes_require_real_session_auth_and_tenant_context(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $admin] = $this->tenantUser('admin', $tenant);
         $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
         $buyer->forceFill([
             'email' => 'quotation-scoring-session@example.com',
             'password' => Hash::make('secret123'),
         ])->save();
+
+        $templateId = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/quotation-scoring/templates', [
+                'name' => 'Balanced RFQ Evaluation',
+                'description' => 'Baseline scoring criteria for session middleware proof.',
+                'criteria' => [
+                    [
+                        'category' => 'cost',
+                        'label' => 'Commercial competitiveness',
+                        'guidance' => 'Score the quote against the commercial offer.',
+                        'weight' => 5,
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                ],
+            ])
+            ->assertOk()
+            ->json('data.template.id');
+
+        Auth::forgetGuards();
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->postJson('/api/auth/login', [
@@ -607,15 +676,28 @@ class QuotationScoringApiTest extends TestCase
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
+                'templateId' => $templateId,
+            ])
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertOk();
+
+        $criterionId = $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson("/api/rfqs/{$rfq->id}/scorecard")
+            ->assertOk()
+            ->json('data.criteria.0.id');
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
-                        'criterionId' => (string) Str::uuid(),
+                        'criterionId' => $criterionId,
                         'vendorId' => (string) $rfq->quotations()->firstOrFail()->vendor_id,
                         'quotationId' => (string) $rfq->quotations()->firstOrFail()->id,
                         'quotationVersionId' => (string) $rfq->quotations()->firstOrFail()->currentVersion->id,
