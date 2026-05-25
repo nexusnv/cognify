@@ -143,6 +143,14 @@ class Rfq extends Model
     }
 
     /**
+     * @return HasMany<Quotation, $this>
+     */
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class);
+    }
+
+    /**
      * @return HasMany<QuotationComparisonNote, $this>
      */
     public function comparisonNotes(): HasMany

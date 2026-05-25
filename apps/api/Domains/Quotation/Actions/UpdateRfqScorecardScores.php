@@ -50,7 +50,7 @@ class UpdateRfqScorecardScores
                 ->keyBy(fn (RfqScorecardCriterion $criterion): string => (string) $criterion->id);
             $criteriaIds = collect($entries)->pluck('criterionId')->unique()->values();
 
-            if ($criteria->only($criteriaIds)->count() !== $criteriaIds->count()) {
+            if ($criteria->only($criteriaIds->all())->count() !== $criteriaIds->count()) {
                 throw ValidationException::withMessages([
                     'entries' => ['Each score entry must reference a criterion on this scorecard.'],
                 ]);
@@ -125,7 +125,7 @@ class UpdateRfqScorecardScores
             foreach ($entries as $payload) {
                 /** @var RfqScorecardCriterion $criterion */
                 $criterion = $criteria->get($payload['criterionId']);
-                $quotation = $quotations->get($payload['quotationId']);
+                $quotation = $payload['quotationId'] !== null ? $quotations->get($payload['quotationId']) : null;
                 $version = $payload['quotationVersionId'] !== null ? $versions->get($payload['quotationVersionId']) : null;
 
                 if ($quotation !== null && (string) $quotation->vendor_id !== $payload['vendorId']) {
@@ -184,7 +184,7 @@ class UpdateRfqScorecardScores
      * @return array<int, array{
      *     criterionId: string,
      *     vendorId: string,
-     *     quotationId: string,
+     *     quotationId: ?string,
      *     quotationVersionId: ?string,
      *     score: mixed,
      *     note: ?string
@@ -201,16 +201,12 @@ class UpdateRfqScorecardScores
         }
 
         return array_map(function (array $entry): array {
-            if (! array_key_exists('quotationId', $entry) || $entry['quotationId'] === null || $entry['quotationId'] === '') {
-                throw ValidationException::withMessages([
-                    'entries' => ['Each score entry must reference a quotation response.'],
-                ]);
-            }
-
             return [
                 'criterionId' => (string) $entry['criterionId'],
                 'vendorId' => (string) $entry['vendorId'],
-                'quotationId' => (string) $entry['quotationId'],
+                'quotationId' => array_key_exists('quotationId', $entry) && $entry['quotationId'] !== null && $entry['quotationId'] !== ''
+                    ? (string) $entry['quotationId']
+                    : null,
                 'quotationVersionId' => array_key_exists('quotationVersionId', $entry) && $entry['quotationVersionId'] !== null
                     ? (string) $entry['quotationVersionId']
                     : null,

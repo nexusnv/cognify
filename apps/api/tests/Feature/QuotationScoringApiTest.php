@@ -335,6 +335,8 @@ class QuotationScoringApiTest extends TestCase
             ->assertJsonPath('data.vendors.0.rawTotal', '17.00')
             ->assertJsonPath('data.vendors.0.weightedTotal', '8.50')
             ->assertJsonPath('data.vendors.0.missingRequiredCount', 0)
+            ->assertJsonPath('data.vendors.0.scoreable', true)
+            ->assertJsonPath('data.comparisonContext.comparisonPath', "/quotations/comparisons/{$rfq->id}")
             ->assertJsonFragment(['note' => 'Strong commercial position.'])
             ->assertJsonFragment(['note' => 'Delivery remains acceptable.']);
 
@@ -685,7 +687,8 @@ class QuotationScoringApiTest extends TestCase
             ])
             ->assertNoContent();
 
-        $this->withHeader('Origin', 'http://localhost:8880')
+        $this->withoutHeader('X-Tenant-Id')
+            ->withHeader('Origin', 'http://localhost:8880')
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertStatus(400)
             ->assertJsonPath('error.code', 'ambiguous_tenant');
