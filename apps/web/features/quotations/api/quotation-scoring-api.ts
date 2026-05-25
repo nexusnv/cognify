@@ -42,13 +42,10 @@ function throwResponseData(error: unknown): never {
   throw error;
 }
 
-function unwrapOk<TData extends { data: unknown }>(
-  response: { status: number; data: TData },
-  expectedStatus = 200,
-): TData["data"] {
+function unwrapOk(response: { status: number; data: unknown }, expectedStatus = 200): unknown {
   if (response.status !== expectedStatus) throw response.data;
 
-  return response.data.data;
+  return (response.data as { data: unknown }).data;
 }
 
 export async function listScoringTemplates(

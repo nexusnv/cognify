@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
@@ -28,10 +28,6 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
   const reopenScorecard = useReopenRfqScorecard(rfqId);
   const scorecard = scorecardQuery.data;
   const [drafts, setDrafts] = useState<Record<string, { score: string; note: string }>>({});
-
-  useEffect(() => {
-    if (scorecard) setDrafts(scorecardDrafts(scorecard));
-  }, [scorecard]);
 
   if (scorecardQuery.isLoading) {
     return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading RFQ scoring workspace</div>;
@@ -66,6 +62,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
 
   const completed = scorecard.scorecard.status === "completed";
   const readyToComplete = scorecard.completion.missingRequiredScoreCount === 0;
+  const visibleDrafts = Object.keys(drafts).length > 0 ? drafts : scorecardDrafts(scorecard);
 
   return (
     <RecordWorkspaceLayout
@@ -107,7 +104,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
       <RfqScorecardVendorSummary scorecard={scorecard} />
       <RfqScorecardMatrix
         scorecard={scorecard}
-        drafts={drafts}
+        drafts={visibleDrafts}
         readOnly={completed}
         isSaving={updateScores.isPending}
         onDraftChange={(key, draft) => setDrafts((current) => ({ ...current, [key]: draft }))}

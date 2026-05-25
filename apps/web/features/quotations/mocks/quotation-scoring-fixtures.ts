@@ -257,7 +257,7 @@ function buildScorecard(rfqId: string, status: "in_progress" | "completed", inco
           criterionId: criterionItem.id,
           vendorId: vendorItem.vendorId,
           quotationId: vendorItem.quotationId,
-          quotationVersionId: vendorItem.quotationVersionId,
+          quotationVersionId: vendorItem.quotationVersionId ?? null,
           score: vendorItem.vendorId === "vendor-1" ? "8.00" : "7.00",
           note: null,
           weightedContribution: vendorItem.vendorId === "vendor-1" ? "8.00" : "7.00",

@@ -961,7 +961,7 @@ git commit -m "docs: mark vendor scoring implemented"
 
 - No new files unless verification reveals a defect.
 
-- [ ] **Step 1: Run focused backend verification**
+- [x] **Step 1: Run focused backend verification**
 
 ```bash
 cd apps/api
@@ -973,7 +973,7 @@ php artisan route:list --path=api/rfqs
 
 Expected: tests pass and routes include scoring endpoints.
 
-- [ ] **Step 2: Run contract verification**
+- [x] **Step 2: Run contract verification**
 
 ```bash
 pnpm generate:api
@@ -983,7 +983,7 @@ pnpm --filter @cognify/api-client typecheck
 
 Expected: no diff from regenerated client after committed generated files; typecheck passes.
 
-- [ ] **Step 3: Run focused frontend verification**
+- [x] **Step 3: Run focused frontend verification**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-scoring
@@ -994,7 +994,7 @@ pnpm --filter @cognify/web typecheck
 
 Expected: tests, lint, and typecheck pass.
 
-- [ ] **Step 4: Run root verification**
+- [x] **Step 4: Run root verification**
 
 ```bash
 pnpm typecheck
@@ -1004,7 +1004,7 @@ git diff --check
 
 Expected: all pass; `git diff --check` has no output.
 
-- [ ] **Step 5: Run scope grep**
+- [x] **Step 5: Run scope grep**
 
 ```bash
 rg -n "winner|recommended vendor|award decision|shortlist|excluded|purchase order|AI scoring|currency conversion|template approval|template clone|version browser" apps/api/Domains/Quotation apps/web/features/quotations docs/01-product/feature-roadmap.md
@@ -1012,7 +1012,7 @@ rg -n "winner|recommended vendor|award decision|shortlist|excluded|purchase orde
 
 Expected: matches are limited to explicit non-goals, future-slice copy, or user-facing warnings that scoring is not award/recommendation behavior.
 
-- [ ] **Step 6: Commit verification fixes if needed**
+- [x] **Step 6: Commit verification fixes if needed**
 
 If verification required changes, stage the specific files changed by those fixes and commit:
 
@@ -1026,9 +1026,9 @@ If no changes were required, leave the branch without an extra verification comm
 
 ## Final Handoff Checklist
 
-- [ ] Design spec coverage: template CRUD/deactivate, RFQ scorecard snapshot, score entry notes, totals, completion/reopen, comparison context, permissions, audit, OpenAPI, web UI, and verification are covered.
-- [ ] Scope check: P1-32 recommendation/award decision, P1-33 award approval, and P1-34 PO handoff remain out of scope.
-- [ ] Architecture check: backend business behavior lives in `apps/api/Domains/Quotation`; web feature code lives in `apps/web/features/quotations`; generated API client is the contract source for web consumers.
-- [ ] Tenant check: every scoring query and mutation validates tenant ownership across template, RFQ, vendor, quotation, quotation version, scorecard, criterion, entry, and actor.
-- [ ] Contract check: OpenAPI and generated client are regenerated and verified.
-- [ ] Runtime check: real session-auth route coverage exists for protected scoring read and mutation endpoints.
+- [x] Design spec coverage: template CRUD/deactivate, RFQ scorecard snapshot, score entry notes, totals, completion/reopen, comparison context, permissions, audit, OpenAPI, web UI, and verification are covered.
+- [x] Scope check: P1-32 recommendation/award decision, P1-33 award approval, and P1-34 PO handoff remain out of scope.
+- [x] Architecture check: backend business behavior lives in `apps/api/Domains/Quotation`; web feature code lives in `apps/web/features/quotations`; generated API client is the contract source for web consumers.
+- [x] Tenant check: every scoring query and mutation validates tenant ownership across template, RFQ, vendor, quotation, quotation version, scorecard, criterion, entry, and actor.
+- [x] Contract check: OpenAPI and generated client are regenerated and verified.
+- [x] Runtime check: real session-auth route coverage exists for protected scoring read and mutation endpoints.

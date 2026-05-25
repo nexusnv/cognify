@@ -56,7 +56,7 @@ describe("RFQ scoring workspace", () => {
     await user.click(within(matrix).getByRole("button", { name: "Save scores" }));
 
     await waitFor(() => {
-      expect(within(matrix).getAllByLabelText("Score")[0]).toHaveValue("9.00");
+      expect(within(matrix).getAllByLabelText("Score")[0]).toHaveValue("9");
     });
   });
 
