@@ -33,6 +33,7 @@ import type {
   CreateQuotationRevisionRequest,
   CreateRequisitionRequest,
   CreateRfqInvitationsRequest,
+  CreateRfqScorecardRequest,
   CurrentUserResponse,
   DelegateApprovalTaskRequest,
   ForbiddenResponse,
@@ -69,6 +70,8 @@ import type {
   QuotationNullableResponse,
   QuotationNullableVendorPortalResponse,
   QuotationResponse,
+  QuotationScoringTemplateListResponse,
+  QuotationScoringTemplateResponse,
   QuotationVendorPortalResponse,
   QuotationVersionListResponse,
   QuotationVersionResponse,
@@ -86,6 +89,7 @@ import type {
   RfqInvitationPortalLinkResponse,
   RfqInvitationResponse,
   RfqResponse,
+  RfqScorecardResponse,
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
   SaveQuotationComparisonNoteRequest,
@@ -93,6 +97,7 @@ import type {
   SaveQuotationManualEntryRequestForVendor,
   SaveQuotationNormalizationCorrectionsRequest,
   SaveQuotationNormalizationLineMappingsRequest,
+  SaveQuotationScoringTemplateRequest,
   SearchResponse,
   SetCurrentTenantRequest,
   SourcingIntakeReviewCloseRequest,
@@ -116,6 +121,7 @@ import type {
   UpdateProcurementProjectRequest,
   UpdateRequisitionRequest,
   UpdateRfqInvitationStatusRequest,
+  UpdateRfqScorecardScoresRequest,
   ValidationFailedResponse,
   VendorCreateQuotationRevisionRequest,
   VendorPickerListResponse,
@@ -7065,4 +7071,608 @@ export const updateRfqInvitationStatus = async (
       body: JSON.stringify(updateRfqInvitationStatusRequest),
     },
   );
+};
+
+/**
+ * @summary List quotation scoring templates
+ */
+export type listQuotationScoringTemplatesResponse200 = {
+  data: QuotationScoringTemplateListResponse;
+  status: 200;
+};
+
+export type listQuotationScoringTemplatesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listQuotationScoringTemplatesResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listQuotationScoringTemplatesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listQuotationScoringTemplatesResponseSuccess =
+  listQuotationScoringTemplatesResponse200 & {
+    headers: Headers;
+  };
+export type listQuotationScoringTemplatesResponseError = (
+  | listQuotationScoringTemplatesResponse401
+  | listQuotationScoringTemplatesResponse403
+  | listQuotationScoringTemplatesResponse404
+) & {
+  headers: Headers;
+};
+
+export type listQuotationScoringTemplatesResponse =
+  | listQuotationScoringTemplatesResponseSuccess
+  | listQuotationScoringTemplatesResponseError;
+
+export const getListQuotationScoringTemplatesUrl = () => {
+  return `/api/quotation-scoring/templates`;
+};
+
+export const listQuotationScoringTemplates = async (
+  options?: RequestInit,
+): Promise<listQuotationScoringTemplatesResponse> => {
+  return cognifyFetch<listQuotationScoringTemplatesResponse>(
+    getListQuotationScoringTemplatesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create quotation scoring template
+ */
+export type createQuotationScoringTemplateResponse200 = {
+  data: QuotationScoringTemplateResponse;
+  status: 200;
+};
+
+export type createQuotationScoringTemplateResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createQuotationScoringTemplateResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createQuotationScoringTemplateResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createQuotationScoringTemplateResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createQuotationScoringTemplateResponseSuccess =
+  createQuotationScoringTemplateResponse200 & {
+    headers: Headers;
+  };
+export type createQuotationScoringTemplateResponseError = (
+  | createQuotationScoringTemplateResponse401
+  | createQuotationScoringTemplateResponse403
+  | createQuotationScoringTemplateResponse404
+  | createQuotationScoringTemplateResponse422
+) & {
+  headers: Headers;
+};
+
+export type createQuotationScoringTemplateResponse =
+  | createQuotationScoringTemplateResponseSuccess
+  | createQuotationScoringTemplateResponseError;
+
+export const getCreateQuotationScoringTemplateUrl = () => {
+  return `/api/quotation-scoring/templates`;
+};
+
+export const createQuotationScoringTemplate = async (
+  saveQuotationScoringTemplateRequest: SaveQuotationScoringTemplateRequest,
+  options?: RequestInit,
+): Promise<createQuotationScoringTemplateResponse> => {
+  return cognifyFetch<createQuotationScoringTemplateResponse>(
+    getCreateQuotationScoringTemplateUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationScoringTemplateRequest),
+    },
+  );
+};
+
+/**
+ * @summary Show quotation scoring template
+ */
+export type showQuotationScoringTemplateResponse200 = {
+  data: QuotationScoringTemplateResponse;
+  status: 200;
+};
+
+export type showQuotationScoringTemplateResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showQuotationScoringTemplateResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showQuotationScoringTemplateResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showQuotationScoringTemplateResponseSuccess =
+  showQuotationScoringTemplateResponse200 & {
+    headers: Headers;
+  };
+export type showQuotationScoringTemplateResponseError = (
+  | showQuotationScoringTemplateResponse401
+  | showQuotationScoringTemplateResponse403
+  | showQuotationScoringTemplateResponse404
+) & {
+  headers: Headers;
+};
+
+export type showQuotationScoringTemplateResponse =
+  | showQuotationScoringTemplateResponseSuccess
+  | showQuotationScoringTemplateResponseError;
+
+export const getShowQuotationScoringTemplateUrl = (quotationScoringTemplate: string) => {
+  return `/api/quotation-scoring/templates/${quotationScoringTemplate}`;
+};
+
+export const showQuotationScoringTemplate = async (
+  quotationScoringTemplate: string,
+  options?: RequestInit,
+): Promise<showQuotationScoringTemplateResponse> => {
+  return cognifyFetch<showQuotationScoringTemplateResponse>(
+    getShowQuotationScoringTemplateUrl(quotationScoringTemplate),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Update quotation scoring template
+ */
+export type updateQuotationScoringTemplateResponse200 = {
+  data: QuotationScoringTemplateResponse;
+  status: 200;
+};
+
+export type updateQuotationScoringTemplateResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateQuotationScoringTemplateResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateQuotationScoringTemplateResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateQuotationScoringTemplateResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateQuotationScoringTemplateResponseSuccess =
+  updateQuotationScoringTemplateResponse200 & {
+    headers: Headers;
+  };
+export type updateQuotationScoringTemplateResponseError = (
+  | updateQuotationScoringTemplateResponse401
+  | updateQuotationScoringTemplateResponse403
+  | updateQuotationScoringTemplateResponse404
+  | updateQuotationScoringTemplateResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateQuotationScoringTemplateResponse =
+  | updateQuotationScoringTemplateResponseSuccess
+  | updateQuotationScoringTemplateResponseError;
+
+export const getUpdateQuotationScoringTemplateUrl = (quotationScoringTemplate: string) => {
+  return `/api/quotation-scoring/templates/${quotationScoringTemplate}`;
+};
+
+export const updateQuotationScoringTemplate = async (
+  quotationScoringTemplate: string,
+  saveQuotationScoringTemplateRequest: SaveQuotationScoringTemplateRequest,
+  options?: RequestInit,
+): Promise<updateQuotationScoringTemplateResponse> => {
+  return cognifyFetch<updateQuotationScoringTemplateResponse>(
+    getUpdateQuotationScoringTemplateUrl(quotationScoringTemplate),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuotationScoringTemplateRequest),
+    },
+  );
+};
+
+/**
+ * @summary Deactivate quotation scoring template
+ */
+export type deactivateQuotationScoringTemplateResponse200 = {
+  data: QuotationScoringTemplateResponse;
+  status: 200;
+};
+
+export type deactivateQuotationScoringTemplateResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type deactivateQuotationScoringTemplateResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type deactivateQuotationScoringTemplateResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type deactivateQuotationScoringTemplateResponseSuccess =
+  deactivateQuotationScoringTemplateResponse200 & {
+    headers: Headers;
+  };
+export type deactivateQuotationScoringTemplateResponseError = (
+  | deactivateQuotationScoringTemplateResponse401
+  | deactivateQuotationScoringTemplateResponse403
+  | deactivateQuotationScoringTemplateResponse404
+) & {
+  headers: Headers;
+};
+
+export type deactivateQuotationScoringTemplateResponse =
+  | deactivateQuotationScoringTemplateResponseSuccess
+  | deactivateQuotationScoringTemplateResponseError;
+
+export const getDeactivateQuotationScoringTemplateUrl = (quotationScoringTemplate: string) => {
+  return `/api/quotation-scoring/templates/${quotationScoringTemplate}/deactivate`;
+};
+
+export const deactivateQuotationScoringTemplate = async (
+  quotationScoringTemplate: string,
+  options?: RequestInit,
+): Promise<deactivateQuotationScoringTemplateResponse> => {
+  return cognifyFetch<deactivateQuotationScoringTemplateResponse>(
+    getDeactivateQuotationScoringTemplateUrl(quotationScoringTemplate),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Show RFQ scorecard
+ */
+export type showRfqScorecardResponse200 = {
+  data: RfqScorecardResponse;
+  status: 200;
+};
+
+export type showRfqScorecardResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showRfqScorecardResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showRfqScorecardResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showRfqScorecardResponseSuccess = showRfqScorecardResponse200 & {
+  headers: Headers;
+};
+export type showRfqScorecardResponseError = (
+  | showRfqScorecardResponse401
+  | showRfqScorecardResponse403
+  | showRfqScorecardResponse404
+) & {
+  headers: Headers;
+};
+
+export type showRfqScorecardResponse =
+  | showRfqScorecardResponseSuccess
+  | showRfqScorecardResponseError;
+
+export const getShowRfqScorecardUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/scorecard`;
+};
+
+export const showRfqScorecard = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<showRfqScorecardResponse> => {
+  return cognifyFetch<showRfqScorecardResponse>(getShowRfqScorecardUrl(rfq), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create RFQ scorecard from template
+ */
+export type createRfqScorecardResponse200 = {
+  data: RfqScorecardResponse;
+  status: 200;
+};
+
+export type createRfqScorecardResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRfqScorecardResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createRfqScorecardResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createRfqScorecardResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createRfqScorecardResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createRfqScorecardResponseSuccess = createRfqScorecardResponse200 & {
+  headers: Headers;
+};
+export type createRfqScorecardResponseError = (
+  | createRfqScorecardResponse401
+  | createRfqScorecardResponse403
+  | createRfqScorecardResponse404
+  | createRfqScorecardResponse409
+  | createRfqScorecardResponse422
+) & {
+  headers: Headers;
+};
+
+export type createRfqScorecardResponse =
+  | createRfqScorecardResponseSuccess
+  | createRfqScorecardResponseError;
+
+export const getCreateRfqScorecardUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/scorecard`;
+};
+
+export const createRfqScorecard = async (
+  rfq: string,
+  createRfqScorecardRequest: CreateRfqScorecardRequest,
+  options?: RequestInit,
+): Promise<createRfqScorecardResponse> => {
+  return cognifyFetch<createRfqScorecardResponse>(getCreateRfqScorecardUrl(rfq), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createRfqScorecardRequest),
+  });
+};
+
+/**
+ * @summary Update RFQ scorecard scores
+ */
+export type updateRfqScorecardScoresResponse200 = {
+  data: RfqScorecardResponse;
+  status: 200;
+};
+
+export type updateRfqScorecardScoresResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateRfqScorecardScoresResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateRfqScorecardScoresResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateRfqScorecardScoresResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updateRfqScorecardScoresResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateRfqScorecardScoresResponseSuccess = updateRfqScorecardScoresResponse200 & {
+  headers: Headers;
+};
+export type updateRfqScorecardScoresResponseError = (
+  | updateRfqScorecardScoresResponse401
+  | updateRfqScorecardScoresResponse403
+  | updateRfqScorecardScoresResponse404
+  | updateRfqScorecardScoresResponse409
+  | updateRfqScorecardScoresResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateRfqScorecardScoresResponse =
+  | updateRfqScorecardScoresResponseSuccess
+  | updateRfqScorecardScoresResponseError;
+
+export const getUpdateRfqScorecardScoresUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/scorecard/scores`;
+};
+
+export const updateRfqScorecardScores = async (
+  rfq: string,
+  updateRfqScorecardScoresRequest: UpdateRfqScorecardScoresRequest,
+  options?: RequestInit,
+): Promise<updateRfqScorecardScoresResponse> => {
+  return cognifyFetch<updateRfqScorecardScoresResponse>(getUpdateRfqScorecardScoresUrl(rfq), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateRfqScorecardScoresRequest),
+  });
+};
+
+/**
+ * @summary Complete RFQ scorecard
+ */
+export type completeRfqScorecardResponse200 = {
+  data: RfqScorecardResponse;
+  status: 200;
+};
+
+export type completeRfqScorecardResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type completeRfqScorecardResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type completeRfqScorecardResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type completeRfqScorecardResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type completeRfqScorecardResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type completeRfqScorecardResponseSuccess = completeRfqScorecardResponse200 & {
+  headers: Headers;
+};
+export type completeRfqScorecardResponseError = (
+  | completeRfqScorecardResponse401
+  | completeRfqScorecardResponse403
+  | completeRfqScorecardResponse404
+  | completeRfqScorecardResponse409
+  | completeRfqScorecardResponse422
+) & {
+  headers: Headers;
+};
+
+export type completeRfqScorecardResponse =
+  | completeRfqScorecardResponseSuccess
+  | completeRfqScorecardResponseError;
+
+export const getCompleteRfqScorecardUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/scorecard/complete`;
+};
+
+export const completeRfqScorecard = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<completeRfqScorecardResponse> => {
+  return cognifyFetch<completeRfqScorecardResponse>(getCompleteRfqScorecardUrl(rfq), {
+    ...options,
+    method: "POST",
+  });
+};
+
+/**
+ * @summary Reopen RFQ scorecard
+ */
+export type reopenRfqScorecardResponse200 = {
+  data: RfqScorecardResponse;
+  status: 200;
+};
+
+export type reopenRfqScorecardResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type reopenRfqScorecardResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type reopenRfqScorecardResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type reopenRfqScorecardResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type reopenRfqScorecardResponseSuccess = reopenRfqScorecardResponse200 & {
+  headers: Headers;
+};
+export type reopenRfqScorecardResponseError = (
+  | reopenRfqScorecardResponse401
+  | reopenRfqScorecardResponse403
+  | reopenRfqScorecardResponse404
+  | reopenRfqScorecardResponse409
+) & {
+  headers: Headers;
+};
+
+export type reopenRfqScorecardResponse =
+  | reopenRfqScorecardResponseSuccess
+  | reopenRfqScorecardResponseError;
+
+export const getReopenRfqScorecardUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/scorecard/reopen`;
+};
+
+export const reopenRfqScorecard = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<reopenRfqScorecardResponse> => {
+  return cognifyFetch<reopenRfqScorecardResponse>(getReopenRfqScorecardUrl(rfq), {
+    ...options,
+    method: "POST",
+  });
 };

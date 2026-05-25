@@ -24,6 +24,7 @@ describe("Quotation comparison workspace", () => {
     render(<QuotationComparisonWorkspace rfqId="rfq-ready" />, { wrapper: TestProviders });
 
     expect(await screen.findByRole("heading", { name: "Laptop refresh program" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open scoring" })).toHaveAttribute("href", "/quotations/scoring/rfq-ready");
     expect(screen.getByText("Risk scoring not configured")).toBeInTheDocument();
     expect(screen.getByText("Comparison notes are annotations only. They do not score vendors, recommend awards, or change RFQ status.")).toBeInTheDocument();
     expect(screen.getAllByText("Northwind Traders").length).toBeGreaterThan(0);

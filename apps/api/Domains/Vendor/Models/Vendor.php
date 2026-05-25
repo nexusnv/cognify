@@ -3,6 +3,7 @@
 namespace Domains\Vendor\Models;
 
 use App\Tenancy\Tenant;
+use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\RfqInvitation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,5 +41,13 @@ class Vendor extends Model
     public function rfqInvitations(): HasMany
     {
         return $this->hasMany(RfqInvitation::class);
+    }
+
+    /**
+     * @return HasMany<Quotation, $this>
+     */
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class);
     }
 }

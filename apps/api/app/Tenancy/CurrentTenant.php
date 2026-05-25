@@ -13,6 +13,11 @@ class CurrentTenant
         $this->tenant = $tenant;
     }
 
+    public function clear(): void
+    {
+        $this->tenant = null;
+    }
+
     public function get(): Tenant
     {
         abort_unless($this->tenant instanceof Tenant, 400, 'A tenant context is required.');
