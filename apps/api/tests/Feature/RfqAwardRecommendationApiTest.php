@@ -505,7 +505,7 @@ class RfqAwardRecommendationApiTest extends TestCase
             'description' => 'Laptop',
             'quantity' => '10.0000',
             'unit' => 'each',
-            'unit_price' => $pricingMode === 'bundle' ? null : $total,
+            'unit_price' => $pricingMode === 'bundle' ? null : number_format(((float) $total) / 10, 4, '.', ''),
             'total_amount' => $pricingMode === 'bundle' ? null : $total,
             'position' => 1,
         ]);

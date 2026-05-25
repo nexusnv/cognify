@@ -129,7 +129,7 @@ Expected generated schemas:
 
 - Create: `apps/api/tests/Feature/RfqAwardRecommendationApiTest.php`
 
-- [ ] **Step 1: Write failing feature tests**
+- [x] **Step 1: Write failing feature tests**
 
 Create `apps/api/tests/Feature/RfqAwardRecommendationApiTest.php`. Reuse helper patterns from `QuotationComparisonApiTest`, `QuotationScoringApiTest`, and `QuotationNormalizationApiTest`.
 
@@ -208,7 +208,7 @@ GET /api/rfqs/{rfq}/award-recommendation
 
 Expected after logout: `401`.
 
-- [ ] **Step 2: Run the API tests to verify they fail**
+- [x] **Step 2: Run the API tests to verify they fail**
 
 Run:
 
@@ -219,7 +219,7 @@ php artisan test --filter=RfqAwardRecommendationApiTest
 
 Expected: FAIL with missing routes, missing models, or missing controller classes.
 
-- [ ] **Step 3: Commit failing tests**
+- [x] **Step 3: Commit failing tests**
 
 Run:
 
@@ -247,7 +247,7 @@ Expected: commit containing only the new failing API test file.
 - Modify: `apps/api/Domains/Quotation/Models/RfqScorecard.php`
 - Modify: `apps/api/Domains/Quotation/Models/QuotationComparisonNote.php`
 
-- [ ] **Step 1: Create the migration**
+- [x] **Step 1: Create the migration**
 
 Create `apps/api/database/migrations/2026_05_26_000000_create_rfq_award_recommendations_table.php`:
 
@@ -315,7 +315,7 @@ return new class extends Migration
 
 Important: this migration uses a normal index for status and enforces “one non-withdrawn recommendation per RFQ” in domain actions because cross-database partial uniqueness is more complex and needs careful SQLite/Postgres/MySQL handling.
 
-- [ ] **Step 2: Create state enums**
+- [x] **Step 2: Create state enums**
 
 Create `apps/api/Domains/Quotation/States/RfqAwardRecommendationStatus.php`:
 
@@ -358,7 +358,7 @@ enum RfqAwardRecommendationEvidenceType: string
 }
 ```
 
-- [ ] **Step 3: Create models with tenant invariants**
+- [x] **Step 3: Create models with tenant invariants**
 
 Create `apps/api/Domains/Quotation/Models/RfqAwardRecommendation.php`:
 
@@ -526,7 +526,7 @@ class RfqAwardRecommendationEvidence extends Model
 }
 ```
 
-- [ ] **Step 4: Add relationships to existing models**
+- [x] **Step 4: Add relationships to existing models**
 
 Modify `apps/api/Domains/Quotation/Models/Rfq.php`:
 
@@ -561,7 +561,7 @@ use Domains\Quotation\States\RfqAwardRecommendationStatus;
 
 Modify `Quotation`, `QuotationVersion`, `RfqScorecard`, and `QuotationComparisonNote` with `hasMany` relationships named `awardRecommendationEvidenceReferences()` when useful for validation. If the implementation validates evidence with direct queries instead, skip these relationships and keep validation in actions.
 
-- [ ] **Step 5: Run migration/model checks**
+- [x] **Step 5: Run migration/model checks**
 
 Run:
 
@@ -577,7 +577,7 @@ php artisan test --filter=RfqAwardRecommendationApiTest
 
 Expected: syntax checks pass; feature tests still fail on missing routes/actions/resources.
 
-- [ ] **Step 6: Commit data model**
+- [x] **Step 6: Commit data model**
 
 Run:
 
@@ -612,7 +612,7 @@ git commit -m "feat: add RFQ award recommendation model"
 - Create: `apps/api/Domains/Quotation/Http/Resources/RfqAwardRecommendationContextResource.php`
 - Modify: `apps/api/app/Providers/AppServiceProvider.php`
 
-- [ ] **Step 1: Add policy and register it**
+- [x] **Step 1: Add policy and register it**
 
 Create `RfqAwardRecommendationPolicy`:
 
@@ -663,7 +663,7 @@ Register in `apps/api/app/Providers/AppServiceProvider.php`:
 Gate::policy(RfqAwardRecommendation::class, RfqAwardRecommendationPolicy::class);
 ```
 
-- [ ] **Step 2: Create request classes**
+- [x] **Step 2: Create request classes**
 
 Create `SaveRfqAwardRecommendationRequest`:
 
@@ -728,7 +728,7 @@ class WithdrawRfqAwardRecommendationRequest extends FormRequest
 }
 ```
 
-- [ ] **Step 3: Implement context builder**
+- [x] **Step 3: Implement context builder**
 
 Create `BuildRfqAwardRecommendationContext`. It should return an array for the resource, not persist data.
 
@@ -770,7 +770,7 @@ Return this array shape:
 ]
 ```
 
-- [ ] **Step 4: Implement save action**
+- [x] **Step 4: Implement save action**
 
 Create `SaveRfqAwardRecommendation` with:
 
@@ -800,7 +800,7 @@ comparison_note -> QuotationComparisonNote where tenant_id and rfq_id match.
 scorecard -> RfqScorecard where tenant_id and rfq_id match.
 ```
 
-- [ ] **Step 5: Implement submit action**
+- [x] **Step 5: Implement submit action**
 
 Create `SubmitRfqAwardRecommendation` with:
 
@@ -820,7 +820,7 @@ Implementation rules:
 - Record `rfq_award_recommendation.submitted`.
 - Do not create `ApprovalTask`, `ApprovalInstance`, notifications, `Award`, RFQ status changes, quotation status changes, or vendor status changes.
 
-- [ ] **Step 6: Implement withdraw action**
+- [x] **Step 6: Implement withdraw action**
 
 Create `WithdrawRfqAwardRecommendation` with:
 
@@ -837,7 +837,7 @@ Implementation rules:
 - Record `rfq_award_recommendation.withdrawn`.
 - Do not reopen/edit scoring or comparison state.
 
-- [ ] **Step 7: Create resources**
+- [x] **Step 7: Create resources**
 
 `RfqAwardRecommendationResource` must output:
 
@@ -864,7 +864,7 @@ Implementation rules:
 
 `RfqAwardRecommendationContextResource` should return the context array from the builder and transform the recommendation through `RfqAwardRecommendationResource` when present.
 
-- [ ] **Step 8: Run focused API checks**
+- [x] **Step 8: Run focused API checks**
 
 Run:
 
@@ -875,7 +875,7 @@ php artisan test --filter=RfqAwardRecommendationApiTest
 
 Expected: failures only for missing controller/routes/OpenAPI if actions/resources compile, or passing tests if routes were added while implementing this task.
 
-- [ ] **Step 9: Commit actions and resources**
+- [x] **Step 9: Commit actions and resources**
 
 Run:
 
@@ -904,7 +904,7 @@ git commit -m "feat: add RFQ award recommendation domain actions"
 - Modify: `apps/api/storage/openapi/openapi.json`
 - Modify generated files under `packages/api-client/src/generated/**`
 
-- [ ] **Step 1: Create controller**
+- [x] **Step 1: Create controller**
 
 Create `RfqAwardRecommendationController`:
 
@@ -978,7 +978,7 @@ class RfqAwardRecommendationController extends Controller
 }
 ```
 
-- [ ] **Step 2: Add routes under tenant middleware**
+- [x] **Step 2: Add routes under tenant middleware**
 
 Modify `apps/api/routes/api.php` near comparison/scoring routes:
 
@@ -997,7 +997,7 @@ Add controller import:
 use Domains\Quotation\Http\Controllers\RfqAwardRecommendationController;
 ```
 
-- [ ] **Step 3: Update OpenAPI paths and schemas**
+- [x] **Step 3: Update OpenAPI paths and schemas**
 
 Modify `apps/api/storage/openapi/openapi.json`.
 
@@ -1064,7 +1064,7 @@ Add schemas matching the design spec. Required response root:
 
 Use camelCase property names in OpenAPI and web code.
 
-- [ ] **Step 4: Generate and verify API client**
+- [x] **Step 4: Generate and verify API client**
 
 Run:
 
@@ -1075,7 +1075,7 @@ pnpm check:api-contract
 
 Expected: generated client exports functions and schemas listed in the file map, and contract check passes.
 
-- [ ] **Step 5: Run API tests**
+- [x] **Step 5: Run API tests**
 
 Run:
 
@@ -1086,7 +1086,7 @@ php artisan test --filter=RfqAwardRecommendationApiTest
 
 Expected: all award recommendation API tests pass.
 
-- [ ] **Step 6: Commit controller, contract, and generated client**
+- [x] **Step 6: Commit controller, contract, and generated client**
 
 Run:
 
@@ -1111,7 +1111,7 @@ git commit -m "feat: expose RFQ award recommendation API"
 - Create: `apps/web/features/quotations/mocks/quotation-award-recommendation-handlers.ts`
 - Create: `apps/web/features/quotations/tests/quotation-award-recommendation-api.test.ts`
 
-- [ ] **Step 1: Write web API tests**
+- [x] **Step 1: Write web API tests**
 
 Create `quotation-award-recommendation-api.test.ts`:
 
@@ -1176,7 +1176,7 @@ describe("quotation award recommendation api", () => {
 
 Adjust imported fixture helper name after creating fixtures.
 
-- [ ] **Step 2: Create API wrappers**
+- [x] **Step 2: Create API wrappers**
 
 Create `quotation-award-recommendation-api.ts` using generated functions:
 
@@ -1230,7 +1230,7 @@ export async function withdrawRfqAwardRecommendation(
 
 Use the actual generated function signatures after `pnpm generate:api`; do not hand-write generated response types.
 
-- [ ] **Step 3: Create hooks**
+- [x] **Step 3: Create hooks**
 
 `use-rfq-award-recommendation.ts`:
 
@@ -1257,7 +1257,7 @@ export function useRfqAwardRecommendation(rfqId: string) {
 
 `use-rfq-award-recommendation-actions.ts` should define `useSaveRfqAwardRecommendation`, `useSubmitRfqAwardRecommendation`, and `useWithdrawRfqAwardRecommendation` using `useMutation`, invalidating `rfqAwardRecommendationQueryKey(rfqId, tenantId)` on success.
 
-- [ ] **Step 4: Create MSW fixtures and handlers**
+- [x] **Step 4: Create MSW fixtures and handlers**
 
 Fixtures must include:
 
@@ -1284,7 +1284,7 @@ Submit handler rules:
 - Return `409` when recommendation is already `pending_approval`.
 - Return `200` and set status to `pending_approval` when valid.
 
-- [ ] **Step 5: Run web API tests**
+- [x] **Step 5: Run web API tests**
 
 Run:
 
@@ -1294,7 +1294,7 @@ pnpm --filter @cognify/web exec vitest run features/quotations/tests/quotation-a
 
 Expected: tests pass.
 
-- [ ] **Step 6: Commit web API layer**
+- [x] **Step 6: Commit web API layer**
 
 Run:
 
@@ -1326,7 +1326,7 @@ git commit -m "feat: add award recommendation web API layer"
 - Modify: `apps/web/components/shell/shell-route-config.ts`
 - Modify: `apps/web/components/shell/shell-route-config.test.tsx`
 
-- [ ] **Step 1: Write workspace tests**
+- [x] **Step 1: Write workspace tests**
 
 Create `rfq-award-recommendation-workspace.test.tsx` covering:
 
@@ -1349,7 +1349,7 @@ expect(screen.getByRole("button", { name: "Submit for approval" })).toBeDisabled
 expect(await screen.findByText("Scorecard must be completed before submission.")).toBeInTheDocument();
 ```
 
-- [ ] **Step 2: Create route page**
+- [x] **Step 2: Create route page**
 
 Create `apps/web/app/(workspace)/quotations/awards/[rfqId]/page.tsx`:
 
@@ -1362,7 +1362,7 @@ export default async function RfqAwardRecommendationPage({ params }: { params: P
 }
 ```
 
-- [ ] **Step 3: Build workspace composition**
+- [x] **Step 3: Build workspace composition**
 
 Create `rfq-award-recommendation-workspace.tsx` with:
 
@@ -1392,7 +1392,7 @@ function submitBlocked(context: RfqAwardRecommendationContext, draft: DraftState
 }
 ```
 
-- [ ] **Step 4: Build vendor option component**
+- [x] **Step 4: Build vendor option component**
 
 `rfq-award-vendor-option-list.tsx` should render a dense table/list:
 
@@ -1406,7 +1406,7 @@ function submitBlocked(context: RfqAwardRecommendationContext, draft: DraftState
 
 Use stable row keys from `vendor.vendorId`.
 
-- [ ] **Step 5: Build rationale form**
+- [x] **Step 5: Build rationale form**
 
 `rfq-award-rationale-form.tsx` should render fields:
 
@@ -1417,7 +1417,7 @@ Use stable row keys from `vendor.vendorId`.
 
 Use `Textarea` from `@cognify/ui`. Disable all fields when recommendation status is `pending_approval` or `withdrawn`.
 
-- [ ] **Step 6: Build evidence selector**
+- [x] **Step 6: Build evidence selector**
 
 `rfq-award-evidence-selector.tsx` should render checkbox-style references from context:
 
@@ -1432,7 +1432,7 @@ Keep the selector deterministic. It should emit:
 { type: "scorecard", id: context.scorecard.id, label: "Completed scoring matrix" }
 ```
 
-- [ ] **Step 7: Build decision summary**
+- [x] **Step 7: Build decision summary**
 
 `rfq-award-decision-summary.tsx` should show:
 
@@ -1444,7 +1444,7 @@ Keep the selector deterministic. It should emit:
 - pending approval explanation
 - withdrawal reason when withdrawn
 
-- [ ] **Step 8: Link from comparison and scoring workspaces**
+- [x] **Step 8: Link from comparison and scoring workspaces**
 
 Modify `quotation-comparison-workspace.tsx` and `rfq-scoring-workspace.tsx` to include:
 
@@ -1459,13 +1459,13 @@ Modify `quotation-comparison-workspace.tsx` and `rfq-scoring-workspace.tsx` to i
 
 Only show the link when the current comparison/scoring permissions indicate the buyer/admin can manage the workflow. If no specific award permission is available on those responses yet, show it for existing buyer/admin quotation workspace users and rely on the award endpoint for enforcement.
 
-- [ ] **Step 9: Add shell route config**
+- [x] **Step 9: Add shell route config**
 
 Modify `apps/web/components/shell/shell-route-config.ts` to include a route label for `/quotations/awards/[rfqId]` equivalent to "Award recommendation".
 
 Update `shell-route-config.test.tsx` with an assertion that the route resolves to the expected label.
 
-- [ ] **Step 10: Run workspace tests**
+- [x] **Step 10: Run workspace tests**
 
 Run:
 
@@ -1475,7 +1475,7 @@ pnpm --filter @cognify/web exec vitest run features/quotations/tests/rfq-award-r
 
 Expected: all award recommendation web tests pass.
 
-- [ ] **Step 11: Commit workspace UI**
+- [x] **Step 11: Commit workspace UI**
 
 Run:
 
@@ -1504,7 +1504,7 @@ git commit -m "feat: add RFQ award recommendation workspace"
 - Optionally modify: `apps/api/database/seeders/Demo/DemoRoadmapPreviewSeeder.php`
 - Optionally modify: `apps/web/features/quotations/mocks/quotation-award-recommendation-fixtures.ts`
 
-- [ ] **Step 1: Update roadmap**
+- [x] **Step 1: Update roadmap**
 
 Modify P1-32 row in `docs/01-product/feature-roadmap.md`:
 
@@ -1512,7 +1512,7 @@ Modify P1-32 row in `docs/01-product/feature-roadmap.md`:
 | P1-32 | Recommendation and Award Decision | Let buyers select a recommended vendor, explain the rationale, attach supporting evidence, and route the decision for approval if required. The award decision should be auditable. | Fully Implemented | 2026-05-25-recommendation-award-decision-design.md | 2026-05-26-recommendation-award-decision.md |  | Implemented as RFQ-level award recommendations with draft, pending approval, and withdrawn states, evidence references to existing quotation/comparison/scoring artifacts, audit events, and no approval-task, awarded-state, vendor-notification, or PO-handoff side effects. |
 ```
 
-- [ ] **Step 2: Add or confirm demo/mock data**
+- [x] **Step 2: Add or confirm demo/mock data**
 
 Ensure MSW fixtures expose at least:
 
@@ -1524,7 +1524,7 @@ Ensure MSW fixtures expose at least:
 
 If local demo seeders already include enough RFQ/quotation/scoring data for manual review, do not broaden backend seeders. If a seeded recommendation is useful for demos, add one deterministic draft or pending recommendation to `DemoRoadmapPreviewSeeder` using the new model and evidence references.
 
-- [ ] **Step 3: Run focused API verification**
+- [x] **Step 3: Run focused API verification**
 
 Run:
 
@@ -1537,7 +1537,7 @@ php artisan test --filter=QuotationScoringApiTest
 
 Expected: all pass.
 
-- [ ] **Step 4: Run contract verification**
+- [x] **Step 4: Run contract verification**
 
 Run:
 
@@ -1547,7 +1547,7 @@ pnpm check:api-contract
 
 Expected: OpenAPI export and generated client are in sync.
 
-- [ ] **Step 5: Run focused web verification**
+- [x] **Step 5: Run focused web verification**
 
 Run:
 
@@ -1558,7 +1558,7 @@ pnpm --filter @cognify/web exec vitest run features/quotations/tests/quotation-c
 
 Expected: all pass.
 
-- [ ] **Step 6: Run repo-level checks**
+- [x] **Step 6: Run repo-level checks**
 
 Run:
 
@@ -1570,7 +1570,7 @@ git diff --check
 
 Expected: all pass.
 
-- [ ] **Step 7: Manual route smoke if dev server is available**
+- [x] **Step 7: Manual route smoke if dev server is available**
 
 Run:
 
@@ -1593,7 +1593,7 @@ Expected:
 
 Stop the dev server after smoke testing if it was started only for this verification.
 
-- [ ] **Step 8: Final commit**
+- [x] **Step 8: Final commit**
 
 Run:
 

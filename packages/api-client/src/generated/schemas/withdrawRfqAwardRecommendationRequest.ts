@@ -6,6 +6,9 @@
  */
 
 export interface WithdrawRfqAwardRecommendationRequest {
-  /** @maxLength 2000 */
+  /**
+   * @minLength 1
+   * @maxLength 2000
+   */
   reason: string;
 }

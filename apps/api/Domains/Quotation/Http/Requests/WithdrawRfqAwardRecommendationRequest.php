@@ -17,7 +17,7 @@ class WithdrawRfqAwardRecommendationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => ['required', 'string', 'max:2000'],
+            'reason' => ['required', 'string', 'min:1', 'max:2000'],
         ];
     }
 }

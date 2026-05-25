@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Textarea } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import type { RfqAwardRecommendation, RfqAwardRecommendationEvidenceReferenceInput } from "@cognify/api-client/schemas";
@@ -27,32 +27,6 @@ type DraftState = {
 
 export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
   const query = useRfqAwardRecommendation(rfqId);
-  const save = useSaveRfqAwardRecommendation(rfqId);
-  const submit = useSubmitRfqAwardRecommendation(rfqId);
-  const withdraw = useWithdrawRfqAwardRecommendation(rfqId);
-  const [draft, setDraft] = useState<DraftState | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSyncedKey, setLastSyncedKey] = useState<string | null>(null);
-  const [withdrawReason, setWithdrawReason] = useState("");
-  const [lastMutation, setLastMutation] = useState<"save" | "submit" | "withdraw" | null>(null);
-
-  useEffect(() => {
-    if (!query.data) return;
-    const nextKey = recommendationSyncKey(query.data);
-    const shouldForceSync = save.isSuccess || submit.isSuccess || withdraw.isSuccess;
-    const changedOnServer = nextKey !== lastSyncedKey;
-
-    if (changedOnServer && (!isDirty || shouldForceSync || !draft)) {
-      setDraft(buildDraftState(query.data));
-      setIsDirty(false);
-      setLastSyncedKey(nextKey);
-      if (shouldForceSync) {
-        save.reset();
-        submit.reset();
-        withdraw.reset();
-      }
-    }
-  }, [query.data, draft, isDirty, lastSyncedKey, save, submit, withdraw]);
 
   if (query.isLoading) {
     return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading RFQ award recommendation workspace</div>;
@@ -68,11 +42,24 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
     return <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">{message}</div>;
   }
 
-  if (!draft) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading award recommendation</div>;
-  }
+  return <RfqAwardRecommendationWorkspaceContent key={rfqId} initialContext={query.data} rfqId={rfqId} />;
+}
 
-  const { data: context } = query;
+function RfqAwardRecommendationWorkspaceContent({
+  initialContext,
+  rfqId,
+}: {
+  initialContext: RfqAwardRecommendation;
+  rfqId: string;
+}) {
+  const save = useSaveRfqAwardRecommendation(rfqId);
+  const submit = useSubmitRfqAwardRecommendation(rfqId);
+  const withdraw = useWithdrawRfqAwardRecommendation(rfqId);
+  const [context, setContext] = useState(initialContext);
+  const [draft, setDraft] = useState<DraftState>(() => buildDraftState(initialContext));
+  const [withdrawReason, setWithdrawReason] = useState("");
+  const [lastMutation, setLastMutation] = useState<"save" | "submit" | "withdraw" | null>(null);
+
   const recommendationStatus = context.recommendation?.status ?? "draft";
   const isPending = recommendationStatus === "pending_approval";
   const isReadOnly = isPending || !context.permissions.canManageAwardRecommendation;
@@ -142,6 +129,11 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
               riskSummary: draft.riskSummary || null,
               exceptionSummary: draft.exceptionSummary || null,
               evidenceReferences: draft.evidenceReferences,
+            }, {
+              onSuccess: (nextContext) => {
+                setContext(nextContext);
+                setDraft(buildDraftState(nextContext));
+              },
             });
           }}
         >
@@ -163,6 +155,11 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
               riskSummary: draft.riskSummary || null,
               exceptionSummary: draft.exceptionSummary || null,
               evidenceReferences: draft.evidenceReferences,
+            }, {
+              onSuccess: (nextContext) => {
+                setContext(nextContext);
+                setDraft(buildDraftState(nextContext));
+              },
             });
           }}
         >
@@ -186,7 +183,6 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
             recommendedQuotationVersionId: option.quotationVersionId,
             scorecardId: context.scorecard?.id ?? null,
           } : current);
-          setIsDirty(true);
         }}
       />
       <section id="rationale">
@@ -198,7 +194,6 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
           readOnly={isReadOnly}
           onChange={(field, value) => {
             setDraft((current) => current ? { ...current, [field]: value } : current);
-            setIsDirty(true);
           }}
         />
       </section>
@@ -209,7 +204,6 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
           readOnly={isReadOnly}
           onChange={(selected) => {
             setDraft((current) => current ? { ...current, evidenceReferences: selected } : current);
-            setIsDirty(true);
           }}
         />
       </section>
@@ -224,7 +218,13 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
               setLastMutation("withdraw");
               save.reset();
               submit.reset();
-              withdraw.mutate({ reason: withdrawReason.trim() });
+              withdraw.mutate({ reason: withdrawReason.trim() }, {
+                onSuccess: (nextContext) => {
+                  setContext(nextContext);
+                  setDraft(buildDraftState(nextContext));
+                  setWithdrawReason("");
+                },
+              });
             }}
           >
             Withdraw recommendation
@@ -278,13 +278,6 @@ function buildDraftState(context: RfqAwardRecommendation): DraftState {
       label: item.label,
     })),
   };
-}
-
-function recommendationSyncKey(context: RfqAwardRecommendation): string {
-  return JSON.stringify({
-    recommendation: context.recommendation,
-    selectedEvidence: context.evidenceReferences.filter((item) => item.selected).map((item) => `${item.type}:${item.id}`),
-  });
 }
 
 function getMutationErrorMessage(error: unknown): string {
