@@ -16,7 +16,7 @@ export function RfqScorecardComparisonContext({ scorecard }: { scorecard: RfqSco
         </div>
       </dl>
       <Link className="mt-4 inline-flex text-sm font-medium underline-offset-4 hover:underline" href={scorecard.comparisonContext.comparisonPath}>
-        Back to comparison
+        View comparison context
       </Link>
     </section>
   );

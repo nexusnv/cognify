@@ -36,6 +36,7 @@ const QUOTATION_NORMALIZATION_WORKSPACE_PATH = /^\/quotations\/normalizations\/[
 const QUOTATION_COMPARISON_WORKSPACE_PATH = /^\/quotations\/comparisons\/[^/]+$/;
 const QUOTATION_SCORING_WORKSPACE_PATH = /^\/quotations\/scoring\/[^/]+$/;
 const QUOTATION_SCORING_TEMPLATE_WORKSPACE_PATH = /^\/quotations\/scoring\/templates\/[^/]+$/;
+const QUOTATION_AWARD_WORKSPACE_PATH = /^\/quotations\/awards\/[^/]+$/;
 
 export const shellNavGroups: ShellNavGroup[] = [
   {
@@ -188,6 +189,13 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
       { label: "Quotations", href: "/quotations/normalizations" },
       { label: "Scoring" },
       { label: "RFQ" },
+    ];
+  }
+
+  if (QUOTATION_AWARD_WORKSPACE_PATH.test(normalizedPathname)) {
+    return [
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Award recommendation" },
     ];
   }
 

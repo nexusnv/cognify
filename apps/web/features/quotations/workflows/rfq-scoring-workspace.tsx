@@ -64,6 +64,9 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
   const readyToComplete = scorecard.completion.missingRequiredScoreCount === 0;
   const serverDrafts = scorecardDrafts(scorecard);
   const visibleDrafts = { ...serverDrafts, ...drafts };
+  const canAccessAwardRecommendation = scorecard.permissions.canManageScores
+    || scorecard.permissions.canApplyScorecard
+    || scorecard.permissions.canManageScoringTemplates;
 
   return (
     <RecordWorkspaceLayout
@@ -89,8 +92,16 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
           className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
           href={scorecard.comparisonContext.comparisonPath}
         >
-          Back to comparison
+          Open comparison
         </Link>
+        {canAccessAwardRecommendation ? (
+          <Link
+            className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
+            href={`/quotations/awards/${scorecard.rfq.id}`}
+          >
+            Award recommendation
+          </Link>
+        ) : null}
         {!completed ? (
           <Button disabled={!readyToComplete || completeScorecard.isPending} onClick={() => completeScorecard.mutate()}>
             Complete scoring
