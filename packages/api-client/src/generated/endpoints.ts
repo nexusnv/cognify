@@ -84,6 +84,7 @@ import type {
   RequisitionListResponse,
   RequisitionResponse,
   RequisitionTemplateListResponse,
+  RfqAwardRecommendationResponse,
   RfqCancelRequest,
   RfqInvitationListResponse,
   RfqInvitationPortalLinkResponse,
@@ -98,6 +99,7 @@ import type {
   SaveQuotationNormalizationCorrectionsRequest,
   SaveQuotationNormalizationLineMappingsRequest,
   SaveQuotationScoringTemplateRequest,
+  SaveRfqAwardRecommendationRequest,
   SearchResponse,
   SetCurrentTenantRequest,
   SourcingIntakeReviewCloseRequest,
@@ -111,6 +113,7 @@ import type {
   StoreApprovalPolicyVersionRequest,
   StoreProcurementProjectRequest,
   SubmitRequisitionResponse,
+  SubmitRfqAwardRecommendationRequest,
   SystemStatusResponse,
   TooManyRequestsResponse,
   TransitionProcurementProjectRequest,
@@ -128,6 +131,7 @@ import type {
   VendorPortalRfqInvitationResponse,
   VendorQuotationVersionListResponse,
   VendorQuotationVersionResponse,
+  WithdrawRfqAwardRecommendationRequest,
 } from "./schemas";
 
 import { cognifyFetch } from "../client";
@@ -7675,4 +7679,265 @@ export const reopenRfqScorecard = async (
     ...options,
     method: "POST",
   });
+};
+
+/**
+ * @summary Show RFQ award recommendation context
+ */
+export type showRfqAwardRecommendationResponse200 = {
+  data: RfqAwardRecommendationResponse;
+  status: 200;
+};
+
+export type showRfqAwardRecommendationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showRfqAwardRecommendationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showRfqAwardRecommendationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showRfqAwardRecommendationResponseSuccess = showRfqAwardRecommendationResponse200 & {
+  headers: Headers;
+};
+export type showRfqAwardRecommendationResponseError = (
+  | showRfqAwardRecommendationResponse401
+  | showRfqAwardRecommendationResponse403
+  | showRfqAwardRecommendationResponse404
+) & {
+  headers: Headers;
+};
+
+export type showRfqAwardRecommendationResponse =
+  | showRfqAwardRecommendationResponseSuccess
+  | showRfqAwardRecommendationResponseError;
+
+export const getShowRfqAwardRecommendationUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation`;
+};
+
+export const showRfqAwardRecommendation = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<showRfqAwardRecommendationResponse> => {
+  return cognifyFetch<showRfqAwardRecommendationResponse>(getShowRfqAwardRecommendationUrl(rfq), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Save RFQ award recommendation draft
+ */
+export type saveRfqAwardRecommendationResponse200 = {
+  data: RfqAwardRecommendationResponse;
+  status: 200;
+};
+
+export type saveRfqAwardRecommendationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type saveRfqAwardRecommendationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type saveRfqAwardRecommendationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type saveRfqAwardRecommendationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type saveRfqAwardRecommendationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type saveRfqAwardRecommendationResponseSuccess = saveRfqAwardRecommendationResponse200 & {
+  headers: Headers;
+};
+export type saveRfqAwardRecommendationResponseError = (
+  | saveRfqAwardRecommendationResponse401
+  | saveRfqAwardRecommendationResponse403
+  | saveRfqAwardRecommendationResponse404
+  | saveRfqAwardRecommendationResponse409
+  | saveRfqAwardRecommendationResponse422
+) & {
+  headers: Headers;
+};
+
+export type saveRfqAwardRecommendationResponse =
+  | saveRfqAwardRecommendationResponseSuccess
+  | saveRfqAwardRecommendationResponseError;
+
+export const getSaveRfqAwardRecommendationUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation`;
+};
+
+export const saveRfqAwardRecommendation = async (
+  rfq: string,
+  saveRfqAwardRecommendationRequest: SaveRfqAwardRecommendationRequest,
+  options?: RequestInit,
+): Promise<saveRfqAwardRecommendationResponse> => {
+  return cognifyFetch<saveRfqAwardRecommendationResponse>(getSaveRfqAwardRecommendationUrl(rfq), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveRfqAwardRecommendationRequest),
+  });
+};
+
+/**
+ * @summary Submit RFQ award recommendation
+ */
+export type submitRfqAwardRecommendationResponse200 = {
+  data: RfqAwardRecommendationResponse;
+  status: 200;
+};
+
+export type submitRfqAwardRecommendationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type submitRfqAwardRecommendationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type submitRfqAwardRecommendationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type submitRfqAwardRecommendationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type submitRfqAwardRecommendationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type submitRfqAwardRecommendationResponseSuccess =
+  submitRfqAwardRecommendationResponse200 & {
+    headers: Headers;
+  };
+export type submitRfqAwardRecommendationResponseError = (
+  | submitRfqAwardRecommendationResponse401
+  | submitRfqAwardRecommendationResponse403
+  | submitRfqAwardRecommendationResponse404
+  | submitRfqAwardRecommendationResponse409
+  | submitRfqAwardRecommendationResponse422
+) & {
+  headers: Headers;
+};
+
+export type submitRfqAwardRecommendationResponse =
+  | submitRfqAwardRecommendationResponseSuccess
+  | submitRfqAwardRecommendationResponseError;
+
+export const getSubmitRfqAwardRecommendationUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/submit`;
+};
+
+export const submitRfqAwardRecommendation = async (
+  rfq: string,
+  submitRfqAwardRecommendationRequest?: SubmitRfqAwardRecommendationRequest,
+  options?: RequestInit,
+): Promise<submitRfqAwardRecommendationResponse> => {
+  return cognifyFetch<submitRfqAwardRecommendationResponse>(
+    getSubmitRfqAwardRecommendationUrl(rfq),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitRfqAwardRecommendationRequest),
+    },
+  );
+};
+
+/**
+ * @summary Withdraw RFQ award recommendation
+ */
+export type withdrawRfqAwardRecommendationResponse200 = {
+  data: RfqAwardRecommendationResponse;
+  status: 200;
+};
+
+export type withdrawRfqAwardRecommendationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type withdrawRfqAwardRecommendationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type withdrawRfqAwardRecommendationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type withdrawRfqAwardRecommendationResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type withdrawRfqAwardRecommendationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type withdrawRfqAwardRecommendationResponseSuccess =
+  withdrawRfqAwardRecommendationResponse200 & {
+    headers: Headers;
+  };
+export type withdrawRfqAwardRecommendationResponseError = (
+  | withdrawRfqAwardRecommendationResponse401
+  | withdrawRfqAwardRecommendationResponse403
+  | withdrawRfqAwardRecommendationResponse404
+  | withdrawRfqAwardRecommendationResponse409
+  | withdrawRfqAwardRecommendationResponse422
+) & {
+  headers: Headers;
+};
+
+export type withdrawRfqAwardRecommendationResponse =
+  | withdrawRfqAwardRecommendationResponseSuccess
+  | withdrawRfqAwardRecommendationResponseError;
+
+export const getWithdrawRfqAwardRecommendationUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/withdraw`;
+};
+
+export const withdrawRfqAwardRecommendation = async (
+  rfq: string,
+  withdrawRfqAwardRecommendationRequest: WithdrawRfqAwardRecommendationRequest,
+  options?: RequestInit,
+): Promise<withdrawRfqAwardRecommendationResponse> => {
+  return cognifyFetch<withdrawRfqAwardRecommendationResponse>(
+    getWithdrawRfqAwardRecommendationUrl(rfq),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(withdrawRfqAwardRecommendationRequest),
+    },
+  );
 };

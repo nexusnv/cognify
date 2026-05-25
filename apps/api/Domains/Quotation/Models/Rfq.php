@@ -6,6 +6,7 @@ use App\Tenancy\Tenant;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\Models\RfqScorecard;
+use Domains\Quotation\States\RfqAwardRecommendationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
@@ -164,5 +165,26 @@ class Rfq extends Model
     public function scorecard(): HasOne
     {
         return $this->hasOne(RfqScorecard::class);
+    }
+
+    /**
+     * @return HasMany<RfqAwardRecommendation, $this>
+     */
+    public function awardRecommendations(): HasMany
+    {
+        return $this->hasMany(RfqAwardRecommendation::class);
+    }
+
+    /**
+     * @return HasOne<RfqAwardRecommendation, $this>
+     */
+    public function activeAwardRecommendation(): HasOne
+    {
+        return $this->hasOne(RfqAwardRecommendation::class)
+            ->whereIn('status', [
+                RfqAwardRecommendationStatus::Draft->value,
+                RfqAwardRecommendationStatus::PendingApproval->value,
+            ])
+            ->latestOfMany('created_at');
     }
 }

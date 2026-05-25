@@ -98,6 +98,14 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
         >
           Open scoring
         </Link>
+        {comparison.permissions.canManageQuotationComparisonNotes ? (
+          <Link
+            className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
+            href={`/quotations/awards/${comparison.rfq.id}`}
+          >
+            Award recommendation
+          </Link>
+        ) : null}
       </div>
       <QuotationComparisonReadinessBanner readiness={comparison.readiness} />
       <QuotationComparisonVendorSummary vendors={comparison.vendors} />

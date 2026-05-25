@@ -25,6 +25,7 @@ describe("Quotation comparison workspace", () => {
 
     expect(await screen.findByRole("heading", { name: "Laptop refresh program" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open scoring" })).toHaveAttribute("href", "/quotations/scoring/rfq-ready");
+    expect(screen.getByRole("link", { name: "Award recommendation" })).toHaveAttribute("href", "/quotations/awards/rfq-ready");
     expect(screen.getByText("Risk scoring not configured")).toBeInTheDocument();
     expect(screen.getByText("Comparison notes are annotations only. They do not score vendors, recommend awards, or change RFQ status.")).toBeInTheDocument();
     expect(screen.getAllByText("Northwind Traders").length).toBeGreaterThan(0);
@@ -150,6 +151,7 @@ describe("Quotation comparison workspace", () => {
     expect(screen.queryByRole("button", { name: "Add note" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit note" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Delete note" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Award recommendation" })).not.toBeInTheDocument();
   });
 });
 

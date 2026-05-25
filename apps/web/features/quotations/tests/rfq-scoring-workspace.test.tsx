@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { server } from "@/tests/msw/server";
 import { quotationScoringHandlers, resetQuotationScoringMockState } from "../mocks/quotation-scoring-handlers";
+import { getRfqScorecardFixture } from "../mocks/quotation-scoring-fixtures";
 import { RfqScoringWorkspace } from "../workflows/rfq-scoring-workspace";
 
 describe("RFQ scoring workspace", () => {
@@ -102,10 +104,43 @@ describe("RFQ scoring workspace", () => {
     render(<RfqScoringWorkspace rfqId="rfq-ready" />, { wrapper: TestProviders });
 
     expect(await screen.findByRole("heading", { name: "Laptop refresh program" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Back to comparison" })[0]).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Back to comparison" })).toHaveAttribute(
       "href",
       "/quotations/comparisons/rfq-ready",
     );
+    expect(screen.getByRole("link", { name: "Open comparison" })).toHaveAttribute(
+      "href",
+      "/quotations/comparisons/rfq-ready",
+    );
+    expect(screen.getByRole("link", { name: "Award recommendation" })).toHaveAttribute(
+      "href",
+      "/quotations/awards/rfq-ready",
+    );
+  });
+
+  it("hides award recommendation link when scoring permissions do not allow management", async () => {
+    server.use(
+      http.get("/api/rfqs/rfq-no-award-link/scorecard", () => {
+        const scorecard = getRfqScorecardFixture("rfq-ready");
+        return HttpResponse.json({
+          data: {
+            ...scorecard,
+            rfq: { ...scorecard?.rfq, id: "rfq-no-award-link" },
+            permissions: {
+              canViewScorecard: true,
+              canApplyScorecard: false,
+              canManageScores: false,
+              canManageScoringTemplates: false,
+            },
+          },
+        });
+      }),
+    );
+
+    render(<RfqScoringWorkspace rfqId="rfq-no-award-link" />, { wrapper: TestProviders });
+
+    expect(await screen.findByRole("heading", { name: "Laptop refresh program" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Award recommendation" })).not.toBeInTheDocument();
   });
 });
 

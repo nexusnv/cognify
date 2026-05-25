@@ -38,6 +38,10 @@ describe("shell route helpers", () => {
       { label: "Scoring" },
       { label: "RFQ" },
     ]);
+    expect(getBreadcrumbs("/quotations/awards/rfq-1")).toEqual([
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Award recommendation" },
+    ]);
     expect(getBreadcrumbs("/quotations/scoring/templates")).toEqual([
       { label: "Quotations", href: "/quotations/normalizations" },
       { label: "Scoring Templates" },

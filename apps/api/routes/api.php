@@ -22,6 +22,7 @@ use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
 use Domains\Quotation\Http\Controllers\RfqController;
+use Domains\Quotation\Http\Controllers\RfqAwardRecommendationController;
 use Domains\Quotation\Http\Controllers\RfqInvitationController;
 use Domains\Quotation\Http\Controllers\RfqScorecardController;
 use Domains\Quotation\Http\Controllers\QuotationComparisonController;
@@ -129,6 +130,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::patch('/rfqs/{rfq}/scorecard/scores', [RfqScorecardController::class, 'updateScores']);
             Route::post('/rfqs/{rfq}/scorecard/complete', [RfqScorecardController::class, 'complete']);
             Route::post('/rfqs/{rfq}/scorecard/reopen', [RfqScorecardController::class, 'reopen']);
+            Route::get('/rfqs/{rfq}/award-recommendation', [RfqAwardRecommendationController::class, 'show']);
+            Route::put('/rfqs/{rfq}/award-recommendation', [RfqAwardRecommendationController::class, 'save']);
+            Route::post('/rfqs/{rfq}/award-recommendation/submit', [RfqAwardRecommendationController::class, 'submit']);
+            Route::post('/rfqs/{rfq}/award-recommendation/withdraw', [RfqAwardRecommendationController::class, 'withdraw']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);
