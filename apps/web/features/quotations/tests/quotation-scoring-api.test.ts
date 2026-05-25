@@ -40,6 +40,8 @@ describe("quotation scoring api", () => {
 
     expect(scorecard.scorecard.templateId).toBe("template-balanced");
     expect(scorecard.criteria.length).toBeGreaterThan(0);
+    expect(scorecard.entries).toEqual([]);
+    expect(scorecard.completion.missingRequiredScoreCount).toBe(4);
     expect(scorecard.rfq.id).toBe("rfq-no-scorecard");
   });
 

@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Auth\TenantRole;
+use App\Http\Middleware\RequireTenantHeader;
 use App\Models\User;
+use App\Tenancy\AmbiguousTenantException;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Quotation\Models\Quotation;
@@ -19,10 +21,12 @@ use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 class QuotationScoringApiTest extends TestCase
@@ -829,6 +833,21 @@ class QuotationScoringApiTest extends TestCase
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertUnauthorized();
+    }
+
+    public function test_require_tenant_header_rejects_repeated_header_values(): void
+    {
+        $request = new class extends Request
+        {
+            public function header($key = null, $default = null)
+            {
+                return ['tenant-a', 'tenant-b'];
+            }
+        };
+
+        $this->expectException(AmbiguousTenantException::class);
+
+        app(RequireTenantHeader::class)->handle($request, fn (): Response => new Response('ok'));
     }
 
     private function actingAsTenant(Tenant $tenant, User $user): self

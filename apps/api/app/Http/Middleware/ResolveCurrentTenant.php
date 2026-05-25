@@ -34,7 +34,11 @@ class ResolveCurrentTenant
             ->whereIn('id', DB::table('tenant_user')->select('tenant_id')->where('user_id', $user->id));
 
         $tenantId = $request->header('X-Tenant-Id');
-        $tenantId = $tenantId !== null ? trim($tenantId) : null;
+        if (is_array($tenantId)) {
+            throw new AmbiguousTenantException('X-Tenant-Id header is required for users with multiple tenants.');
+        }
+
+        $tenantId = is_string($tenantId) ? trim($tenantId) : null;
         if ($tenantId === null || $tenantId === '') {
             if ($membershipCount > 1) {
                 throw new AmbiguousTenantException('X-Tenant-Id header is required for users with multiple tenants.');

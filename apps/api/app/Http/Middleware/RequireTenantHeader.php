@@ -15,7 +15,11 @@ class RequireTenantHeader
     public function handle(Request $request, Closure $next): Response
     {
         $tenantId = $request->header('X-Tenant-Id');
-        $tenantId = $tenantId !== null ? trim($tenantId) : null;
+        if (is_array($tenantId)) {
+            throw new AmbiguousTenantException('X-Tenant-Id header is required for quotation scoring routes.');
+        }
+
+        $tenantId = is_string($tenantId) ? trim($tenantId) : null;
 
         if ($tenantId === null || $tenantId === '') {
             throw new AmbiguousTenantException('X-Tenant-Id header is required for quotation scoring routes.');

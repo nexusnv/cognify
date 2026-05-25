@@ -109,6 +109,7 @@ export function createRfqScorecardFixture(rfqId: string, templateId: string): Rf
     required: criterion.required,
     displayOrder: criterion.displayOrder,
   }));
+  scorecard.entries = [];
   recalculate(scorecard);
   scorecards[rfqId] = scorecard;
 
