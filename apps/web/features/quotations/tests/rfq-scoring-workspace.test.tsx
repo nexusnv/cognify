@@ -58,6 +58,18 @@ describe("RFQ scoring workspace", () => {
     await waitFor(() => {
       expect(within(matrix).getAllByLabelText("Score")[0]).toHaveValue("9");
     });
+    expect(screen.queryByText("Missing required score")).not.toBeInTheDocument();
+  });
+
+  it("rejects invalid score values before saving", async () => {
+    render(<RfqScoringWorkspace rfqId="rfq-ready" />, { wrapper: TestProviders });
+
+    await screen.findByRole("heading", { name: "Laptop refresh program" });
+    const matrix = screen.getByLabelText("Score matrix");
+    fireEvent.change(within(matrix).getAllByLabelText("Score")[0], { target: { value: "abc" } });
+
+    expect(await within(matrix).findByText("Invalid score")).toBeInTheDocument();
+    expect(within(matrix).getByRole("button", { name: "Save scores" })).toBeDisabled();
   });
 
   it("shows missing required score indicators", async () => {

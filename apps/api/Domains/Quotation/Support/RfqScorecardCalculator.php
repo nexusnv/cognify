@@ -9,13 +9,18 @@ use Domains\Quotation\Models\RfqScorecardEntry;
 
 class RfqScorecardCalculator
 {
-    public function weightedContribution(float $score, int $maxScore, float $weight): string
+    public function weightedContribution(float $score, int $maxScore, float $weight): float
     {
         if ($maxScore <= 0) {
-            return $this->decimal(0);
+            return 0.0;
         }
 
-        return $this->decimal(($score / $maxScore) * $weight);
+        return ($score / $maxScore) * $weight;
+    }
+
+    public function formattedWeightedContribution(float $score, int $maxScore, float $weight): string
+    {
+        return $this->decimal($this->weightedContribution($score, $maxScore, $weight));
     }
 
     /**
@@ -63,7 +68,7 @@ class RfqScorecardCalculator
 
                     $score = (float) $entry->score;
                     $rawTotal += $score;
-                    $weightedTotal += (float) $this->weightedContribution(
+                    $weightedTotal += $this->weightedContribution(
                         $score,
                         $criterion->max_score,
                         (float) $criterion->weight,
@@ -95,6 +100,22 @@ class RfqScorecardCalculator
     public function completionSummary(RfqScorecard $scorecard): array
     {
         $vendorTotals = $this->vendorTotals($scorecard);
+
+        return $this->completionSummaryFromTotals($scorecard, $vendorTotals);
+    }
+
+    /**
+     * @param array<int, array{missingRequiredCount: int}> $vendorTotals
+     * @return array{
+     *     status: string,
+     *     scoreableVendorCount: int,
+     *     requiredScoreCount: int,
+     *     completedRequiredScoreCount: int,
+     *     missingRequiredScoreCount: int
+     * }
+     */
+    public function completionSummaryFromTotals(RfqScorecard $scorecard, array $vendorTotals): array
+    {
         $scoreableVendorCount = count($vendorTotals);
         $requiredCriterionCount = $this->requiredCriterionCount($scorecard);
         $requiredScoreCount = $scoreableVendorCount * $requiredCriterionCount;

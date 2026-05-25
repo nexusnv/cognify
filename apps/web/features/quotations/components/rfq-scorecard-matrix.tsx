@@ -17,6 +17,8 @@ export function RfqScorecardMatrix({
   onDraftChange: (key: string, draft: { score: string; note: string }) => void;
   onSave: (entries: UpdateScoreEntryInput[]) => void;
 }) {
+  const hasInvalidScores = hasInvalidDraft(scorecard, drafts);
+
   return (
     <section className="space-y-3" aria-label="Score matrix">
       <div className="overflow-x-auto rounded-md border">
@@ -42,6 +44,7 @@ export function RfqScorecardMatrix({
                 {scorecard.vendors.map((vendor) => {
                   const key = cellKey(criterion.id, vendor.vendorId);
                   const draft = drafts[key] ?? { score: "", note: "" };
+                  const state = scoreState(draft.score);
 
                   return (
                     <td key={key} className="w-72 px-4 py-3">
@@ -64,9 +67,10 @@ export function RfqScorecardMatrix({
                           onChange={(event) => onDraftChange(key, { ...draft, note: event.target.value })}
                         />
                       </label>
-                      {criterion.required && draft.score === "" ? (
+                      {criterion.required && state === "missing" ? (
                         <p className="mt-1 text-xs text-red-700">Missing required score</p>
                       ) : null}
+                      {state === "invalid" ? <p className="mt-1 text-xs text-red-700">Invalid score</p> : null}
                     </td>
                   );
                 })}
@@ -75,7 +79,7 @@ export function RfqScorecardMatrix({
           </tbody>
         </table>
       </div>
-      <Button disabled={readOnly || isSaving} onClick={() => onSave(toEntries(scorecard, drafts))}>
+      <Button disabled={readOnly || isSaving || hasInvalidScores} onClick={() => onSave(toEntries(scorecard, drafts))}>
         Save scores
       </Button>
     </section>
@@ -107,7 +111,7 @@ function toEntries(scorecard: RfqScorecard, drafts: Record<string, { score: stri
         vendorId: vendor.vendorId,
         quotationId: vendor.quotationId,
         quotationVersionId: vendor.quotationVersionId,
-        score: draft.score === "" ? null : Number(draft.score),
+        score: scoreState(draft.score) === "missing" ? null : Number(draft.score.trim()),
         note: draft.note.trim() || null,
       };
     }),
@@ -116,4 +120,20 @@ function toEntries(scorecard: RfqScorecard, drafts: Record<string, { score: stri
 
 function cellKey(criterionId: string, vendorId: string): string {
   return `${criterionId}:${vendorId}`;
+}
+
+function scoreState(score: string): "missing" | "invalid" | "valid" {
+  const trimmed = score.trim();
+  if (trimmed === "") return "missing";
+
+  return Number.isFinite(Number(trimmed)) ? "valid" : "invalid";
+}
+
+function hasInvalidDraft(scorecard: RfqScorecard, drafts: Record<string, { score: string; note: string }>): boolean {
+  return scorecard.vendors.some((vendor) => {
+    return scorecard.criteria.some((criterion) => {
+      const draft = drafts[cellKey(criterion.id, vendor.vendorId)] ?? { score: "", note: "" };
+      return scoreState(draft.score) === "invalid";
+    });
+  });
 }

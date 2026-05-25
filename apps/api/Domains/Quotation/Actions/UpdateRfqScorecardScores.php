@@ -201,21 +201,40 @@ class UpdateRfqScorecardScores
         }
 
         return array_map(function (array $entry): array {
+            $quotationId = $this->optionalStringId($entry, 'quotationId');
+            $quotationVersionId = $this->optionalStringId($entry, 'quotationVersionId');
+
+            if ($quotationVersionId !== null && $quotationId === null) {
+                throw ValidationException::withMessages([
+                    'entries' => ['A quotation version can only be scored with its quotation.'],
+                ]);
+            }
+
             return [
                 'criterionId' => (string) $entry['criterionId'],
                 'vendorId' => (string) $entry['vendorId'],
-                'quotationId' => array_key_exists('quotationId', $entry) && $entry['quotationId'] !== null && $entry['quotationId'] !== ''
-                    ? (string) $entry['quotationId']
-                    : null,
-                'quotationVersionId' => array_key_exists('quotationVersionId', $entry) && $entry['quotationVersionId'] !== null
-                    ? (string) $entry['quotationVersionId']
-                    : null,
+                'quotationId' => $quotationId,
+                'quotationVersionId' => $quotationVersionId,
                 'score' => $entry['score'],
                 'note' => array_key_exists('note', $entry) && $entry['note'] !== null
                     ? trim((string) $entry['note'])
                     : null,
             ];
         }, array_values($entries));
+    }
+
+    /**
+     * @param array<string, mixed> $entry
+     */
+    private function optionalStringId(array $entry, string $key): ?string
+    {
+        if (! array_key_exists($key, $entry) || $entry[$key] === null) {
+            return null;
+        }
+
+        $value = trim((string) $entry[$key]);
+
+        return $value === '' ? null : $value;
     }
 
     private function entryKey(string $criterionId, string $vendorId): string

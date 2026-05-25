@@ -11,6 +11,7 @@ use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\States\RfqScorecardStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ReopenRfqScorecard
 {
@@ -27,6 +28,10 @@ class ReopenRfqScorecard
                 ->whereKey($scorecard->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (! $lockedScorecard->statusState()->isCompleted()) {
+                throw new ConflictHttpException('Only completed scorecards can be reopened.');
+            }
 
             $lockedScorecard->forceFill([
                 'status' => RfqScorecardStatus::InProgress->value,

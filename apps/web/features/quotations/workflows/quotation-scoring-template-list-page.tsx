@@ -66,10 +66,12 @@ export function QuotationScoringTemplateListPage() {
                 <td className="px-4 py-3">{template.usageCount}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
-                    <Link className="text-sm font-medium underline-offset-4 hover:underline" href={`/quotations/scoring/templates/${template.id}`}>
-                      Edit
-                    </Link>
-                    {template.active ? (
+                    {template.permissions?.canUpdate ? (
+                      <Link className="text-sm font-medium underline-offset-4 hover:underline" href={`/quotations/scoring/templates/${template.id}`}>
+                        Edit
+                      </Link>
+                    ) : null}
+                    {template.active && template.permissions?.canDeactivate ? (
                       <button
                         className="text-sm font-medium text-red-700 underline-offset-4 hover:underline"
                         type="button"

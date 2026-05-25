@@ -10,6 +10,7 @@ import {
   reopenRfqScorecardFixture,
   resetQuotationScoringMockState,
   saveScoringTemplateFixture,
+  updateScoringTemplateFixture,
   updateRfqScorecardScoresFixture,
 } from "./quotation-scoring-fixtures";
 
@@ -62,7 +63,11 @@ export const quotationScoringHandlers = [
       return validationFailed("A scoring template requires a name and at least one criterion.");
     }
 
-    return HttpResponse.json({ data: saveScoringTemplateFixture(payload, String(params.template)) });
+    try {
+      return HttpResponse.json({ data: updateScoringTemplateFixture(String(params.template), payload) });
+    } catch (error) {
+      return notFound(error instanceof Error ? error.message : undefined);
+    }
   }),
 
   http.post("/api/quotation-scoring/templates/:template/deactivate", ({ params }) => {

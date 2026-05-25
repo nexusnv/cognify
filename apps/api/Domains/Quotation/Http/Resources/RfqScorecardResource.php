@@ -102,7 +102,7 @@ class RfqScorecardResource extends JsonResource
                 ->sortBy(['vendorId', 'criterionId'])
                 ->values()
                 ->all(),
-            'completion' => $calculator->completionSummary($scorecard),
+            'completion' => $calculator->completionSummaryFromTotals($scorecard, $vendorTotals),
             'comparisonContext' => [
                 'comparisonPath' => "/quotations/comparisons/{$rfq->id}",
                 'normalizationPaths' => $comparisonVendors
@@ -164,7 +164,7 @@ class RfqScorecardResource extends JsonResource
         $weightedContribution = null;
 
         if ($criterion !== null && $entry->score !== null) {
-            $weightedContribution = $calculator->weightedContribution(
+            $weightedContribution = $calculator->formattedWeightedContribution(
                 (float) $entry->score,
                 $criterion->max_score,
                 (float) $criterion->weight,

@@ -67,6 +67,17 @@ export function saveScoringTemplateFixture(
   return clone(template);
 }
 
+export function updateScoringTemplateFixture(
+  templateId: string,
+  payload: SaveQuotationScoringTemplateRequest,
+): QuotationScoringTemplate {
+  if (!templates.some((template) => template.id === templateId)) {
+    throw new Error("Scoring template not found.");
+  }
+
+  return saveScoringTemplateFixture(payload, templateId);
+}
+
 export function deactivateScoringTemplateFixture(templateId: string): QuotationScoringTemplate {
   const template = templates.find((item) => item.id === templateId);
   if (!template) throw new Error("Scoring template not found.");
@@ -98,6 +109,7 @@ export function createRfqScorecardFixture(rfqId: string, templateId: string): Rf
     required: criterion.required,
     displayOrder: criterion.displayOrder,
   }));
+  recalculate(scorecard);
   scorecards[rfqId] = scorecard;
 
   return clone(scorecard);
@@ -121,7 +133,7 @@ export function updateRfqScorecardScoresFixture(
       quotationVersionId: entry.quotationVersionId ?? scorecard.vendors.find((vendor) => vendor.vendorId === entry.vendorId)?.quotationVersionId ?? null,
       score: entry.score == null ? null : String(Number(entry.score).toFixed(2)),
       note: entry.note ?? null,
-      weightedContribution: entry.score == null ? null : String(Number(entry.score).toFixed(2)),
+      weightedContribution: null,
       scoredAt: "2026-05-24T08:00:00.000000Z",
     };
     if (existing) Object.assign(existing, next);
@@ -260,13 +272,28 @@ function buildScorecard(rfqId: string, status: "in_progress" | "completed", inco
           quotationVersionId: vendorItem.quotationVersionId ?? null,
           score: vendorItem.vendorId === "vendor-1" ? "8.00" : "7.00",
           note: null,
-          weightedContribution: vendorItem.vendorId === "vendor-1" ? "8.00" : "7.00",
+          weightedContribution: null,
           scoredAt: "2026-05-24T08:00:00.000000Z",
         });
       }
     }
-    recalculate(scorecard);
+  } else {
+    const vendorItem = scorecard.vendors[0];
+    for (const criterionItem of scorecard.criteria.slice(0, 2)) {
+      scorecard.entries.push({
+        criterionId: criterionItem.id,
+        vendorId: vendorItem.vendorId,
+        quotationId: vendorItem.quotationId,
+        quotationVersionId: vendorItem.quotationVersionId ?? null,
+        score: "8.00",
+        note: null,
+        weightedContribution: null,
+        scoredAt: "2026-05-24T08:00:00.000000Z",
+      });
+    }
   }
+
+  recalculate(scorecard);
 
   return scorecard;
 }
@@ -312,16 +339,60 @@ function vendor(vendorId: string, vendorName: string, quotationId: string, quota
 }
 
 function recalculate(scorecard: RfqScorecard): void {
+  let missingRequiredScoreCount = 0;
+
   for (const vendorItem of scorecard.vendors) {
     const entries = scorecard.entries.filter((entry) => entry.vendorId === vendorItem.vendorId);
-    const raw = entries.reduce((total, entry) => total + Number(entry.score ?? 0), 0);
-    const missing = scorecard.criteria.filter(
-      (criterionItem) => criterionItem.required && !entries.some((entry) => entry.criterionId === criterionItem.id && entry.score !== null),
-    ).length;
+    let raw = 0;
+    let weighted = 0;
+    let missing = 0;
+
+    for (const criterionItem of scorecard.criteria) {
+      const entry = entries.find((item) => item.criterionId === criterionItem.id);
+      const contribution = weightedContribution(entry?.score ?? null, criterionItem.maxScore, criterionItem.weight);
+
+      if (entry) {
+        entry.weightedContribution = contribution === null ? null : contribution.toFixed(2);
+      }
+
+      if (entry?.score != null) {
+        raw += Number(entry.score);
+      } else if (criterionItem.required) {
+        missing++;
+      }
+
+      weighted += contribution ?? 0;
+    }
+
+    missingRequiredScoreCount += missing;
     vendorItem.rawTotal = raw.toFixed(2);
-    vendorItem.weightedTotal = (raw / Math.max(1, scorecard.criteria.length)).toFixed(2);
+    vendorItem.weightedTotal = weighted.toFixed(2);
     vendorItem.missingRequiredCount = missing;
   }
+
+  const requiredCriterionCount = scorecard.criteria.filter((criterionItem) => criterionItem.required).length;
+  const requiredScoreCount = requiredCriterionCount * scorecard.vendors.length;
+  scorecard.completion = {
+    status: missingRequiredScoreCount === 0 ? "complete" : "incomplete",
+    requiredScoreCount,
+    completedRequiredScoreCount: requiredScoreCount - missingRequiredScoreCount,
+    missingRequiredScoreCount,
+    scoreableVendorCount: scorecard.vendors.length,
+  };
+}
+
+function weightedContribution(score: string | number | null, maxScore: string | number | null, weight: string | number | null): number | null {
+  if (score == null || maxScore == null || weight == null) return null;
+
+  const numericScore = Number(score);
+  const numericMaxScore = Number(maxScore);
+  const numericWeight = Number(weight);
+
+  if (!Number.isFinite(numericScore) || !Number.isFinite(numericMaxScore) || !Number.isFinite(numericWeight) || numericMaxScore <= 0) {
+    return null;
+  }
+
+  return (numericScore / numericMaxScore) * numericWeight;
 }
 
 function clone<T>(value: T): T {

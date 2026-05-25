@@ -76,4 +76,12 @@ class QuotationScoringTemplate extends Model
     {
         return $this->hasMany(QuotationScoringTemplateCriterion::class, 'template_id')->orderBy('display_order');
     }
+
+    /**
+     * @return HasMany<RfqScorecard, $this>
+     */
+    public function scorecards(): HasMany
+    {
+        return $this->hasMany(RfqScorecard::class, 'template_id');
+    }
 }

@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -21,8 +22,22 @@ return new class extends Migration
             $table->foreignIdFor(User::class, 'deactivated_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('deactivated_at')->nullable();
             $table->timestamps();
-            $table->unique(['tenant_id', 'name', 'is_active']);
         });
+
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver === 'mysql') {
+            DB::statement(
+                'ALTER TABLE quotation_scoring_templates ADD active_name VARCHAR(255) GENERATED ALWAYS AS (CASE WHEN is_active = 1 THEN name ELSE NULL END) STORED'
+            );
+            DB::statement(
+                'CREATE UNIQUE INDEX quotation_scoring_templates_active_name_unique ON quotation_scoring_templates (tenant_id, active_name)'
+            );
+        } else {
+            $whereActive = $driver === 'pgsql' ? 'is_active = true' : 'is_active = 1';
+            DB::statement(
+                "CREATE UNIQUE INDEX quotation_scoring_templates_active_name_unique ON quotation_scoring_templates (tenant_id, name) WHERE {$whereActive}"
+            );
+        }
 
         Schema::create('quotation_scoring_template_criteria', function (Blueprint $table): void {
             $table->uuid('id')->primary();
@@ -47,6 +62,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('quotation_scoring_template_criteria');
+        if (Schema::hasTable('quotation_scoring_templates')) {
+            if (Schema::getConnection()->getDriverName() === 'mysql') {
+                DB::statement('DROP INDEX quotation_scoring_templates_active_name_unique ON quotation_scoring_templates');
+            } else {
+                DB::statement('DROP INDEX IF EXISTS quotation_scoring_templates_active_name_unique');
+            }
+        }
         Schema::dropIfExists('quotation_scoring_templates');
     }
 };

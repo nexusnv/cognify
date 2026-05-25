@@ -32,7 +32,8 @@ class RfqScorecardCalculatorTest extends TestCase
     {
         $calculator = app(RfqScorecardCalculator::class);
 
-        $this->assertSame('40.00', $calculator->weightedContribution(8, 10, 50));
+        $this->assertSame(40.0, $calculator->weightedContribution(8, 10, 50));
+        $this->assertSame('40.00', $calculator->formattedWeightedContribution(8, 10, 50));
     }
 
     public function test_missing_scores_are_not_treated_as_zero(): void

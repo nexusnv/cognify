@@ -25,6 +25,7 @@ class QuotationScoringTemplateController extends Controller
         $templates = QuotationScoringTemplate::query()
             ->where('tenant_id', $tenant->id)
             ->with('criteria')
+            ->withCount(['scorecards as usage_count'])
             ->orderByDesc('is_active')
             ->orderBy('name')
             ->get();
@@ -84,6 +85,7 @@ class QuotationScoringTemplateController extends Controller
         return QuotationScoringTemplate::query()
             ->where('tenant_id', $tenant->id)
             ->with('criteria')
+            ->withCount(['scorecards as usage_count'])
             ->findOrFail($id);
     }
 

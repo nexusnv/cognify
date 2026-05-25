@@ -4,7 +4,10 @@ import { Button, NativeSelect, Textarea } from "@cognify/ui";
 import type { QuotationScoringTemplate, SaveQuotationScoringTemplateRequest } from "@cognify/api-client/schemas";
 import { useMemo, useState } from "react";
 
-type CriterionDraft = SaveQuotationScoringTemplateRequest["criteria"][number];
+type CriterionDraft = Omit<SaveQuotationScoringTemplateRequest["criteria"][number], "maxScore"> & {
+  maxScore: number | string;
+  clientId: string;
+};
 
 const categories = ["cost", "delivery", "quality", "compliance", "risk", "sustainability", "past_performance", "other"] as const;
 
@@ -28,12 +31,19 @@ export function QuotationScoringTemplateForm({
       maxScore: criterion.maxScore,
       required: criterion.required,
       displayOrder: criterion.displayOrder,
+      clientId: criterion.id,
     })) ?? [blankCriterion(1)],
   );
   const [error, setError] = useState<string | null>(null);
 
   const totalWeight = useMemo(
-    () => criteria.reduce((sum, criterion) => sum + Number(criterion.weight || 0), 0).toFixed(2),
+    () =>
+      criteria
+        .reduce((sum, criterion) => {
+          const weight = Number(criterion.weight);
+          return sum + (Number.isFinite(weight) ? weight : 0);
+        }, 0)
+        .toFixed(2),
     [criteria],
   );
 
@@ -50,8 +60,11 @@ export function QuotationScoringTemplateForm({
       name: name.trim(),
       description: description.trim() || null,
       criteria: criteria.map((criterion, index) => ({
-        ...criterion,
+        category: criterion.category,
         label: criterion.label.trim(),
+        weight: criterion.weight,
+        maxScore: Number(criterion.maxScore),
+        required: criterion.required,
         guidance: typeof criterion.guidance === "string" && criterion.guidance.trim() !== "" ? criterion.guidance.trim() : null,
         displayOrder: index + 1,
       })),
@@ -104,7 +117,7 @@ export function QuotationScoringTemplateForm({
 
         <div className="grid gap-3">
           {criteria.map((criterion, index) => (
-            <div key={index} className="rounded-md border p-4" data-testid="criterion-row">
+            <div key={criterion.clientId} className="rounded-md border p-4" data-testid="criterion-row">
               <div className="grid gap-3 md:grid-cols-[minmax(120px,160px)_1fr_minmax(90px,120px)_minmax(90px,120px)]">
                 <label className="grid gap-2 text-sm font-medium">
                   Category
@@ -141,8 +154,8 @@ export function QuotationScoringTemplateForm({
                   <input
                     className="min-h-11 rounded-md border px-3 text-sm"
                     inputMode="numeric"
-                    value={criterion.maxScore}
-                    onChange={(event) => updateCriterion(index, { maxScore: Number(event.target.value) })}
+                    value={String(criterion.maxScore)}
+                    onChange={(event) => updateCriterion(index, { maxScore: event.target.value })}
                   />
                 </label>
               </div>
@@ -206,6 +219,7 @@ export function QuotationScoringTemplateForm({
 
 function blankCriterion(displayOrder: number): CriterionDraft {
   return {
+    clientId: `criterion-${Date.now()}-${displayOrder}-${Math.random().toString(36).slice(2)}`,
     category: "cost",
     label: "",
     guidance: "",
@@ -219,8 +233,14 @@ function blankCriterion(displayOrder: number): CriterionDraft {
 function validate(name: string, criteria: CriterionDraft[]): string | null {
   if (!name.trim()) return "Template name is required.";
   if (criteria.length === 0) return "Add at least one criterion.";
-  if (criteria.some((criterion) => Number(criterion.weight) <= 0)) return "Weight must be greater than 0.";
-  if (criteria.some((criterion) => Number(criterion.maxScore) < 1 || Number(criterion.maxScore) > 100)) {
+  if (criteria.some((criterion) => {
+    const weight = Number(criterion.weight);
+    return !Number.isFinite(weight) || weight <= 0;
+  })) return "Weight must be greater than 0.";
+  if (criteria.some((criterion) => {
+    const maxScore = Number(criterion.maxScore);
+    return !Number.isFinite(maxScore) || maxScore < 1 || maxScore > 100;
+  })) {
     return "Max score must be between 1 and 100.";
   }
   if (criteria.some((criterion) => !criterion.label.trim())) return "Criterion label is required.";

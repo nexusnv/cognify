@@ -38,6 +38,24 @@ describe("quotation scoring template UI", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Add at least one criterion.");
   });
 
+  it("rejects nonnumeric criterion weights and max scores", async () => {
+    const user = userEvent.setup();
+    render(<QuotationScoringTemplateForm onSave={() => undefined} />);
+
+    fireEvent.change(screen.getByLabelText("Template name"), { target: { value: "Bad scoring" } });
+    fireEvent.change(screen.getByLabelText("Label"), { target: { value: "Cost" } });
+    fireEvent.change(screen.getByLabelText("Weight"), { target: { value: "abc" } });
+    await user.click(screen.getByRole("button", { name: "Save scoring template" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Weight must be greater than 0.");
+
+    fireEvent.change(screen.getByLabelText("Weight"), { target: { value: "50" } });
+    fireEvent.change(screen.getByLabelText("Max score"), { target: { value: "abc" } });
+    await user.click(screen.getByRole("button", { name: "Save scoring template" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Max score must be between 1 and 100.");
+  });
+
   it("adds removes and reorders criteria", async () => {
     const user = userEvent.setup();
     render(<QuotationScoringTemplateForm onSave={() => undefined} />);

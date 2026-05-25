@@ -30,7 +30,7 @@ class QuotationScoringTemplateResource extends JsonResource
                 ->map(fn (QuotationScoringTemplateCriterion $criterion): array => $this->criterion($criterion))
                 ->values()
                 ->all(),
-            'usageCount' => $this->usageCount($template),
+            'usageCount' => $this->usageCountValue($template),
             'permissions' => [
                 'canView' => $request->user()?->can('view', $template) ?? false,
                 'canUpdate' => $request->user()?->can('update', $template) ?? false,
@@ -73,5 +73,12 @@ class QuotationScoringTemplateResource extends JsonResource
             ->where('tenant_id', $template->tenant_id)
             ->where('template_id', $template->id)
             ->count();
+    }
+
+    private function usageCountValue(QuotationScoringTemplate $template): int
+    {
+        $preloaded = $template->getAttribute('usage_count');
+
+        return $preloaded !== null ? (int) $preloaded : $this->usageCount($template);
     }
 }

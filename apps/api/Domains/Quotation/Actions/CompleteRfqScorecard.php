@@ -13,6 +13,7 @@ use Domains\Quotation\States\RfqScorecardStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CompleteRfqScorecard
 {
@@ -33,6 +34,10 @@ class CompleteRfqScorecard
                 ->lockForUpdate()
                 ->firstOrFail()
                 ->load('criteria', 'entries');
+
+            if ($lockedScorecard->statusState()->isCompleted()) {
+                throw new ConflictHttpException('Scorecard already completed.');
+            }
 
             $summary = $this->calculator->completionSummary($lockedScorecard);
 

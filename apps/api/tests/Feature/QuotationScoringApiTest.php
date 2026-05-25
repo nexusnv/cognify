@@ -113,12 +113,42 @@ class QuotationScoringApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.name', 'Balanced RFQ Evaluation - Updated')
             ->assertJsonPath('data.0.active', false);
+
+        $secondTemplateId = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/quotation-scoring/templates', [
+                'name' => 'Balanced RFQ Evaluation - Updated',
+                'description' => 'Replacement active template with a historical name.',
+                'criteria' => [
+                    [
+                        'category' => 'cost',
+                        'label' => 'Commercial competitiveness',
+                        'guidance' => 'Score the quote against the commercial offer.',
+                        'weight' => 100,
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                ],
+            ])
+            ->assertOk()
+            ->json('data.template.id');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/quotation-scoring/templates/{$secondTemplateId}/deactivate")
+            ->assertOk();
+
+        $this->assertSame(2, \Domains\Quotation\Models\QuotationScoringTemplate::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('name', 'Balanced RFQ Evaluation - Updated')
+            ->where('is_active', false)
+            ->count());
     }
 
     public function test_buyer_can_apply_active_template_to_rfq_and_snapshot_criteria(): void
     {
         [$tenant, $admin] = $this->tenantUser('admin');
         [, $buyer] = $this->tenantUser('buyer', $tenant);
+        [$otherTenant, $otherAdmin] = $this->tenantUser('admin');
         $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
 
         $templateId = $this->actingAsTenant($tenant, $admin)
@@ -148,6 +178,31 @@ class QuotationScoringApiTest extends TestCase
             ])
             ->assertOk()
             ->json('data.template.id');
+
+        $otherTemplateId = $this->actingAsTenant($otherTenant, $otherAdmin)
+            ->postJson('/api/quotation-scoring/templates', [
+                'name' => 'Other Tenant Evaluation',
+                'description' => 'Should not validate for this tenant.',
+                'criteria' => [
+                    [
+                        'category' => 'cost',
+                        'label' => 'Other tenant cost',
+                        'guidance' => 'Other tenant guidance.',
+                        'weight' => 100,
+                        'maxScore' => 10,
+                        'required' => true,
+                        'displayOrder' => 1,
+                    ],
+                ],
+            ])
+            ->assertOk()
+            ->json('data.template.id');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
+                'templateId' => $otherTemplateId,
+            ])
+            ->assertUnprocessable();
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson("/api/rfqs/{$rfq->id}/scorecard", [
@@ -289,6 +344,24 @@ class QuotationScoringApiTest extends TestCase
             ->whereHas('quotations', fn ($query) => $query->where('rfq_id', $rfq->id))
             ->orderBy('id')
             ->get();
+        $firstQuotation = Quotation::query()->where('rfq_id', $rfq->id)->where('vendor_id', $vendors[0]->id)->firstOrFail();
+        $firstVersion = QuotationVersion::query()->where('quotation_id', $firstQuotation->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
+                'entries' => [
+                    [
+                        'criterionId' => $costCriterionId,
+                        'vendorId' => (string) $vendors[0]->id,
+                        'quotationId' => '',
+                        'quotationVersionId' => (string) $firstVersion->id,
+                        'score' => 9,
+                        'note' => 'Version without quotation should fail.',
+                    ],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.details.fields.entries.0', 'A quotation version can only be scored with its quotation.');
 
         $this->actingAsTenant($tenant, $buyer)
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
@@ -493,6 +566,10 @@ class QuotationScoringApiTest extends TestCase
             ->assertJsonPath('data.scorecard.status', 'completed');
 
         $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/scorecard/complete")
+            ->assertConflict();
+
+        $this->actingAsTenant($tenant, $buyer)
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
                 'entries' => [
                     [
@@ -511,6 +588,10 @@ class QuotationScoringApiTest extends TestCase
             ->postJson("/api/rfqs/{$rfq->id}/scorecard/reopen")
             ->assertOk()
             ->assertJsonPath('data.scorecard.status', 'in_progress');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/scorecard/reopen")
+            ->assertConflict();
 
         $this->actingAsTenant($tenant, $buyer)
             ->patchJson("/api/rfqs/{$rfq->id}/scorecard/scores", [
@@ -689,6 +770,12 @@ class QuotationScoringApiTest extends TestCase
 
         $this->withoutHeader('X-Tenant-Id')
             ->withHeader('Origin', 'http://localhost:8880')
+            ->getJson("/api/rfqs/{$rfq->id}/scorecard")
+            ->assertStatus(400)
+            ->assertJsonPath('error.code', 'ambiguous_tenant');
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', '   ')
             ->getJson("/api/rfqs/{$rfq->id}/scorecard")
             ->assertStatus(400)
             ->assertJsonPath('error.code', 'ambiguous_tenant');

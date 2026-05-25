@@ -62,7 +62,8 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
 
   const completed = scorecard.scorecard.status === "completed";
   const readyToComplete = scorecard.completion.missingRequiredScoreCount === 0;
-  const visibleDrafts = Object.keys(drafts).length > 0 ? drafts : scorecardDrafts(scorecard);
+  const serverDrafts = scorecardDrafts(scorecard);
+  const visibleDrafts = { ...serverDrafts, ...drafts };
 
   return (
     <RecordWorkspaceLayout

@@ -17,11 +17,11 @@ export function RfqScorecardVendorSummary({ scorecard }: { scorecard: RfqScoreca
             </div>
             <div>
               <dt className="text-muted-foreground">Total amount</dt>
-              <dd>{vendor.currency && vendor.totalAmount ? `${vendor.currency} ${vendor.totalAmount}` : "No total"}</dd>
+              <dd>{vendor.currency && vendor.totalAmount != null ? `${vendor.currency} ${vendor.totalAmount}` : "No total"}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Lead time</dt>
-              <dd>{vendor.leadTimeDays ? `${vendor.leadTimeDays} days` : "No lead time"}</dd>
+              <dd>{vendor.leadTimeDays != null ? `${vendor.leadTimeDays} days` : "No lead time"}</dd>
             </div>
           </dl>
         </article>
