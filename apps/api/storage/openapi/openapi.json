@@ -17049,22 +17049,19 @@
             "type": [
               "string",
               "null"
-            ],
-            "pattern": "^[0-9]+$"
+            ]
           },
           "recommendedQuotationId": {
             "type": [
               "string",
               "null"
-            ],
-            "pattern": "^[0-9]+$"
+            ]
           },
           "recommendedQuotationVersionId": {
             "type": [
               "string",
               "null"
-            ],
-            "pattern": "^[0-9]+$"
+            ]
           },
           "scorecardId": {
             "type": [

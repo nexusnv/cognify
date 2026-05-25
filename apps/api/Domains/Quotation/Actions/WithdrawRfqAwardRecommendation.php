@@ -46,7 +46,15 @@ class WithdrawRfqAwardRecommendation
 
             Gate::forUser($actor)->authorize('withdraw', $recommendation);
 
-            $reason = trim((string) ($data['reason'] ?? ''));
+            $rawReason = $data['reason'] ?? null;
+
+            if (! is_string($rawReason)) {
+                throw ValidationException::withMessages([
+                    'reason' => ['A withdrawal reason is required.'],
+                ]);
+            }
+
+            $reason = trim($rawReason);
 
             if ($reason === '') {
                 throw ValidationException::withMessages([

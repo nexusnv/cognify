@@ -30,18 +30,18 @@ class SubmitRfqAwardRecommendation
      */
     public function handle(Tenant $tenant, User $actor, Rfq $rfq, ?array $data = null): RfqAwardRecommendation
     {
-        if ($data !== null) {
-            $this->saveRecommendation->handle($tenant, $actor, $rfq, $data);
-        } else {
-            Gate::forUser($actor)->authorize('manage', [RfqAwardRecommendation::class, $rfq]);
-        }
-
-        return DB::transaction(function () use ($tenant, $actor, $rfq): RfqAwardRecommendation {
+        return DB::transaction(function () use ($tenant, $actor, $rfq, $data): RfqAwardRecommendation {
             $lockedRfq = Rfq::query()
                 ->where('tenant_id', $tenant->id)
                 ->whereKey($rfq->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($data !== null) {
+                $this->saveRecommendation->handle($tenant, $actor, $lockedRfq, $data);
+            } else {
+                Gate::forUser($actor)->authorize('manage', [RfqAwardRecommendation::class, $lockedRfq]);
+            }
 
             $recommendation = RfqAwardRecommendation::query()
                 ->with('evidenceReferences')

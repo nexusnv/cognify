@@ -25,6 +25,8 @@ Priority is ordered by product dependency, customer value, implementation levera
 
 Feature status below is assessed against the current repository state as of 2026-05-22, using shipped routes, tests, generated contracts, and committed spec/plan artifacts.
 
+Exception: P1-32 was updated after this assessment date and reflects Recommendation and Award Decision implementation work from 2026-05-25 and 2026-05-26.
+
 ## P0 - Platform and Workflow Foundation
 
 These features establish the tenant-scoped SaaS base, common UX shell, auditability, and workflow spine. They should be built before broad procurement modules to avoid rework.

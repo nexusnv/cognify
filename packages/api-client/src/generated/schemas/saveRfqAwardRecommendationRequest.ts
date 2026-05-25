@@ -15,11 +15,8 @@ import type { SaveRfqAwardRecommendationRequestExceptionSummary } from "./saveRf
 import type { RfqAwardRecommendationEvidenceReferenceInput } from "./rfqAwardRecommendationEvidenceReferenceInput";
 
 export interface SaveRfqAwardRecommendationRequest {
-  /** @pattern ^[0-9]+$ */
   recommendedVendorId?: SaveRfqAwardRecommendationRequestRecommendedVendorId;
-  /** @pattern ^[0-9]+$ */
   recommendedQuotationId?: SaveRfqAwardRecommendationRequestRecommendedQuotationId;
-  /** @pattern ^[0-9]+$ */
   recommendedQuotationVersionId?: SaveRfqAwardRecommendationRequestRecommendedQuotationVersionId;
   scorecardId?: SaveRfqAwardRecommendationRequestScorecardId;
   /** @maxLength 4000 */

@@ -5,7 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-/**
- * @pattern ^[0-9]+$
- */
 export type SaveRfqAwardRecommendationRequestRecommendedVendorId = string | null;

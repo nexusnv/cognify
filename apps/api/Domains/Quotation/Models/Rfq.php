@@ -185,6 +185,6 @@ class Rfq extends Model
                 RfqAwardRecommendationStatus::Draft->value,
                 RfqAwardRecommendationStatus::PendingApproval->value,
             ])
-            ->latestOfMany();
+            ->latestOfMany('created_at');
     }
 }
