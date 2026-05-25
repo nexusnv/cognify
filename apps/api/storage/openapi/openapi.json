@@ -6048,6 +6048,212 @@
           }
         }
       }
+    },
+    "/api/rfqs/{rfq}/award-recommendation": {
+      "get": {
+        "operationId": "showRfqAwardRecommendation",
+        "summary": "Show RFQ award recommendation context",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ award recommendation context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardRecommendationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveRfqAwardRecommendation",
+        "summary": "Save RFQ award recommendation draft",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRfqAwardRecommendationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved RFQ award recommendation context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardRecommendationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/rfqs/{rfq}/award-recommendation/submit": {
+      "post": {
+        "operationId": "submitRfqAwardRecommendation",
+        "summary": "Submit RFQ award recommendation",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRfqAwardRecommendationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submitted RFQ award recommendation context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardRecommendationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/rfqs/{rfq}/award-recommendation/withdraw": {
+      "post": {
+        "operationId": "withdrawRfqAwardRecommendation",
+        "summary": "Withdraw RFQ award recommendation",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawRfqAwardRecommendationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Withdrawn RFQ award recommendation context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardRecommendationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -16249,6 +16455,676 @@
           },
           "canManageScoringTemplates": {
             "type": "boolean"
+          }
+        }
+      },
+      "RfqAwardRecommendationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RfqAwardRecommendation"
+          }
+        }
+      },
+      "RfqAwardRecommendation": {
+        "type": "object",
+        "required": [
+          "rfq",
+          "recommendation",
+          "vendorOptions",
+          "scorecard",
+          "readiness",
+          "evidenceReferences",
+          "links",
+          "permissions"
+        ],
+        "properties": {
+          "rfq": {
+            "$ref": "#/components/schemas/RfqAwardRecommendationRfq"
+          },
+          "recommendation": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RfqAwardRecommendationDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vendorOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RfqAwardRecommendationVendorOption"
+            }
+          },
+          "scorecard": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RfqAwardRecommendationScorecardSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/RfqAwardRecommendationReadiness"
+          },
+          "evidenceReferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RfqAwardRecommendationEvidenceReference"
+            }
+          },
+          "links": {
+            "type": "object",
+            "required": [
+              "comparison",
+              "scoring"
+            ],
+            "properties": {
+              "comparison": {
+                "type": "string"
+              },
+              "scoring": {
+                "type": "string"
+              }
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/RfqAwardRecommendationPermissions"
+          }
+        }
+      },
+      "RfqAwardRecommendationDecision": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "recommendedVendorId",
+          "recommendedQuotationId",
+          "recommendedQuotationVersionId",
+          "scorecardId",
+          "rationale",
+          "tradeoffSummary",
+          "riskSummary",
+          "exceptionSummary",
+          "withdrawalReason",
+          "submittedByUserId",
+          "submittedAt",
+          "withdrawnByUserId",
+          "withdrawnAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending_approval",
+              "withdrawn"
+            ]
+          },
+          "recommendedVendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedQuotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedQuotationVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scorecardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tradeoffSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "riskSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exceptionSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withdrawalReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submittedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "withdrawnByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withdrawnAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "RfqAwardRecommendationRfq": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "status",
+          "responseDueAt",
+          "scopeSummary",
+          "requisition",
+          "project"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "responseDueAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "scopeSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requisition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RfqRequisitionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RfqProjectSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "RfqAwardRecommendationVendorOption": {
+        "type": "object",
+        "required": [
+          "vendorId",
+          "vendorName",
+          "quotationId",
+          "quotationNumber",
+          "quotationVersionId",
+          "readiness",
+          "currency",
+          "totalAmount",
+          "leadTimeDays",
+          "paymentTerms",
+          "deliveryTerms",
+          "warrantyTerms",
+          "complianceNotes",
+          "issueCounts",
+          "scorecard",
+          "links"
+        ],
+        "properties": {
+          "vendorId": {
+            "type": "string"
+          },
+          "vendorName": {
+            "type": "string"
+          },
+          "quotationId": {
+            "type": "string"
+          },
+          "quotationNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quotationVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "readiness": {
+            "type": "string"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "warrantyTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complianceNotes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issueCounts": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationComparisonIssueCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scorecard": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "rawTotal",
+                  "weightedTotal",
+                  "missingRequiredCount"
+                ],
+                "properties": {
+                  "rawTotal": {
+                    "type": "string"
+                  },
+                  "weightedTotal": {
+                    "type": "string"
+                  },
+                  "missingRequiredCount": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "links": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuotationComparisonLinks"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "RfqAwardRecommendationEvidenceReference": {
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "label",
+          "selected"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "quotation_version",
+              "quotation_attachment",
+              "comparison_note",
+              "scorecard"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RfqAwardRecommendationEvidenceReferenceInput": {
+        "type": "object",
+        "required": [
+          "type",
+          "id"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "quotation_version",
+              "quotation_attachment",
+              "comparison_note",
+              "scorecard"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 160
+          }
+        }
+      },
+      "RfqAwardRecommendationPermissions": {
+        "type": "object",
+        "required": [
+          "canViewAwardRecommendation",
+          "canManageAwardRecommendation",
+          "canSubmitAwardRecommendation",
+          "canWithdrawAwardRecommendation"
+        ],
+        "properties": {
+          "canViewAwardRecommendation": {
+            "type": "boolean"
+          },
+          "canManageAwardRecommendation": {
+            "type": "boolean"
+          },
+          "canSubmitAwardRecommendation": {
+            "type": "boolean"
+          },
+          "canWithdrawAwardRecommendation": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RfqAwardRecommendationScorecardSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "completedAt",
+          "completion",
+          "vendorTotals"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_progress",
+              "completed"
+            ]
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/RfqScorecardCompletion"
+          },
+          "vendorTotals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "vendorId",
+                "quotationId",
+                "rawTotal",
+                "weightedTotal",
+                "missingRequiredCount"
+              ],
+              "properties": {
+                "vendorId": {
+                  "type": "string"
+                },
+                "quotationId": {
+                  "type": "string"
+                },
+                "rawTotal": {
+                  "type": "string"
+                },
+                "weightedTotal": {
+                  "type": "string"
+                },
+                "missingRequiredCount": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RfqAwardRecommendationReadiness": {
+        "type": "object",
+        "required": [
+          "comparisonStatus",
+          "scoringStatus",
+          "blockingMessages"
+        ],
+        "properties": {
+          "comparisonStatus": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "incomplete"
+            ]
+          },
+          "scoringStatus": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "in_progress",
+              "complete"
+            ]
+          },
+          "blockingMessages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SaveRfqAwardRecommendationRequest": {
+        "type": "object",
+        "properties": {
+          "recommendedVendorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]+$"
+          },
+          "recommendedQuotationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]+$"
+          },
+          "recommendedQuotationVersionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]+$"
+          },
+          "scorecardId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4000
+          },
+          "tradeoffSummary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4000
+          },
+          "riskSummary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4000
+          },
+          "exceptionSummary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4000
+          },
+          "evidenceReferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RfqAwardRecommendationEvidenceReferenceInput"
+            }
+          }
+        }
+      },
+      "SubmitRfqAwardRecommendationRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SaveRfqAwardRecommendationRequest"
+          }
+        ]
+      },
+      "WithdrawRfqAwardRecommendationRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
           }
         }
       },
