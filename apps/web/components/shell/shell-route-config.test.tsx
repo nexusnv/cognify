@@ -33,6 +33,20 @@ describe("shell route helpers", () => {
       { label: "Quotations", href: "/quotations/normalizations" },
       { label: "Comparison workspace" },
     ]);
+    expect(getBreadcrumbs("/quotations/scoring/rfq-1")).toEqual([
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Scoring" },
+      { label: "RFQ" },
+    ]);
+    expect(getBreadcrumbs("/quotations/scoring/templates")).toEqual([
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Scoring Templates" },
+    ]);
+    expect(getBreadcrumbs("/quotations/scoring/templates/template-1")).toEqual([
+      { label: "Quotations", href: "/quotations/normalizations" },
+      { label: "Scoring Templates", href: "/quotations/scoring/templates" },
+      { label: "Template workspace" },
+    ]);
     expect(getBreadcrumbs("/system")).toEqual([{ label: "System" }]);
   });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { useQuotationComparison } from "../hooks/use-quotation-comparison";
@@ -90,6 +91,14 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
         </>
       }
     >
+      <div className="flex flex-wrap gap-2">
+        <Link
+          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
+          href={`/quotations/scoring/${comparison.rfq.id}`}
+        >
+          Open scoring
+        </Link>
+      </div>
       <QuotationComparisonReadinessBanner readiness={comparison.readiness} />
       <QuotationComparisonVendorSummary vendors={comparison.vendors} />
       <QuotationComparisonTable rows={comparison.lineRows} vendors={comparison.vendors} />

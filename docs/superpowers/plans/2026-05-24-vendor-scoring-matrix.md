@@ -1,6 +1,6 @@
 # Vendor Scoring Matrix Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement P1-31 so admins can maintain lightweight reusable scoring templates and buyers can apply one frozen RFQ scorecard to score quotation responses without creating award, shortlist, recommendation, or RFQ state side effects.
 
@@ -130,7 +130,7 @@ Expected generated endpoint wrappers from OpenAPI operation IDs:
 
 - Create: `apps/api/tests/Feature/QuotationScoringApiTest.php`
 
-- [ ] **Step 1: Write failing feature tests**
+- [x] **Step 1: Write failing feature tests**
 
 Create `apps/api/tests/Feature/QuotationScoringApiTest.php`. Reuse tenant, RFQ, quotation, version, normalization, comparison, and session-auth helper patterns from `QuotationComparisonApiTest` and `QuotationNormalizationApiTest`.
 
@@ -173,7 +173,7 @@ GET /api/rfqs/{rfq}/scorecard
 
 Expected after logout: `401`.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 cd apps/api
@@ -182,7 +182,7 @@ php artisan test --filter=QuotationScoringApiTest
 
 Expected: failures for missing classes, missing routes, or 404 endpoints.
 
-- [ ] **Step 3: Commit tests**
+- [x] **Step 3: Commit tests**
 
 ```bash
 git add apps/api/tests/Feature/QuotationScoringApiTest.php
@@ -204,7 +204,7 @@ git commit -m "test: define quotation scoring API behavior"
 - Create: `apps/api/Domains/Quotation/Models/RfqScorecardEntry.php`
 - Modify: `apps/api/Domains/Quotation/Models/Rfq.php`
 
-- [ ] **Step 1: Create migrations**
+- [x] **Step 1: Create migrations**
 
 Create template tables:
 
@@ -291,7 +291,7 @@ Schema::create('rfq_scorecard_entries', function (Blueprint $table): void {
 });
 ```
 
-- [ ] **Step 2: Add states**
+- [x] **Step 2: Add states**
 
 Create `QuotationScoringCriterionCategory`:
 
@@ -319,7 +319,7 @@ enum RfqScorecardStatus: string
 }
 ```
 
-- [ ] **Step 3: Add models and relationships**
+- [x] **Step 3: Add models and relationships**
 
 Each model must use `HasUuids`, guarded arrays consistent with nearby Quotation models, enum casts for `category` and `status`, and relationships to tenant, RFQ, template, criteria, entries, user, vendor, quotation, and version as applicable.
 
@@ -332,7 +332,7 @@ public function scorecard(): HasOne
 }
 ```
 
-- [ ] **Step 4: Run migrations and model smoke tests**
+- [x] **Step 4: Run migrations and model smoke tests**
 
 ```bash
 cd apps/api
@@ -341,7 +341,7 @@ php artisan test --filter=QuotationScoringApiTest
 
 Expected: migration/model errors resolved; route/action failures remain.
 
-- [ ] **Step 5: Commit data model**
+- [x] **Step 5: Commit data model**
 
 ```bash
 git add apps/api/database/migrations/2026_05_24_000000_create_quotation_scoring_templates_table.php apps/api/database/migrations/2026_05_24_000001_create_rfq_scorecards_table.php apps/api/Domains/Quotation/States/QuotationScoringCriterionCategory.php apps/api/Domains/Quotation/States/RfqScorecardStatus.php apps/api/Domains/Quotation/Models/QuotationScoringTemplate.php apps/api/Domains/Quotation/Models/QuotationScoringTemplateCriterion.php apps/api/Domains/Quotation/Models/RfqScorecard.php apps/api/Domains/Quotation/Models/RfqScorecardCriterion.php apps/api/Domains/Quotation/Models/RfqScorecardEntry.php apps/api/Domains/Quotation/Models/Rfq.php
@@ -358,7 +358,7 @@ git commit -m "feat: add quotation scoring data model"
 - Create: `apps/api/Domains/Quotation/Policies/QuotationScoringTemplatePolicy.php`
 - Create: `apps/api/Domains/Quotation/Policies/RfqScorecardPolicy.php`
 
-- [ ] **Step 1: Write calculator unit tests**
+- [x] **Step 1: Write calculator unit tests**
 
 Create tests named:
 
@@ -368,7 +368,7 @@ Create tests named:
 
 Use a criterion with `score=8`, `max_score=10`, `weight=50` and assert weighted contribution is `40.00`.
 
-- [ ] **Step 2: Implement calculator**
+- [x] **Step 2: Implement calculator**
 
 Create methods:
 
@@ -380,7 +380,7 @@ public function completionSummary(RfqScorecard $scorecard): array;
 
 Return decimal strings rounded to two places to match API resource output.
 
-- [ ] **Step 3: Implement policies**
+- [x] **Step 3: Implement policies**
 
 Rules:
 
@@ -396,7 +396,7 @@ view/create/update/complete/reopen: buyer or admin for same tenant RFQ
 
 Do not grant access to requester, approver, or vendor portal contexts.
 
-- [ ] **Step 4: Implement template actions**
+- [x] **Step 4: Implement template actions**
 
 `CreateQuotationScoringTemplate` validates at least one criterion, creates the template and ordered criteria in a transaction, and records `quotation_scoring_template.created`.
 
@@ -404,7 +404,7 @@ Do not grant access to requester, approver, or vendor portal contexts.
 
 `DeactivateQuotationScoringTemplate` sets `is_active=false`, `deactivated_by_user_id`, and `deactivated_at`. Record `quotation_scoring_template.deactivated`.
 
-- [ ] **Step 5: Implement scorecard actions**
+- [x] **Step 5: Implement scorecard actions**
 
 `CreateRfqScorecard`:
 
@@ -433,7 +433,7 @@ Do not grant access to requester, approver, or vendor portal contexts.
 - clears `completed_by_user_id` and `completed_at`;
 - records `quotation_scorecard.reopened`.
 
-- [ ] **Step 6: Run focused API tests**
+- [x] **Step 6: Run focused API tests**
 
 ```bash
 cd apps/api
@@ -443,7 +443,7 @@ php artisan test --filter=QuotationScoringApiTest
 
 Expected: calculator tests pass; API tests fail only where controllers/routes/resources are still missing.
 
-- [ ] **Step 7: Commit actions**
+- [x] **Step 7: Commit actions**
 
 ```bash
 git add apps/api/tests/Unit/RfqScorecardCalculatorTest.php apps/api/Domains/Quotation/Support/RfqScorecardCalculator.php apps/api/Domains/Quotation/Actions/CreateQuotationScoringTemplate.php apps/api/Domains/Quotation/Actions/UpdateQuotationScoringTemplate.php apps/api/Domains/Quotation/Actions/DeactivateQuotationScoringTemplate.php apps/api/Domains/Quotation/Actions/CreateRfqScorecard.php apps/api/Domains/Quotation/Actions/UpdateRfqScorecardScores.php apps/api/Domains/Quotation/Actions/CompleteRfqScorecard.php apps/api/Domains/Quotation/Actions/ReopenRfqScorecard.php apps/api/Domains/Quotation/Policies/QuotationScoringTemplatePolicy.php apps/api/Domains/Quotation/Policies/RfqScorecardPolicy.php
@@ -457,7 +457,7 @@ git commit -m "feat: add quotation scoring domain actions"
 - Create request, resource, and controller files listed in the API file map.
 - Modify: `apps/api/routes/api.php`
 
-- [ ] **Step 1: Add request validation**
+- [x] **Step 1: Add request validation**
 
 `SaveQuotationScoringTemplateRequest` rules:
 
@@ -492,7 +492,7 @@ git commit -m "feat: add quotation scoring domain actions"
 'entries.*.note' => ['nullable', 'string', 'max:2000'],
 ```
 
-- [ ] **Step 2: Add resources**
+- [x] **Step 2: Add resources**
 
 `QuotationScoringTemplateResource` outputs:
 
@@ -537,7 +537,7 @@ git commit -m "feat: add quotation scoring domain actions"
 
 Use `BuildQuotationComparison` or the same query sources as comparison to populate comparison readiness and links. Do not copy comparison values into new persisted scoring tables.
 
-- [ ] **Step 3: Add controllers**
+- [x] **Step 3: Add controllers**
 
 `QuotationScoringTemplateController`:
 
@@ -561,7 +561,7 @@ reopen(Rfq $rfq)
 
 Controllers must stay thin: authorize, call actions, return resources.
 
-- [ ] **Step 4: Add routes**
+- [x] **Step 4: Add routes**
 
 Inside the authenticated tenant-scoped route group:
 
@@ -581,7 +581,7 @@ Route::post('rfqs/{rfq}/scorecard/complete', [RfqScorecardController::class, 'co
 Route::post('rfqs/{rfq}/scorecard/reopen', [RfqScorecardController::class, 'reopen']);
 ```
 
-- [ ] **Step 5: Run API tests and route checks**
+- [x] **Step 5: Run API tests and route checks**
 
 ```bash
 cd apps/api
@@ -593,7 +593,7 @@ php artisan route:list --path=api/rfqs
 
 Expected: tests pass; route list includes scoring template and RFQ scorecard routes.
 
-- [ ] **Step 6: Commit API surface**
+- [x] **Step 6: Commit API surface**
 
 ```bash
 git add apps/api/Domains/Quotation/Http/Requests/SaveQuotationScoringTemplateRequest.php apps/api/Domains/Quotation/Http/Requests/CreateRfqScorecardRequest.php apps/api/Domains/Quotation/Http/Requests/UpdateRfqScorecardScoresRequest.php apps/api/Domains/Quotation/Http/Resources/QuotationScoringTemplateResource.php apps/api/Domains/Quotation/Http/Resources/RfqScorecardResource.php apps/api/Domains/Quotation/Http/Controllers/QuotationScoringTemplateController.php apps/api/Domains/Quotation/Http/Controllers/RfqScorecardController.php apps/api/routes/api.php
@@ -607,7 +607,7 @@ git commit -m "feat: expose quotation scoring API"
 - Modify: `apps/api/storage/openapi/openapi.json`
 - Modify generated files under `packages/api-client/src/generated/**`
 
-- [ ] **Step 1: Add OpenAPI schemas and paths**
+- [x] **Step 1: Add OpenAPI schemas and paths**
 
 Add paths matching the route list and operation IDs from this plan. Define schemas:
 
@@ -629,7 +629,7 @@ UpdateRfqScorecardScoresRequest
 
 Use camelCase JSON property names matching web conventions: `maxScore`, `displayOrder`, `templateId`, `criterionId`, `vendorId`, `quotationVersionId`, `weightedTotal`, `missingRequiredCount`.
 
-- [ ] **Step 2: Generate client and verify contract**
+- [x] **Step 2: Generate client and verify contract**
 
 ```bash
 pnpm generate:api
@@ -639,7 +639,7 @@ pnpm --filter @cognify/api-client typecheck
 
 Expected: generated endpoint wrappers and schemas exist with no contract drift failures.
 
-- [ ] **Step 3: Commit contract**
+- [x] **Step 3: Commit contract**
 
 ```bash
 git add apps/api/storage/openapi/openapi.json packages/api-client/src/generated
@@ -658,7 +658,7 @@ git commit -m "feat: add quotation scoring contract"
 - Create: `apps/web/features/quotations/mocks/quotation-scoring-handlers.ts`
 - Create: `apps/web/features/quotations/tests/quotation-scoring-api.test.ts`
 
-- [ ] **Step 1: Write API wrapper tests**
+- [x] **Step 1: Write API wrapper tests**
 
 Test that wrappers pass tenant headers and call the generated operations. Include tests named:
 
@@ -667,7 +667,7 @@ Test that wrappers pass tenant headers and call the generated operations. Includ
 - `updates score entries`
 - `completes and reopens the scorecard`
 
-- [ ] **Step 2: Add API wrappers**
+- [x] **Step 2: Add API wrappers**
 
 Create wrapper functions:
 
@@ -684,7 +684,7 @@ export async function reopenRfqScorecard(rfqId: string, tenantId: string): Promi
 
 Use generated schemas from `@cognify/api-client`; do not duplicate response types.
 
-- [ ] **Step 3: Add hooks**
+- [x] **Step 3: Add hooks**
 
 Query keys:
 
@@ -697,7 +697,7 @@ export const quotationScoringKeys = {
 
 Mutations must invalidate the relevant template or scorecard query after success.
 
-- [ ] **Step 4: Add MSW fixtures and handlers**
+- [x] **Step 4: Add MSW fixtures and handlers**
 
 Fixtures must include:
 
@@ -713,7 +713,7 @@ Handlers must cover all scoring endpoints and export:
 export function resetQuotationScoringMockState(): void;
 ```
 
-- [ ] **Step 5: Run web API tests**
+- [x] **Step 5: Run web API tests**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-scoring-api
@@ -721,7 +721,7 @@ pnpm --filter @cognify/web test -- quotation-scoring-api
 
 Expected: tests pass.
 
-- [ ] **Step 6: Commit web API layer**
+- [x] **Step 6: Commit web API layer**
 
 ```bash
 git add apps/web/features/quotations/api/quotation-scoring-api.ts apps/web/features/quotations/hooks/use-quotation-scoring-templates.ts apps/web/features/quotations/hooks/use-rfq-scorecard.ts apps/web/features/quotations/hooks/use-rfq-scorecard-actions.ts apps/web/features/quotations/mocks/quotation-scoring-fixtures.ts apps/web/features/quotations/mocks/quotation-scoring-handlers.ts apps/web/features/quotations/tests/quotation-scoring-api.test.ts
@@ -739,7 +739,7 @@ git commit -m "feat: add quotation scoring web API hooks"
 - Create: `apps/web/features/quotations/components/quotation-scoring-template-form.tsx`
 - Create: `apps/web/features/quotations/tests/quotation-scoring-template-form.test.tsx`
 
-- [ ] **Step 1: Write UI tests**
+- [x] **Step 1: Write UI tests**
 
 Required test names:
 
@@ -749,11 +749,11 @@ Required test names:
 - `saves a scoring template with criterion weights and max scores`
 - `deactivates a template without deleting historical usage`
 
-- [ ] **Step 2: Add template routes**
+- [x] **Step 2: Add template routes**
 
 `page.tsx` files should delegate to workflow components and parse route params only.
 
-- [ ] **Step 3: Build template list page**
+- [x] **Step 3: Build template list page**
 
 Use existing app-shell and table patterns. Show:
 
@@ -765,7 +765,7 @@ Use existing app-shell and table patterns. Show:
 - last updated;
 - create/edit/deactivate actions.
 
-- [ ] **Step 4: Build template form**
+- [x] **Step 4: Build template form**
 
 Use shadcn/Radix primitives through `packages/ui`. Controls:
 
@@ -784,7 +784,7 @@ Validation messages:
 - `Weight must be greater than 0.`
 - `Max score must be between 1 and 100.`
 
-- [ ] **Step 5: Run template UI tests**
+- [x] **Step 5: Run template UI tests**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-scoring-template-form
@@ -792,7 +792,7 @@ pnpm --filter @cognify/web test -- quotation-scoring-template-form
 
 Expected: tests pass.
 
-- [ ] **Step 6: Commit template UI**
+- [x] **Step 6: Commit template UI**
 
 ```bash
 git add apps/web/app/\(workspace\)/quotations/scoring/templates/page.tsx apps/web/app/\(workspace\)/quotations/scoring/templates/\[templateId\]/page.tsx apps/web/features/quotations/workflows/quotation-scoring-template-list-page.tsx apps/web/features/quotations/workflows/quotation-scoring-template-form-page.tsx apps/web/features/quotations/components/quotation-scoring-template-form.tsx apps/web/features/quotations/tests/quotation-scoring-template-form.test.tsx
@@ -812,7 +812,7 @@ git commit -m "feat: add quotation scoring template UI"
 - Create: `apps/web/features/quotations/components/rfq-scorecard-comparison-context.tsx`
 - Create: `apps/web/features/quotations/tests/rfq-scoring-workspace.test.tsx`
 
-- [ ] **Step 1: Write workspace tests**
+- [x] **Step 1: Write workspace tests**
 
 Required test names:
 
@@ -825,11 +825,11 @@ Required test names:
 - `renders completed scorecards as read only until reopened`
 - `links back to the quotation comparison workspace`
 
-- [ ] **Step 2: Add route page**
+- [x] **Step 2: Add route page**
 
 Create a thin route file that renders `RfqScoringWorkspace` with `rfqId`.
 
-- [ ] **Step 3: Build workspace shell**
+- [x] **Step 3: Build workspace shell**
 
 Use `RecordWorkspaceLayout`. Header actions:
 
@@ -840,11 +840,11 @@ Use `RecordWorkspaceLayout`. Header actions:
 
 Do not show award, recommendation, shortlist, or winner language.
 
-- [ ] **Step 4: Build template picker**
+- [x] **Step 4: Build template picker**
 
 Show active templates with name, criterion count, total weight, and description. Disable apply while the mutation is pending.
 
-- [ ] **Step 5: Build scorecard matrix**
+- [x] **Step 5: Build scorecard matrix**
 
 Desktop matrix:
 
@@ -861,7 +861,7 @@ Mobile layout:
 - criteria sections inside each card;
 - fixed-width inputs so labels do not shift layout.
 
-- [ ] **Step 6: Build completion and comparison context panels**
+- [x] **Step 6: Build completion and comparison context panels**
 
 Completion banner states:
 
@@ -872,7 +872,7 @@ Completion banner states:
 
 Comparison context shows selected totals, delivery, compliance, readiness, and links to comparison/normalization/quotation version workspaces. It does not persist comparison values in scoring state.
 
-- [ ] **Step 7: Run workspace tests**
+- [x] **Step 7: Run workspace tests**
 
 ```bash
 pnpm --filter @cognify/web test -- rfq-scoring-workspace
@@ -880,7 +880,7 @@ pnpm --filter @cognify/web test -- rfq-scoring-workspace
 
 Expected: tests pass.
 
-- [ ] **Step 8: Commit RFQ scoring workspace**
+- [x] **Step 8: Commit RFQ scoring workspace**
 
 ```bash
 git add apps/web/app/\(workspace\)/quotations/scoring/\[rfqId\]/page.tsx apps/web/features/quotations/workflows/rfq-scoring-workspace.tsx apps/web/features/quotations/components/rfq-scorecard-template-picker.tsx apps/web/features/quotations/components/rfq-scorecard-completion-banner.tsx apps/web/features/quotations/components/rfq-scorecard-matrix.tsx apps/web/features/quotations/components/rfq-scorecard-vendor-summary.tsx apps/web/features/quotations/components/rfq-scorecard-comparison-context.tsx apps/web/features/quotations/tests/rfq-scoring-workspace.test.tsx
@@ -897,7 +897,7 @@ git commit -m "feat: add RFQ scoring workspace"
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: `docs/superpowers/plans/2026-05-24-vendor-scoring-matrix.md`
 
-- [ ] **Step 1: Link comparison to scoring**
+- [x] **Step 1: Link comparison to scoring**
 
 Add a buyer/admin scoring action near the comparison header:
 
@@ -909,7 +909,7 @@ Add a buyer/admin scoring action near the comparison header:
 
 Copy must say `Open scoring`, not `Recommend vendor` or `Award vendor`.
 
-- [ ] **Step 2: Add shell route config**
+- [x] **Step 2: Add shell route config**
 
 Add route patterns for:
 
@@ -928,7 +928,7 @@ Quotations > Scoring Templates
 
 Do not add a standalone scoring queue nav item.
 
-- [ ] **Step 3: Update roadmap after implementation verification**
+- [x] **Step 3: Update roadmap after implementation verification**
 
 Update P1-31 row:
 
@@ -938,7 +938,7 @@ Update P1-31 row:
 
 Keep P1-32 through P1-34 as `Not Implemented`.
 
-- [ ] **Step 4: Run integration tests**
+- [x] **Step 4: Run integration tests**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-comparison-workspace
@@ -948,7 +948,7 @@ pnpm --filter @cognify/web test -- quotation-scoring
 
 Expected: tests pass.
 
-- [ ] **Step 5: Commit integration and docs**
+- [x] **Step 5: Commit integration and docs**
 
 ```bash
 git add apps/web/features/quotations/workflows/quotation-comparison-workspace.tsx apps/web/components/shell/shell-route-config.ts apps/web/components/shell/shell-route-config.test.tsx docs/01-product/feature-roadmap.md docs/superpowers/plans/2026-05-24-vendor-scoring-matrix.md
