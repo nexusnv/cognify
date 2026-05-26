@@ -1,6 +1,6 @@
 # Award Approval Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement P1-33 so a buyer/admin can route a submitted RFQ award recommendation through the existing Approval domain, approvers can decide it from the existing approval queue/task screens, and the recommendation records approved, rejected, or changes-requested outcomes.
 
@@ -144,7 +144,7 @@ Expected new or changed schemas:
 - Modify: `apps/api/tests/Feature/ApprovalTaskApiTest.php`
 - Modify: `apps/api/tests/Feature/RfqAwardRecommendationApiTest.php`
 
-- [ ] **Step 1: Write failing award approval feature tests**
+- [x] **Step 1: Write failing award approval feature tests**
 
 Create `apps/api/tests/Feature/RfqAwardApprovalApiTest.php`. Reuse tenant/auth helpers and RFQ fixture patterns from `RfqAwardRecommendationApiTest` and approval policy setup patterns from `ApprovalTaskApiTest`.
 
@@ -218,7 +218,7 @@ GET /api/rfqs/{rfq}/award-recommendation/approval-summary
 
 Expected after logout: `401`.
 
-- [ ] **Step 2: Add requisition preservation assertions**
+- [x] **Step 2: Add requisition preservation assertions**
 
 Extend `apps/api/tests/Feature/ApprovalTaskApiTest.php` with:
 
@@ -228,7 +228,7 @@ public function test_requisition_approval_still_routes_and_approves_after_subjec
 
 Assert that requisition route, task summary, approve, reject, request-changes, sibling cancellation, notification href, and `RequisitionStatus` outcomes remain unchanged.
 
-- [ ] **Step 3: Add award read-only assertions to recommendation tests**
+- [x] **Step 3: Add award read-only assertions to recommendation tests**
 
 Extend `apps/api/tests/Feature/RfqAwardRecommendationApiTest.php` with:
 
@@ -238,7 +238,7 @@ public function test_approval_routed_and_decided_recommendations_are_read_only_f
 
 Assert draft save fails with `409` for `approval_routed`, `approved`, `rejected`, and `changes_requested`.
 
-- [ ] **Step 4: Run failing API tests**
+- [x] **Step 4: Run failing API tests**
 
 Run:
 
@@ -251,7 +251,7 @@ php artisan test --filter=RfqAwardRecommendationApiTest
 
 Expected: `RfqAwardApprovalApiTest` fails with missing routes/classes or old requisition-only subject shapes. Existing tests should still run and expose the read-only/status gaps added above.
 
-- [ ] **Step 5: Commit failing tests**
+- [x] **Step 5: Commit failing tests**
 
 Run:
 
@@ -274,7 +274,7 @@ Expected: commit contains only failing test changes.
 - Modify: `apps/api/Domains/Quotation/Actions/SaveRfqAwardRecommendation.php`
 - Modify: `apps/api/Domains/Quotation/Http/Resources/RfqAwardRecommendationResource.php`
 
-- [ ] **Step 1: Add approval metadata migration**
+- [x] **Step 1: Add approval metadata migration**
 
 Create `apps/api/database/migrations/2026_05_26_100000_add_approval_metadata_to_rfq_award_recommendations_table.php`:
 
@@ -320,7 +320,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] **Step 2: Extend recommendation status enum**
+- [x] **Step 2: Extend recommendation status enum**
 
 Update `apps/api/Domains/Quotation/States/RfqAwardRecommendationStatus.php`:
 
@@ -352,7 +352,7 @@ enum RfqAwardRecommendationStatus: string
 }
 ```
 
-- [ ] **Step 3: Add model fillables, casts, and relations**
+- [x] **Step 3: Add model fillables, casts, and relations**
 
 Update `RfqAwardRecommendation` with fillables and casts for every new metadata column, plus:
 
@@ -387,7 +387,7 @@ Casts must include:
 'changes_requested_fields' => 'array',
 ```
 
-- [ ] **Step 4: Keep draft save read-only outside draft**
+- [x] **Step 4: Keep draft save read-only outside draft**
 
 Update `SaveRfqAwardRecommendation` so it only updates an existing recommendation when `status === Draft`. If the current status is `pending_approval`, `approval_routed`, `approved`, `rejected`, `changes_requested`, or `withdrawn`, throw:
 
@@ -395,7 +395,7 @@ Update `SaveRfqAwardRecommendation` so it only updates an existing recommendatio
 throw new ConflictHttpException('Only draft award recommendations can be edited.');
 ```
 
-- [ ] **Step 5: Expose approval metadata in resource**
+- [x] **Step 5: Expose approval metadata in resource**
 
 Update `RfqAwardRecommendationResource` to include:
 
@@ -412,7 +412,7 @@ Update `RfqAwardRecommendationResource` to include:
 'changesRequestedFields' => $this->changes_requested_fields ?? [],
 ```
 
-- [ ] **Step 6: Run focused recommendation tests**
+- [x] **Step 6: Run focused recommendation tests**
 
 Run:
 
@@ -423,7 +423,7 @@ php artisan test --filter=RfqAwardRecommendationApiTest
 
 Expected: new read-only assertions pass; approval routing tests still fail until routing is implemented.
 
-- [ ] **Step 7: Commit recommendation state changes**
+- [x] **Step 7: Commit recommendation state changes**
 
 Run:
 
@@ -445,7 +445,7 @@ git commit -m "feat: add award approval state metadata"
 - Modify: `apps/api/Domains/Approval/Data/ApprovalContextData.php`
 - Modify: `apps/api/Domains/Approval/Http/Resources/ApprovalTaskResource.php`
 
-- [ ] **Step 1: Create subject summary value object**
+- [x] **Step 1: Create subject summary value object**
 
 Create `ApprovalSubjectSummary`:
 
@@ -493,7 +493,7 @@ final class ApprovalSubjectSummary
 }
 ```
 
-- [ ] **Step 2: Create subject handler contract**
+- [x] **Step 2: Create subject handler contract**
 
 Create `ApprovalSubjectHandler`:
 
@@ -541,7 +541,7 @@ interface ApprovalSubjectHandler
 }
 ```
 
-- [ ] **Step 3: Create subject registry**
+- [x] **Step 3: Create subject registry**
 
 Create `ApprovalSubjectRegistry`:
 
@@ -608,7 +608,7 @@ $this->app->singleton(ApprovalSubjectRegistry::class, fn ($app) => new ApprovalS
 
 If `RfqAwardRecommendationApprovalSubjectHandler` does not exist yet, add the binding in Task 4 after creating it.
 
-- [ ] **Step 4: Add subjectType and award fields to approval context**
+- [x] **Step 4: Add subjectType and award fields to approval context**
 
 Update `ApprovalContextData` constructor, `fromArray()`, `missingRequiredContext()`, and `toArray()` to include these nullable fields:
 
@@ -631,7 +631,7 @@ public readonly bool $exceptionSummaryPresent,
 
 `fromRequisition()` must set `subjectType: 'requisition'` and null award fields so existing policy rules still work.
 
-- [ ] **Step 5: Create requisition handler**
+- [x] **Step 5: Create requisition handler**
 
 Create `RequisitionApprovalSubjectHandler` using the current hard-coded requisition behavior:
 
@@ -679,7 +679,7 @@ public function taskSubjectSummary(Model $subject): ApprovalSubjectSummary
 
 `onRouted()`, `onApproved()`, `onRejected()`, and `onChangesRequested()` must call the existing requisition actions now used directly by approval actions.
 
-- [ ] **Step 6: Refactor ApprovalTaskResource to use handler summaries**
+- [x] **Step 6: Refactor ApprovalTaskResource to use handler summaries**
 
 Inject or resolve `ApprovalSubjectRegistry` inside `ApprovalTaskResource::toArray()`. Replace the requisition-specific `subject` block with:
 
@@ -705,7 +705,7 @@ $summary = $subject instanceof Model
 
 Keep `permissions` unchanged.
 
-- [ ] **Step 7: Run approval task tests**
+- [x] **Step 7: Run approval task tests**
 
 Run:
 
@@ -716,7 +716,7 @@ php artisan test --filter=ApprovalTaskApiTest
 
 Expected: requisition behavior is green or exposes only remaining routing/action refactor work.
 
-- [ ] **Step 8: Commit subject contract and requisition adapter**
+- [x] **Step 8: Commit subject contract and requisition adapter**
 
 Run:
 
@@ -738,7 +738,7 @@ git commit -m "refactor: introduce approval subject handlers"
 - Modify: `apps/api/Domains/Approval/Actions/RequestApprovalChanges.php`
 - Modify: `apps/api/Domains/Approval/Http/Controllers/ApprovalTaskController.php`
 
-- [ ] **Step 1: Create RouteSubjectForApproval**
+- [x] **Step 1: Create RouteSubjectForApproval**
 
 Create `RouteSubjectForApproval` by moving the reusable logic out of `RouteRequisitionForApproval`. The public method must be:
 
@@ -767,7 +767,7 @@ The policy candidate query must use:
 ->orderByDesc('version_number')
 ```
 
-- [ ] **Step 2: Keep RouteRequisitionForApproval as wrapper**
+- [x] **Step 2: Keep RouteRequisitionForApproval as wrapper**
 
 Replace `RouteRequisitionForApproval::handle()` with:
 
@@ -780,7 +780,7 @@ public function handle(Tenant $tenant, User $actor, Requisition $requisition): A
 }
 ```
 
-- [ ] **Step 3: Replace hard-coded requisition approval completion**
+- [x] **Step 3: Replace hard-coded requisition approval completion**
 
 In `ApproveApprovalTask`, replace:
 
@@ -802,7 +802,7 @@ if ($subject instanceof Model) {
 
 Inject `ApprovalSubjectRegistry` and remove direct requisition action dependencies from approval actions after the handler owns them.
 
-- [ ] **Step 4: Replace hard-coded reject and changes side effects**
+- [x] **Step 4: Replace hard-coded reject and changes side effects**
 
 In `RejectApprovalTask`, after setting instance/stage/task rejected state, call:
 
@@ -826,7 +826,7 @@ if ($subject instanceof Model) {
 }
 ```
 
-- [ ] **Step 5: Make task loading subject-safe**
+- [x] **Step 5: Make task loading subject-safe**
 
 Update `ApprovalTaskController` eager loading from requisition-only:
 
@@ -842,7 +842,7 @@ to:
 
 Subject handlers must load their own nested relations in `taskSubjectSummary()`.
 
-- [ ] **Step 6: Run requisition approval tests**
+- [x] **Step 6: Run requisition approval tests**
 
 Run:
 
@@ -855,7 +855,7 @@ php artisan test --filter=ApprovalDelegationApiTest
 
 Expected: all existing requisition approval behavior remains green.
 
-- [ ] **Step 7: Commit routing refactor**
+- [x] **Step 7: Commit routing refactor**
 
 Run:
 
@@ -877,7 +877,7 @@ git commit -m "refactor: route approval subjects generically"
 - Create: `apps/api/Domains/Quotation/Actions/RequestRfqAwardRecommendationChanges.php`
 - Modify: `apps/api/app/Providers/AppServiceProvider.php`
 
-- [ ] **Step 1: Create award approval context builder inside handler**
+- [x] **Step 1: Create award approval context builder inside handler**
 
 Create `RfqAwardRecommendationApprovalSubjectHandler`. Its `buildContext()` must load:
 
@@ -913,7 +913,7 @@ exceptionSummaryPresent: filled($recommendation->exception_summary),
 
 Preserve shared requisition fields as null or zero where they do not apply.
 
-- [ ] **Step 2: Create award subject summary**
+- [x] **Step 2: Create award subject summary**
 
 `taskSubjectSummary()` must return:
 
@@ -948,7 +948,7 @@ new ApprovalSubjectSummary(
 
 `taskTitle()` must return `Approve award recommendation for {rfq number}`.
 
-- [ ] **Step 3: Implement routed state action**
+- [x] **Step 3: Implement routed state action**
 
 Create `MarkRfqAwardRecommendationApprovalRouted`:
 
@@ -975,7 +975,7 @@ public function handle(RfqAwardRecommendation $recommendation, ApprovalInstance 
 }
 ```
 
-- [ ] **Step 4: Implement approved, rejected, and changes-requested actions**
+- [x] **Step 4: Implement approved, rejected, and changes-requested actions**
 
 Create the three decision actions. Each must:
 
@@ -1004,11 +1004,11 @@ Changes action must set:
 'changes_requested_fields' => array_values($requestedFields),
 ```
 
-- [ ] **Step 5: Wire handler callbacks to quotation actions**
+- [x] **Step 5: Wire handler callbacks to quotation actions**
 
 In `RfqAwardRecommendationApprovalSubjectHandler`, inject the four quotation actions and call them from `onRouted()`, `onApproved()`, `onRejected()`, and `onChangesRequested()`.
 
-- [ ] **Step 6: Bind award handler in registry**
+- [x] **Step 6: Bind award handler in registry**
 
 Update `AppServiceProvider` registry binding so it includes:
 
@@ -1016,7 +1016,7 @@ Update `AppServiceProvider` registry binding so it includes:
 $app->make(RfqAwardRecommendationApprovalSubjectHandler::class),
 ```
 
-- [ ] **Step 7: Run award approval tests**
+- [x] **Step 7: Run award approval tests**
 
 Run:
 
@@ -1027,7 +1027,7 @@ php artisan test --filter=RfqAwardApprovalApiTest
 
 Expected: tests still fail only for missing award approval routes/summary/preview endpoints, queue filters, or OpenAPI contract.
 
-- [ ] **Step 8: Commit award handler and state actions**
+- [x] **Step 8: Commit award handler and state actions**
 
 Run:
 
@@ -1050,7 +1050,7 @@ git commit -m "feat: handle award recommendations as approval subjects"
 - Modify: `apps/api/Domains/Approval/Http/Resources/ApprovalPreviewResource.php`
 - Modify: `apps/api/routes/api.php`
 
-- [ ] **Step 1: Add policy methods**
+- [x] **Step 1: Add policy methods**
 
 Add these methods to `RfqAwardRecommendationPolicy`:
 
@@ -1069,7 +1069,7 @@ public function viewApproval(User $user, RfqAwardRecommendation $recommendation)
 
 If the existing policy works from `Rfq` instead of recommendation, resolve the recommendation first in the controller and apply equivalent buyer/admin tenant checks.
 
-- [ ] **Step 2: Build award approval summary action**
+- [x] **Step 2: Build award approval summary action**
 
 Create `BuildRfqAwardApprovalSummary`:
 
@@ -1087,7 +1087,7 @@ public function handle(Tenant $tenant, RfqAwardRecommendation $recommendation): 
 }
 ```
 
-- [ ] **Step 3: Build award approval preview action**
+- [x] **Step 3: Build award approval preview action**
 
 Create `BuildRfqAwardApprovalPreview`. It must:
 
@@ -1098,7 +1098,7 @@ Create `BuildRfqAwardApprovalPreview`. It must:
 - Build a route through `ApprovalRouteBuilder`.
 - Return the same array shape consumed by `ApprovalPreviewResource` without creating tasks.
 
-- [ ] **Step 4: Add controller methods**
+- [x] **Step 4: Add controller methods**
 
 Add methods to `RfqAwardRecommendationController`:
 
@@ -1135,7 +1135,7 @@ Each method must:
 - Authorize buyer/admin view or route behavior.
 - Route only when recommendation status is `pending_approval`.
 
-- [ ] **Step 5: Register routes**
+- [x] **Step 5: Register routes**
 
 Add inside the existing tenant-protected RFQ group in `apps/api/routes/api.php`:
 
@@ -1145,7 +1145,7 @@ Route::get('/rfqs/{rfq}/award-recommendation/approval-summary', [RfqAwardRecomme
 Route::get('/rfqs/{rfq}/award-recommendation/approval-preview', [RfqAwardRecommendationController::class, 'approvalPreview']);
 ```
 
-- [ ] **Step 6: Add subjectType queue filter**
+- [x] **Step 6: Add subjectType queue filter**
 
 Update `ApprovalTaskController::index()` validation:
 
@@ -1164,7 +1164,7 @@ Apply:
 
 Only apply requester/department/costCenter/project/amount filters when no subject type is provided or when `subjectType === 'requisition'`. If a requisition-only filter is sent with `subjectType=rfq_award_recommendation`, return an empty result set instead of joining requisition fields onto award tasks.
 
-- [ ] **Step 7: Run focused API tests**
+- [x] **Step 7: Run focused API tests**
 
 Run:
 
@@ -1177,7 +1177,7 @@ php artisan test --filter=ApprovalPreviewApiTest
 
 Expected: API behavior tests pass except OpenAPI/generated-client assertions that require contract updates.
 
-- [ ] **Step 8: Commit routes and query behavior**
+- [x] **Step 8: Commit routes and query behavior**
 
 Run:
 
@@ -1196,7 +1196,7 @@ git commit -m "feat: expose award approval route and summary APIs"
 - Modify generated files under `packages/api-client/src/generated/**`
 - Modify: `apps/web/features/approvals/types/approval-view-model.ts`
 
-- [ ] **Step 1: Update OpenAPI approval task subject schema**
+- [x] **Step 1: Update OpenAPI approval task subject schema**
 
 Change `ApprovalTask.subject` from requisition-shaped fields to a generic object:
 
@@ -1219,7 +1219,7 @@ Change `ApprovalTask.subject` from requisition-shaped fields to a generic object
 }
 ```
 
-- [ ] **Step 2: Add award approval endpoints**
+- [x] **Step 2: Add award approval endpoints**
 
 Add OpenAPI paths:
 
@@ -1244,7 +1244,7 @@ Responses:
 - preview: `200` with `{ data: ApprovalPreview }`
 - shared errors: `401`, `403`, `404`, `409`, `422`
 
-- [ ] **Step 3: Add subjectType list param**
+- [x] **Step 3: Add subjectType list param**
 
 Add `subjectType` to `ListApprovalTasksParams` as:
 
@@ -1257,7 +1257,7 @@ Add `subjectType` to `ListApprovalTasksParams` as:
 }
 ```
 
-- [ ] **Step 4: Regenerate generated client**
+- [x] **Step 4: Regenerate generated client**
 
 Run:
 
@@ -1268,7 +1268,7 @@ pnpm check:api-contract
 
 Expected: generated endpoint functions and schemas include the new operation IDs and `subjectType` filter without web type errors.
 
-- [ ] **Step 5: Update web view model filters**
+- [x] **Step 5: Update web view model filters**
 
 Update `ApprovalTaskFilters`:
 
@@ -1282,7 +1282,7 @@ Update `ApprovalPolicyFormValues.subjectType` to:
 subjectType: "requisition" | "rfq_award_recommendation";
 ```
 
-- [ ] **Step 6: Run API client typecheck**
+- [x] **Step 6: Run API client typecheck**
 
 Run:
 
@@ -1292,7 +1292,7 @@ pnpm --filter @cognify/api-client typecheck
 
 Expected: pass.
 
-- [ ] **Step 7: Commit contract and generated client**
+- [x] **Step 7: Commit contract and generated client**
 
 Run:
 
@@ -1315,7 +1315,7 @@ git commit -m "feat: add award approval API contract"
 - Modify: `apps/web/features/approvals/mocks/approval-handlers.ts`
 - Modify: `apps/web/features/quotations/tests/quotation-award-recommendation-api.test.ts`
 
-- [ ] **Step 1: Add quotation award approval API wrappers**
+- [x] **Step 1: Add quotation award approval API wrappers**
 
 Import generated endpoints:
 
@@ -1347,7 +1347,7 @@ export async function previewRfqAwardRecommendationRoute(rfqId: string, tenantId
 }
 ```
 
-- [ ] **Step 2: Add route mutation hook**
+- [x] **Step 2: Add route mutation hook**
 
 In `use-rfq-award-recommendation-actions.ts`, add:
 
@@ -1368,7 +1368,7 @@ export function useRouteRfqAwardRecommendationApproval(rfqId: string) {
 
 Also add `useRfqAwardRecommendationApprovalSummary` and `useRfqAwardRecommendationApprovalPreview` query hooks if keeping query hooks separate is clearer.
 
-- [ ] **Step 3: Add MSW award approval states**
+- [x] **Step 3: Add MSW award approval states**
 
 Extend quotation award fixtures with:
 
@@ -1388,7 +1388,7 @@ GET /api/rfqs/:rfq/award-recommendation/approval-summary
 GET /api/rfqs/:rfq/award-recommendation/approval-preview
 ```
 
-- [ ] **Step 4: Add approval task fixture for award subject**
+- [x] **Step 4: Add approval task fixture for award subject**
 
 Add an approval task fixture with:
 
@@ -1416,7 +1416,7 @@ subject: {
 }
 ```
 
-- [ ] **Step 5: Add wrapper tests**
+- [x] **Step 5: Add wrapper tests**
 
 Extend `quotation-award-recommendation-api.test.ts` to assert:
 
@@ -1426,7 +1426,7 @@ await expect(fetchRfqAwardRecommendationApprovalSummary("42", "tenant-1")).resol
 await expect(previewRfqAwardRecommendationRoute("42", "tenant-1")).resolves.toMatchObject({ context: expect.objectContaining({ subjectType: "rfq_award_recommendation" }) });
 ```
 
-- [ ] **Step 6: Run web API tests**
+- [x] **Step 6: Run web API tests**
 
 Run:
 
@@ -1436,7 +1436,7 @@ pnpm --filter @cognify/web exec vitest run features/quotations/tests/quotation-a
 
 Expected: pass.
 
-- [ ] **Step 7: Commit web API and mocks**
+- [x] **Step 7: Commit web API and mocks**
 
 Run:
 
@@ -1455,7 +1455,7 @@ git commit -m "feat: wire award approval web APIs"
 - Modify: `apps/web/features/quotations/workflows/rfq-award-recommendation-workspace.tsx`
 - Modify: `apps/web/features/quotations/tests/rfq-award-recommendation-workspace.test.tsx`
 
-- [ ] **Step 1: Write failing workspace tests**
+- [x] **Step 1: Write failing workspace tests**
 
 Extend `rfq-award-recommendation-workspace.test.tsx` with tests:
 
@@ -1488,7 +1488,7 @@ Create PO handoff
 Notify vendors
 ```
 
-- [ ] **Step 2: Create approval panel component**
+- [x] **Step 2: Create approval panel component**
 
 Create `RfqAwardApprovalPanel` props:
 
@@ -1513,7 +1513,7 @@ Render:
 
 Use `Button` from `@cognify/ui` and a normal `Link` for task/workspace links. Do not create a new shared UI primitive.
 
-- [ ] **Step 3: Wire panel into workspace**
+- [x] **Step 3: Wire panel into workspace**
 
 In `RfqAwardRecommendationWorkspaceContent`:
 
@@ -1529,7 +1529,7 @@ const routeApproval = useRouteRfqAwardRecommendationApproval(rfqId);
 const approvalSummary = useRfqAwardRecommendationApprovalSummary(rfqId);
 ```
 
-- [ ] **Step 4: Run workspace tests**
+- [x] **Step 4: Run workspace tests**
 
 Run:
 
@@ -1539,7 +1539,7 @@ pnpm --filter @cognify/web exec vitest run features/quotations/tests/rfq-award-r
 
 Expected: pass.
 
-- [ ] **Step 5: Commit award approval panel**
+- [x] **Step 5: Commit award approval panel**
 
 Run:
 
@@ -1560,7 +1560,7 @@ git commit -m "feat: show award approval progress in workspace"
 - Modify: `apps/web/features/approvals/tests/approval-queue-workflow.test.tsx`
 - Create: `apps/web/features/approvals/tests/approval-award-task-detail.test.tsx`
 
-- [ ] **Step 1: Write failing approval UI tests**
+- [x] **Step 1: Write failing approval UI tests**
 
 Add queue assertions:
 
@@ -1582,7 +1582,7 @@ expect(screen.getByRole("link", { name: /open award recommendation/i })).toHaveA
 
 Also assert approve/reject/request-changes dialogs still render for the award task.
 
-- [ ] **Step 2: Make queue labels generic**
+- [x] **Step 2: Make queue labels generic**
 
 Update table header `Requisition` to `Subject`.
 
@@ -1596,7 +1596,7 @@ Render:
 
 Keep stable columns and avoid requisition-only requester as a required display. If metadata requester exists, show it; otherwise show `primaryParty`.
 
-- [ ] **Step 3: Add subject type filter**
+- [x] **Step 3: Add subject type filter**
 
 In `approval-queue-page.tsx`, add a compact select or segmented control backed by `subjectType` values:
 
@@ -1608,7 +1608,7 @@ Award recommendations
 
 Pass `subjectType` into `useApprovalTasks()`.
 
-- [ ] **Step 4: Make task detail subject-aware**
+- [x] **Step 4: Make task detail subject-aware**
 
 In `approval-task-detail-page.tsx`:
 
@@ -1630,7 +1630,7 @@ Scorecard total
 Evidence references
 ```
 
-- [ ] **Step 5: Run approval web tests**
+- [x] **Step 5: Run approval web tests**
 
 Run:
 
@@ -1640,7 +1640,7 @@ pnpm --filter @cognify/web exec vitest run features/approvals/tests/approval-que
 
 Expected: pass.
 
-- [ ] **Step 6: Commit approval UI changes**
+- [x] **Step 6: Commit approval UI changes**
 
 Run:
 
@@ -1658,7 +1658,7 @@ git commit -m "feat: render award subjects in approval workspace"
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify this plan by checking completed boxes.
 
-- [ ] **Step 1: Run full contract and focused API verification**
+- [x] **Step 1: Run full contract and focused API verification**
 
 Run:
 
@@ -1672,7 +1672,7 @@ cd apps/api && php artisan test --filter=RfqAwardApprovalApiTest
 
 Expected: all pass.
 
-- [ ] **Step 2: Run focused web verification**
+- [x] **Step 2: Run focused web verification**
 
 Run:
 
@@ -1686,7 +1686,7 @@ pnpm --filter @cognify/api-client typecheck
 
 Expected: all pass.
 
-- [ ] **Step 3: Run root checks**
+- [x] **Step 3: Run root checks**
 
 Run:
 
@@ -1699,7 +1699,7 @@ git diff --check
 
 Expected: all pass.
 
-- [ ] **Step 4: Update roadmap**
+- [x] **Step 4: Update roadmap**
 
 Mark P1-33 in `docs/01-product/feature-roadmap.md` as implemented with a short note:
 
@@ -1707,7 +1707,7 @@ Mark P1-33 in `docs/01-product/feature-roadmap.md` as implemented with a short n
 Implemented via `docs/superpowers/plans/2026-05-26-award-approval.md`: award recommendations route through the shared Approval domain and record approval outcomes; operational awarding and PO handoff remain downstream.
 ```
 
-- [ ] **Step 5: Commit verification and roadmap**
+- [x] **Step 5: Commit verification and roadmap**
 
 Run:
 
