@@ -7,9 +7,10 @@ use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalStageStatus;
-use Domains\Requisition\Models\Requisition;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,7 +25,9 @@ class ApprovalTaskResource extends JsonResource
     public function toArray(Request $request): array
     {
         $subject = $this->whenLoaded('subject');
-        $requisition = $subject instanceof Requisition ? $subject : null;
+        $summary = $subject instanceof Model
+            ? app(ApprovalSubjectRegistry::class)->forStoredSubject($this->subject_type)->taskSubjectSummary($subject)
+            : null;
         $isActionable = $this->isActionableBy($request);
 
         return [
@@ -32,18 +35,17 @@ class ApprovalTaskResource extends JsonResource
             'tenantId' => (string) $this->tenant_id,
             'instanceId' => (string) $this->approval_instance_id,
             'stageId' => (string) $this->approval_stage_id,
-            'subject' => [
-                'type' => $requisition instanceof Requisition ? 'requisition' : $this->subject_type,
+            'subject' => $summary?->toArray() ?? [
+                'type' => $this->subject_type,
                 'id' => (string) $this->subject_id,
-                'number' => $requisition?->number,
-                'title' => $requisition?->title,
-                'status' => $requisition?->status?->value,
-                'requester' => $requisition instanceof Requisition ? $this->userSummary($requisition->requester) : null,
-                'department' => $requisition?->department,
-                'costCenter' => $requisition?->cost_center,
-                'projectId' => $requisition?->project_id !== null ? (string) $requisition->project_id : null,
-                'amount' => $requisition instanceof Requisition ? $this->estimatedTotal($requisition) : null,
-                'currency' => $requisition?->currency,
+                'number' => null,
+                'title' => null,
+                'status' => null,
+                'primaryParty' => null,
+                'amount' => null,
+                'currency' => null,
+                'href' => null,
+                'metadata' => [],
             ],
             'title' => $this->title,
             'status' => $this->status->value,
@@ -79,18 +81,6 @@ class ApprovalTaskResource extends JsonResource
                 'canRequestChanges' => $isActionable,
             ],
         ];
-    }
-
-    private function estimatedTotal(Requisition $requisition): float
-    {
-        if (! $requisition->relationLoaded('lineItems')) {
-            return 0.0;
-        }
-
-        return round($requisition->lineItems->reduce(
-            fn (float $carry, $lineItem): float => $carry + ((float) $lineItem->quantity * (float) $lineItem->estimated_unit_price),
-            0.0,
-        ), 2);
     }
 
     private function userSummary(mixed $user): ?array

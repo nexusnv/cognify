@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Audit\AuditEvent;
 use App\Audit\Policies\AuditEventPolicy;
+use App\Tenancy\CurrentTenant;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
+use Domains\Approval\SubjectHandlers\RequisitionApprovalSubjectHandler;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
-use App\Tenancy\CurrentTenant;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Project\Policies\ProcurementProjectPolicy;
 use Domains\Quotation\Models\Rfq;
@@ -34,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(CurrentTenant::class);
+        $this->app->singleton(ApprovalSubjectRegistry::class, fn ($app) => new ApprovalSubjectRegistry([
+            $app->make(RequisitionApprovalSubjectHandler::class),
+        ]));
     }
 
     /**

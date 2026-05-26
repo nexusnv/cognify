@@ -12,6 +12,7 @@ final class ApprovalContextData
      */
     public function __construct(
         public readonly string $tenantId,
+        public readonly string $subjectType,
         public readonly ?string $requisitionId,
         public readonly ?string $requesterId,
         public readonly float $amount,
@@ -22,6 +23,19 @@ final class ApprovalContextData
         public readonly array $lineItemCategories,
         public readonly ?string $riskClassification,
         public readonly ?string $vendorId,
+        public readonly ?string $awardRecommendationId = null,
+        public readonly ?string $rfqId = null,
+        public readonly ?string $rfqNumber = null,
+        public readonly ?string $recommendedVendorId = null,
+        public readonly ?string $recommendedVendorName = null,
+        public readonly ?string $recommendedQuotationId = null,
+        public readonly ?string $recommendedQuotationVersionId = null,
+        public readonly ?float $recommendedAmount = null,
+        public readonly ?string $recommendedCurrency = null,
+        public readonly ?string $scorecardId = null,
+        public readonly ?float $scorecardWeightedTotal = null,
+        public readonly bool $riskSummaryPresent = false,
+        public readonly bool $exceptionSummaryPresent = false,
     ) {}
 
     public static function fromRequisition(Requisition $requisition): self
@@ -30,6 +44,7 @@ final class ApprovalContextData
 
         return new self(
             tenantId: (string) $requisition->tenant_id,
+            subjectType: 'requisition',
             requisitionId: (string) $requisition->id,
             requesterId: (string) $requisition->requester_id,
             amount: round(
@@ -63,6 +78,7 @@ final class ApprovalContextData
 
         return new self(
             tenantId: $tenantId,
+            subjectType: isset($context['subjectType']) && $context['subjectType'] !== '' ? (string) $context['subjectType'] : 'requisition',
             requisitionId: isset($context['requisitionId']) ? (string) $context['requisitionId'] : null,
             requesterId: isset($context['requesterId']) ? (string) $context['requesterId'] : null,
             amount: isset($context['amount']) ? round((float) $context['amount'], 2) : 0.0,
@@ -75,6 +91,19 @@ final class ApprovalContextData
                 ? (string) $context['riskClassification']
                 : null,
             vendorId: isset($context['vendorId']) && $context['vendorId'] !== '' ? (string) $context['vendorId'] : null,
+            awardRecommendationId: isset($context['awardRecommendationId']) && $context['awardRecommendationId'] !== '' ? (string) $context['awardRecommendationId'] : null,
+            rfqId: isset($context['rfqId']) && $context['rfqId'] !== '' ? (string) $context['rfqId'] : null,
+            rfqNumber: isset($context['rfqNumber']) && $context['rfqNumber'] !== '' ? (string) $context['rfqNumber'] : null,
+            recommendedVendorId: isset($context['recommendedVendorId']) && $context['recommendedVendorId'] !== '' ? (string) $context['recommendedVendorId'] : null,
+            recommendedVendorName: isset($context['recommendedVendorName']) && $context['recommendedVendorName'] !== '' ? (string) $context['recommendedVendorName'] : null,
+            recommendedQuotationId: isset($context['recommendedQuotationId']) && $context['recommendedQuotationId'] !== '' ? (string) $context['recommendedQuotationId'] : null,
+            recommendedQuotationVersionId: isset($context['recommendedQuotationVersionId']) && $context['recommendedQuotationVersionId'] !== '' ? (string) $context['recommendedQuotationVersionId'] : null,
+            recommendedAmount: isset($context['recommendedAmount']) ? round((float) $context['recommendedAmount'], 2) : null,
+            recommendedCurrency: isset($context['recommendedCurrency']) && $context['recommendedCurrency'] !== '' ? (string) $context['recommendedCurrency'] : null,
+            scorecardId: isset($context['scorecardId']) && $context['scorecardId'] !== '' ? (string) $context['scorecardId'] : null,
+            scorecardWeightedTotal: isset($context['scorecardWeightedTotal']) ? round((float) $context['scorecardWeightedTotal'], 2) : null,
+            riskSummaryPresent: (bool) ($context['riskSummaryPresent'] ?? false),
+            exceptionSummaryPresent: (bool) ($context['exceptionSummaryPresent'] ?? false),
         );
     }
 
@@ -87,6 +116,7 @@ final class ApprovalContextData
         $missing = [];
         $supportedFields = array_flip([
             'tenantId',
+            'subjectType',
             'requisitionId',
             'requesterId',
             'amount',
@@ -97,6 +127,19 @@ final class ApprovalContextData
             'lineItemCategories',
             'riskClassification',
             'vendorId',
+            'awardRecommendationId',
+            'rfqId',
+            'rfqNumber',
+            'recommendedVendorId',
+            'recommendedVendorName',
+            'recommendedQuotationId',
+            'recommendedQuotationVersionId',
+            'recommendedAmount',
+            'recommendedCurrency',
+            'scorecardId',
+            'scorecardWeightedTotal',
+            'riskSummaryPresent',
+            'exceptionSummaryPresent',
         ]);
 
         foreach (array_values(array_unique($requiredFields)) as $field) {
@@ -126,6 +169,7 @@ final class ApprovalContextData
     {
         return [
             'tenantId' => $this->tenantId,
+            'subjectType' => $this->subjectType,
             'requisitionId' => $this->requisitionId,
             'requesterId' => $this->requesterId,
             'amount' => $this->amount,
@@ -136,6 +180,19 @@ final class ApprovalContextData
             'lineItemCategories' => $this->lineItemCategories,
             'riskClassification' => $this->riskClassification,
             'vendorId' => $this->vendorId,
+            'awardRecommendationId' => $this->awardRecommendationId,
+            'rfqId' => $this->rfqId,
+            'rfqNumber' => $this->rfqNumber,
+            'recommendedVendorId' => $this->recommendedVendorId,
+            'recommendedVendorName' => $this->recommendedVendorName,
+            'recommendedQuotationId' => $this->recommendedQuotationId,
+            'recommendedQuotationVersionId' => $this->recommendedQuotationVersionId,
+            'recommendedAmount' => $this->recommendedAmount,
+            'recommendedCurrency' => $this->recommendedCurrency,
+            'scorecardId' => $this->scorecardId,
+            'scorecardWeightedTotal' => $this->scorecardWeightedTotal,
+            'riskSummaryPresent' => $this->riskSummaryPresent,
+            'exceptionSummaryPresent' => $this->exceptionSummaryPresent,
         ];
     }
 
