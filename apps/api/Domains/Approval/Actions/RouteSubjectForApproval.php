@@ -62,7 +62,12 @@ class RouteSubjectForApproval
             }
 
             $context = $handler->buildContext($subject);
-            $match = $this->matcher->match($context, $this->tenantPolicyCandidates($tenant, $handler));
+            $policyCandidates = $this->tenantPolicyCandidates($tenant, $handler);
+            if ($policyCandidates === []) {
+                throw new ConflictHttpException('No approval policy versions are available.');
+            }
+
+            $match = $this->matcher->match($context, $policyCandidates);
             $route = $this->routeBuilder->build(
                 $context,
                 $match['matchedVersion'],

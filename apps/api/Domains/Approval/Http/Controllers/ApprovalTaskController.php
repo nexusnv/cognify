@@ -15,6 +15,7 @@ use Domains\Approval\Http\Requests\DelegateApprovalTaskRequest;
 use Domains\Approval\Http\Resources\ApprovalTaskResource;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalTaskStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Models\RequisitionLineItem;
@@ -28,6 +29,7 @@ class ApprovalTaskController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $validated = $request->validate([
             'scope' => ['sometimes', 'string', 'in:assigned_to_me,overdue,due_soon,completed_by_me,all'],
+            'subjectType' => ['sometimes', 'string', 'in:requisition,rfq_award_recommendation'],
             'status' => ['sometimes', 'string'],
             'dueFrom' => ['sometimes', 'date'],
             'dueTo' => ['sometimes', 'date'],
@@ -62,12 +64,22 @@ class ApprovalTaskController extends Controller
             default => $query->where('assignee_id', $request->user()->id),
         };
 
+        if (array_key_exists('subjectType', $validated)) {
+            $query->where('subject_type', app(ApprovalSubjectRegistry::class)->forStoredSubject($validated['subjectType'])->modelClass());
+        }
+
         $query
             ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
             ->when($validated['dueFrom'] ?? null, fn ($query, string $date) => $query->whereDate('due_at', '>=', $date))
             ->when($validated['dueTo'] ?? null, fn ($query, string $date) => $query->whereDate('due_at', '<=', $date))
             ->when($validated['updatedFrom'] ?? null, fn ($query, string $date) => $query->whereDate('updated_at', '>=', $date))
             ->when($validated['updatedTo'] ?? null, fn ($query, string $date) => $query->whereDate('updated_at', '<=', $date));
+
+        $hasRequisitionOnlyFilters = count(array_intersect(array_keys($validated), ['requesterId', 'department', 'costCenter', 'projectId', 'amountMin', 'amountMax'])) > 0;
+
+        if (($validated['subjectType'] ?? null) === 'rfq_award_recommendation' && $hasRequisitionOnlyFilters) {
+            $query->whereRaw('1 = 0');
+        }
 
         foreach (['requesterId', 'department', 'costCenter', 'projectId'] as $filter) {
             if (! array_key_exists($filter, $validated)) {

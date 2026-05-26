@@ -134,6 +134,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::put('/rfqs/{rfq}/award-recommendation', [RfqAwardRecommendationController::class, 'save']);
             Route::post('/rfqs/{rfq}/award-recommendation/submit', [RfqAwardRecommendationController::class, 'submit']);
             Route::post('/rfqs/{rfq}/award-recommendation/withdraw', [RfqAwardRecommendationController::class, 'withdraw']);
+            Route::post('/rfqs/{rfq}/award-recommendation/approval-route', [RfqAwardRecommendationController::class, 'routeApproval']);
+            Route::get('/rfqs/{rfq}/award-recommendation/approval-summary', [RfqAwardRecommendationController::class, 'approvalSummary']);
+            Route::get('/rfqs/{rfq}/award-recommendation/approval-preview', [RfqAwardRecommendationController::class, 'approvalPreview']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);

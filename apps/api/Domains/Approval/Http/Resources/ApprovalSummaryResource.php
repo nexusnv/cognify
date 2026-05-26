@@ -24,6 +24,7 @@ class ApprovalSummaryResource extends JsonResource
         $currentUserTask = $activeTasks->firstWhere('assignee_id', $request->user()?->id);
 
         return [
+            'id' => (string) $this->id,
             'instanceId' => (string) $this->id,
             'status' => $this->status->value,
             'currentStage' => $currentStage !== null ? [
