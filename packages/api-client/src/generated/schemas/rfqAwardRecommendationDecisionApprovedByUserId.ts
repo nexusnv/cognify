@@ -4,6 +4,5 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { UserSummary } from "./userSummary";
 
-export type ApprovalTaskSubjectRequester = UserSummary | null;
+export type RfqAwardRecommendationDecisionApprovedByUserId = string | null;

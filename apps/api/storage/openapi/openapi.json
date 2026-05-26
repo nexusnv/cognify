@@ -2698,6 +2698,18 @@
             }
           },
           {
+            "name": "subjectType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "requisition",
+                "rfq_award_recommendation"
+              ]
+            }
+          },
+          {
             "name": "status",
             "in": "query",
             "schema": {
@@ -6254,6 +6266,138 @@
           }
         }
       }
+    },
+    "/api/rfqs/{rfq}/award-recommendation/approval-route": {
+      "post": {
+        "operationId": "routeRfqAwardRecommendationForApproval",
+        "summary": "Route RFQ award recommendation for approval",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ award approval route",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardApprovalRouteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/rfqs/{rfq}/award-recommendation/approval-summary": {
+      "get": {
+        "operationId": "getRfqAwardRecommendationApprovalSummary",
+        "summary": "Get RFQ award recommendation approval summary",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ award approval summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardRecommendationApprovalSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/rfqs/{rfq}/award-recommendation/approval-preview": {
+      "get": {
+        "operationId": "previewRfqAwardRecommendationApproval",
+        "summary": "Preview RFQ award recommendation approval route",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ award approval preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqAwardApprovalPreviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6799,7 +6943,8 @@
           "stages",
           "warnings",
           "estimatedDueAt",
-          "createsTasks"
+          "createsTasks",
+          "context"
         ],
         "properties": {
           "matchedPolicy": {
@@ -6905,6 +7050,9 @@
           },
           "createsTasks": {
             "type": "boolean"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ApprovalPreviewContext"
           }
         }
       },
@@ -9748,26 +9896,54 @@
       "ApprovalPreviewContext": {
         "type": "object",
         "properties": {
-          "requisitionId": {
+          "tenantId": {
             "type": "string"
           },
+          "subjectType": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "rfq_award_recommendation"
+            ]
+          },
+          "requisitionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "requesterId": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "amount": {
             "type": "number"
           },
           "currency": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "department": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "costCenter": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "projectId": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "lineItemCategories": {
             "type": "array",
@@ -9776,10 +9952,88 @@
             }
           },
           "riskClassification": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "vendorId": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "awardRecommendationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedVendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedVendorName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedQuotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedQuotationVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedAmount": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "recommendedCurrency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scorecardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scorecardWeightedTotal": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "riskSummaryPresent": {
+            "type": "boolean"
+          },
+          "exceptionSummaryPresent": {
+            "type": "boolean"
           }
         }
       },
@@ -10760,19 +11014,15 @@
         "required": [
           "type",
           "id",
-          "number",
-          "title",
-          "status",
-          "requester",
-          "department",
-          "costCenter",
-          "projectId",
-          "amount",
-          "currency"
+          "metadata"
         ],
         "properties": {
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "requisition",
+              "rfq_award_recommendation"
+            ]
           },
           "id": {
             "type": "string"
@@ -10795,29 +11045,7 @@
               "null"
             ]
           },
-          "requester": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/UserSummary"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "department": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "costCenter": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "projectId": {
+          "primaryParty": {
             "type": [
               "string",
               "null"
@@ -10834,6 +11062,16 @@
               "string",
               "null"
             ]
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
@@ -14208,6 +14446,7 @@
       "ApprovalSummary": {
         "type": "object",
         "required": [
+          "id",
           "instanceId",
           "status",
           "currentStage",
@@ -14284,6 +14523,9 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "id": {
+            "type": "string"
           }
         }
       },
@@ -16558,7 +16800,17 @@
           "submittedAt",
           "withdrawnByUserId",
           "withdrawnAt",
-          "updatedAt"
+          "updatedAt",
+          "approvalInstanceId",
+          "approvedByUserId",
+          "approvedAt",
+          "rejectedByUserId",
+          "rejectedAt",
+          "decisionReason",
+          "changesRequestedByUserId",
+          "changesRequestedAt",
+          "changesRequestedReason",
+          "changesRequestedFields"
         ],
         "properties": {
           "id": {
@@ -16569,6 +16821,10 @@
             "enum": [
               "draft",
               "pending_approval",
+              "approval_routed",
+              "approved",
+              "rejected",
+              "changes_requested",
               "withdrawn"
             ]
           },
@@ -16658,6 +16914,69 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "approvalInstanceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "rejectedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changesRequestedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changesRequestedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "changesRequestedReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changesRequestedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -17191,6 +17510,127 @@
               "null"
             ],
             "maxLength": 2000
+          }
+        }
+      },
+      "ApprovalAwardRecommendationSubjectMetadata": {
+        "type": "object",
+        "properties": {
+          "rfqId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedVendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedVendorName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedQuotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommendedQuotationVersionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tradeoffSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "riskSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exceptionSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scorecardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scorecardWeightedTotal": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "evidenceReferenceCount": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "RfqAwardApprovalPreviewResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApprovalPreview"
+          }
+        }
+      },
+      "RfqAwardApprovalRouteResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApprovalSummary"
+          }
+        }
+      },
+      "RfqAwardRecommendationApprovalSummaryResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       }

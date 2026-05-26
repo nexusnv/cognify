@@ -5,9 +5,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListApprovalTasksScope } from "./listApprovalTasksScope";
+import type { ListApprovalTasksSubjectType } from "./listApprovalTasksSubjectType";
 
 export type ListApprovalTasksParams = {
   scope?: ListApprovalTasksScope;
+  subjectType?: ListApprovalTasksSubjectType;
   status?: string;
   dueFrom?: string;
   dueTo?: string;

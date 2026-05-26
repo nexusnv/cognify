@@ -84,6 +84,9 @@ import type {
   RequisitionListResponse,
   RequisitionResponse,
   RequisitionTemplateListResponse,
+  RfqAwardApprovalPreviewResponse,
+  RfqAwardApprovalRouteResponse,
+  RfqAwardRecommendationApprovalSummaryResponse,
   RfqAwardRecommendationResponse,
   RfqCancelRequest,
   RfqInvitationListResponse,
@@ -7938,6 +7941,198 @@ export const withdrawRfqAwardRecommendation = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(withdrawRfqAwardRecommendationRequest),
+    },
+  );
+};
+
+/**
+ * @summary Route RFQ award recommendation for approval
+ */
+export type routeRfqAwardRecommendationForApprovalResponse200 = {
+  data: RfqAwardApprovalRouteResponse;
+  status: 200;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponseSuccess =
+  routeRfqAwardRecommendationForApprovalResponse200 & {
+    headers: Headers;
+  };
+export type routeRfqAwardRecommendationForApprovalResponseError = (
+  | routeRfqAwardRecommendationForApprovalResponse401
+  | routeRfqAwardRecommendationForApprovalResponse403
+  | routeRfqAwardRecommendationForApprovalResponse404
+  | routeRfqAwardRecommendationForApprovalResponse409
+  | routeRfqAwardRecommendationForApprovalResponse422
+) & {
+  headers: Headers;
+};
+
+export type routeRfqAwardRecommendationForApprovalResponse =
+  | routeRfqAwardRecommendationForApprovalResponseSuccess
+  | routeRfqAwardRecommendationForApprovalResponseError;
+
+export const getRouteRfqAwardRecommendationForApprovalUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/approval-route`;
+};
+
+export const routeRfqAwardRecommendationForApproval = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<routeRfqAwardRecommendationForApprovalResponse> => {
+  return cognifyFetch<routeRfqAwardRecommendationForApprovalResponse>(
+    getRouteRfqAwardRecommendationForApprovalUrl(rfq),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Get RFQ award recommendation approval summary
+ */
+export type getRfqAwardRecommendationApprovalSummaryResponse200 = {
+  data: RfqAwardRecommendationApprovalSummaryResponse;
+  status: 200;
+};
+
+export type getRfqAwardRecommendationApprovalSummaryResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type getRfqAwardRecommendationApprovalSummaryResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type getRfqAwardRecommendationApprovalSummaryResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type getRfqAwardRecommendationApprovalSummaryResponseSuccess =
+  getRfqAwardRecommendationApprovalSummaryResponse200 & {
+    headers: Headers;
+  };
+export type getRfqAwardRecommendationApprovalSummaryResponseError = (
+  | getRfqAwardRecommendationApprovalSummaryResponse401
+  | getRfqAwardRecommendationApprovalSummaryResponse403
+  | getRfqAwardRecommendationApprovalSummaryResponse404
+) & {
+  headers: Headers;
+};
+
+export type getRfqAwardRecommendationApprovalSummaryResponse =
+  | getRfqAwardRecommendationApprovalSummaryResponseSuccess
+  | getRfqAwardRecommendationApprovalSummaryResponseError;
+
+export const getGetRfqAwardRecommendationApprovalSummaryUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/approval-summary`;
+};
+
+export const getRfqAwardRecommendationApprovalSummary = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<getRfqAwardRecommendationApprovalSummaryResponse> => {
+  return cognifyFetch<getRfqAwardRecommendationApprovalSummaryResponse>(
+    getGetRfqAwardRecommendationApprovalSummaryUrl(rfq),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Preview RFQ award recommendation approval route
+ */
+export type previewRfqAwardRecommendationApprovalResponse200 = {
+  data: RfqAwardApprovalPreviewResponse;
+  status: 200;
+};
+
+export type previewRfqAwardRecommendationApprovalResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type previewRfqAwardRecommendationApprovalResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type previewRfqAwardRecommendationApprovalResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type previewRfqAwardRecommendationApprovalResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type previewRfqAwardRecommendationApprovalResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type previewRfqAwardRecommendationApprovalResponseSuccess =
+  previewRfqAwardRecommendationApprovalResponse200 & {
+    headers: Headers;
+  };
+export type previewRfqAwardRecommendationApprovalResponseError = (
+  | previewRfqAwardRecommendationApprovalResponse401
+  | previewRfqAwardRecommendationApprovalResponse403
+  | previewRfqAwardRecommendationApprovalResponse404
+  | previewRfqAwardRecommendationApprovalResponse409
+  | previewRfqAwardRecommendationApprovalResponse422
+) & {
+  headers: Headers;
+};
+
+export type previewRfqAwardRecommendationApprovalResponse =
+  | previewRfqAwardRecommendationApprovalResponseSuccess
+  | previewRfqAwardRecommendationApprovalResponseError;
+
+export const getPreviewRfqAwardRecommendationApprovalUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/approval-preview`;
+};
+
+export const previewRfqAwardRecommendationApproval = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<previewRfqAwardRecommendationApprovalResponse> => {
+  return cognifyFetch<previewRfqAwardRecommendationApprovalResponse>(
+    getPreviewRfqAwardRecommendationApprovalUrl(rfq),
+    {
+      ...options,
+      method: "GET",
     },
   );
 };

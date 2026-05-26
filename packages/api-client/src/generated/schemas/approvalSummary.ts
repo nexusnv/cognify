@@ -24,4 +24,5 @@ export interface ApprovalSummary {
   currentUserTaskId: ApprovalSummaryCurrentUserTaskId;
   startedAt: ApprovalSummaryStartedAt;
   completedAt: ApprovalSummaryCompletedAt;
+  id: string;
 }
