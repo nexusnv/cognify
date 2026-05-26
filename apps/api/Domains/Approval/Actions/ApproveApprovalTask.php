@@ -13,21 +13,21 @@ use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalStage;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\Services\ApprovalSlaCalculator;
 use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
-use Domains\Requisition\Actions\MarkRequisitionApproved;
-use Domains\Requisition\Models\Requisition;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApproveApprovalTask
 {
     public function __construct(
-        private readonly MarkRequisitionApproved $markRequisitionApproved,
+        private readonly ApprovalSubjectRegistry $subjectRegistry,
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
         private readonly ApprovalSlaCalculator $slaCalculator,
@@ -76,8 +76,10 @@ class ApproveApprovalTask
                     ])->save();
 
                     $subject = $task->subject;
-                    if ($subject instanceof Requisition) {
-                        $this->markRequisitionApproved->handle($subject, $instance, $actor);
+                    if ($subject instanceof Model) {
+                        $this->subjectRegistry
+                            ->forStoredSubject($task->subject_type)
+                            ->onApproved($tenant, $subject, $instance, $actor);
                     }
                 }
             }
@@ -170,13 +172,18 @@ class ApproveApprovalTask
                 continue;
             }
 
+            $subject = $instance->subject;
+            $handler = $subject instanceof Model
+                ? $this->subjectRegistry->forStoredSubject($instance->subject_type)
+                : null;
+
             $this->notificationRecorder->record($tenant, collect([$assignee]), new NotificationData(
                 type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
                 title: 'Approval task assigned',
-                body: $instance->subject?->title ?? 'Approval task',
+                body: $subject instanceof Model && $handler !== null ? $handler->notificationBody($subject) : 'Approval task',
                 href: "/approvals/tasks/{$task->id}",
-                subject: $instance->subject,
-                subjectLabel: $instance->subject instanceof Requisition ? $instance->subject->number : null,
+                subject: $subject,
+                subjectLabel: $subject instanceof Model && $handler !== null ? $handler->notificationSubjectLabel($subject) : null,
                 actor: $actor,
             ));
         }

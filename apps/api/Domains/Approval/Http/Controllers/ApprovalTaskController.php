@@ -42,7 +42,7 @@ class ApprovalTaskController extends Controller
         ]);
 
         $query = ApprovalTask::query()
-            ->with(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject.requester', 'subject.lineItems'])
+            ->with(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject'])
             ->where('tenant_id', $tenant->id)
             ->latest('updated_at');
 
@@ -131,7 +131,7 @@ class ApprovalTaskController extends Controller
         abort_unless((int) $task->assignee_id === (int) $request->user()->id, 403);
         $task->forceFill(['viewed_at' => $task->viewed_at ?? now()])->save();
 
-        return new ApprovalTaskResource($task->refresh()->load(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject.requester', 'subject.lineItems']));
+        return new ApprovalTaskResource($task->refresh()->load(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject']));
     }
 
     public function approve(Request $request, CurrentTenant $currentTenant, ApproveApprovalTask $action, int $approvalTask): ApprovalTaskResource
@@ -182,7 +182,7 @@ class ApprovalTaskController extends Controller
     private function findTenantTask(Tenant $tenant, int $id): ApprovalTask
     {
         return ApprovalTask::query()
-            ->with(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject.requester', 'subject.lineItems'])
+            ->with(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject'])
             ->where('tenant_id', $tenant->id)
             ->findOrFail($id);
     }
