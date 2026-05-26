@@ -44,17 +44,13 @@ class SaveRfqAwardRecommendation
                 ->with('evidenceReferences')
                 ->where('tenant_id', $tenant->id)
                 ->where('rfq_id', $lockedRfq->id)
-                ->whereIn('status', [
-                    RfqAwardRecommendationStatus::Draft->value,
-                    RfqAwardRecommendationStatus::PendingApproval->value,
-                ])
                 ->lockForUpdate()
                 ->latest('updated_at')
                 ->latest('id')
                 ->first();
 
-            if ($recommendation !== null && $recommendation->statusState()->isPendingApproval()) {
-                throw new ConflictHttpException('Pending award recommendations cannot be edited.');
+            if ($recommendation !== null && ! $recommendation->statusState()->isEditable()) {
+                throw new ConflictHttpException('Only draft award recommendations can be edited.');
             }
 
             $before = $recommendation !== null ? $this->auditSnapshot($recommendation) : null;
