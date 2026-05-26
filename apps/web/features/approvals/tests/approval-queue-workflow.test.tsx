@@ -36,6 +36,8 @@ describe("approval queue workflow", () => {
     expect(screen.getByLabelText("Amount max")).toBeInTheDocument();
     expect(screen.getByLabelText("Updated from")).toBeInTheDocument();
     expect(screen.getByLabelText("Updated to")).toBeInTheDocument();
+    expect(screen.getByLabelText("Subject type")).toBeInTheDocument();
+    expect(screen.getByText("Award recommendation for Enterprise laptop refresh")).toBeInTheDocument();
     const slaSummary = await screen.findByRole("region", { name: "Approval SLA summary" });
     expect(slaSummary).toBeInTheDocument();
     expect(within(slaSummary).getByText("Due soon")).toBeInTheDocument();
@@ -45,5 +47,9 @@ describe("approval queue workflow", () => {
 
     await user.click(screen.getByRole("button", { name: "Due soon" }));
     expect(await screen.findByText("Warehouse packing supplies")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Subject type"), "rfq_award_recommendation");
+    expect(await screen.findByText("Award recommendation for Enterprise laptop refresh")).toBeInTheDocument();
+    expect(screen.queryByText("Warehouse packing supplies")).not.toBeInTheDocument();
   });
 });

@@ -25,7 +25,16 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
     requester?: { name?: string };
     department?: string | null;
     costCenter?: string | null;
+    rfqId?: string | null;
+    rfqNumber?: string | null;
+    recommendedVendorName?: string | null;
+    rationale?: string | null;
+    tradeoffSummary?: string | null;
+    riskSummary?: string | null;
+    exceptionSummary?: string | null;
+    scorecardWeightedTotal?: number | null;
   };
+  const isAwardRecommendation = task.subject.type === "rfq_award_recommendation";
 
   return (
     <div className="space-y-6">
@@ -49,9 +58,19 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
           <Metric label="Delegated from" value={task.originalAssignee.name} />
         ) : null}
-        <Metric label="Requester" value={subjectMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
-        <Metric label="Department" value={subjectMetadata.department ?? "Unassigned"} />
-        <Metric label="Cost center" value={subjectMetadata.costCenter ?? "Unassigned"} />
+        {isAwardRecommendation ? (
+          <>
+            <Metric label="Recommended vendor" value={subjectMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
+            <Metric label="RFQ" value={subjectMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
+            <Metric label="Weighted score" value={formatNumber(subjectMetadata.scorecardWeightedTotal)} />
+          </>
+        ) : (
+          <>
+            <Metric label="Requester" value={subjectMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
+            <Metric label="Department" value={subjectMetadata.department ?? "Unassigned"} />
+            <Metric label="Cost center" value={subjectMetadata.costCenter ?? "Unassigned"} />
+          </>
+        )}
       </section>
 
       <section className="rounded-md border p-4">
@@ -110,15 +129,23 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
       </section>
 
       <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Requisition</h2>
+        <h2 className="text-base font-semibold">{isAwardRecommendation ? "Award recommendation" : "Requisition"}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {task.subject.title} is currently {task.subject.status?.replaceAll("_", " ")}.
         </p>
+        {isAwardRecommendation ? (
+          <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+            <Metric label="Rationale" value={subjectMetadata.rationale ?? "No rationale provided"} />
+            <Metric label="Tradeoff summary" value={subjectMetadata.tradeoffSummary ?? "Not provided"} />
+            <Metric label="Risk summary" value={subjectMetadata.riskSummary ?? "Not provided"} />
+            <Metric label="Exception summary" value={subjectMetadata.exceptionSummary ?? "Not provided"} />
+          </div>
+        ) : null}
         <Link
-          href={`/requisitions/${task.subject.id}`}
+          href={isAwardRecommendation ? awardRecommendationHref(task, subjectMetadata) : `/requisitions/${task.subject.id}`}
           className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
         >
-          Open requisition
+          {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
         </Link>
       </section>
     </div>
@@ -139,4 +166,19 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(
     new Date(value),
   );
+}
+
+function formatNumber(value?: number | null) {
+  if (typeof value !== "number") return "Not scored";
+  return new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(value);
+}
+
+function awardRecommendationHref(
+  task: { subject: { href?: string | null } },
+  metadata: { rfqId?: string | null },
+) {
+  if (task.subject.href) return task.subject.href;
+  if (metadata.rfqId) return `/quotations/awards/${metadata.rfqId}`;
+
+  return "/quotations";
 }
