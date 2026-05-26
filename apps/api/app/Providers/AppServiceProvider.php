@@ -7,6 +7,7 @@ use App\Audit\Policies\AuditEventPolicy;
 use App\Tenancy\CurrentTenant;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\SubjectHandlers\RequisitionApprovalSubjectHandler;
+use Domains\Approval\SubjectHandlers\RfqAwardRecommendationApprovalSubjectHandler;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
 use Domains\Project\Models\ProcurementProject;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(CurrentTenant::class);
         $this->app->singleton(ApprovalSubjectRegistry::class, fn ($app) => new ApprovalSubjectRegistry([
             $app->make(RequisitionApprovalSubjectHandler::class),
+            $app->make(RfqAwardRecommendationApprovalSubjectHandler::class),
         ]));
     }
 
