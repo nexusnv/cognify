@@ -82,6 +82,52 @@ describe("RFQ award recommendation workspace", () => {
     await screen.findByText("Withdrawal reason: Need updated commercial clarification.");
   });
 
+  it("shows route for approval when recommendation is pending approval", async () => {
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-pending-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("heading", { name: "Award recommendation" });
+
+    expect(screen.getByRole("region", { name: "Approval route" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Route for approval" })).toBeEnabled();
+    expect(await screen.findByText("No approval route has been started.")).toBeInTheDocument();
+  });
+
+  it("routes the recommendation and shows active approval summary", async () => {
+    const user = userEvent.setup();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-pending-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("heading", { name: "Award recommendation" });
+
+    await user.click(screen.getByRole("button", { name: "Route for approval" }));
+
+    expect(await screen.findByText("Current stage")).toBeInTheDocument();
+    expect(screen.getByText("Commercial approval")).toBeInTheDocument();
+    expect(screen.getByText("Priya Buyer")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open approval task" })).toHaveAttribute("href", "/approvals/tasks/award-task-1");
+  });
+
+  it.each([
+    ["rfq-approved-recommendation", "Approved"],
+    ["rfq-rejected-recommendation", "Rejected"],
+    ["rfq-changes-requested-recommendation", "Changes requested"],
+  ])("shows %s approval outcome without operational award controls", async (rfqId, outcome) => {
+    render(<RfqAwardRecommendationWorkspace rfqId={rfqId} />, { wrapper: TestProviders });
+    await screen.findByRole("heading", { name: "Award recommendation" });
+
+    expect(await screen.findByText(outcome)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Award vendor" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create PO handoff" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Notify vendors" })).not.toBeInTheDocument();
+  });
+
+  it("shows approval route errors in the approval panel", async () => {
+    const user = userEvent.setup();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-no-award-policy" />, { wrapper: TestProviders });
+    await screen.findByRole("heading", { name: "Award recommendation" });
+
+    await user.click(screen.getByRole("button", { name: "Route for approval" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No matching approval policy");
+  });
+
   it("allows editing and saving from withdrawn recommendation state", async () => {
     const user = userEvent.setup();
     server.use(
