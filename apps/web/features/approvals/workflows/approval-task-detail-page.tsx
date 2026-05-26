@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { toast } from "sonner";
+import type {
+  ApprovalAwardRecommendationSubjectMetadata,
+  ApprovalRequisitionSubjectMetadata,
+} from "@cognify/api-client/schemas";
 import { ApprovalActionDialog } from "../components/approval-action-dialog";
 import { ApprovalDelegationDialog } from "../components/approval-delegation-dialog";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
@@ -21,20 +25,9 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
     return <p className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Approval task could not be loaded.</p>;
   }
 
-  const subjectMetadata = task.subject.metadata as {
-    requester?: { name?: string };
-    department?: string | null;
-    costCenter?: string | null;
-    rfqId?: string | null;
-    rfqNumber?: string | null;
-    recommendedVendorName?: string | null;
-    rationale?: string | null;
-    tradeoffSummary?: string | null;
-    riskSummary?: string | null;
-    exceptionSummary?: string | null;
-    scorecardWeightedTotal?: number | null;
-  };
   const isAwardRecommendation = task.subject.type === "rfq_award_recommendation";
+  const awardMetadata = task.subject.metadata as ApprovalAwardRecommendationSubjectMetadata;
+  const requisitionMetadata = task.subject.metadata as ApprovalRequisitionSubjectMetadata;
 
   return (
     <div className="space-y-6">
@@ -60,15 +53,15 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         ) : null}
         {isAwardRecommendation ? (
           <>
-            <Metric label="Recommended vendor" value={subjectMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
-            <Metric label="RFQ" value={subjectMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
-            <Metric label="Weighted score" value={formatNumber(subjectMetadata.scorecardWeightedTotal)} />
+            <Metric label="Recommended vendor" value={awardMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
+            <Metric label="RFQ" value={awardMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
+            <Metric label="Weighted score" value={formatNumber(awardMetadata.scorecardWeightedTotal)} />
           </>
         ) : (
           <>
-            <Metric label="Requester" value={subjectMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
-            <Metric label="Department" value={subjectMetadata.department ?? "Unassigned"} />
-            <Metric label="Cost center" value={subjectMetadata.costCenter ?? "Unassigned"} />
+            <Metric label="Requester" value={requisitionMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
+            <Metric label="Department" value={requisitionMetadata.department ?? "Unassigned"} />
+            <Metric label="Cost center" value={requisitionMetadata.costCenter ?? "Unassigned"} />
           </>
         )}
       </section>
@@ -101,7 +94,7 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
               onSubmit={async ({ lockVersion, reason }) => {
                 await actions.reject.mutateAsync(
                   { lockVersion, reason: reason ?? "" },
-                  { onSuccess: () => toast.success("Requisition rejected") },
+                  { onSuccess: () => toast.success(rejectionSuccessMessage(task.subject.type)) },
                 );
               }}
             />
@@ -135,14 +128,14 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         </p>
         {isAwardRecommendation ? (
           <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-            <Metric label="Rationale" value={subjectMetadata.rationale ?? "No rationale provided"} />
-            <Metric label="Tradeoff summary" value={subjectMetadata.tradeoffSummary ?? "Not provided"} />
-            <Metric label="Risk summary" value={subjectMetadata.riskSummary ?? "Not provided"} />
-            <Metric label="Exception summary" value={subjectMetadata.exceptionSummary ?? "Not provided"} />
+            <Metric label="Rationale" value={awardMetadata.rationale ?? "No rationale provided"} />
+            <Metric label="Tradeoff summary" value={awardMetadata.tradeoffSummary ?? "Not provided"} />
+            <Metric label="Risk summary" value={awardMetadata.riskSummary ?? "Not provided"} />
+            <Metric label="Exception summary" value={awardMetadata.exceptionSummary ?? "Not provided"} />
           </div>
         ) : null}
         <Link
-          href={isAwardRecommendation ? awardRecommendationHref(task, subjectMetadata) : `/requisitions/${task.subject.id}`}
+          href={isAwardRecommendation ? awardRecommendationHref(task, awardMetadata) : `/requisitions/${task.subject.id}`}
           className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
         >
           {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
@@ -173,9 +166,15 @@ function formatNumber(value?: number | null) {
   return new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(value);
 }
 
+function rejectionSuccessMessage(subjectType: string) {
+  if (subjectType === "rfq_award_recommendation") return "Award recommendation rejected";
+  if (subjectType === "requisition") return "Requisition rejected";
+  return "Approval rejected";
+}
+
 function awardRecommendationHref(
   task: { subject: { href?: string | null } },
-  metadata: { rfqId?: string | null },
+  metadata: Pick<ApprovalAwardRecommendationSubjectMetadata, "rfqId">,
 ) {
   if (task.subject.href) return task.subject.href;
   if (metadata.rfqId) return `/quotations/awards/${metadata.rfqId}`;

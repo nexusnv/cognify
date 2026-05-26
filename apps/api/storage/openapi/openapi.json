@@ -6618,7 +6618,8 @@
           "subjectType": {
             "type": "string",
             "enum": [
-              "requisition"
+              "requisition",
+              "rfq_award_recommendation"
             ]
           },
           "status": {
@@ -9841,7 +9842,8 @@
           "subjectType": {
             "type": "string",
             "enum": [
-              "requisition"
+              "requisition",
+              "rfq_award_recommendation"
             ]
           },
           "priority": {
@@ -10354,7 +10356,8 @@
           "subjectType": {
             "type": "string",
             "enum": [
-              "requisition"
+              "requisition",
+              "rfq_award_recommendation"
             ]
           },
           "priority": {
@@ -11070,8 +11073,63 @@
             ]
           },
           "metadata": {
-            "type": "object",
-            "additionalProperties": true
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalRequisitionSubjectMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/ApprovalAwardRecommendationSubjectMetadata"
+              }
+            ]
+          }
+        }
+      },
+      "ApprovalRequisitionSubjectMetadata": {
+        "type": "object",
+        "properties": {
+          "requester": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "email"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "department": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "costCenter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

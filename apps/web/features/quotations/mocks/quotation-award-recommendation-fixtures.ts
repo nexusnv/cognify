@@ -241,7 +241,8 @@ export function routeQuotationAwardRecommendationApprovalFixture(rfqId: string):
 
 export function getQuotationAwardRecommendationApprovalSummaryFixture(rfqId: string): ApprovalSummary | null {
   const state = states.get(rfqId);
-  if (!state?.payload.recommendation) throw new Error("RFQ award recommendation not found.");
+  if (!state) throw new Error("RFQ award recommendation not found.");
+  if (!state.payload.recommendation) return null;
 
   const status = state.payload.recommendation.status;
   if (status === "pending_approval" || status === "draft" || status === "withdrawn") return null;

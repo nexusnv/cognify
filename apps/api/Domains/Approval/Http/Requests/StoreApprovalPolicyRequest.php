@@ -21,7 +21,7 @@ class StoreApprovalPolicyRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'subjectType' => ['required', Rule::in(['requisition'])],
+            'subjectType' => ['required', Rule::in(['requisition', 'rfq_award_recommendation'])],
             'priority' => ['sometimes', 'integer', 'min:1'],
             'rules' => ['required', 'array'],
             'rules.*.field' => ['required_with:rules.*', 'string', 'max:255'],

@@ -98,10 +98,14 @@ final class ApprovalContextData
             recommendedVendorName: isset($context['recommendedVendorName']) && $context['recommendedVendorName'] !== '' ? (string) $context['recommendedVendorName'] : null,
             recommendedQuotationId: isset($context['recommendedQuotationId']) && $context['recommendedQuotationId'] !== '' ? (string) $context['recommendedQuotationId'] : null,
             recommendedQuotationVersionId: isset($context['recommendedQuotationVersionId']) && $context['recommendedQuotationVersionId'] !== '' ? (string) $context['recommendedQuotationVersionId'] : null,
-            recommendedAmount: isset($context['recommendedAmount']) ? round((float) $context['recommendedAmount'], 2) : null,
+            recommendedAmount: isset($context['recommendedAmount']) && $context['recommendedAmount'] !== '' && is_numeric($context['recommendedAmount'])
+                ? round((float) $context['recommendedAmount'], 2)
+                : null,
             recommendedCurrency: isset($context['recommendedCurrency']) && $context['recommendedCurrency'] !== '' ? (string) $context['recommendedCurrency'] : null,
             scorecardId: isset($context['scorecardId']) && $context['scorecardId'] !== '' ? (string) $context['scorecardId'] : null,
-            scorecardWeightedTotal: isset($context['scorecardWeightedTotal']) ? round((float) $context['scorecardWeightedTotal'], 2) : null,
+            scorecardWeightedTotal: isset($context['scorecardWeightedTotal']) && $context['scorecardWeightedTotal'] !== '' && is_numeric($context['scorecardWeightedTotal'])
+                ? round((float) $context['scorecardWeightedTotal'], 2)
+                : null,
             riskSummaryPresent: (bool) ($context['riskSummaryPresent'] ?? false),
             exceptionSummaryPresent: (bool) ($context['exceptionSummaryPresent'] ?? false),
         );

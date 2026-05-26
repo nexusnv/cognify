@@ -43,6 +43,10 @@ class MarkRfqAwardRecommendationApproved
             ->lockForUpdate()
             ->firstOrFail();
 
+        if ((int) $recommendation->approval_instance_id !== (int) $instance->id) {
+            throw new ConflictHttpException('Approval instance does not match routed recommendation.');
+        }
+
         if ($recommendation->statusState() !== RfqAwardRecommendationStatus::ApprovalRouted) {
             throw new ConflictHttpException('Only routed award recommendations can be decided.');
         }

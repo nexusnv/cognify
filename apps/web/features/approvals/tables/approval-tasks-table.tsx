@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import type { ApprovalRequisitionSubjectMetadata } from "@cognify/api-client/schemas";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
 import type { ApprovalTask } from "../types/approval-view-model";
 
@@ -77,7 +78,9 @@ function formatDate(value?: string | null) {
 }
 
 function subjectRequester(task: ApprovalTask): string | null {
-  const requester = (task.subject.metadata as { requester?: { name?: string } } | undefined)?.requester;
+  if (task.subject.type !== "requisition") return null;
+
+  const requester = (task.subject.metadata as ApprovalRequisitionSubjectMetadata).requester;
 
   return requester?.name ?? null;
 }

@@ -172,15 +172,19 @@ class RouteSubjectForApproval
         });
 
         if ($isActive) {
-            $this->notificationRecorder->record($tenant, $assignees, new NotificationData(
-                type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
-                title: 'Approval task assigned',
-                body: $handler->notificationBody($subject),
-                href: "/approvals/tasks/{$tasks->first()?->id}",
-                subject: $subject,
-                subjectLabel: $handler->notificationSubjectLabel($subject),
-                actor: $actor,
-            ));
+            foreach ($assignees as $assignee) {
+                $task = $tasks->firstWhere('assignee_id', $assignee->id) ?? $tasks->first();
+
+                $this->notificationRecorder->record($tenant, collect([$assignee]), new NotificationData(
+                    type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+                    title: 'Approval task assigned',
+                    body: $handler->notificationBody($subject),
+                    href: $task !== null ? "/approvals/tasks/{$task->id}" : null,
+                    subject: $subject,
+                    subjectLabel: $handler->notificationSubjectLabel($subject),
+                    actor: $actor,
+                ));
+            }
         }
     }
 

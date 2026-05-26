@@ -21,7 +21,7 @@ class UpdateApprovalPolicyRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'subjectType' => ['sometimes', Rule::in(['requisition'])],
+            'subjectType' => ['sometimes', Rule::in(['requisition', 'rfq_award_recommendation'])],
             'priority' => ['sometimes', 'integer', 'min:1'],
             'rules' => ['sometimes', 'array'],
             'rules.*.field' => ['required_with:rules.*', 'string', 'max:255'],

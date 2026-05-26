@@ -20,8 +20,26 @@ final class ApprovalSubjectRegistry
     public function __construct(iterable $handlers)
     {
         foreach ($handlers as $handler) {
-            $this->bySubjectType[$handler->subjectType()] = $handler;
-            $this->byModelClass[$handler->modelClass()] = $handler;
+            $subjectType = $handler->subjectType();
+            if (array_key_exists($subjectType, $this->bySubjectType)) {
+                throw new InvalidArgumentException(sprintf(
+                    'Duplicate approval subject type [%s] registered by [%s].',
+                    $subjectType,
+                    get_class($handler),
+                ));
+            }
+
+            $modelClass = $handler->modelClass();
+            if (array_key_exists($modelClass, $this->byModelClass)) {
+                throw new InvalidArgumentException(sprintf(
+                    'Duplicate approval subject model class [%s] registered by [%s].',
+                    $modelClass,
+                    get_class($handler),
+                ));
+            }
+
+            $this->bySubjectType[$subjectType] = $handler;
+            $this->byModelClass[$modelClass] = $handler;
         }
     }
 

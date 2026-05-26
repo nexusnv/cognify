@@ -4,5 +4,9 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { ApprovalRequisitionSubjectMetadata } from "./approvalRequisitionSubjectMetadata";
+import type { ApprovalAwardRecommendationSubjectMetadata } from "./approvalAwardRecommendationSubjectMetadata";
 
-export type ApprovalTaskSubjectMetadata = { [key: string]: unknown };
+export type ApprovalTaskSubjectMetadata =
+  | ApprovalRequisitionSubjectMetadata
+  | ApprovalAwardRecommendationSubjectMetadata;

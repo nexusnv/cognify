@@ -49,8 +49,8 @@ class SaveRfqAwardRecommendation
                 ->latest('id')
                 ->first();
 
-            if ($recommendation !== null && ! $recommendation->statusState()->isEditable()) {
-                throw new ConflictHttpException('Only draft award recommendations can be edited.');
+            if ($recommendation !== null && ! $recommendation->statusState()->isEditable() && $recommendation->statusState() !== RfqAwardRecommendationStatus::ChangesRequested) {
+                throw new ConflictHttpException('Only draft or changes-requested award recommendations can be edited.');
             }
 
             $before = $recommendation !== null ? $this->auditSnapshot($recommendation) : null;

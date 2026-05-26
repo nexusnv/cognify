@@ -188,8 +188,8 @@ function RfqAwardRecommendationWorkspaceContent({
         recommendationStatus={recommendationStatus}
         canRoute={context.permissions.canManageAwardRecommendation}
         summary={approvalSummary.data ?? null}
-        isLoading={approvalSummary.isLoading}
-        error={lastMutation === "route" ? routeApproval.error : null}
+        isLoading={approvalSummary.isLoading || approvalSummary.isPending}
+        error={approvalSummary.error ?? (lastMutation === "route" ? routeApproval.error : null)}
         isRouting={routeApproval.isPending}
         onRoute={() => {
           setLastMutation("route");

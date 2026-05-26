@@ -22,6 +22,8 @@ use Domains\Approval\States\ApprovalTaskStatus;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApproveApprovalTask
@@ -77,9 +79,17 @@ class ApproveApprovalTask
 
                     $subject = $task->subject;
                     if ($subject instanceof Model) {
-                        $this->subjectRegistry
-                            ->forStoredSubject($task->subject_type)
-                            ->onApproved($tenant, $subject, $instance, $actor);
+                        try {
+                            $this->subjectRegistry
+                                ->forStoredSubject($task->subject_type)
+                                ->onApproved($tenant, $subject, $instance, $actor);
+                        } catch (InvalidArgumentException $exception) {
+                            Log::warning('Approval task subject handler could not be resolved after approval.', [
+                                'approval_task_id' => $task->id,
+                                'subject_type' => $task->subject_type,
+                                'exception' => $exception->getMessage(),
+                            ]);
+                        }
                     }
                 }
             }
@@ -173,9 +183,18 @@ class ApproveApprovalTask
             }
 
             $subject = $instance->subject;
-            $handler = $subject instanceof Model
-                ? $this->subjectRegistry->forStoredSubject($instance->subject_type)
-                : null;
+            $handler = null;
+            if ($subject instanceof Model) {
+                try {
+                    $handler = $this->subjectRegistry->forStoredSubject($instance->subject_type);
+                } catch (InvalidArgumentException $exception) {
+                    Log::warning('Approval task subject handler could not be resolved for stage activation notification.', [
+                        'approval_task_id' => $task->id,
+                        'subject_type' => $task->subject_type,
+                        'exception' => $exception->getMessage(),
+                    ]);
+                }
+            }
 
             $this->notificationRecorder->record($tenant, collect([$assignee]), new NotificationData(
                 type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,

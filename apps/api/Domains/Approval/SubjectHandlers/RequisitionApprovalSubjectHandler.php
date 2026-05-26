@@ -29,6 +29,9 @@ final class RequisitionApprovalSubjectHandler implements ApprovalSubjectHandler
         return 'requisition';
     }
 
+    /**
+     * @return class-string<Model>
+     */
     public function modelClass(): string
     {
         return Requisition::class;
