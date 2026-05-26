@@ -5,8 +5,11 @@ import type {
   WithdrawRfqAwardRecommendationRequest,
 } from "@cognify/api-client/schemas";
 import {
+  getQuotationAwardRecommendationApprovalSummaryFixture,
   getQuotationAwardRecommendationFixture,
+  previewQuotationAwardRecommendationApprovalFixture,
   resetQuotationAwardRecommendationMockState,
+  routeQuotationAwardRecommendationApprovalFixture,
   saveQuotationAwardRecommendationFixture,
   submitQuotationAwardRecommendationFixture,
   withdrawQuotationAwardRecommendationFixture,
@@ -122,6 +125,30 @@ export const quotationAwardRecommendationHandlers = [
       return HttpResponse.json({ data: withdrawQuotationAwardRecommendationFixture(String(params.rfq), reason) });
     } catch (error) {
       return invalidStateOrNotFound(error, "Recommendation could not be withdrawn.");
+    }
+  }),
+
+  http.post("/api/rfqs/:rfq/award-recommendation/approval-route", ({ params }) => {
+    try {
+      return HttpResponse.json({ data: routeQuotationAwardRecommendationApprovalFixture(String(params.rfq)) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "Recommendation could not be routed for approval.");
+    }
+  }),
+
+  http.get("/api/rfqs/:rfq/award-recommendation/approval-summary", ({ params }) => {
+    try {
+      return HttpResponse.json({ data: getQuotationAwardRecommendationApprovalSummaryFixture(String(params.rfq)) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "Approval summary could not be loaded.");
+    }
+  }),
+
+  http.get("/api/rfqs/:rfq/award-recommendation/approval-preview", ({ params }) => {
+    try {
+      return HttpResponse.json({ data: previewQuotationAwardRecommendationApprovalFixture(String(params.rfq)) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "Approval route could not be previewed.");
     }
   }),
 ];

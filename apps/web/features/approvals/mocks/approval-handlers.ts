@@ -34,9 +34,11 @@ export const approvalHandlers = [
   http.get("/api/approval-tasks", ({ request }) => {
     const url = new URL(request.url);
     const scope = url.searchParams.get("scope");
+    const subjectType = url.searchParams.get("subjectType");
     const status = url.searchParams.get("status");
     const data = tasks.filter((task) => {
       const matchesStatus = !status || task.status === status;
+      const matchesSubject = !subjectType || task.subject.type === subjectType;
       const matchesScope =
         !scope ||
         scope === "all" ||
@@ -45,7 +47,7 @@ export const approvalHandlers = [
         (scope === "overdue" && task.dueAt !== null && task.dueAt < "2026-05-18") ||
         (scope === "due_soon" && task.status === "active");
 
-      return matchesStatus && matchesScope;
+      return matchesStatus && matchesSubject && matchesScope;
     });
 
     return HttpResponse.json({

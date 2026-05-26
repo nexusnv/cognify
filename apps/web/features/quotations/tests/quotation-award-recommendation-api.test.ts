@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { storeActiveTenantId } from "@/features/identity/api/identity-api";
 import { server } from "@/tests/msw/server";
 import {
+  fetchRfqAwardRecommendationApprovalSummary,
+  previewRfqAwardRecommendationRoute,
+  routeRfqAwardRecommendationApproval,
   saveRfqAwardRecommendation,
   showRfqAwardRecommendation,
   submitRfqAwardRecommendation,
@@ -74,5 +77,22 @@ describe("quotation award recommendation api", () => {
     expect(withdrawn.recommendation?.status).toBe("withdrawn");
     expect(withdrawn.recommendation?.withdrawalReason).toBe("Additional commercial clarification required.");
     expect(withdrawn.recommendation?.withdrawnByUserId).toBe("buyer-1");
+  });
+
+  it("supports award approval route preview summary and route wrappers", async () => {
+    const preview = await previewRfqAwardRecommendationRoute("rfq-pending-recommendation", "tenant-1");
+    expect(preview.context).toMatchObject({ subjectType: "rfq_award_recommendation" });
+    expect(preview.stages[0]?.name).toBe("Commercial approval");
+
+    await expect(fetchRfqAwardRecommendationApprovalSummary("rfq-pending-recommendation", "tenant-1")).resolves.toBeNull();
+
+    await expect(routeRfqAwardRecommendationApproval("rfq-pending-recommendation", "tenant-1")).resolves.toMatchObject({
+      status: "active",
+      currentStage: expect.objectContaining({ name: "Commercial approval" }),
+    });
+
+    await expect(fetchRfqAwardRecommendationApprovalSummary("rfq-pending-recommendation", "tenant-1")).resolves.toMatchObject({
+      currentStage: expect.any(Object),
+    });
   });
 });

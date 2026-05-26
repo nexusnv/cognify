@@ -8,11 +8,15 @@ import type {
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
+  routeRfqAwardRecommendationApproval,
   saveRfqAwardRecommendation,
   submitRfqAwardRecommendation,
   withdrawRfqAwardRecommendation,
 } from "../api/quotation-award-recommendation-api";
-import { rfqAwardRecommendationQueryKey } from "./use-rfq-award-recommendation";
+import {
+  rfqAwardRecommendationApprovalSummaryQueryKey,
+  rfqAwardRecommendationQueryKey,
+} from "./use-rfq-award-recommendation";
 
 export function useSaveRfqAwardRecommendation(rfqId: string) {
   const tenantId = getStoredActiveTenantId();
@@ -47,6 +51,22 @@ export function useWithdrawRfqAwardRecommendation(rfqId: string) {
       withdrawRfqAwardRecommendation(rfqId, payload, tenantId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationQueryKey(rfqId, tenantId) });
+    },
+  });
+}
+
+export function useRouteRfqAwardRecommendationApproval(rfqId: string) {
+  const tenantId = getStoredActiveTenantId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => routeRfqAwardRecommendationApproval(rfqId, tenantId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationQueryKey(rfqId, tenantId) }),
+        queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationApprovalSummaryQueryKey(rfqId, tenantId) }),
+        queryClient.invalidateQueries({ queryKey: ["approval-tasks"] }),
+      ]);
     },
   });
 }

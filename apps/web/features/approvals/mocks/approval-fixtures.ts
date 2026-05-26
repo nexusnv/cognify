@@ -47,6 +47,8 @@ export const approvalPolicyFixture: ApprovalPolicy = {
 };
 
 export const approvalPreviewContextFixture: ApprovalPreviewContext = {
+  tenantId: "tenant-1",
+  subjectType: "requisition",
   requisitionId: "req-2",
   requesterId: "user-1",
   amount: 3400,
@@ -57,6 +59,19 @@ export const approvalPreviewContextFixture: ApprovalPreviewContext = {
   lineItemCategories: ["Packing box bundle"],
   riskClassification: "medium",
   vendorId: "vendor-1",
+  awardRecommendationId: null,
+  rfqId: null,
+  rfqNumber: null,
+  recommendedVendorId: null,
+  recommendedVendorName: null,
+  recommendedQuotationId: null,
+  recommendedQuotationVersionId: null,
+  recommendedAmount: null,
+  recommendedCurrency: null,
+  scorecardId: null,
+  scorecardWeightedTotal: null,
+  riskSummaryPresent: false,
+  exceptionSummaryPresent: false,
 };
 
 export const approvalPreviewFixture: ApprovalPreview = {
@@ -100,6 +115,7 @@ export const approvalPreviewFixture: ApprovalPreview = {
   warnings: [],
   estimatedDueAt: "2026-05-19T00:00:00.000Z",
   createsTasks: false,
+  context: approvalPreviewContextFixture,
 };
 
 export const submittedRequisitionApprovalPreviewFixture: ApprovalPreview = {
@@ -188,12 +204,16 @@ export const approvalTaskFixtures: ApprovalTask[] = [
       number: "REQ-2026-000002",
       title: "Warehouse packing supplies",
       status: "pending_approval",
-      requester: { id: "user-1", name: "Maya Tan", email: "maya.tan@acme.test" },
-      department: "Operations",
-      costCenter: "OPS-220",
-      projectId: null,
+      primaryParty: "Maya Tan",
       amount: 3400,
       currency: "MYR",
+      href: "/requisitions/req-2",
+      metadata: {
+        requester: { id: "user-1", name: "Maya Tan", email: "maya.tan@acme.test" },
+        department: "Operations",
+        costCenter: "OPS-220",
+        projectId: null,
+      },
     },
     title: "Approve REQ-2026-000002",
     status: "active",
@@ -229,6 +249,7 @@ export const approvalTaskFixtures: ApprovalTask[] = [
 ];
 
 export const approvalSummaryFixture: ApprovalSummary = {
+  id: "instance-1",
   instanceId: "instance-1",
   status: "active",
   currentStage: {

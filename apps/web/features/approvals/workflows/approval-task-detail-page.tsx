@@ -21,6 +21,12 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
     return <p className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Approval task could not be loaded.</p>;
   }
 
+  const subjectMetadata = task.subject.metadata as {
+    requester?: { name?: string };
+    department?: string | null;
+    costCenter?: string | null;
+  };
+
   return (
     <div className="space-y-6">
       <header className="space-y-3">
@@ -43,9 +49,9 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
           <Metric label="Delegated from" value={task.originalAssignee.name} />
         ) : null}
-        <Metric label="Requester" value={task.subject.requester?.name ?? "Unknown"} />
-        <Metric label="Department" value={task.subject.department ?? "Unassigned"} />
-        <Metric label="Cost center" value={task.subject.costCenter ?? "Unassigned"} />
+        <Metric label="Requester" value={subjectMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
+        <Metric label="Department" value={subjectMetadata.department ?? "Unassigned"} />
+        <Metric label="Cost center" value={subjectMetadata.costCenter ?? "Unassigned"} />
       </section>
 
       <section className="rounded-md border p-4">

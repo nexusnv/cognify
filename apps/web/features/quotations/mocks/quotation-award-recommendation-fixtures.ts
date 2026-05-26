@@ -1,4 +1,6 @@
 import type {
+  ApprovalPreview,
+  ApprovalSummary,
   RfqAwardRecommendation,
   RfqAwardRecommendationDecision,
   RfqAwardRecommendationEvidenceReference,
@@ -20,6 +22,21 @@ export function resetQuotationAwardRecommendationMockState(): void {
   states.set("rfq-pending-recommendation", {
     payload: buildFixture("rfq-pending-recommendation", { recommendationStatus: "pending_approval" }),
   });
+  states.set("rfq-routed-recommendation", {
+    payload: buildFixture("rfq-routed-recommendation", { recommendationStatus: "approval_routed" }),
+  });
+  states.set("rfq-approved-recommendation", {
+    payload: buildFixture("rfq-approved-recommendation", { recommendationStatus: "approved" }),
+  });
+  states.set("rfq-rejected-recommendation", {
+    payload: buildFixture("rfq-rejected-recommendation", { recommendationStatus: "rejected" }),
+  });
+  states.set("rfq-changes-requested-recommendation", {
+    payload: buildFixture("rfq-changes-requested-recommendation", { recommendationStatus: "changes_requested" }),
+  });
+  states.set("rfq-no-award-policy", {
+    payload: buildFixture("rfq-no-award-policy", { recommendationStatus: "pending_approval" }),
+  });
   states.set("rfq-incomplete-scorecard", {
     payload: buildFixture("rfq-incomplete-scorecard", { scorecardStatus: "in_progress", scorecardCompletionStatus: "incomplete" }),
   });
@@ -40,8 +57,8 @@ export function saveQuotationAwardRecommendationFixture(
 ): RfqAwardRecommendation {
   const state = states.get(rfqId);
   if (!state) throw new Error("RFQ award recommendation not found.");
-  if (state.payload.recommendation?.status === "pending_approval") {
-    throw new Error("Pending award recommendations cannot be edited.");
+  if (state.payload.recommendation && state.payload.recommendation.status !== "draft") {
+    throw new Error("Only draft award recommendations can be edited.");
   }
 
   const current = state.payload.recommendation ?? createEmptyRecommendation(rfqId);
@@ -127,10 +144,123 @@ export function withdrawQuotationAwardRecommendationFixture(rfqId: string, reaso
   return structuredClone(state.payload);
 }
 
+export function previewQuotationAwardRecommendationApprovalFixture(rfqId: string): ApprovalPreview {
+  const state = states.get(rfqId);
+  if (!state?.payload.recommendation) throw new Error("RFQ award recommendation not found.");
+  if (rfqId === "rfq-no-award-policy") throw new Error("No matching approval policy");
+
+  return {
+    matchedPolicy: {
+      id: "award-policy-1",
+      tenantId: "tenant-1",
+      name: "Award recommendation approval",
+      subjectType: "rfq_award_recommendation",
+      status: "active",
+    },
+    matchedVersion: {
+      id: "award-policy-version-1",
+      tenantId: "tenant-1",
+      policyId: "award-policy-1",
+      versionNumber: 1,
+      status: "published",
+      priority: 100,
+      rules: [{ field: "recommendedAmount", operator: "gte", value: 1 }],
+      routeTemplate: {
+        stages: [
+          {
+            name: "Commercial approval",
+            completionRule: "all",
+            approvers: [{ type: "user", userId: "user-2", label: "Priya Buyer" }],
+          },
+        ],
+      },
+      slaRules: [{ stage: "Commercial approval", dueInHours: 48 }],
+    },
+    matchedConditions: [
+      { field: "recommendedAmount", operator: "gte", value: 1, matched: true, summary: "recommendedAmount gte 1 matched" },
+    ],
+    stages: [
+      {
+        name: "Commercial approval",
+        completionRule: "all",
+        approvers: [{ type: "user", userId: "user-2", label: "Priya Buyer" }],
+        fallbackApprovers: [{ type: "role", role: "approver", label: "Approver fallback" }],
+        dueAt: "2026-05-28T10:00:00.000Z",
+        warnings: [],
+      },
+    ],
+    warnings: [],
+    estimatedDueAt: "2026-05-28T10:00:00.000Z",
+    createsTasks: false,
+    context: {
+      tenantId: "tenant-1",
+      subjectType: "rfq_award_recommendation",
+      requisitionId: null,
+      requesterId: null,
+      amount: 125000,
+      currency: "USD",
+      department: null,
+      costCenter: null,
+      projectId: null,
+      lineItemCategories: [],
+      riskClassification: null,
+      vendorId: state.payload.recommendation.recommendedVendorId,
+      awardRecommendationId: state.payload.recommendation.id,
+      rfqId,
+      rfqNumber: state.payload.rfq.number,
+      recommendedVendorId: state.payload.recommendation.recommendedVendorId,
+      recommendedVendorName: "Northwind Traders",
+      recommendedQuotationId: state.payload.recommendation.recommendedQuotationId,
+      recommendedQuotationVersionId: state.payload.recommendation.recommendedQuotationVersionId,
+      recommendedAmount: 125000,
+      recommendedCurrency: "USD",
+      scorecardId: state.payload.recommendation.scorecardId,
+      scorecardWeightedTotal: 86.5,
+      riskSummaryPresent: Boolean(state.payload.recommendation.riskSummary),
+      exceptionSummaryPresent: Boolean(state.payload.recommendation.exceptionSummary),
+    },
+  };
+}
+
+export function routeQuotationAwardRecommendationApprovalFixture(rfqId: string): ApprovalSummary {
+  const state = states.get(rfqId);
+  if (!state?.payload.recommendation) throw new Error("RFQ award recommendation not found.");
+  if (rfqId === "rfq-no-award-policy") throw new Error("No matching approval policy");
+
+  const recommendation = state.payload.recommendation;
+  if (recommendation.status !== "pending_approval" && recommendation.status !== "approval_routed") {
+    throw new Error("Only pending award recommendations can be routed for approval.");
+  }
+
+  recommendation.status = "approval_routed";
+  recommendation.approvalInstanceId = "award-approval-instance-1";
+  recommendation.updatedAt = "2026-05-26T11:00:00.000000Z";
+
+  return approvalSummaryForStatus("active");
+}
+
+export function getQuotationAwardRecommendationApprovalSummaryFixture(rfqId: string): ApprovalSummary | null {
+  const state = states.get(rfqId);
+  if (!state?.payload.recommendation) throw new Error("RFQ award recommendation not found.");
+
+  const status = state.payload.recommendation.status;
+  if (status === "pending_approval" || status === "draft" || status === "withdrawn") return null;
+
+  return approvalSummaryForStatus(
+    status === "approval_routed"
+      ? "active"
+      : status === "approved"
+        ? "approved"
+        : status === "rejected"
+          ? "rejected"
+          : "changes_requested",
+  );
+}
+
 function buildFixture(
   rfqId: string,
   options?: {
-    recommendationStatus?: "draft" | "pending_approval";
+    recommendationStatus?: "draft" | "pending_approval" | "approval_routed" | "approved" | "rejected" | "changes_requested";
     scorecardStatus?: "in_progress" | "completed";
     scorecardCompletionStatus?: "incomplete" | "complete";
     withoutScorecard?: boolean;
@@ -184,6 +314,9 @@ function buildFixture(
       : ({
           ...createEmptyRecommendation(rfqId),
           status: options.recommendationStatus,
+          approvalInstanceId: ["approval_routed", "approved", "rejected", "changes_requested"].includes(options.recommendationStatus)
+            ? "award-approval-instance-1"
+            : null,
           recommendedVendorId: "101",
           recommendedQuotationId: "201",
           recommendedQuotationVersionId: "301",
@@ -192,7 +325,16 @@ function buildFixture(
           tradeoffSummary: "Slightly higher price with reduced implementation risk.",
           riskSummary: "No blocking risk after normalization.",
           submittedByUserId: options.recommendationStatus === "pending_approval" ? "buyer-1" : null,
-          submittedAt: options.recommendationStatus === "pending_approval" ? "2026-05-26T08:30:00.000000Z" : null,
+          submittedAt: options.recommendationStatus !== "draft" ? "2026-05-26T08:30:00.000000Z" : null,
+          approvedByUserId: options.recommendationStatus === "approved" ? "user-2" : null,
+          approvedAt: options.recommendationStatus === "approved" ? "2026-05-26T12:00:00.000000Z" : null,
+          rejectedByUserId: options.recommendationStatus === "rejected" ? "user-2" : null,
+          rejectedAt: options.recommendationStatus === "rejected" ? "2026-05-26T12:00:00.000000Z" : null,
+          decisionReason: options.recommendationStatus === "rejected" ? "Rationale needs commercial clarification." : null,
+          changesRequestedByUserId: options.recommendationStatus === "changes_requested" ? "user-2" : null,
+          changesRequestedAt: options.recommendationStatus === "changes_requested" ? "2026-05-26T12:00:00.000000Z" : null,
+          changesRequestedReason: options.recommendationStatus === "changes_requested" ? "Attach final clarification." : null,
+          changesRequestedFields: options.recommendationStatus === "changes_requested" ? ["evidence"] : [],
         } satisfies RfqAwardRecommendationDecision);
 
   const scorecard = options?.withoutScorecard
@@ -269,6 +411,7 @@ function createEmptyRecommendation(rfqId: string): RfqAwardRecommendationDecisio
     recommendedQuotationId: null,
     recommendedQuotationVersionId: null,
     scorecardId: null,
+    approvalInstanceId: null,
     rationale: null,
     tradeoffSummary: null,
     riskSummary: null,
@@ -278,7 +421,57 @@ function createEmptyRecommendation(rfqId: string): RfqAwardRecommendationDecisio
     submittedAt: null,
     withdrawnByUserId: null,
     withdrawnAt: null,
+    approvedByUserId: null,
+    approvedAt: null,
+    rejectedByUserId: null,
+    rejectedAt: null,
+    decisionReason: null,
+    changesRequestedByUserId: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    changesRequestedFields: [],
     updatedAt: "2026-05-26T08:00:00.000000Z",
+  };
+}
+
+function approvalSummaryForStatus(status: ApprovalSummary["status"]): ApprovalSummary {
+  return {
+    id: "award-approval-instance-1",
+    instanceId: "award-approval-instance-1",
+    status,
+    currentStage:
+          status === "active"
+        ? {
+            id: "award-stage-1",
+            sequence: 1,
+            name: "Commercial approval",
+            status: "active",
+            completionRule: "all",
+            dueAt: "2026-05-28T11:00:00.000Z",
+            isOverdue: false,
+          }
+        : null,
+    activeApprovers:
+      status === "active"
+        ? [{ id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test", taskId: "award-task-1" }]
+        : [],
+    completedDecisions:
+      status === "active"
+        ? []
+        : [
+            {
+              taskId: "award-task-1",
+              decision: status === "changes_requested" ? "changes_requested" : status,
+              reason: status === "approved" ? null : "Approval decision reason.",
+              decidedAt: "2026-05-26T12:00:00.000Z",
+              decidedBy: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+            },
+          ],
+    dueAt: status === "active" ? "2026-05-28T11:00:00.000Z" : null,
+    isOverdue: false,
+    currentUserTaskId: status === "active" ? "award-task-1" : null,
+    startedAt: "2026-05-26T11:00:00.000Z",
+    completedAt: status === "active" ? null : "2026-05-26T12:00:00.000Z",
   };
 }
 
