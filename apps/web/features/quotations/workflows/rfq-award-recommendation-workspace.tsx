@@ -6,12 +6,21 @@ import { Button, Textarea } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import type { RfqAwardRecommendation, RfqAwardRecommendationEvidenceReferenceInput } from "@cognify/api-client/schemas";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { RfqAwardApprovalPanel } from "../components/rfq-award-approval-panel";
 import { RfqAwardDecisionSummary } from "../components/rfq-award-decision-summary";
 import { RfqAwardEvidenceSelector } from "../components/rfq-award-evidence-selector";
 import { RfqAwardRationaleForm } from "../components/rfq-award-rationale-form";
 import { RfqAwardVendorOptionList } from "../components/rfq-award-vendor-option-list";
-import { useSaveRfqAwardRecommendation, useSubmitRfqAwardRecommendation, useWithdrawRfqAwardRecommendation } from "../hooks/use-rfq-award-recommendation-actions";
-import { useRfqAwardRecommendation } from "../hooks/use-rfq-award-recommendation";
+import {
+  useRouteRfqAwardRecommendationApproval,
+  useSaveRfqAwardRecommendation,
+  useSubmitRfqAwardRecommendation,
+  useWithdrawRfqAwardRecommendation,
+} from "../hooks/use-rfq-award-recommendation-actions";
+import {
+  useRfqAwardRecommendation,
+  useRfqAwardRecommendationApprovalSummary,
+} from "../hooks/use-rfq-award-recommendation";
 
 type DraftState = {
   recommendedVendorId: string | null;
@@ -55,14 +64,17 @@ function RfqAwardRecommendationWorkspaceContent({
   const save = useSaveRfqAwardRecommendation(rfqId);
   const submit = useSubmitRfqAwardRecommendation(rfqId);
   const withdraw = useWithdrawRfqAwardRecommendation(rfqId);
+  const routeApproval = useRouteRfqAwardRecommendationApproval(rfqId);
+  const approvalSummary = useRfqAwardRecommendationApprovalSummary(rfqId);
   const [context, setContext] = useState(initialContext);
   const [draft, setDraft] = useState<DraftState>(() => buildDraftState(initialContext));
   const [withdrawReason, setWithdrawReason] = useState("");
-  const [lastMutation, setLastMutation] = useState<"save" | "submit" | "withdraw" | null>(null);
+  const [lastMutation, setLastMutation] = useState<"save" | "submit" | "withdraw" | "route" | null>(null);
 
   const recommendationStatus = context.recommendation?.status ?? "draft";
   const isPending = recommendationStatus === "pending_approval";
-  const isReadOnly = isPending || !context.permissions.canManageAwardRecommendation;
+  const isApprovalLocked = ["pending_approval", "approval_routed", "approved", "rejected", "changes_requested"].includes(recommendationStatus);
+  const isReadOnly = isApprovalLocked || !context.permissions.canManageAwardRecommendation;
   const blockingReason = submitBlockingReason(context, draft, isReadOnly);
   const selectedOption = context.vendorOptions.find((option) => option.vendorId === draft.recommendedVendorId);
   const hasVendors = context.vendorOptions.length > 0;
@@ -90,6 +102,7 @@ function RfqAwardRecommendationWorkspaceContent({
       ]}
       sections={[
         { id: "overview", label: "Overview" },
+        { id: "approval", label: "Approval" },
         { id: "rationale", label: "Rationale" },
         { id: "evidence", label: "Evidence" },
       ]}
@@ -119,6 +132,7 @@ function RfqAwardRecommendationWorkspaceContent({
             setLastMutation("save");
             submit.reset();
             withdraw.reset();
+            routeApproval.reset();
             save.mutate({
               recommendedVendorId: draft.recommendedVendorId,
               recommendedQuotationId: draft.recommendedQuotationId,
@@ -145,6 +159,7 @@ function RfqAwardRecommendationWorkspaceContent({
             setLastMutation("submit");
             save.reset();
             withdraw.reset();
+            routeApproval.reset();
             submit.mutate({
               recommendedVendorId: draft.recommendedVendorId,
               recommendedQuotationId: draft.recommendedQuotationId,
@@ -169,6 +184,34 @@ function RfqAwardRecommendationWorkspaceContent({
       </section>
       {mutationError ? <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">{getMutationErrorMessage(mutationError)}</div> : null}
       {blockingReason ? <p className="text-sm text-amber-700">{blockingReason}</p> : null}
+      <RfqAwardApprovalPanel
+        recommendationStatus={recommendationStatus}
+        canRoute={context.permissions.canManageAwardRecommendation}
+        summary={approvalSummary.data ?? null}
+        isLoading={approvalSummary.isLoading || approvalSummary.isPending}
+        error={approvalSummary.error ?? (lastMutation === "route" ? routeApproval.error : null)}
+        isRouting={routeApproval.isPending}
+        onRoute={() => {
+          setLastMutation("route");
+          save.reset();
+          submit.reset();
+          withdraw.reset();
+          routeApproval.mutate(undefined, {
+            onSuccess: (summary) => {
+              setContext((current) => ({
+                ...current,
+                recommendation: current.recommendation
+                  ? {
+                      ...current.recommendation,
+                      status: "approval_routed",
+                      approvalInstanceId: summary.instanceId,
+                    }
+                  : current.recommendation,
+              }));
+            },
+          });
+        }}
+      />
       <RfqAwardVendorOptionList
         options={context.vendorOptions}
         selectedVendorId={draft.recommendedVendorId}
@@ -218,6 +261,7 @@ function RfqAwardRecommendationWorkspaceContent({
               setLastMutation("withdraw");
               save.reset();
               submit.reset();
+              routeApproval.reset();
               withdraw.mutate({ reason: withdrawReason.trim() }, {
                 onSuccess: (nextContext) => {
                   setContext(nextContext);

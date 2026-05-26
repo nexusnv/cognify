@@ -12,5 +12,9 @@ export type RfqAwardRecommendationDecisionStatus =
 export const RfqAwardRecommendationDecisionStatus = {
   draft: "draft",
   pending_approval: "pending_approval",
+  approval_routed: "approval_routed",
+  approved: "approved",
+  rejected: "rejected",
+  changes_requested: "changes_requested",
   withdrawn: "withdrawn",
 } as const;

@@ -34,6 +34,17 @@ class RfqAwardRecommendationPolicy
             && $recommendation->statusState()->isPendingApproval();
     }
 
+    public function routeApproval(User $user, RfqAwardRecommendation $recommendation): bool
+    {
+        return $this->manage($user, $recommendation)
+            && $recommendation->statusState()->isPendingApproval();
+    }
+
+    public function viewApproval(User $user, RfqAwardRecommendation $recommendation): bool
+    {
+        return $this->view($user, $recommendation);
+    }
+
     private function buyerOrAdmin(User $user): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);

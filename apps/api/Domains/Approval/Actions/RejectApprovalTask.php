@@ -8,20 +8,20 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
-use Domains\Requisition\Actions\MarkRequisitionRejected;
-use Domains\Requisition\Models\Requisition;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RejectApprovalTask
 {
     public function __construct(
-        private readonly MarkRequisitionRejected $markRequisitionRejected,
+        private readonly ApprovalSubjectRegistry $subjectRegistry,
         private readonly AuditRecorder $auditRecorder,
     ) {}
 
@@ -61,8 +61,10 @@ class RejectApprovalTask
                 ->update(['status' => ApprovalTaskStatus::Cancelled]);
 
             $subject = $task->subject;
-            if ($subject instanceof Requisition) {
-                $this->markRequisitionRejected->handle($subject, $instance, $actor, $reason);
+            if ($subject instanceof Model) {
+                $this->subjectRegistry
+                    ->forStoredSubject($task->subject_type)
+                    ->onRejected($tenant, $subject, $instance, $actor, $reason);
             }
 
             $this->auditRecorder->record(new AuditEventData(

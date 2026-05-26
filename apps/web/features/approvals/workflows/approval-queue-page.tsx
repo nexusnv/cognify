@@ -46,6 +46,25 @@ export function ApprovalQueuePage() {
         </div>
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-sm font-medium">
+            Subject type
+            <select
+              className="mt-1 min-h-10 w-full rounded-md border bg-background px-3 font-normal"
+              value={filters.subjectType ?? ""}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  subjectType: event.target.value
+                    ? event.target.value as ApprovalTaskFilters["subjectType"]
+                    : undefined,
+                }))
+              }
+            >
+              <option value="">Any subject</option>
+              <option value="requisition">Requisition</option>
+              <option value="rfq_award_recommendation">Award recommendation</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium">
             Status
             <select
               className="mt-1 min-h-10 w-full rounded-md border bg-background px-3 font-normal"

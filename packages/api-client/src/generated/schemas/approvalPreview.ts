@@ -10,6 +10,7 @@ import type { ApprovalPreviewCondition } from "./approvalPreviewCondition";
 import type { ApprovalPreviewStage } from "./approvalPreviewStage";
 import type { ApprovalPreviewWarning } from "./approvalPreviewWarning";
 import type { ApprovalPreviewEstimatedDueAt } from "./approvalPreviewEstimatedDueAt";
+import type { ApprovalPreviewContext } from "./approvalPreviewContext";
 
 export interface ApprovalPreview {
   matchedPolicy: ApprovalPreviewMatchedPolicy;
@@ -19,4 +20,5 @@ export interface ApprovalPreview {
   warnings: ApprovalPreviewWarning[];
   estimatedDueAt: ApprovalPreviewEstimatedDueAt;
   createsTasks: boolean;
+  context: ApprovalPreviewContext;
 }

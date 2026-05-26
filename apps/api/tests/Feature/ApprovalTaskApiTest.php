@@ -365,6 +365,68 @@ class ApprovalTaskApiTest extends TestCase
         ]);
     }
 
+    public function test_requisition_approval_still_routes_and_approves_after_subject_handler_refactor(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $this->createPublishedPolicyVersion($tenant, $requester, $approver);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/route-approval")
+            ->assertOk()
+            ->assertJsonPath('data.instance.status', 'active')
+            ->assertJsonPath('data.tasks.0.subject.type', 'requisition')
+            ->assertJsonPath('data.tasks.0.subject.href', "/requisitions/{$requisition->id}");
+
+        $task = ApprovalTask::query()->firstOrFail();
+
+        $this->assertSame(RequisitionStatus::PendingApproval, $requisition->refresh()->status);
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $approver->id,
+            'type' => 'approval.task_assigned',
+            'body' => $requisition->title,
+            'href' => "/approvals/tasks/{$task->id}",
+        ]);
+
+        $this->actingAsTenant($tenant, $approver)
+            ->getJson("/api/approval-tasks/{$task->id}")
+            ->assertOk()
+            ->assertJsonPath('data.subject.type', 'requisition')
+            ->assertJsonPath('data.subject.number', $requisition->number);
+
+        $this->actingAsTenant($tenant, $approver)
+            ->postJson("/api/approval-tasks/{$task->id}/approve", ['lockVersion' => $task->lock_version])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertSame(RequisitionStatus::Approved, $requisition->refresh()->status);
+
+        $rejected = $this->routeRequisition($tenant, $requester, $approver);
+        $rejectTask = ApprovalTask::query()->where('subject_id', $rejected->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $approver)
+            ->postJson("/api/approval-tasks/{$rejectTask->id}/reject", [
+                'lockVersion' => $rejectTask->lock_version,
+                'reason' => 'Budget is not justified.',
+            ])
+            ->assertOk();
+        $this->assertSame(RequisitionStatus::Rejected, $rejected->refresh()->status);
+
+        $changes = $this->routeRequisition($tenant, $requester, $approver);
+        $changesTask = ApprovalTask::query()->where('subject_id', $changes->id)->firstOrFail();
+
+        $this->actingAsTenant($tenant, $approver)
+            ->postJson("/api/approval-tasks/{$changesTask->id}/request-changes", [
+                'lockVersion' => $changesTask->lock_version,
+                'reason' => 'Please attach supplier quote.',
+                'requestedFields' => ['attachments'],
+            ])
+            ->assertOk();
+        $this->assertSame(RequisitionStatus::ChangesRequested, $changes->refresh()->status);
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */

@@ -19,6 +19,7 @@ final class ApprovalPreviewData
         public readonly array $warnings,
         public readonly ?string $estimatedDueAt,
         public readonly bool $createsTasks = false,
+        public readonly array $context = [],
     ) {
     }
 
@@ -35,6 +36,7 @@ final class ApprovalPreviewData
             'warnings' => $this->warnings,
             'estimatedDueAt' => $this->estimatedDueAt,
             'createsTasks' => $this->createsTasks,
+            'context' => $this->context,
         ];
     }
 }

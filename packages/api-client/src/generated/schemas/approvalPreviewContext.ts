@@ -4,16 +4,51 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { ApprovalPreviewContextSubjectType } from "./approvalPreviewContextSubjectType";
+import type { ApprovalPreviewContextRequisitionId } from "./approvalPreviewContextRequisitionId";
+import type { ApprovalPreviewContextRequesterId } from "./approvalPreviewContextRequesterId";
+import type { ApprovalPreviewContextCurrency } from "./approvalPreviewContextCurrency";
+import type { ApprovalPreviewContextDepartment } from "./approvalPreviewContextDepartment";
+import type { ApprovalPreviewContextCostCenter } from "./approvalPreviewContextCostCenter";
+import type { ApprovalPreviewContextProjectId } from "./approvalPreviewContextProjectId";
+import type { ApprovalPreviewContextRiskClassification } from "./approvalPreviewContextRiskClassification";
+import type { ApprovalPreviewContextVendorId } from "./approvalPreviewContextVendorId";
+import type { ApprovalPreviewContextAwardRecommendationId } from "./approvalPreviewContextAwardRecommendationId";
+import type { ApprovalPreviewContextRfqId } from "./approvalPreviewContextRfqId";
+import type { ApprovalPreviewContextRfqNumber } from "./approvalPreviewContextRfqNumber";
+import type { ApprovalPreviewContextRecommendedVendorId } from "./approvalPreviewContextRecommendedVendorId";
+import type { ApprovalPreviewContextRecommendedVendorName } from "./approvalPreviewContextRecommendedVendorName";
+import type { ApprovalPreviewContextRecommendedQuotationId } from "./approvalPreviewContextRecommendedQuotationId";
+import type { ApprovalPreviewContextRecommendedQuotationVersionId } from "./approvalPreviewContextRecommendedQuotationVersionId";
+import type { ApprovalPreviewContextRecommendedAmount } from "./approvalPreviewContextRecommendedAmount";
+import type { ApprovalPreviewContextRecommendedCurrency } from "./approvalPreviewContextRecommendedCurrency";
+import type { ApprovalPreviewContextScorecardId } from "./approvalPreviewContextScorecardId";
+import type { ApprovalPreviewContextScorecardWeightedTotal } from "./approvalPreviewContextScorecardWeightedTotal";
 
 export interface ApprovalPreviewContext {
-  requisitionId?: string;
-  requesterId?: string;
+  tenantId?: string;
+  subjectType?: ApprovalPreviewContextSubjectType;
+  requisitionId?: ApprovalPreviewContextRequisitionId;
+  requesterId?: ApprovalPreviewContextRequesterId;
   amount?: number;
-  currency?: string;
-  department?: string;
-  costCenter?: string;
-  projectId?: string;
+  currency?: ApprovalPreviewContextCurrency;
+  department?: ApprovalPreviewContextDepartment;
+  costCenter?: ApprovalPreviewContextCostCenter;
+  projectId?: ApprovalPreviewContextProjectId;
   lineItemCategories?: string[];
-  riskClassification?: string;
-  vendorId?: string;
+  riskClassification?: ApprovalPreviewContextRiskClassification;
+  vendorId?: ApprovalPreviewContextVendorId;
+  awardRecommendationId?: ApprovalPreviewContextAwardRecommendationId;
+  rfqId?: ApprovalPreviewContextRfqId;
+  rfqNumber?: ApprovalPreviewContextRfqNumber;
+  recommendedVendorId?: ApprovalPreviewContextRecommendedVendorId;
+  recommendedVendorName?: ApprovalPreviewContextRecommendedVendorName;
+  recommendedQuotationId?: ApprovalPreviewContextRecommendedQuotationId;
+  recommendedQuotationVersionId?: ApprovalPreviewContextRecommendedQuotationVersionId;
+  recommendedAmount?: ApprovalPreviewContextRecommendedAmount;
+  recommendedCurrency?: ApprovalPreviewContextRecommendedCurrency;
+  scorecardId?: ApprovalPreviewContextScorecardId;
+  scorecardWeightedTotal?: ApprovalPreviewContextScorecardWeightedTotal;
+  riskSummaryPresent?: boolean;
+  exceptionSummaryPresent?: boolean;
 }

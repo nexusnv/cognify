@@ -1,10 +1,15 @@
 import {
+  getRfqAwardRecommendationApprovalSummary,
+  previewRfqAwardRecommendationApproval,
+  routeRfqAwardRecommendationForApproval,
   saveRfqAwardRecommendation as saveRfqAwardRecommendationEndpoint,
   showRfqAwardRecommendation as showRfqAwardRecommendationEndpoint,
   submitRfqAwardRecommendation as submitRfqAwardRecommendationEndpoint,
   withdrawRfqAwardRecommendation as withdrawRfqAwardRecommendationEndpoint,
 } from "@cognify/api-client/endpoints";
 import type {
+  ApprovalPreview,
+  ApprovalSummary,
   RfqAwardRecommendation,
   SaveRfqAwardRecommendationRequest,
   SubmitRfqAwardRecommendationRequest,
@@ -81,4 +86,37 @@ export async function withdrawRfqAwardRecommendation(
   );
 
   return unwrapOk(response) as RfqAwardRecommendation;
+}
+
+export async function routeRfqAwardRecommendationApproval(
+  rfqId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<ApprovalSummary> {
+  const response = await routeRfqAwardRecommendationForApproval(rfqId, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
+
+  return unwrapOk(response) as ApprovalSummary;
+}
+
+export async function fetchRfqAwardRecommendationApprovalSummary(
+  rfqId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<ApprovalSummary | null> {
+  const response = await getRfqAwardRecommendationApprovalSummary(rfqId, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
+
+  return unwrapOk(response) as ApprovalSummary | null;
+}
+
+export async function previewRfqAwardRecommendationRoute(
+  rfqId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<ApprovalPreview> {
+  const response = await previewRfqAwardRecommendationApproval(rfqId, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
+
+  return unwrapOk(response) as ApprovalPreview;
 }

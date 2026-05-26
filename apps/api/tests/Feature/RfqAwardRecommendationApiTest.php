@@ -11,6 +11,7 @@ use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\QuotationNormalizationMappingType;
 use Domains\Quotation\States\QuotationNormalizationPricingMode;
@@ -138,6 +139,38 @@ class RfqAwardRecommendationApiTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.recommendation.status', 'withdrawn');
+    }
+
+    public function test_approval_routed_and_decided_recommendations_are_read_only_for_draft_save(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
+        $quotation = Quotation::query()->where('rfq_id', $rfq->id)->firstOrFail();
+        $version = QuotationVersion::query()->whereKey($quotation->current_version_id)->firstOrFail();
+
+        foreach (['approval_routed', 'approved', 'rejected', 'changes_requested'] as $status) {
+            RfqAwardRecommendation::query()->where('tenant_id', $tenant->id)->where('rfq_id', $rfq->id)->delete();
+            $this->saveDraftRecommendation($tenant, $buyer, $rfq, $quotation, $version);
+
+            RfqAwardRecommendation::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('rfq_id', $rfq->id)
+                ->update(['status' => $status]);
+
+            $this->actingAsTenant($tenant, $buyer)
+                ->putJson("/api/rfqs/{$rfq->id}/award-recommendation", [
+                    'recommendedVendorId' => (string) $quotation->vendor_id,
+                    'recommendedQuotationId' => (string) $quotation->id,
+                    'recommendedQuotationVersionId' => (string) $version->id,
+                    'scorecardId' => null,
+                    'rationale' => "Should be rejected while {$status}.",
+                    'tradeoffSummary' => 'Read-only approval state check.',
+                    'riskSummary' => 'Approval state should prevent edits.',
+                    'exceptionSummary' => null,
+                    'evidenceReferences' => [],
+                ])
+                ->assertConflict();
+        }
     }
 
     public function test_withdraw_requires_reason_and_records_withdrawal_metadata(): void

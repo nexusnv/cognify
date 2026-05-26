@@ -4,6 +4,7 @@ namespace Domains\Quotation\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Quotation\States\RfqAwardRecommendationStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -29,6 +30,7 @@ class RfqAwardRecommendation extends Model
         'recommended_quotation_version_id',
         'scorecard_id',
         'status',
+        'approval_instance_id',
         'rationale',
         'tradeoff_summary',
         'risk_summary',
@@ -40,6 +42,15 @@ class RfqAwardRecommendation extends Model
         'submitted_at',
         'withdrawn_by_user_id',
         'withdrawn_at',
+        'approved_by_user_id',
+        'approved_at',
+        'rejected_by_user_id',
+        'rejected_at',
+        'decision_reason',
+        'changes_requested_by_user_id',
+        'changes_requested_at',
+        'changes_requested_reason',
+        'changes_requested_fields',
     ];
 
     protected function casts(): array
@@ -48,6 +59,10 @@ class RfqAwardRecommendation extends Model
             'status' => RfqAwardRecommendationStatus::class,
             'submitted_at' => 'datetime',
             'withdrawn_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'changes_requested_at' => 'datetime',
+            'changes_requested_fields' => 'array',
         ];
     }
 
@@ -130,6 +145,14 @@ class RfqAwardRecommendation extends Model
     }
 
     /**
+     * @return BelongsTo<ApprovalInstance, $this>
+     */
+    public function approvalInstance(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalInstance::class, 'approval_instance_id');
+    }
+
+    /**
      * @return HasMany<RfqAwardRecommendationEvidence, $this>
      */
     public function evidenceReferences(): HasMany
@@ -167,5 +190,29 @@ class RfqAwardRecommendation extends Model
     public function withdrawnByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'withdrawn_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function approvedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function rejectedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function changesRequestedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'changes_requested_by_user_id');
     }
 }

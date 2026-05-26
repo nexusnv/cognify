@@ -4,26 +4,25 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { ApprovalTaskSubjectType } from "./approvalTaskSubjectType";
 import type { ApprovalTaskSubjectNumber } from "./approvalTaskSubjectNumber";
 import type { ApprovalTaskSubjectTitle } from "./approvalTaskSubjectTitle";
 import type { ApprovalTaskSubjectStatus } from "./approvalTaskSubjectStatus";
-import type { ApprovalTaskSubjectRequester } from "./approvalTaskSubjectRequester";
-import type { ApprovalTaskSubjectDepartment } from "./approvalTaskSubjectDepartment";
-import type { ApprovalTaskSubjectCostCenter } from "./approvalTaskSubjectCostCenter";
-import type { ApprovalTaskSubjectProjectId } from "./approvalTaskSubjectProjectId";
+import type { ApprovalTaskSubjectPrimaryParty } from "./approvalTaskSubjectPrimaryParty";
 import type { ApprovalTaskSubjectAmount } from "./approvalTaskSubjectAmount";
 import type { ApprovalTaskSubjectCurrency } from "./approvalTaskSubjectCurrency";
+import type { ApprovalTaskSubjectHref } from "./approvalTaskSubjectHref";
+import type { ApprovalTaskSubjectMetadata } from "./approvalTaskSubjectMetadata";
 
 export interface ApprovalTaskSubject {
-  type: string;
+  type: ApprovalTaskSubjectType;
   id: string;
-  number: ApprovalTaskSubjectNumber;
-  title: ApprovalTaskSubjectTitle;
-  status: ApprovalTaskSubjectStatus;
-  requester: ApprovalTaskSubjectRequester;
-  department: ApprovalTaskSubjectDepartment;
-  costCenter: ApprovalTaskSubjectCostCenter;
-  projectId: ApprovalTaskSubjectProjectId;
-  amount: ApprovalTaskSubjectAmount;
-  currency: ApprovalTaskSubjectCurrency;
+  number?: ApprovalTaskSubjectNumber;
+  title?: ApprovalTaskSubjectTitle;
+  status?: ApprovalTaskSubjectStatus;
+  primaryParty?: ApprovalTaskSubjectPrimaryParty;
+  amount?: ApprovalTaskSubjectAmount;
+  currency?: ApprovalTaskSubjectCurrency;
+  href?: ApprovalTaskSubjectHref;
+  metadata: ApprovalTaskSubjectMetadata;
 }

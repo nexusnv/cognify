@@ -19,6 +19,15 @@ import type { RfqAwardRecommendationDecisionSubmittedAt } from "./rfqAwardRecomm
 import type { RfqAwardRecommendationDecisionWithdrawnByUserId } from "./rfqAwardRecommendationDecisionWithdrawnByUserId";
 import type { RfqAwardRecommendationDecisionWithdrawnAt } from "./rfqAwardRecommendationDecisionWithdrawnAt";
 import type { RfqAwardRecommendationDecisionUpdatedAt } from "./rfqAwardRecommendationDecisionUpdatedAt";
+import type { RfqAwardRecommendationDecisionApprovalInstanceId } from "./rfqAwardRecommendationDecisionApprovalInstanceId";
+import type { RfqAwardRecommendationDecisionApprovedByUserId } from "./rfqAwardRecommendationDecisionApprovedByUserId";
+import type { RfqAwardRecommendationDecisionApprovedAt } from "./rfqAwardRecommendationDecisionApprovedAt";
+import type { RfqAwardRecommendationDecisionRejectedByUserId } from "./rfqAwardRecommendationDecisionRejectedByUserId";
+import type { RfqAwardRecommendationDecisionRejectedAt } from "./rfqAwardRecommendationDecisionRejectedAt";
+import type { RfqAwardRecommendationDecisionDecisionReason } from "./rfqAwardRecommendationDecisionDecisionReason";
+import type { RfqAwardRecommendationDecisionChangesRequestedByUserId } from "./rfqAwardRecommendationDecisionChangesRequestedByUserId";
+import type { RfqAwardRecommendationDecisionChangesRequestedAt } from "./rfqAwardRecommendationDecisionChangesRequestedAt";
+import type { RfqAwardRecommendationDecisionChangesRequestedReason } from "./rfqAwardRecommendationDecisionChangesRequestedReason";
 
 export interface RfqAwardRecommendationDecision {
   id: string;
@@ -37,4 +46,14 @@ export interface RfqAwardRecommendationDecision {
   withdrawnByUserId: RfqAwardRecommendationDecisionWithdrawnByUserId;
   withdrawnAt: RfqAwardRecommendationDecisionWithdrawnAt;
   updatedAt: RfqAwardRecommendationDecisionUpdatedAt;
+  approvalInstanceId: RfqAwardRecommendationDecisionApprovalInstanceId;
+  approvedByUserId: RfqAwardRecommendationDecisionApprovedByUserId;
+  approvedAt: RfqAwardRecommendationDecisionApprovedAt;
+  rejectedByUserId: RfqAwardRecommendationDecisionRejectedByUserId;
+  rejectedAt: RfqAwardRecommendationDecisionRejectedAt;
+  decisionReason: RfqAwardRecommendationDecisionDecisionReason;
+  changesRequestedByUserId: RfqAwardRecommendationDecisionChangesRequestedByUserId;
+  changesRequestedAt: RfqAwardRecommendationDecisionChangesRequestedAt;
+  changesRequestedReason: RfqAwardRecommendationDecisionChangesRequestedReason;
+  changesRequestedFields: string[];
 }

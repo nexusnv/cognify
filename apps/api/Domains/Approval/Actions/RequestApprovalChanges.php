@@ -8,13 +8,13 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
-use Domains\Requisition\Actions\RequestRequisitionChanges;
-use Domains\Requisition\Models\Requisition;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -22,7 +22,7 @@ class RequestApprovalChanges
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-        private readonly RequestRequisitionChanges $requestRequisitionChanges,
+        private readonly ApprovalSubjectRegistry $subjectRegistry,
     ) {}
 
     /**
@@ -91,12 +91,10 @@ class RequestApprovalChanges
                 ->update(['status' => ApprovalTaskStatus::Cancelled]);
 
             $subject = $task->subject;
-            if ($subject instanceof Requisition) {
-                $this->requestRequisitionChanges->handle($tenant, $actor, $subject, [
-                    'reason' => $reason,
-                    'requestedFields' => $requestedFields,
-                    'approvalInstanceId' => $instance->id,
-                ]);
+            if ($subject instanceof Model) {
+                $this->subjectRegistry
+                    ->forStoredSubject($task->subject_type)
+                    ->onChangesRequested($tenant, $subject, $instance, $actor, $reason, $requestedFields);
             }
 
             $this->auditRecorder->record(new AuditEventData(

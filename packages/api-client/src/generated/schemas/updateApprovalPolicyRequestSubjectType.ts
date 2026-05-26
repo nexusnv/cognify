@@ -11,4 +11,5 @@ export type UpdateApprovalPolicyRequestSubjectType =
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const UpdateApprovalPolicyRequestSubjectType = {
   requisition: "requisition",
+  rfq_award_recommendation: "rfq_award_recommendation",
 } as const;

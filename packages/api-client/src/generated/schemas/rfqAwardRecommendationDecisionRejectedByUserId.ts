@@ -5,4 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ApprovalTaskSubjectDepartment = string | null;
+export type RfqAwardRecommendationDecisionRejectedByUserId = string | null;

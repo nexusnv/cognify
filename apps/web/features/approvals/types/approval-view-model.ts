@@ -78,6 +78,7 @@ export type ApprovalTaskScope =
 
 export type ApprovalTaskFilters = {
   scope?: ApprovalTaskScope;
+  subjectType?: "requisition" | "rfq_award_recommendation";
   status?: string;
   dueFrom?: string;
   dueTo?: string;
@@ -94,7 +95,7 @@ export type ApprovalTaskFilters = {
 export type ApprovalPolicyFormValues = {
   name: string;
   description: string;
-  subjectType: "requisition";
+  subjectType: "requisition" | "rfq_award_recommendation";
   rules: ApprovalPolicyRule[];
   routeTemplate: ApprovalRouteTemplate;
   slaRules: ApprovalSlaRule[];

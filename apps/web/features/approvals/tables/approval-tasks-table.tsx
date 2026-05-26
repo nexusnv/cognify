@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import type { ApprovalRequisitionSubjectMetadata } from "@cognify/api-client/schemas";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
 import type { ApprovalTask } from "../types/approval-view-model";
 
@@ -29,7 +30,7 @@ export function ApprovalTasksTable({
       <table className="w-full min-w-[900px] text-sm" aria-label="Approval tasks">
         <thead className="bg-muted/50 text-left">
           <tr>
-            <th className="px-3 py-2 font-medium">Requisition</th>
+            <th className="px-3 py-2 font-medium">Subject</th>
             <th className="px-3 py-2 font-medium">Stage</th>
             <th className="px-3 py-2 font-medium">Assignee</th>
             <th className="px-3 py-2 font-medium">Requester</th>
@@ -43,12 +44,12 @@ export function ApprovalTasksTable({
           {tasks.map((task) => (
             <tr key={task.id} className="border-t">
               <td className="px-3 py-3">
-                <div className="font-medium">{task.subject.title}</div>
-                <div className="font-mono text-xs text-muted-foreground">{task.subject.number}</div>
+                <div className="font-medium">{task.subject.title ?? "Approval subject"}</div>
+                <div className="font-mono text-xs text-muted-foreground">{task.subject.number ?? task.subject.type}</div>
               </td>
               <td className="px-3 py-3">{task.stage.name}</td>
               <td className="px-3 py-3 text-muted-foreground">{task.assignee?.name ?? "Unassigned"}</td>
-              <td className="px-3 py-3 text-muted-foreground">{task.subject.requester?.name ?? "Unknown"}</td>
+              <td className="px-3 py-3 text-muted-foreground">{subjectRequester(task) ?? task.subject.primaryParty ?? "Unknown"}</td>
               <td className="px-3 py-3"><ApprovalStatusBadge status={task.status} /></td>
               <td className="px-3 py-3 tabular-nums">{formatDate(task.dueAt)}</td>
               <td className="px-3 py-3 tabular-nums text-muted-foreground">{formatDate(task.updatedAt)}</td>
@@ -74,4 +75,12 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(
     new Date(value),
   );
+}
+
+function subjectRequester(task: ApprovalTask): string | null {
+  if (task.subject.type !== "requisition") return null;
+
+  const requester = (task.subject.metadata as ApprovalRequisitionSubjectMetadata).requester;
+
+  return requester?.name ?? null;
 }
