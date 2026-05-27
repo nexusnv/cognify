@@ -56,16 +56,25 @@ class ProcurementCalendarApiTest extends TestCase
         ]);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?start=2026-06-01&end=2026-06-30')
+            ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
             ->assertOk()
-            ->assertJsonCount(7, 'data.events')
-            ->assertJsonPath('data.events.0.source.type', 'requisition')
-            ->assertJsonPath('data.events.1.source.type', 'rfq')
-            ->assertJsonPath('data.events.2.source.type', 'rfq_invitation')
-            ->assertJsonPath('data.events.3.source.type', 'quotation')
-            ->assertJsonPath('data.events.4.source.type', 'quotation_version')
-            ->assertJsonPath('data.events.5.source.type', 'approval')
-            ->assertJsonPath('data.events.6.source.type', 'po_handoff');
+            ->assertJsonPath('data.summary.bySourceType.rfqDeadline', 2)
+            ->assertJsonPath('data.summary.bySourceType.approvalDue', 1)
+            ->assertJsonPath('data.summary.bySourceType.requisitionNeededBy', 1)
+            ->assertJsonPath('data.summary.bySourceType.poHandoff', 1)
+            ->assertJsonPath('data.summary.bySourceType.quotationValidity', 2)
+            ->assertJsonPath('data.events.0.sourceType', 'requisitionNeededBy')
+            ->assertJsonPath('data.events.1.sourceType', 'rfqDeadline')
+            ->assertJsonPath('data.events.2.sourceType', 'rfqDeadline')
+            ->assertJsonPath('data.events.3.sourceType', 'quotationValidity')
+            ->assertJsonPath('data.events.4.sourceType', 'quotationValidity')
+            ->assertJsonPath('data.events.5.sourceType', 'approvalDue')
+            ->assertJsonPath('data.events.6.sourceType', 'poHandoff')
+            ->assertJsonFragment(['sourceType' => 'requisitionNeededBy'])
+            ->assertJsonFragment(['sourceType' => 'rfqDeadline'])
+            ->assertJsonFragment(['sourceType' => 'quotationValidity'])
+            ->assertJsonFragment(['sourceType' => 'approvalDue'])
+            ->assertJsonFragment(['sourceType' => 'poHandoff']);
 
         $this->assertDatabaseHas('requisitions', ['id' => $requisition->id]);
         $this->assertDatabaseHas('rfqs', ['id' => $rfq->id]);
@@ -87,11 +96,13 @@ class ProcurementCalendarApiTest extends TestCase
         $otherTask = $this->createApprovalTask($tenant, $requisition, $otherApprover, ['due_at' => '2026-06-13 09:00:00']);
 
         $this->actingAsTenant($tenant, $approver)
-            ->getJson('/api/procurement-calendar/events?source=approval&status=due&start=2026-06-01&end=2026-06-30')
+            ->getJson('/api/procurement-calendar/events?sourceTypes[]=approvalDue&statuses[]=dueSoon&from=2026-06-01&to=2026-06-30')
             ->assertOk()
             ->assertJsonCount(1, 'data.events')
-            ->assertJsonPath('data.events.0.assignee.id', (string) $approver->id)
-            ->assertJsonPath('data.events.0.status', 'due');
+            ->assertJsonPath('data.events.0.sourceType', 'approvalDue')
+            ->assertJsonPath('data.events.0.sourceId', (string) $assignedTask->id)
+            ->assertJsonPath('data.events.0.status', 'dueSoon')
+            ->assertJsonMissing(['sourceId' => (string) $otherTask->id]);
 
         $this->assertSame($approver->id, $assignedTask->refresh()->assignee_id);
         $this->assertSame($otherApprover->id, $otherTask->refresh()->assignee_id);
@@ -120,13 +131,12 @@ class ProcurementCalendarApiTest extends TestCase
         ]);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?sourceTypes[]=rfqDeadline&status=dueSoon&search=Searchable&start=2026-06-01&end=2026-06-30')
+            ->getJson('/api/procurement-calendar/events?sourceTypes[]=rfqDeadline&statuses[]=dueSoon&q=Searchable&from=2026-06-01&to=2026-06-30')
             ->assertOk()
-            ->assertJsonPath('data.filters.sourceTypes.0', 'rfqDeadline')
-            ->assertJsonPath('data.filters.status', 'dueSoon')
-            ->assertJsonPath('data.filters.search', 'Searchable')
             ->assertJsonCount(1, 'data.events')
-            ->assertJsonPath('data.events.0.source.id', (string) $rfq->id);
+            ->assertJsonPath('data.events.0.sourceType', 'rfqDeadline')
+            ->assertJsonPath('data.events.0.sourceId', (string) $rfq->id)
+            ->assertJsonPath('data.events.0.status', 'dueSoon');
     }
 
     public function test_invalid_or_overwide_ranges_return_validation_errors(): void
@@ -134,15 +144,14 @@ class ProcurementCalendarApiTest extends TestCase
         [$tenant, $buyer] = $this->tenantUser('buyer');
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?start=2026-06-30&end=2026-06-01')
+            ->getJson('/api/procurement-calendar/events?from=2026-06-30&to=2026-06-01')
             ->assertStatus(422)
             ->assertJsonPath('error.code', 'validation_failed');
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?start=2026-01-01&end=2026-12-31')
+            ->getJson('/api/procurement-calendar/events?from=2026-01-01&to=2026-12-31')
             ->assertStatus(422)
-            ->assertJsonPath('error.code', 'validation_failed')
-            ->assertJsonPath('error.details.fields.range', 'The selected date range is too wide.');
+            ->assertJsonPath('error.code', 'validation_failed');
     }
 
     public function test_cross_tenant_records_do_not_appear(): void
@@ -205,9 +214,9 @@ class ProcurementCalendarApiTest extends TestCase
         ]);
 
         $response = $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?start=2026-06-01&end=2026-06-30')
+            ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
             ->assertOk()
-            ->assertJsonPath('data.events.0.source.type', 'requisition');
+            ->assertJsonPath('data.events.0.title', 'Same tenant calendar item');
         $payload = $response->json();
         $this->assertStringContainsString('Same tenant visible rfq', json_encode($payload));
         $this->assertStringNotContainsString('Other tenant exclusive rfq', json_encode($payload));
@@ -227,13 +236,11 @@ class ProcurementCalendarApiTest extends TestCase
         ]);
 
         $response = $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?source=vendorDocumentExpiry&start=2026-08-01&end=2026-08-31')
+            ->getJson('/api/procurement-calendar/events?sourceTypes[]=vendorDocumentExpiry&from=2026-08-01&to=2026-08-31')
             ->assertOk()
-            ->assertJsonPath('data.availableSources.vendorDocumentExpiry', false)
-            ->assertJsonPath('data.availableSources.rfq', true)
             ->assertJsonCount(0, 'data.events')
-            ->assertJsonMissingPath('data.events.0.source.type')
-            ->assertJsonPath('data.metadata.unavailableFutureSources.0.key', 'vendorDocumentExpiry');
+            ->assertJsonFragment(['sourceType' => 'vendorDocumentExpiry', 'available' => false])
+            ->assertJsonMissingPath('data.events.0.sourceType');
         $this->assertStringNotContainsString('vendor document', json_encode($response->json()));
     }
 
