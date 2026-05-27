@@ -46,6 +46,7 @@ import type {
   ListAuditEventsParams,
   ListGlobalSearchParams,
   ListNotificationsParams,
+  ListProcurementCalendarEventsParams,
   ListProjectsParams,
   ListQuotationNormalizationsParams,
   ListRequisitionActivity200,
@@ -60,6 +61,7 @@ import type {
   NotificationListResponse,
   NotificationResponse,
   PreviewApprovalPolicyRequest,
+  ProcurementCalendarEventCollectionResponse,
   ProcurementProjectListResponse,
   ProcurementProjectResponse,
   ProjectActivityListResponse,
@@ -844,6 +846,97 @@ export const listAuditEvents = async (
     ...options,
     method: "GET",
   });
+};
+
+/**
+ * @summary List procurement calendar events
+ */
+export type listProcurementCalendarEventsResponse200 = {
+  data: ProcurementCalendarEventCollectionResponse;
+  status: 200;
+};
+
+export type listProcurementCalendarEventsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listProcurementCalendarEventsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listProcurementCalendarEventsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listProcurementCalendarEventsResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type listProcurementCalendarEventsResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
+export type listProcurementCalendarEventsResponseSuccess =
+  listProcurementCalendarEventsResponse200 & {
+    headers: Headers;
+  };
+export type listProcurementCalendarEventsResponseError = (
+  | listProcurementCalendarEventsResponse400
+  | listProcurementCalendarEventsResponse401
+  | listProcurementCalendarEventsResponse403
+  | listProcurementCalendarEventsResponse422
+  | listProcurementCalendarEventsResponse429
+) & {
+  headers: Headers;
+};
+
+export type listProcurementCalendarEventsResponse =
+  | listProcurementCalendarEventsResponseSuccess
+  | listProcurementCalendarEventsResponseError;
+
+export const getListProcurementCalendarEventsUrl = (
+  params: ListProcurementCalendarEventsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["sourceTypes", "statuses"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : v.toString());
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/procurement-calendar/events?${stringifiedParams}`
+    : `/api/procurement-calendar/events`;
+};
+
+export const listProcurementCalendarEvents = async (
+  params: ListProcurementCalendarEventsParams,
+  options?: RequestInit,
+): Promise<listProcurementCalendarEventsResponse> => {
+  return cognifyFetch<listProcurementCalendarEventsResponse>(
+    getListProcurementCalendarEventsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**

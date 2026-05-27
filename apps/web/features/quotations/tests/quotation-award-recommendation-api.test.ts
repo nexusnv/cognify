@@ -134,7 +134,11 @@ describe("quotation award recommendation api", () => {
     const jsonExport = await exportRfqAwardRecommendationPoHandoffJson("po-handoff-1", "tenant-1");
     expect(jsonExport).toMatchObject({ format: "json", handoff: expect.objectContaining({ number: "POH-2026-000001" }) });
 
-    await expect(downloadPurchaseOrderRequestHandoffCsv("po-handoff-1", "tenant-1")).resolves.toBeInstanceOf(Blob);
+    const csvExport = await downloadPurchaseOrderRequestHandoffCsv("po-handoff-1", "tenant-1");
+    expect(csvExport.type).toBe("text/csv;charset=utf-8");
+    await expect(csvExport.text()).resolves.toContain(
+      "handoff_number,handoff_status,rfq_number,vendor_name,description,line_total",
+    );
   });
 
   it("surfaces PO handoff stale lock conflicts", async () => {
