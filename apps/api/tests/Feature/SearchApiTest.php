@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Award\Models\Award;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
@@ -460,6 +463,45 @@ class SearchApiTest extends TestCase
         $this->assertContains('throttle:60,1', $route->gatherMiddleware());
     }
 
+    public function test_buyer_can_search_purchase_order_handoffs_by_number_rfq_vendor_and_status(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        $vendor = $this->createVendor($tenant, ['name' => 'Northwind Traders']);
+        $rfq = $this->createRfq($tenant, ['number' => 'RFQ-2026-POH', 'title' => 'Warehouse racking']);
+        $handoff = $this->createPurchaseOrderRequestHandoff($tenant, [
+            'number' => 'POH-2026-000001',
+            'status' => 'ready',
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $vendor->id,
+            'source_snapshot' => ['rfq' => ['number' => $rfq->number], 'vendor' => ['name' => $vendor->name]],
+        ]);
+
+        foreach (['POH-2026', 'RFQ-2026-POH', 'Northwind', 'ready'] as $query) {
+            $response = $this->actingAsTenant($tenant, $buyer)
+                ->getJson('/api/search?query='.urlencode($query).'&types[]=po_handoff&limit=10');
+
+            $response->assertOk()
+                ->assertJsonPath('meta.returned', 1)
+                ->assertJsonPath('data.0.type', 'po_handoff')
+                ->assertJsonPath('data.0.id', (string) $handoff->id)
+                ->assertJsonPath('data.0.title', 'POH-2026-000001')
+                ->assertJsonPath('data.0.subtitle', 'Northwind Traders')
+                ->assertJsonPath('data.0.status', 'ready')
+                ->assertJsonPath('data.0.href', "/quotations/awards/{$rfq->id}");
+        }
+    }
+
+    public function test_requester_cannot_search_purchase_order_handoffs(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        $this->createPurchaseOrderRequestHandoff($tenant, ['number' => 'POH-2026-000002']);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=POH-2026&types[]=po_handoff&limit=10')
+            ->assertOk()
+            ->assertJsonPath('meta.returned', 0);
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */
@@ -597,5 +639,76 @@ class SearchApiTest extends TestCase
             'decided_at' => $attributes['decided_at'] ?? now(),
             'metadata' => $attributes['metadata'] ?? ['demo' => true],
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function createPurchaseOrderRequestHandoff(Tenant $tenant, array $attributes = []): PurchaseOrderRequestHandoff
+    {
+        $requestedByUserId = $attributes['requested_by_user_id'] ?? $tenant->users()->first()?->id;
+
+        if ($requestedByUserId === null) {
+            $requestedBy = User::factory()->create();
+            $tenant->users()->attach($requestedBy->id, ['role' => 'buyer']);
+            $requestedByUserId = $requestedBy->id;
+        }
+
+        $rfq = isset($attributes['rfq_id'])
+            ? Rfq::query()->findOrFail($attributes['rfq_id'])
+            : $this->createRfq($tenant, ['number' => 'RFQ-2026-POH', 'title' => 'Warehouse racking']);
+        $vendor = isset($attributes['vendor_id'])
+            ? Vendor::query()->findOrFail($attributes['vendor_id'])
+            : $this->createVendor($tenant, ['name' => 'Northwind Traders']);
+        $quotation = isset($attributes['quotation_id'])
+            ? Quotation::query()->findOrFail($attributes['quotation_id'])
+            : $this->createQuotation($tenant, [
+                'rfq_id' => $rfq->id,
+                'vendor_id' => $vendor->id,
+                'number' => 'QUO-2026-POH',
+                'currency' => 'MYR',
+                'total_amount' => '100.00',
+            ]);
+        $quotationVersion = isset($attributes['quotation_version_id'])
+            ? QuotationVersion::query()->findOrFail($attributes['quotation_version_id'])
+            : QuotationVersion::query()->create([
+                'tenant_id' => $tenant->id,
+                'quotation_id' => $quotation->id,
+                'version_number' => 1,
+                'status' => 'received',
+                'submission_source' => 'buyer_upload',
+                'is_current' => true,
+                'currency' => $attributes['currency'] ?? 'MYR',
+                'total_amount' => $attributes['total_amount'] ?? '100.00',
+            ]);
+        $recommendationId = $attributes['rfq_award_recommendation_id'] ?? RfqAwardRecommendation::query()->create([
+            'tenant_id' => $tenant->id,
+            'rfq_id' => $rfq->id,
+            'recommended_vendor_id' => $vendor->id,
+            'recommended_quotation_id' => $quotation->id,
+            'recommended_quotation_version_id' => $quotationVersion->id,
+            'status' => 'approved',
+            'created_by_user_id' => $requestedByUserId,
+        ])->id;
+
+        return PurchaseOrderRequestHandoff::query()->create(array_merge([
+            'tenant_id' => $tenant->id,
+            'rfq_award_recommendation_id' => $recommendationId,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $vendor->id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $quotationVersion->id,
+            'number' => 'POH-2026-000001',
+            'status' => 'draft',
+            'currency' => 'MYR',
+            'total_amount' => '100.00',
+            'source_snapshot' => [],
+            'line_snapshot' => [['description' => 'Default line']],
+            'approval_snapshot' => [],
+            'evidence_snapshot' => [],
+            'readiness_warnings' => [],
+            'requested_by_user_id' => $requestedByUserId,
+            'lock_version' => 1,
+        ], $attributes));
     }
 }

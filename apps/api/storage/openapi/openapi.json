@@ -2477,7 +2477,8 @@
                   "project",
                   "rfq",
                   "quotation",
-                  "award"
+                  "award",
+                  "po_handoff"
                 ]
               }
             }
@@ -6398,6 +6399,388 @@
           }
         }
       }
+    },
+    "/api/rfqs/{rfq}/award-recommendation/po-handoff": {
+      "get": {
+        "operationId": "showRfqAwardRecommendationPoHandoff",
+        "summary": "Show or create RFQ award recommendation PO handoff",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RFQ award recommendation PO handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRfqAwardRecommendationPoHandoff",
+        "summary": "Create or reveal RFQ award recommendation PO handoff",
+        "tags": [
+          "rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "rfq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Created or existing RFQ award recommendation PO handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      }
+    },
+    "/api/po-handoffs/{handoff}": {
+      "get": {
+        "operationId": "showPurchaseOrderRequestHandoff",
+        "summary": "Show purchase order request handoff",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase order request handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePurchaseOrderRequestHandoff",
+        "summary": "Update purchase order request handoff review fields",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseOrderRequestHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated purchase order request handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/po-handoffs/{handoff}/ready": {
+      "post": {
+        "operationId": "markPurchaseOrderRequestHandoffReady",
+        "summary": "Mark purchase order request handoff ready",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkPurchaseOrderRequestHandoffReadyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ready purchase order request handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/po-handoffs/{handoff}/cancel": {
+      "post": {
+        "operationId": "cancelPurchaseOrderRequestHandoff",
+        "summary": "Cancel purchase order request handoff",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPurchaseOrderRequestHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancelled purchase order request handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/po-handoffs/{handoff}/export.json": {
+      "get": {
+        "operationId": "exportPurchaseOrderRequestHandoffJson",
+        "summary": "Export purchase order request handoff as JSON",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase order request handoff JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      }
+    },
+    "/api/po-handoffs/{handoff}/export.csv": {
+      "get": {
+        "operationId": "exportPurchaseOrderRequestHandoffCsv",
+        "summary": "Export purchase order request handoff as CSV",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase order request handoff CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9777,7 +10160,8 @@
               "project",
               "rfq",
               "quotation",
-              "award"
+              "award",
+              "po_handoff"
             ]
           },
           "id": {
@@ -17689,6 +18073,494 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PurchaseOrderRequestHandoff"
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoff": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "status",
+          "rfqId",
+          "recommendationId",
+          "vendorId",
+          "currency",
+          "totalAmount",
+          "source",
+          "lines",
+          "approval",
+          "evidence",
+          "review",
+          "readinessWarnings",
+          "lockVersion",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "exported",
+              "cancelled"
+            ]
+          },
+          "rfqId": {
+            "type": "string"
+          },
+          "recommendationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vendorId": {
+            "type": "string"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/PurchaseOrderRequestHandoffSource"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderRequestHandoffLine"
+            }
+          },
+          "approval": {
+            "$ref": "#/components/schemas/PurchaseOrderRequestHandoffApproval"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderRequestHandoffEvidence"
+            }
+          },
+          "review": {
+            "$ref": "#/components/schemas/PurchaseOrderRequestHandoffReview"
+          },
+          "readinessWarnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "readyByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "readyAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cancelledReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastExportFormat": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "json",
+              "csv",
+              null
+            ]
+          },
+          "lastExportedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lockVersion": {
+            "type": "integer"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/PurchaseOrderRequestHandoffPermissions"
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffSource": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "rfq": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "vendor": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "quotation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "quotationVersion": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "award": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffLine": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "lineNumber": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "itemCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitOfMeasure": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineTotal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffApproval": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "approvalInstanceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finalDecision": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "approvedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffEvidence": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffReview": {
+        "type": "object",
+        "required": [
+          "requestedPoDate",
+          "deliveryAttention",
+          "financeNote",
+          "exportMemo"
+        ],
+        "properties": {
+          "requestedPoDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "deliveryAttention": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "financeNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exportMemo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffPermissions": {
+        "type": "object",
+        "required": [
+          "canUpdate",
+          "canMarkReady",
+          "canExport",
+          "canCancel"
+        ],
+        "properties": {
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canMarkReady": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdatePurchaseOrderRequestHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "requestedPoDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "deliveryAttention": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "financeNote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 5000
+          },
+          "exportMemo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 5000
+          }
+        }
+      },
+      "MarkPurchaseOrderRequestHandoffReadyRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "CancelPurchaseOrderRequestHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "reason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2000
+          }
+        }
+      },
+      "PurchaseOrderRequestHandoffExport": {
+        "type": "object",
+        "required": [
+          "format",
+          "exportedAt",
+          "handoff"
+        ],
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "json"
+            ]
+          },
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "handoff": {
+            "type": "object",
+            "additionalProperties": true
           }
         }
       }

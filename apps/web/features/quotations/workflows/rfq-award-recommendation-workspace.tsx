@@ -9,6 +9,7 @@ import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-l
 import { RfqAwardApprovalPanel } from "../components/rfq-award-approval-panel";
 import { RfqAwardDecisionSummary } from "../components/rfq-award-decision-summary";
 import { RfqAwardEvidenceSelector } from "../components/rfq-award-evidence-selector";
+import { RfqAwardPoHandoffPanel } from "../components/rfq-award-po-handoff-panel";
 import { RfqAwardRationaleForm } from "../components/rfq-award-rationale-form";
 import { RfqAwardVendorOptionList } from "../components/rfq-award-vendor-option-list";
 import {
@@ -20,6 +21,7 @@ import {
 import {
   useRfqAwardRecommendation,
   useRfqAwardRecommendationApprovalSummary,
+  useRfqAwardRecommendationPoHandoff,
 } from "../hooks/use-rfq-award-recommendation";
 
 type DraftState = {
@@ -72,6 +74,8 @@ function RfqAwardRecommendationWorkspaceContent({
   const [lastMutation, setLastMutation] = useState<"save" | "submit" | "withdraw" | "route" | null>(null);
 
   const recommendationStatus = context.recommendation?.status ?? "draft";
+  const showPoHandoff = recommendationStatus === "approved";
+  const poHandoff = useRfqAwardRecommendationPoHandoff(rfqId, showPoHandoff);
   const isPending = recommendationStatus === "pending_approval";
   const isApprovalLocked = ["pending_approval", "approval_routed", "approved", "rejected", "changes_requested"].includes(recommendationStatus);
   const isReadOnly = isApprovalLocked || !context.permissions.canManageAwardRecommendation;
@@ -103,6 +107,7 @@ function RfqAwardRecommendationWorkspaceContent({
       sections={[
         { id: "overview", label: "Overview" },
         { id: "approval", label: "Approval" },
+        ...(showPoHandoff ? [{ id: "po-handoff", label: "PO handoff" }] : []),
         { id: "rationale", label: "Rationale" },
         { id: "evidence", label: "Evidence" },
       ]}
@@ -212,6 +217,15 @@ function RfqAwardRecommendationWorkspaceContent({
           });
         }}
       />
+      {showPoHandoff ? (
+        <RfqAwardPoHandoffPanel
+          key={`${poHandoff.data?.id ?? "none"}:${poHandoff.data?.lockVersion ?? "loading"}`}
+          rfqId={rfqId}
+          handoff={poHandoff.data}
+          isLoading={poHandoff.isLoading || poHandoff.isPending}
+          error={poHandoff.error}
+        />
+      ) : null}
       <RfqAwardVendorOptionList
         options={context.vendorOptions}
         selectedVendorId={draft.recommendedVendorId}

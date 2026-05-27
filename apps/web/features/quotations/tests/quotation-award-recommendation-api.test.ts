@@ -4,11 +4,18 @@ import { storeActiveTenantId } from "@/features/identity/api/identity-api";
 import { server } from "@/tests/msw/server";
 import {
   fetchRfqAwardRecommendationApprovalSummary,
+  cancelRfqAwardRecommendationPoHandoff,
+  createRfqAwardRecommendationPoHandoffForRfq,
+  downloadPurchaseOrderRequestHandoffCsv,
+  exportRfqAwardRecommendationPoHandoffJson,
+  fetchRfqAwardRecommendationPoHandoff,
+  markRfqAwardRecommendationPoHandoffReady,
   previewRfqAwardRecommendationRoute,
   routeRfqAwardRecommendationApproval,
   saveRfqAwardRecommendation,
   showRfqAwardRecommendation,
   submitRfqAwardRecommendation,
+  updateRfqAwardRecommendationPoHandoff,
   withdrawRfqAwardRecommendation,
 } from "../api/quotation-award-recommendation-api";
 import {
@@ -94,5 +101,59 @@ describe("quotation award recommendation api", () => {
     await expect(fetchRfqAwardRecommendationApprovalSummary("rfq-pending-recommendation", "tenant-1")).resolves.toMatchObject({
       currentStage: expect.any(Object),
     });
+  });
+
+  it("supports PO handoff review ready and export wrappers", async () => {
+    const handoff = await fetchRfqAwardRecommendationPoHandoff("rfq-approved-recommendation", "tenant-1");
+    expect(handoff).toMatchObject({ id: "po-handoff-1", status: "draft", number: "POH-2026-000001" });
+
+    await expect(createRfqAwardRecommendationPoHandoffForRfq("rfq-approved-recommendation", "tenant-1")).resolves.toMatchObject({
+      id: "po-handoff-1",
+    });
+
+    const updated = await updateRfqAwardRecommendationPoHandoff(
+      "po-handoff-1",
+      {
+        lockVersion: handoff?.lockVersion ?? 1,
+        requestedPoDate: "2026-06-15",
+        deliveryAttention: "Warehouse receiving",
+        financeNote: "Charge to expansion budget.",
+        exportMemo: "Upload to ERP batch MY-0626.",
+      },
+      "tenant-1",
+    );
+    expect(updated.review.financeNote).toBe("Charge to expansion budget.");
+
+    const ready = await markRfqAwardRecommendationPoHandoffReady(
+      "po-handoff-1",
+      { lockVersion: updated.lockVersion },
+      "tenant-1",
+    );
+    expect(ready.status).toBe("ready");
+
+    const jsonExport = await exportRfqAwardRecommendationPoHandoffJson("po-handoff-1", "tenant-1");
+    expect(jsonExport).toMatchObject({ format: "json", handoff: expect.objectContaining({ number: "POH-2026-000001" }) });
+
+    await expect(downloadPurchaseOrderRequestHandoffCsv("po-handoff-1", "tenant-1")).resolves.toBeInstanceOf(Blob);
+  });
+
+  it("surfaces PO handoff stale lock conflicts", async () => {
+    await expect(
+      markRfqAwardRecommendationPoHandoffReady("po-handoff-1", { lockVersion: 99 }, "tenant-1"),
+    ).rejects.toMatchObject({
+      error: expect.objectContaining({ message: "The PO handoff has changed. Reload and try again." }),
+    });
+  });
+
+  it("supports PO handoff cancellation wrapper", async () => {
+    const handoff = await fetchRfqAwardRecommendationPoHandoff("rfq-approved-recommendation", "tenant-1");
+
+    await expect(
+      cancelRfqAwardRecommendationPoHandoff(
+        "po-handoff-1",
+        { lockVersion: handoff?.lockVersion ?? 1, reason: "Award replaced by corrected recommendation." },
+        "tenant-1",
+      ),
+    ).resolves.toMatchObject({ status: "cancelled", cancelledReason: "Award replaced by corrected recommendation." });
   });
 });

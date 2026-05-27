@@ -15,4 +15,5 @@ export const SearchResultType = {
   rfq: "rfq",
   quotation: "quotation",
   award: "award",
+  po_handoff: "po_handoff",
 } as const;

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   fetchRfqAwardRecommendationApprovalSummary,
+  fetchRfqAwardRecommendationPoHandoff,
   previewRfqAwardRecommendationRoute,
   showRfqAwardRecommendation,
 } from "../api/quotation-award-recommendation-api";
@@ -68,5 +69,26 @@ export function useRfqAwardRecommendationApprovalPreview(rfqId: string | null | 
       return previewRfqAwardRecommendationRoute(rfqId, tenantId);
     },
     enabled: Boolean(rfqId && tenantId),
+  });
+}
+
+export function rfqAwardRecommendationPoHandoffQueryKey(rfqId: string, tenantId?: string | null) {
+  return ["rfq-award-recommendation-po-handoff", tenantId ?? "no-tenant", rfqId] as const;
+}
+
+export function useRfqAwardRecommendationPoHandoff(rfqId: string | null | undefined, enabled: boolean) {
+  const tenantId = getStoredActiveTenantId();
+  const queryRfqId = rfqId ?? "no-rfq";
+
+  return useQuery({
+    queryKey: rfqAwardRecommendationPoHandoffQueryKey(queryRfqId, tenantId),
+    queryFn: () => {
+      if (!rfqId) {
+        throw new Error("Cannot load PO handoff without an RFQ id.");
+      }
+
+      return fetchRfqAwardRecommendationPoHandoff(rfqId, tenantId);
+    },
+    enabled: Boolean(enabled && rfqId && tenantId),
   });
 }

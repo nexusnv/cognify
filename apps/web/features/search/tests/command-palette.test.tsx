@@ -143,6 +143,23 @@ describe("command palette", () => {
     expect(router.push).toHaveBeenCalledWith("/system");
   });
 
+  it("renders purchase order handoff search results", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<CommandPaletteHost />);
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    await user.type(screen.getByPlaceholderText("Search or jump to..."), "POH-2026");
+
+    const result = await screen.findByRole("option", { name: /POH-2026-000001/ });
+    expect(result).toBeInTheDocument();
+    expect(screen.getByText("Northwind Traders")).toBeInTheDocument();
+
+    await user.click(result);
+    expect(router.push).toHaveBeenCalledWith("/quotations/awards/rfq-approved-recommendation");
+  });
+
+
   it("shows an explicit loading state while remote search is pending", async () => {
     const user = userEvent.setup();
 

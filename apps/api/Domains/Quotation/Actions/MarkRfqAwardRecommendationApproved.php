@@ -6,33 +6,42 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\PurchaseOrder\Actions\CreateOrRevealPurchaseOrderRequestHandoff;
 use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\States\RfqAwardRecommendationStatus;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class MarkRfqAwardRecommendationApproved
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder) {}
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly CreateOrRevealPurchaseOrderRequestHandoff $createOrRevealPoHandoff,
+    ) {}
 
     public function handle(RfqAwardRecommendation $recommendation, ApprovalInstance $instance, User $actor): void
     {
-        $recommendation = $this->lockedRecommendation($recommendation, $instance);
+        DB::transaction(function () use ($recommendation, $instance, $actor): void {
+            $recommendation = $this->lockedRecommendation($recommendation, $instance);
 
-        $recommendation->forceFill([
-            'status' => RfqAwardRecommendationStatus::Approved,
-            'approval_instance_id' => $instance->id,
-            'approved_by_user_id' => $actor->id,
-            'approved_at' => now(),
-            'updated_by_user_id' => $actor->id,
-        ])->save();
+            $recommendation->forceFill([
+                'status' => RfqAwardRecommendationStatus::Approved,
+                'approval_instance_id' => $instance->id,
+                'approved_by_user_id' => $actor->id,
+                'approved_at' => now(),
+                'updated_by_user_id' => $actor->id,
+            ])->save();
 
-        $this->auditRecorder->record(new AuditEventData(
-            tenant: $recommendation->tenant,
-            actor: $actor,
-            action: 'rfq_award_recommendation.approved',
-            subject: $recommendation,
-            metadata: ['approvalInstanceId' => (string) $instance->id],
-        ));
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $recommendation->tenant,
+                actor: $actor,
+                action: 'rfq_award_recommendation.approved',
+                subject: $recommendation,
+                metadata: ['approvalInstanceId' => (string) $instance->id],
+            ));
+
+            $this->createOrRevealPoHandoff->handle($recommendation->fresh(), $actor);
+        });
     }
 
     private function lockedRecommendation(RfqAwardRecommendation $recommendation, ApprovalInstance $instance): RfqAwardRecommendation

@@ -1,17 +1,27 @@
 import { HttpResponse, http } from "msw";
 import type {
+  CancelPurchaseOrderRequestHandoffRequest,
+  MarkPurchaseOrderRequestHandoffReadyRequest,
   SaveRfqAwardRecommendationRequest,
   SubmitRfqAwardRecommendationRequest,
+  UpdatePurchaseOrderRequestHandoffRequest,
   WithdrawRfqAwardRecommendationRequest,
 } from "@cognify/api-client/schemas";
 import {
+  cancelPurchaseOrderRequestHandoffFixture,
+  createPurchaseOrderRequestHandoffFixture,
+  exportPurchaseOrderRequestHandoffCsvFixture,
+  exportPurchaseOrderRequestHandoffJsonFixture,
   getQuotationAwardRecommendationApprovalSummaryFixture,
   getQuotationAwardRecommendationFixture,
+  getPurchaseOrderRequestHandoffFixture,
+  markPurchaseOrderRequestHandoffReadyFixture,
   previewQuotationAwardRecommendationApprovalFixture,
   resetQuotationAwardRecommendationMockState,
   routeQuotationAwardRecommendationApprovalFixture,
   saveQuotationAwardRecommendationFixture,
   submitQuotationAwardRecommendationFixture,
+  updatePurchaseOrderRequestHandoffFixture,
   withdrawQuotationAwardRecommendationFixture,
 } from "./quotation-award-recommendation-fixtures";
 
@@ -149,6 +159,73 @@ export const quotationAwardRecommendationHandlers = [
       return HttpResponse.json({ data: previewQuotationAwardRecommendationApprovalFixture(String(params.rfq)) });
     } catch (error) {
       return invalidStateOrNotFound(error, "Approval route could not be previewed.");
+    }
+  }),
+
+  http.get("/api/rfqs/:rfq/award-recommendation/po-handoff", ({ params }) => {
+    try {
+      return HttpResponse.json({ data: getPurchaseOrderRequestHandoffFixture(String(params.rfq)) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff could not be loaded.");
+    }
+  }),
+
+  http.post("/api/rfqs/:rfq/award-recommendation/po-handoff", ({ params }) => {
+    try {
+      return HttpResponse.json({ data: createPurchaseOrderRequestHandoffFixture(String(params.rfq)) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff could not be created.");
+    }
+  }),
+
+  http.patch("/api/po-handoffs/:handoff", async ({ params, request }) => {
+    const payload = await readJson<UpdatePurchaseOrderRequestHandoffRequest>(request);
+    if (!payload) return validationFailed("PO handoff update payload is required.");
+
+    try {
+      return HttpResponse.json({ data: updatePurchaseOrderRequestHandoffFixture(String(params.handoff), payload) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff could not be updated.");
+    }
+  }),
+
+  http.post("/api/po-handoffs/:handoff/ready", async ({ params, request }) => {
+    const payload = await readJson<MarkPurchaseOrderRequestHandoffReadyRequest>(request);
+    if (!payload) return validationFailed("PO handoff ready payload is required.");
+
+    try {
+      return HttpResponse.json({ data: markPurchaseOrderRequestHandoffReadyFixture(String(params.handoff), payload) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff could not be marked ready.");
+    }
+  }),
+
+  http.post("/api/po-handoffs/:handoff/cancel", async ({ params, request }) => {
+    const payload = await readJson<CancelPurchaseOrderRequestHandoffRequest>(request);
+    if (!payload?.reason?.trim()) return validationFailed("A cancellation reason is required.");
+
+    try {
+      return HttpResponse.json({ data: cancelPurchaseOrderRequestHandoffFixture(String(params.handoff), payload) });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff could not be cancelled.");
+    }
+  }),
+
+  http.get("/api/po-handoffs/:handoff/export.json", ({ params }) => {
+    try {
+      return HttpResponse.json(exportPurchaseOrderRequestHandoffJsonFixture(String(params.handoff)));
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff JSON export could not be generated.");
+    }
+  }),
+
+  http.get("/api/po-handoffs/:handoff/export.csv", ({ params }) => {
+    try {
+      return new HttpResponse(exportPurchaseOrderRequestHandoffCsvFixture(String(params.handoff)), {
+        headers: { "Content-Type": "text/csv; charset=UTF-8" },
+      });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff CSV export could not be generated.");
     }
   }),
 ];

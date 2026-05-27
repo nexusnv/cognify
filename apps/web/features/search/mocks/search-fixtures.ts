@@ -64,4 +64,13 @@ export const searchResultFixtures: SearchResultViewModel[] = [
     href: "/system",
     updatedAt: "2026-05-14T08:10:00.000Z",
   },
+  {
+    type: "po_handoff",
+    id: "po-handoff-1",
+    title: "POH-2026-000001",
+    subtitle: "Northwind Traders",
+    status: "ready",
+    href: "/quotations/awards/rfq-approved-recommendation",
+    updatedAt: "2026-05-26T12:00:00.000000Z",
+  },
 ];
