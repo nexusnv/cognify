@@ -592,6 +592,113 @@
         }
       }
     },
+    "/api/procurement-calendar/events": {
+      "get": {
+        "operationId": "listProcurementCalendarEvents",
+        "summary": "List procurement calendar events",
+        "tags": [
+          "Reporting"
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "month",
+                "week",
+                "agenda"
+              ]
+            }
+          },
+          {
+            "name": "sourceTypes[]",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProcurementCalendarEventSourceType"
+              }
+            }
+          },
+          {
+            "name": "statuses[]",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProcurementCalendarEventStatus"
+              }
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Procurement calendar event collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcurementCalendarEventCollectionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
     "/api/auth/forgot-password": {
       "post": {
         "operationId": "requestPasswordReset",
@@ -8711,6 +8818,297 @@
             "$ref": "#/components/schemas/PaginationMeta"
           }
         }
+      },
+      "ProcurementCalendarEventCollectionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProcurementCalendarEventCollection"
+          }
+        }
+      },
+      "ProcurementCalendarEventCollection": {
+        "type": "object",
+        "required": [
+          "range",
+          "summary",
+          "availableSources",
+          "events"
+        ],
+        "properties": {
+          "range": {
+            "$ref": "#/components/schemas/ProcurementCalendarRange"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ProcurementCalendarSummary"
+          },
+          "availableSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcurementCalendarAvailableSource"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcurementCalendarEvent"
+            }
+          }
+        }
+      },
+      "ProcurementCalendarRange": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "view"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "month",
+              "week",
+              "agenda"
+            ]
+          }
+        }
+      },
+      "ProcurementCalendarSummary": {
+        "type": "object",
+        "required": [
+          "total",
+          "byStatus",
+          "bySourceType"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "byStatus": {
+            "$ref": "#/components/schemas/ProcurementCalendarSummaryByStatus"
+          },
+          "bySourceType": {
+            "$ref": "#/components/schemas/ProcurementCalendarSummaryBySourceType"
+          }
+        }
+      },
+      "ProcurementCalendarSummaryByStatus": {
+        "type": "object",
+        "required": [
+          "overdue",
+          "dueSoon",
+          "scheduled",
+          "completed",
+          "informational"
+        ],
+        "properties": {
+          "overdue": {
+            "type": "integer"
+          },
+          "dueSoon": {
+            "type": "integer"
+          },
+          "scheduled": {
+            "type": "integer"
+          },
+          "completed": {
+            "type": "integer"
+          },
+          "informational": {
+            "type": "integer"
+          }
+        }
+      },
+      "ProcurementCalendarSummaryBySourceType": {
+        "type": "object",
+        "required": [
+          "rfqDeadline",
+          "approvalDue",
+          "requisitionNeededBy",
+          "poHandoff",
+          "quotationValidity",
+          "vendorDocumentExpiry",
+          "contractRenewal"
+        ],
+        "properties": {
+          "rfqDeadline": {
+            "type": "integer"
+          },
+          "approvalDue": {
+            "type": "integer"
+          },
+          "requisitionNeededBy": {
+            "type": "integer"
+          },
+          "poHandoff": {
+            "type": "integer"
+          },
+          "quotationValidity": {
+            "type": "integer"
+          },
+          "vendorDocumentExpiry": {
+            "type": "integer"
+          },
+          "contractRenewal": {
+            "type": "integer"
+          }
+        }
+      },
+      "ProcurementCalendarAvailableSource": {
+        "type": "object",
+        "required": [
+          "sourceType",
+          "label",
+          "available"
+        ],
+        "properties": {
+          "sourceType": {
+            "$ref": "#/components/schemas/ProcurementCalendarEventSourceType"
+          },
+          "label": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ProcurementCalendarEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceType",
+          "sourceId",
+          "sourceLabel",
+          "title",
+          "startsAt",
+          "endsAt",
+          "allDay",
+          "status",
+          "priority",
+          "record",
+          "context"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceType": {
+            "$ref": "#/components/schemas/ProcurementCalendarEventSourceType"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "sourceLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProcurementCalendarEventStatus"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "record": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProcurementCalendarEventRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ProcurementCalendarEventRecord": {
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "label",
+          "href"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          }
+        }
+      },
+      "ProcurementCalendarEventSourceType": {
+        "type": "string",
+        "enum": [
+          "rfqDeadline",
+          "approvalDue",
+          "requisitionNeededBy",
+          "poHandoff",
+          "quotationValidity",
+          "vendorDocumentExpiry",
+          "contractRenewal"
+        ]
+      },
+      "ProcurementCalendarEventStatus": {
+        "type": "string",
+        "enum": [
+          "overdue",
+          "dueSoon",
+          "scheduled",
+          "completed",
+          "informational"
+        ]
       },
       "ProcurementProjectPermissions": {
         "type": "object",
