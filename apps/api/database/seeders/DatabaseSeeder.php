@@ -48,6 +48,9 @@ class DatabaseSeeder extends Seeder
                         'sourcing_intake_reviews' => $context->sourcingIntakeReviews->count(),
                         'approval_tasks' => $context->approvalTasks->count(),
                         'awards' => $context->awards->count(),
+                        'quotation_normalizations' => $context->quotationNormalizations->count(),
+                        'quotation_scoring_templates' => $context->quotationScoringTemplates->count(),
+                        'rfq_scorecards' => $context->rfqScorecards->count(),
                     ],
                 ],
             );

@@ -8,7 +8,11 @@ use Domains\Approval\Models\ApprovalTask;
 use Domains\Award\Models\Award;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationNormalization;
+use Domains\Quotation\Models\QuotationScoringTemplate;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
+use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\Models\SourcingIntakeReview;
 use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
@@ -37,6 +41,18 @@ class DemoSeedContext
     /** @var Collection<string, Quotation> */
     public Collection $quotations;
 
+    /** @var Collection<string, QuotationNormalization> */
+    public Collection $quotationNormalizations;
+
+    /** @var Collection<string, QuotationScoringTemplate> */
+    public Collection $quotationScoringTemplates;
+
+    /** @var Collection<string, RfqScorecard> */
+    public Collection $rfqScorecards;
+
+    /** @var Collection<string, RfqAwardRecommendation> */
+    public Collection $rfqAwardRecommendations;
+
     /** @var Collection<string, SourcingIntakeReview> */
     public Collection $sourcingIntakeReviews;
 
@@ -55,6 +71,10 @@ class DemoSeedContext
         $this->projects = collect();
         $this->rfqs = collect();
         $this->quotations = collect();
+        $this->quotationNormalizations = collect();
+        $this->quotationScoringTemplates = collect();
+        $this->rfqScorecards = collect();
+        $this->rfqAwardRecommendations = collect();
         $this->sourcingIntakeReviews = collect();
         $this->approvalTasks = collect();
         $this->awards = collect();
