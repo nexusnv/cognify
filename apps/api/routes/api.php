@@ -36,6 +36,7 @@ use Domains\Quotation\Http\Controllers\RfqInvitationPortalController;
 use Domains\Quotation\Http\Controllers\SourcingIntakeReviewController;
 use Domains\Quotation\Http\Controllers\VendorPortalQuotationController;
 use Domains\Quotation\Http\Controllers\VendorPortalQuotationVersionController;
+use Domains\Reporting\Http\Controllers\ProcurementCalendarEventController;
 use Domains\Requisition\Http\Controllers\RequisitionActivityController;
 use Domains\Requisition\Http\Controllers\RequisitionController;
 use Domains\Requisition\Http\Controllers\RequisitionIntakeOptionsController;
@@ -86,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
         Route::get('/system/status', [SystemStatusController::class, 'show'])->middleware('throttle:30,1');
+        Route::get('/procurement-calendar/events', ProcurementCalendarEventController::class)->middleware('throttle:60,1');
 
         Route::get('/approval-policies', [ApprovalPolicyController::class, 'index']);
         Route::post('/approval-policies', [ApprovalPolicyController::class, 'store']);
