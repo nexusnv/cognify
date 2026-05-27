@@ -20,6 +20,7 @@ describe("shell route helpers", () => {
       { label: "Edit" },
     ]);
     expect(getBreadcrumbs("/sourcing/intake")).toEqual([{ label: "Sourcing intake" }]);
+    expect(getBreadcrumbs("/calendar")).toEqual([{ label: "Calendar" }]);
     expect(getBreadcrumbs("/sourcing/intake/review-1")).toEqual([
       { label: "Sourcing intake", href: "/sourcing/intake" },
       { label: "Intake review" },
@@ -90,6 +91,43 @@ describe("shell route helpers", () => {
     const labels = groups.flatMap((group) => group.items.map((item) => item.label));
 
     expect(labels).toContain("Sourcing intake");
+  });
+
+  it("shows calendar for buyer-style permissions", () => {
+    const groups = getVisibleNavGroups(shellNavGroups, {
+      ...requesterIdentity.permissions,
+      canViewSubmittedRequisitions: true,
+    });
+    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
+
+    expect(labels).toContain("Calendar");
+  });
+
+  it("shows calendar for admin permissions", () => {
+    const groups = getVisibleNavGroups(shellNavGroups, {
+      ...requesterIdentity.permissions,
+      canAccessAdmin: true,
+    });
+    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
+
+    expect(labels).toContain("Calendar");
+  });
+
+  it("shows calendar for approver-style permissions", () => {
+    const groups = getVisibleNavGroups(shellNavGroups, {
+      ...requesterIdentity.permissions,
+      canReviewQuotationNormalization: true,
+    });
+    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
+
+    expect(labels).toContain("Calendar");
+  });
+
+  it("hides calendar for requester-only permissions", () => {
+    const groups = getVisibleNavGroups(shellNavGroups, requesterIdentity.permissions);
+    const labels = groups.flatMap((group) => group.items.map((item) => item.label));
+
+    expect(labels).not.toContain("Calendar");
   });
 
   it("shows quotations only for normalization review permissions", () => {

@@ -12,5 +12,15 @@ describe("getSearchCommands", () => {
 
     expect(commands.some((command) => command.label === "Open requisitions")).toBe(true);
     expect(commands.some((command) => command.label === "Create requisition")).toBe(true);
+    expect(commands.some((command) => command.label === "Open calendar")).toBe(false);
+  });
+
+  it("includes calendar navigation when permissions allow it", () => {
+    const commands = getSearchCommands({
+      ...requesterIdentity.permissions,
+      canViewSubmittedRequisitions: true,
+    });
+
+    expect(commands.some((command) => command.label === "Open calendar")).toBe(true);
   });
 });

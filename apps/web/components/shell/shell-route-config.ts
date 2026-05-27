@@ -4,6 +4,7 @@ import {
   CheckSquare,
   ClipboardCheck,
   Activity,
+  CalendarDays,
   FileSearch,
   FileText,
   Gauge,
@@ -24,6 +25,11 @@ const canUseAudit = (permissions: IdentityPermissions) => permissions.canAccessA
 const canUseSourcingIntake = (permissions: IdentityPermissions) => permissions.canManageSourcingIntake;
 const canUseQuotationNormalizations = (permissions: IdentityPermissions) =>
   permissions.canReviewQuotationNormalization;
+const canUseCalendar = (permissions: IdentityPermissions) =>
+  permissions.canAccessAdmin ||
+  permissions.canManageSourcingIntake ||
+  permissions.canReviewQuotationNormalization ||
+  permissions.canViewSubmittedRequisitions;
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
@@ -65,6 +71,13 @@ export const shellNavGroups: ShellNavGroup[] = [
     id: "sourcing",
     label: "Sourcing",
     items: [
+      {
+        label: "Calendar",
+        href: "/calendar",
+        icon: CalendarDays,
+        implemented: true,
+        permission: canUseCalendar,
+      },
       {
         label: "Sourcing intake",
         href: "/sourcing/intake",
@@ -144,6 +157,10 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   if (normalizedPathname === "/sourcing/intake") {
     return [{ label: "Sourcing intake" }];
+  }
+
+  if (normalizedPathname === "/calendar") {
+    return [{ label: "Calendar" }];
   }
 
   if (normalizedPathname === "/quotations/normalizations") {
