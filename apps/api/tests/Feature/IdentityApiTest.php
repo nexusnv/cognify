@@ -257,6 +257,7 @@ class IdentityApiTest extends TestCase
                 'canSubmitOwnDraftRequisition' => true,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => false,
+                'canReviewQuotationNormalization' => false,
             ],
             TenantRole::Buyer->value => [
                 'canCreateRequisition' => false,
@@ -265,6 +266,7 @@ class IdentityApiTest extends TestCase
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => true,
+                'canReviewQuotationNormalization' => true,
             ],
             TenantRole::Approver->value => [
                 'canCreateRequisition' => false,
@@ -273,6 +275,7 @@ class IdentityApiTest extends TestCase
                 'canSubmitOwnDraftRequisition' => false,
                 'canAccessAdmin' => false,
                 'canManageSourcingIntake' => false,
+                'canReviewQuotationNormalization' => false,
             ],
             TenantRole::Admin->value => [
                 'canCreateRequisition' => true,
@@ -281,6 +284,7 @@ class IdentityApiTest extends TestCase
                 'canSubmitOwnDraftRequisition' => true,
                 'canAccessAdmin' => true,
                 'canManageSourcingIntake' => true,
+                'canReviewQuotationNormalization' => true,
             ],
         ];
 

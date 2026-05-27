@@ -27,7 +27,7 @@ class SaveRfqAwardRecommendation
     public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, Rfq $rfq, array $data): RfqAwardRecommendation
     {
@@ -49,15 +49,15 @@ class SaveRfqAwardRecommendation
                 ->latest('id')
                 ->first();
 
-            if ($recommendation !== null && ! $recommendation->statusState()->isEditable() && $recommendation->statusState() !== RfqAwardRecommendationStatus::ChangesRequested) {
-                throw new ConflictHttpException('Only draft or changes-requested award recommendations can be edited.');
+            if ($recommendation !== null && ! $recommendation->statusState()->isEditable()) {
+                throw new ConflictHttpException('Only draft award recommendations can be edited.');
             }
 
             $before = $recommendation !== null ? $this->auditSnapshot($recommendation) : null;
             $validated = $this->validateSelection($tenant, $lockedRfq, $data);
 
             if ($recommendation === null) {
-                $recommendation = new RfqAwardRecommendation();
+                $recommendation = new RfqAwardRecommendation;
                 $recommendation->forceFill([
                     'tenant_id' => $tenant->id,
                     'rfq_id' => $lockedRfq->id,
@@ -103,7 +103,7 @@ class SaveRfqAwardRecommendation
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{
      *     recommendedVendorId: ?int,
      *     recommendedQuotationId: ?int,
@@ -230,7 +230,7 @@ class SaveRfqAwardRecommendation
     }
 
     /**
-     * @param array<int, mixed> $references
+     * @param  array<int, mixed>  $references
      * @return array<int, array{type: RfqAwardRecommendationEvidenceType, id: string, label: ?string}>
      */
     private function normalizeEvidenceReferences(Tenant $tenant, Rfq $rfq, array $references): array
@@ -349,7 +349,7 @@ class SaveRfqAwardRecommendation
     }
 
     /**
-     * @param array<int, array{type: RfqAwardRecommendationEvidenceType, id: string, label: ?string}> $references
+     * @param  array<int, array{type: RfqAwardRecommendationEvidenceType, id: string, label: ?string}>  $references
      */
     private function replaceEvidenceReferences(
         Tenant $tenant,
