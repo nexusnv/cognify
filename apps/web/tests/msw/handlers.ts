@@ -14,6 +14,7 @@ import { rfqHandlers } from "@/features/sourcing/mocks/rfq-handlers";
 import { vendorHandlers } from "@/features/sourcing/mocks/vendor-handlers";
 import { rfqInvitationHandlers } from "@/features/sourcing/mocks/rfq-invitation-handlers";
 import { quotationNormalizationHandlers } from "@/features/quotations/mocks/quotation-normalization-handlers";
+import { procurementCalendarHandlers } from "@/features/procurement-calendar/mocks/procurement-calendar-handlers";
 
 export const handlers = [
   http.get("/api/health", () => {
@@ -31,6 +32,7 @@ export const handlers = [
   ...rfqHandlers,
   ...rfqInvitationHandlers,
   ...quotationNormalizationHandlers,
+  ...procurementCalendarHandlers,
   ...searchHandlers,
   ...attachmentHandlers,
   ...identityHandlers,
