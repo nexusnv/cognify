@@ -61,9 +61,11 @@ final class ListProcurementCalendarEvents
             ])
             ->values();
 
+        $statusSummary = $this->statusSummary($sortedEvents);
+
         $summary = [
-            'total' => array_sum($this->statusSummary($sortedEvents)),
-            'byStatus' => $this->statusSummary($sortedEvents),
+            'total' => array_sum($statusSummary),
+            'byStatus' => $statusSummary,
             'bySourceType' => $this->sourceSummary($sortedEvents),
         ];
 
@@ -151,8 +153,6 @@ final class ListProcurementCalendarEvents
             'requisitionNeededBy' => 0,
             'poHandoff' => 0,
             'quotationValidity' => 0,
-            'vendorDocumentExpiry' => 0,
-            'contractRenewal' => 0,
         ]);
 
         foreach ($events as $event) {

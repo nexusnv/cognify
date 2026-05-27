@@ -8938,9 +8938,7 @@
           "approvalDue",
           "requisitionNeededBy",
           "poHandoff",
-          "quotationValidity",
-          "vendorDocumentExpiry",
-          "contractRenewal"
+          "quotationValidity"
         ],
         "properties": {
           "rfqDeadline": {
@@ -8956,12 +8954,6 @@
             "type": "integer"
           },
           "quotationValidity": {
-            "type": "integer"
-          },
-          "vendorDocumentExpiry": {
-            "type": "integer"
-          },
-          "contractRenewal": {
             "type": "integer"
           }
         }

@@ -30,8 +30,6 @@ describe("procurement calendar api", () => {
                 requisitionNeededBy: 0,
                 poHandoff: 0,
                 quotationValidity: 0,
-                vendorDocumentExpiry: 0,
-                contractRenewal: 0,
               },
             },
             availableSources: [],

@@ -11,6 +11,4 @@ export interface ProcurementCalendarSummaryBySourceType {
   requisitionNeededBy: number;
   poHandoff: number;
   quotationValidity: number;
-  vendorDocumentExpiry: number;
-  contractRenewal: number;
 }

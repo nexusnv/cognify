@@ -139,8 +139,6 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
         requisitionNeededBy: 1,
         poHandoff: 1,
         quotationValidity: 1,
-        vendorDocumentExpiry: 0,
-        contractRenewal: 0,
       },
     },
     availableSources: [
@@ -217,8 +215,6 @@ export function getFilteredProcurementCalendarFixture(params: {
         requisitionNeededBy: events.filter((event) => event.sourceType === "requisitionNeededBy").length,
         poHandoff: events.filter((event) => event.sourceType === "poHandoff").length,
         quotationValidity: events.filter((event) => event.sourceType === "quotationValidity").length,
-        vendorDocumentExpiry: events.filter((event) => event.sourceType === "vendorDocumentExpiry").length,
-        contractRenewal: events.filter((event) => event.sourceType === "contractRenewal").length,
       },
     },
     events,
