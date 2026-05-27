@@ -58,24 +58,23 @@ class ProcurementCalendarApiTest extends TestCase
         $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
             ->assertOk()
+            ->assertJsonPath('data.range.from', '2026-06-01')
+            ->assertJsonPath('data.range.to', '2026-06-30')
+            ->assertJsonPath('data.summary.byStatus.scheduled', 7)
             ->assertJsonPath('data.summary.bySourceType.rfqDeadline', 2)
             ->assertJsonPath('data.summary.bySourceType.approvalDue', 1)
             ->assertJsonPath('data.summary.bySourceType.requisitionNeededBy', 1)
             ->assertJsonPath('data.summary.bySourceType.poHandoff', 1)
             ->assertJsonPath('data.summary.bySourceType.quotationValidity', 1)
+            ->assertJsonFragment(['sourceType' => 'vendorDocumentExpiry', 'available' => false])
+            ->assertJsonFragment(['sourceType' => 'contractRenewal', 'available' => false])
+            ->assertJsonFragment(['title' => 'Warehouse replenishment'])
+            ->assertJsonFragment(['href' => "/requisitions/{$requisition->id}"])
             ->assertJsonFragment(['sourceType' => 'requisitionNeededBy'])
             ->assertJsonFragment(['sourceType' => 'rfqDeadline'])
             ->assertJsonFragment(['sourceType' => 'quotationValidity'])
             ->assertJsonFragment(['sourceType' => 'approvalDue'])
             ->assertJsonFragment(['sourceType' => 'poHandoff']);
-
-        $this->assertDatabaseHas('requisitions', ['id' => $requisition->id]);
-        $this->assertDatabaseHas('rfqs', ['id' => $rfq->id]);
-        $this->assertDatabaseHas('rfq_invitations', ['id' => $invitation->id]);
-        $this->assertDatabaseHas('quotations', ['id' => $quotation->id]);
-        $this->assertDatabaseHas('quotation_versions', ['id' => $version->id]);
-        $this->assertDatabaseHas('approval_tasks', ['id' => $task->id]);
-        $this->assertDatabaseHas('purchase_order_request_handoffs', ['id' => $handoff->id]);
     }
 
     public function test_approver_sees_only_assigned_approval_due_events(): void
@@ -94,7 +93,9 @@ class ProcurementCalendarApiTest extends TestCase
             ->assertJsonCount(1, 'data.events')
             ->assertJsonPath('data.events.0.sourceType', 'approvalDue')
             ->assertJsonPath('data.events.0.sourceId', (string) $assignedTask->id)
+            ->assertJsonPath('data.events.0.title', 'Requisition approval')
             ->assertJsonPath('data.events.0.status', 'scheduled')
+            ->assertJsonPath('data.events.0.record.href', "/approvals/tasks/{$assignedTask->id}")
             ->assertJsonMissing(['sourceId' => (string) $otherTask->id]);
 
         $this->assertSame($approver->id, $assignedTask->refresh()->assignee_id);
@@ -129,6 +130,8 @@ class ProcurementCalendarApiTest extends TestCase
             ->assertJsonCount(1, 'data.events')
             ->assertJsonPath('data.events.0.sourceType', 'rfqDeadline')
             ->assertJsonPath('data.events.0.sourceId', (string) $rfq->id)
+            ->assertJsonPath('data.events.0.title', 'Searchable RFQ deadline')
+            ->assertJsonPath('data.events.0.record.href', "/sourcing/rfqs/{$rfq->id}")
             ->assertJsonPath('data.events.0.status', 'scheduled');
     }
 
@@ -233,6 +236,7 @@ class ProcurementCalendarApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(0, 'data.events')
             ->assertJsonFragment(['sourceType' => 'vendorDocumentExpiry', 'available' => false])
+            ->assertJsonFragment(['sourceType' => 'contractRenewal', 'available' => false])
             ->assertJsonMissingPath('data.events.0.sourceType');
         $this->assertStringNotContainsString('vendor document', json_encode($response->json()));
     }
