@@ -2,13 +2,17 @@
 
 namespace Domains\PurchaseOrder\Http\Requests;
 
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CancelPurchaseOrderRequestHandoffRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $handoff = $this->route('handoff');
+
+        return $handoff instanceof PurchaseOrderRequestHandoff
+            && ($this->user()?->can('cancel', $handoff) ?? false);
     }
 
     /**

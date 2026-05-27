@@ -6403,7 +6403,7 @@
     "/api/rfqs/{rfq}/award-recommendation/po-handoff": {
       "get": {
         "operationId": "showRfqAwardRecommendationPoHandoff",
-        "summary": "Show or create RFQ award recommendation PO handoff",
+        "summary": "Show RFQ award recommendation PO handoff",
         "tags": [
           "rfqs"
         ],

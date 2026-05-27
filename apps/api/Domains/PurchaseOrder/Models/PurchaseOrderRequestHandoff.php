@@ -16,7 +16,6 @@ use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -106,76 +105,74 @@ class PurchaseOrderRequestHandoff extends Model
     protected static function booted(): void
     {
         static::saving(function (self $handoff): void {
-            DB::transaction(function () use ($handoff): void {
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'rfq_award_recommendation_id',
-                    dirtyMessage: ['rfq_award_recommendation_id', 'tenant_id'],
-                    query: RfqAwardRecommendation::query(),
-                    error: 'PO handoff award recommendation must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'approval_instance_id',
-                    dirtyMessage: ['approval_instance_id', 'tenant_id'],
-                    query: ApprovalInstance::query(),
-                    error: 'PO handoff approval instance must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'rfq_id',
-                    dirtyMessage: ['rfq_id', 'tenant_id'],
-                    query: Rfq::query(),
-                    error: 'PO handoff RFQ must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'requisition_id',
-                    dirtyMessage: ['requisition_id', 'tenant_id'],
-                    query: Requisition::query(),
-                    error: 'PO handoff requisition must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'project_id',
-                    dirtyMessage: ['project_id', 'tenant_id'],
-                    query: ProcurementProject::query(),
-                    error: 'PO handoff project must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'vendor_id',
-                    dirtyMessage: ['vendor_id', 'tenant_id'],
-                    query: Vendor::query(),
-                    error: 'PO handoff vendor must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'quotation_id',
-                    dirtyMessage: ['quotation_id', 'tenant_id'],
-                    query: Quotation::query(),
-                    error: 'PO handoff quotation must belong to the same tenant.',
-                );
-                $handoff->assertBelongsToTenant(
-                    relationKey: 'quotation_version_id',
-                    dirtyMessage: ['quotation_version_id', 'tenant_id'],
-                    query: QuotationVersion::query(),
-                    error: 'PO handoff quotation version must belong to the same tenant.',
-                );
-                $handoff->assertUserBelongsToTenant(
-                    userKey: 'requested_by_user_id',
-                    dirtyMessage: ['requested_by_user_id', 'tenant_id'],
-                    error: 'PO handoff requester must belong to the same tenant.',
-                );
-                $handoff->assertUserBelongsToTenant(
-                    userKey: 'ready_by_user_id',
-                    dirtyMessage: ['ready_by_user_id', 'tenant_id'],
-                    error: 'PO handoff ready actor must belong to the same tenant.',
-                );
-                $handoff->assertUserBelongsToTenant(
-                    userKey: 'cancelled_by_user_id',
-                    dirtyMessage: ['cancelled_by_user_id', 'tenant_id'],
-                    error: 'PO handoff cancellation actor must belong to the same tenant.',
-                );
-                $handoff->assertUserBelongsToTenant(
-                    userKey: 'last_exported_by_user_id',
-                    dirtyMessage: ['last_exported_by_user_id', 'tenant_id'],
-                    error: 'PO handoff export actor must belong to the same tenant.',
-                );
-            });
+            $handoff->assertBelongsToTenant(
+                relationKey: 'rfq_award_recommendation_id',
+                dirtyMessage: ['rfq_award_recommendation_id', 'tenant_id'],
+                query: RfqAwardRecommendation::query(),
+                error: 'PO handoff award recommendation must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'approval_instance_id',
+                dirtyMessage: ['approval_instance_id', 'tenant_id'],
+                query: ApprovalInstance::query(),
+                error: 'PO handoff approval instance must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'rfq_id',
+                dirtyMessage: ['rfq_id', 'tenant_id'],
+                query: Rfq::query(),
+                error: 'PO handoff RFQ must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'requisition_id',
+                dirtyMessage: ['requisition_id', 'tenant_id'],
+                query: Requisition::query(),
+                error: 'PO handoff requisition must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'project_id',
+                dirtyMessage: ['project_id', 'tenant_id'],
+                query: ProcurementProject::query(),
+                error: 'PO handoff project must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'vendor_id',
+                dirtyMessage: ['vendor_id', 'tenant_id'],
+                query: Vendor::query(),
+                error: 'PO handoff vendor must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'quotation_id',
+                dirtyMessage: ['quotation_id', 'tenant_id'],
+                query: Quotation::query(),
+                error: 'PO handoff quotation must belong to the same tenant.',
+            );
+            $handoff->assertBelongsToTenant(
+                relationKey: 'quotation_version_id',
+                dirtyMessage: ['quotation_version_id', 'tenant_id'],
+                query: QuotationVersion::query(),
+                error: 'PO handoff quotation version must belong to the same tenant.',
+            );
+            $handoff->assertUserBelongsToTenant(
+                userKey: 'requested_by_user_id',
+                dirtyMessage: ['requested_by_user_id', 'tenant_id'],
+                error: 'PO handoff requester must belong to the same tenant.',
+            );
+            $handoff->assertUserBelongsToTenant(
+                userKey: 'ready_by_user_id',
+                dirtyMessage: ['ready_by_user_id', 'tenant_id'],
+                error: 'PO handoff ready actor must belong to the same tenant.',
+            );
+            $handoff->assertUserBelongsToTenant(
+                userKey: 'cancelled_by_user_id',
+                dirtyMessage: ['cancelled_by_user_id', 'tenant_id'],
+                error: 'PO handoff cancellation actor must belong to the same tenant.',
+            );
+            $handoff->assertUserBelongsToTenant(
+                userKey: 'last_exported_by_user_id',
+                dirtyMessage: ['last_exported_by_user_id', 'tenant_id'],
+                error: 'PO handoff export actor must belong to the same tenant.',
+            );
         });
     }
 

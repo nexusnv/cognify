@@ -8143,7 +8143,7 @@ export const previewRfqAwardRecommendationApproval = async (
 };
 
 /**
- * @summary Show or create RFQ award recommendation PO handoff
+ * @summary Show RFQ award recommendation PO handoff
  */
 export type showRfqAwardRecommendationPoHandoffResponse200 = {
   data: PurchaseOrderRequestHandoffResponse;

@@ -7,6 +7,7 @@ import { CommandPaletteHost } from "../../../components/shell/command-palette-ho
 import { multiTenantIdentity } from "../../identity/mocks/identity-fixtures";
 import { server } from "../../../tests/msw/server";
 import { rememberRecentRecord } from "../hooks/use-recent-records";
+import { searchResultFixtures } from "../mocks/search-fixtures";
 
 if (typeof window !== "undefined" && !window.ResizeObserver) {
   class ResizeObserver {
@@ -155,8 +156,9 @@ describe("command palette", () => {
     expect(result).toBeInTheDocument();
     expect(screen.getByText("Northwind Traders")).toBeInTheDocument();
 
+    const handoffResult = searchResultFixtures.find((fixture) => fixture.type === "po_handoff");
     await user.click(result);
-    expect(router.push).toHaveBeenCalledWith("/quotations/awards/rfq-approved-recommendation");
+    expect(router.push).toHaveBeenCalledWith(handoffResult?.href);
   });
 
 
