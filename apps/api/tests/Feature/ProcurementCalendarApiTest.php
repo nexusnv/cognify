@@ -39,14 +39,18 @@ class ProcurementCalendarApiTest extends TestCase
         [, $requester] = $this->tenantUser('requester', $tenant);
         [, $approver] = $this->tenantUser('approver', $tenant);
 
-        $requisition = $this->createSubmittedRequisition($tenant, $requester);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester, [
+            'needed_by_date' => '2026-06-24',
+        ]);
         $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, ['response_due_at' => '2026-06-18 17:00:00']);
         $vendor = $this->createVendor($tenant, 'Northwind Traders');
         $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor, ['response_due_at' => '2026-06-19 12:00:00']);
         $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer, ['valid_until' => '2026-06-25']);
         $version = $this->createQuotationVersion($tenant, $quotation, $buyer, ['valid_until' => '2026-06-25']);
         $recommendation = $this->createAwardRecommendation($tenant, $rfq, $quotation, $version, $buyer);
-        $task = $this->createApprovalTask($tenant, $requisition, $approver);
+        $task = $this->createApprovalTask($tenant, $requisition, $approver, [
+            'due_at' => '2026-06-20 09:00:00',
+        ]);
         $handoff = $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
             'requested_po_date' => '2026-06-21',
         ]);
@@ -100,21 +104,27 @@ class ProcurementCalendarApiTest extends TestCase
         [, $approver] = $this->tenantUser('approver', $tenant);
 
         $requisition = $this->createSubmittedRequisition($tenant, $requester, ['title' => 'Warehouse forklift refresh']);
-        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, ['number' => 'RFQ-2026-SEARCH']);
+        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, [
+            'number' => 'RFQ-2026-SEARCH',
+            'title' => 'Searchable RFQ deadline',
+            'response_due_at' => '2026-06-18 11:00:00',
+        ]);
         $vendor = $this->createVendor($tenant, 'Searchable Supplies');
-        $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor);
-        $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer, ['number' => 'Q-SEARCH-1']);
-        $version = $this->createQuotationVersion($tenant, $quotation, $buyer);
+        $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor, ['response_due_at' => '2026-06-19 11:00:00']);
+        $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer, ['number' => 'Q-SEARCH-1', 'valid_until' => '2026-06-24']);
+        $version = $this->createQuotationVersion($tenant, $quotation, $buyer, ['valid_until' => '2026-06-24']);
         $recommendation = $this->createAwardRecommendation($tenant, $rfq, $quotation, $version, $buyer);
-        $this->createApprovalTask($tenant, $requisition, $approver, ['status' => 'active']);
-        $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer);
+        $this->createApprovalTask($tenant, $requisition, $approver, ['status' => 'active', 'due_at' => '2026-06-21 09:00:00']);
+        $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
+            'requested_po_date' => '2026-06-23',
+        ]);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?source=rfq&status=active&search=SEARCH&start=2026-06-01&end=2026-06-30')
+            ->getJson('/api/procurement-calendar/events?sourceTypes[]=rfqDeadline&status=dueSoon&search=Searchable&start=2026-06-01&end=2026-06-30')
             ->assertOk()
-            ->assertJsonPath('data.filters.source', 'rfq')
-            ->assertJsonPath('data.filters.status', 'active')
-            ->assertJsonPath('data.filters.search', 'SEARCH')
+            ->assertJsonPath('data.filters.sourceTypes.0', 'rfqDeadline')
+            ->assertJsonPath('data.filters.status', 'dueSoon')
+            ->assertJsonPath('data.filters.search', 'Searchable')
             ->assertJsonCount(1, 'data.events')
             ->assertJsonPath('data.events.0.source.id', (string) $rfq->id);
     }
@@ -140,8 +150,39 @@ class ProcurementCalendarApiTest extends TestCase
         [$tenant, $buyer] = $this->tenantUser('buyer');
         [$otherTenant, $otherBuyer] = $this->tenantUser('buyer');
         [, $otherRequester] = $this->tenantUser('requester', $otherTenant);
+        [, $requester] = $this->tenantUser('requester', $tenant);
 
-        $otherRequisition = $this->createSubmittedRequisition($otherTenant, $otherRequester);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester, [
+            'title' => 'Same tenant calendar item',
+            'needed_by_date' => '2026-06-19',
+        ]);
+        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, [
+            'title' => 'Same tenant visible rfq',
+            'response_due_at' => '2026-06-20 10:00:00',
+        ]);
+        $vendor = $this->createVendor($tenant, 'Same Tenant Vendor');
+        $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor, ['response_due_at' => '2026-06-21 10:00:00']);
+        $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer, [
+            'number' => 'Q-SAME-TENANT',
+            'valid_until' => '2026-06-26',
+        ]);
+        $version = $this->createQuotationVersion($tenant, $quotation, $buyer, [
+            'valid_until' => '2026-06-26',
+        ]);
+        $recommendation = $this->createAwardRecommendation($tenant, $rfq, $quotation, $version, $buyer);
+        $this->createApprovalTask($tenant, $requisition, $buyer, [
+            'title' => 'Same tenant approval',
+            'due_at' => '2026-06-22 09:00:00',
+        ]);
+        $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
+            'number' => 'POH-SAME-TENANT',
+            'requested_po_date' => '2026-06-23',
+        ]);
+
+        $otherRequisition = $this->createSubmittedRequisition($otherTenant, $otherRequester, [
+            'title' => 'Other tenant exclusive requisition',
+            'needed_by_date' => '2026-06-19',
+        ]);
         $otherRfq = $this->createDraftRfq($otherTenant, $otherRequisition, $otherBuyer, [
             'number' => 'RFQ-OTHER',
             'title' => 'Other tenant exclusive rfq',
@@ -168,8 +209,9 @@ class ProcurementCalendarApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.events.0.source.type', 'requisition');
         $payload = $response->json();
-        $this->assertNotContains('Other tenant exclusive rfq', json_encode($payload));
-        $this->assertNotContains('POH-OTHER-EXCLUSIVE', json_encode($payload));
+        $this->assertStringContainsString('Same tenant visible rfq', json_encode($payload));
+        $this->assertStringNotContainsString('Other tenant exclusive rfq', json_encode($payload));
+        $this->assertStringNotContainsString('POH-OTHER-EXCLUSIVE', json_encode($payload));
     }
 
     public function test_unavailable_future_sources_are_returned_as_metadata_not_fake_events(): void
