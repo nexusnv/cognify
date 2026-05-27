@@ -23,7 +23,7 @@ class UpdateRfqScorecardScores
     public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, Rfq $rfq, RfqScorecard $scorecard, array $data): RfqScorecard
     {
@@ -141,7 +141,7 @@ class UpdateRfqScorecardScores
                 }
 
                 $entry = $existingEntries->get($this->entryKey($payload['criterionId'], $payload['vendorId']))
-                    ?? new RfqScorecardEntry();
+                    ?? new RfqScorecardEntry;
                 $before = $entry->exists ? $this->snapshot($entry) : ['score' => null, 'note' => null];
 
                 $entry->forceFill([
@@ -180,7 +180,7 @@ class UpdateRfqScorecardScores
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<int, array{
      *     criterionId: string,
      *     vendorId: string,
@@ -210,6 +210,12 @@ class UpdateRfqScorecardScores
                 ]);
             }
 
+            if ($quotationId === null) {
+                throw ValidationException::withMessages([
+                    'entries' => ['Each score entry must reference a quotation response.'],
+                ]);
+            }
+
             return [
                 'criterionId' => (string) $entry['criterionId'],
                 'vendorId' => (string) $entry['vendorId'],
@@ -224,7 +230,7 @@ class UpdateRfqScorecardScores
     }
 
     /**
-     * @param array<string, mixed> $entry
+     * @param  array<string, mixed>  $entry
      */
     private function optionalStringId(array $entry, string $key): ?string
     {

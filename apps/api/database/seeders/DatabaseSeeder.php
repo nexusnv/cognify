@@ -4,8 +4,9 @@ namespace Database\Seeders;
 
 use Database\Seeders\Demo\DemoAttachmentSeeder;
 use Database\Seeders\Demo\DemoAuditSeeder;
-use Database\Seeders\Demo\DemoRequisitionAuthoringSeeder;
 use Database\Seeders\Demo\DemoNotificationSeeder;
+use Database\Seeders\Demo\DemoProcurementLifecycleSeeder;
+use Database\Seeders\Demo\DemoRequisitionAuthoringSeeder;
 use Database\Seeders\Demo\DemoRequisitionSeeder;
 use Database\Seeders\Demo\DemoRoadmapPreviewSeeder;
 use Database\Seeders\Demo\DemoSeedContext;
@@ -29,6 +30,7 @@ class DatabaseSeeder extends Seeder
             app(DemoRequisitionSeeder::class)->run($context);
             app(DemoRequisitionAuthoringSeeder::class)->run();
             app(DemoRoadmapPreviewSeeder::class)->run($context);
+            app(DemoProcurementLifecycleSeeder::class)->run($context);
             app(DemoAttachmentSeeder::class)->run($context);
             app(DemoAuditSeeder::class)->run($context);
             app(DemoNotificationSeeder::class)->run($context);
@@ -48,6 +50,9 @@ class DatabaseSeeder extends Seeder
                         'sourcing_intake_reviews' => $context->sourcingIntakeReviews->count(),
                         'approval_tasks' => $context->approvalTasks->count(),
                         'awards' => $context->awards->count(),
+                        'quotation_normalizations' => $context->quotationNormalizations->count(),
+                        'quotation_scoring_templates' => $context->quotationScoringTemplates->count(),
+                        'rfq_scorecards' => $context->rfqScorecards->count(),
                     ],
                 ],
             );

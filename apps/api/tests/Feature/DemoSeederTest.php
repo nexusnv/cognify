@@ -6,18 +6,35 @@ use App\Auth\TenantRole;
 use App\Models\User;
 use App\Notifications\NotificationRecord;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalDelegation;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Attachment\Models\Attachment;
 use Domains\Award\Models\Award;
+use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Demo\Models\DemoSeedRun;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationComparisonNote;
+use Domains\Quotation\Models\QuotationNormalization;
+use Domains\Quotation\Models\QuotationScoringTemplate;
+use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
+use Domains\Quotation\Models\RfqInvitation;
+use Domains\Quotation\Models\RfqScorecard;
+use Domains\Quotation\States\QuotationNormalizationStatus;
+use Domains\Quotation\States\RfqAwardRecommendationStatus;
+use Domains\Quotation\States\RfqInvitationStatus;
+use Domains\Quotation\States\RfqScorecardStatus;
+use Domains\Quotation\States\RfqStatus;
+use Domains\Quotation\States\SourcingIntakeStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Tests\TestCase;
@@ -272,15 +289,23 @@ class DemoSeederTest extends TestCase
 
         $this->assertSame(3, Tenant::query()->count());
         $this->assertSame(7, User::query()->count());
-        $this->assertSame(5, Requisition::query()->count());
+        $this->assertSame(10, Requisition::query()->count());
         $this->assertSame(9, Vendor::query()->count());
-        $this->assertSame(2, ProcurementProject::query()->count());
-        $this->assertSame(2, Rfq::query()->count());
-        $this->assertSame(2, Quotation::query()->count());
-        $this->assertSame(4, ApprovalTask::query()->count());
+        $this->assertSame(3, ProcurementProject::query()->count());
+        $this->assertSame(5, Rfq::query()->count());
+        $this->assertSame(5, Quotation::query()->count());
+        $this->assertSame(7, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
         $this->assertSame(2, Attachment::query()->count());
         $this->assertSame(5, NotificationRecord::query()->count());
+        $this->assertSame(6, RfqInvitation::query()->count());
+        $this->assertSame(4, QuotationVersion::query()->count());
+        $this->assertSame(4, QuotationNormalization::query()->count());
+        $this->assertSame(1, QuotationScoringTemplate::query()->count());
+        $this->assertSame(1, RfqScorecard::query()->count());
+        $this->assertSame(4, RfqAwardRecommendation::query()->count());
+        $this->assertSame(1, QuotationComparisonNote::query()->count());
+        $this->assertSame(1, ApprovalDelegation::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
 
         $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
@@ -328,6 +353,11 @@ class DemoSeederTest extends TestCase
             'status' => RequisitionStatus::Rejected->value,
             'submitted_at' => '2026-05-15 09:00:00',
         ]);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-SUSTAIN', 'status' => RequisitionStatus::Approved->value]);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-CHANGE', 'status' => RequisitionStatus::ChangesRequested->value]);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-WITHDRAWN', 'status' => RequisitionStatus::Withdrawn->value]);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-CANCELLED', 'status' => RequisitionStatus::Cancelled->value]);
+        $this->assertDatabaseHas('requisitions', ['number' => 'REQ-2026-DRAFT-DEMO', 'status' => RequisitionStatus::Draft->value]);
         $this->assertDatabaseHas('vendors', ['name' => 'Atlas Office Supplies', 'status' => 'preferred']);
         $this->assertDatabaseHas('vendors', ['name' => 'Northstar Furniture Co', 'status' => 'evaluation']);
         $this->assertDatabaseHas('vendors', ['name' => 'SecureWorks Advisory', 'status' => 'preferred']);
@@ -339,23 +369,73 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('vendors', ['name' => 'Civic Safety Partners', 'status' => 'restricted']);
         $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-0001', 'name' => 'HQ Workplace Refresh']);
         $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-1001', 'name' => 'Northwind Warehouse Launch']);
+        $this->assertDatabaseHas('procurement_projects', ['number' => 'PRJ-2026-SUSTAIN', 'name' => 'Sustainable Office Expansion 2026']);
         $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-0001', 'title' => 'Office furniture package']);
         $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-1001', 'title' => 'Warehouse supply bundle']);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-SUSTAIN', 'status' => RfqStatus::Open->value]);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-DRAFT', 'status' => RfqStatus::Draft->value]);
+        $this->assertDatabaseHas('rfqs', ['number' => 'RFQ-2026-CANCELLED', 'status' => RfqStatus::Cancelled->value]);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-0001', 'status' => 'received']);
         $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-1001', 'status' => 'received']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-SUSTAIN-G', 'status' => 'received']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-SUSTAIN-N', 'status' => 'received']);
+        $this->assertDatabaseHas('quotations', ['number' => 'QUO-2026-SUSTAIN-A', 'status' => 'received']);
         $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => 'open', 'category' => 'IT Hardware']);
         $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => 'ready_for_rfq', 'sourcing_path' => 'needs_rfq']);
+        $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => SourcingIntakeStatus::InReview->value]);
+        $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => SourcingIntakeStatus::ClarificationRequested->value]);
+        $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => SourcingIntakeStatus::DirectAwardRecorded->value]);
+        $this->assertDatabaseHas('sourcing_intake_reviews', ['status' => SourcingIntakeStatus::Closed->value]);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-0003', 'status' => 'active']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-0001', 'status' => 'active']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-1001', 'status' => 'approved']);
         $this->assertDatabaseHas('approval_tasks', ['title' => 'Approve REQ-2026-1002', 'status' => 'rejected']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Sustainability compliance review', 'status' => 'changes_requested']);
+        $this->assertDatabaseHas('approval_tasks', ['title' => 'Final award approval for RFQ-2026-SUSTAIN', 'status' => 'approved']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-1001', 'status' => 'recommended']);
+        $this->assertDatabaseHas('quotation_normalizations', ['status' => QuotationNormalizationStatus::Approved->value]);
+        $this->assertDatabaseHas('quotation_normalizations', ['status' => QuotationNormalizationStatus::ApprovedWithWarnings->value]);
+        $this->assertDatabaseHas('quotation_normalizations', ['status' => QuotationNormalizationStatus::NeedsReview->value]);
+        $this->assertDatabaseHas('quotation_normalizations', ['status' => QuotationNormalizationStatus::Failed->value]);
+        $this->assertDatabaseHas('rfq_scorecards', ['template_name' => 'Sustainable Furniture Evaluation', 'status' => RfqScorecardStatus::Completed->value]);
+        $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::Draft->value]);
+        $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::PendingApproval->value]);
+        $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::ApprovalRouted->value]);
+        $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::Approved->value]);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
         $this->assertDatabaseHas('notifications', ['title' => 'Local demo data is ready']);
         $this->assertDatabaseHas('demo_seed_runs', ['name' => 'local-demo']);
+
+        $this->assertEqualsCanonicalizing(
+            [
+                RequisitionStatus::Approved->value,
+                RequisitionStatus::Cancelled->value,
+                RequisitionStatus::ChangesRequested->value,
+                RequisitionStatus::Draft->value,
+                RequisitionStatus::PendingApproval->value,
+                RequisitionStatus::Rejected->value,
+                RequisitionStatus::Submitted->value,
+                RequisitionStatus::Withdrawn->value,
+            ],
+            Requisition::query()->distinct()->pluck('status')->map(fn (RequisitionStatus $status): string => $status->value)->all(),
+        );
+        $this->assertEqualsCanonicalizing(
+            [
+                RfqInvitationStatus::Pending->value,
+                RfqInvitationStatus::Sent->value,
+                RfqInvitationStatus::Acknowledged->value,
+                RfqInvitationStatus::Declined->value,
+                RfqInvitationStatus::Expired->value,
+                RfqInvitationStatus::Cancelled->value,
+            ],
+            RfqInvitation::query()->distinct()->pluck('status')->map(fn (RfqInvitationStatus $status): string => $status->value)->all(),
+        );
+        $this->assertSame(9, DB::table('rfq_scorecard_entries')->count());
+        $this->assertSame(2, CollaborationComment::query()->where('subject_type', Requisition::class)->whereHasMorph('subject', [Requisition::class], fn ($query) => $query->where('number', 'REQ-2026-SUSTAIN'))->count());
+        $this->assertSame(2, ApprovalInstance::query()->where('subject_type', RfqAwardRecommendation::class)->count());
 
         foreach (Attachment::query()->get() as $attachment) {
             $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
@@ -366,14 +446,17 @@ class DemoSeederTest extends TestCase
         $this->assertSame([
             'tenants' => 3,
             'users' => 7,
-            'requisitions' => 5,
+            'requisitions' => 10,
             'vendors' => 9,
-            'projects' => 2,
-            'rfqs' => 2,
-            'quotations' => 2,
-            'sourcing_intake_reviews' => 2,
-            'approval_tasks' => 4,
+            'projects' => 3,
+            'rfqs' => 5,
+            'quotations' => 5,
+            'sourcing_intake_reviews' => 6,
+            'approval_tasks' => 7,
             'awards' => 2,
+            'quotation_normalizations' => 4,
+            'quotation_scoring_templates' => 1,
+            'rfq_scorecards' => 1,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }
