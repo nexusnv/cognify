@@ -40,22 +40,28 @@ class ProcurementCalendarApiTest extends TestCase
         [, $approver] = $this->tenantUser('approver', $tenant);
 
         $requisition = $this->createSubmittedRequisition($tenant, $requester);
-        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer);
+        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, ['response_due_at' => '2026-06-18 17:00:00']);
         $vendor = $this->createVendor($tenant, 'Northwind Traders');
-        $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor);
-        $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer);
-        $version = $this->createQuotationVersion($tenant, $quotation, $buyer);
+        $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor, ['response_due_at' => '2026-06-19 12:00:00']);
+        $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer, ['valid_until' => '2026-06-25']);
+        $version = $this->createQuotationVersion($tenant, $quotation, $buyer, ['valid_until' => '2026-06-25']);
         $recommendation = $this->createAwardRecommendation($tenant, $rfq, $quotation, $version, $buyer);
         $task = $this->createApprovalTask($tenant, $requisition, $approver);
-        $handoff = $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer);
+        $handoff = $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
+            'requested_po_date' => '2026-06-21',
+        ]);
 
         $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?start=2026-06-01&end=2026-06-30')
             ->assertOk()
+            ->assertJsonCount(7, 'data.events')
             ->assertJsonPath('data.events.0.source.type', 'requisition')
             ->assertJsonPath('data.events.1.source.type', 'rfq')
-            ->assertJsonPath('data.events.2.source.type', 'approval')
-            ->assertJsonPath('data.events.3.source.type', 'po_handoff');
+            ->assertJsonPath('data.events.2.source.type', 'rfq_invitation')
+            ->assertJsonPath('data.events.3.source.type', 'quotation')
+            ->assertJsonPath('data.events.4.source.type', 'quotation_version')
+            ->assertJsonPath('data.events.5.source.type', 'approval')
+            ->assertJsonPath('data.events.6.source.type', 'po_handoff');
 
         $this->assertDatabaseHas('requisitions', ['id' => $requisition->id]);
         $this->assertDatabaseHas('rfqs', ['id' => $rfq->id]);
@@ -136,32 +142,57 @@ class ProcurementCalendarApiTest extends TestCase
         [, $otherRequester] = $this->tenantUser('requester', $otherTenant);
 
         $otherRequisition = $this->createSubmittedRequisition($otherTenant, $otherRequester);
-        $otherRfq = $this->createDraftRfq($otherTenant, $otherRequisition, $otherBuyer, ['number' => 'RFQ-OTHER']);
+        $otherRfq = $this->createDraftRfq($otherTenant, $otherRequisition, $otherBuyer, [
+            'number' => 'RFQ-OTHER',
+            'title' => 'Other tenant exclusive rfq',
+            'response_due_at' => '2026-06-20 10:00:00',
+        ]);
         $otherVendor = $this->createVendor($otherTenant, 'Other Tenant Vendor');
-        $otherInvitation = $this->createRfqInvitation($otherTenant, $otherRfq, $otherVendor);
-        $otherQuotation = $this->createQuotation($otherTenant, $otherRfq, $otherInvitation, $otherVendor, $otherBuyer);
-        $otherVersion = $this->createQuotationVersion($otherTenant, $otherQuotation, $otherBuyer);
+        $otherInvitation = $this->createRfqInvitation($otherTenant, $otherRfq, $otherVendor, ['response_due_at' => '2026-06-22 10:00:00']);
+        $otherQuotation = $this->createQuotation($otherTenant, $otherRfq, $otherInvitation, $otherVendor, $otherBuyer, [
+            'number' => 'Q-OTHER-EXCLUSIVE',
+            'valid_until' => '2026-06-27',
+        ]);
+        $otherVersion = $this->createQuotationVersion($otherTenant, $otherQuotation, $otherBuyer, [
+            'valid_until' => '2026-06-27',
+        ]);
         $otherRecommendation = $this->createAwardRecommendation($otherTenant, $otherRfq, $otherQuotation, $otherVersion, $otherBuyer);
-        $this->createApprovalTask($otherTenant, $otherRequisition, $otherBuyer);
-        $this->createPurchaseOrderRequestHandoff($otherTenant, $otherRecommendation, $otherRfq, $otherQuotation, $otherVersion, $otherBuyer);
+        $this->createApprovalTask($otherTenant, $otherRequisition, $otherBuyer, ['title' => 'Other tenant approval']);
+        $this->createPurchaseOrderRequestHandoff($otherTenant, $otherRecommendation, $otherRfq, $otherQuotation, $otherVersion, $otherBuyer, [
+            'number' => 'POH-OTHER-EXCLUSIVE',
+            'requested_po_date' => '2026-06-24',
+        ]);
 
-        $this->actingAsTenant($tenant, $buyer)
+        $response = $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?start=2026-06-01&end=2026-06-30')
             ->assertOk()
-            ->assertJsonMissingPath('data.events.0.source.tenantId')
-            ->assertJsonMissingPath('data.events.0.id');
+            ->assertJsonPath('data.events.0.source.type', 'requisition');
+        $payload = $response->json();
+        $this->assertNotContains('Other tenant exclusive rfq', json_encode($payload));
+        $this->assertNotContains('POH-OTHER-EXCLUSIVE', json_encode($payload));
     }
 
     public function test_unavailable_future_sources_are_returned_as_metadata_not_fake_events(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $requester] = $this->tenantUser('requester', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester, [
+            'title' => 'Future source range anchor',
+        ]);
+        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, [
+            'title' => 'Future source range rfq',
+            'response_due_at' => '2026-08-03 09:00:00',
+        ]);
 
-        $this->actingAsTenant($tenant, $buyer)
-            ->getJson('/api/procurement-calendar/events?start=2026-06-01&end=2026-12-31')
+        $response = $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/procurement-calendar/events?source=vendorDocumentExpiry&start=2026-08-01&end=2026-08-31')
             ->assertOk()
-            ->assertJsonPath('data.metadata.unavailableFutureSources.0.key', 'manual_reminders')
-            ->assertJsonPath('data.metadata.unavailableFutureSources.0.available', false)
-            ->assertJsonMissingPath('data.events.0.source.type');
+            ->assertJsonPath('data.availableSources.vendorDocumentExpiry', false)
+            ->assertJsonPath('data.availableSources.rfq', true)
+            ->assertJsonCount(0, 'data.events')
+            ->assertJsonMissingPath('data.events.0.source.type')
+            ->assertJsonPath('data.metadata.unavailableFutureSources.0.key', 'vendorDocumentExpiry');
+        $this->assertStringNotContainsString('vendor document', json_encode($response->json()));
     }
 
     /**
@@ -226,15 +257,15 @@ class ProcurementCalendarApiTest extends TestCase
         ]);
     }
 
-    private function createRfqInvitation(Tenant $tenant, Rfq $rfq, Vendor $vendor): RfqInvitation
+    private function createRfqInvitation(Tenant $tenant, Rfq $rfq, Vendor $vendor, array $attributes = []): RfqInvitation
     {
-        return RfqInvitation::query()->create([
+        return RfqInvitation::query()->create(array_merge([
             'tenant_id' => $tenant->id,
             'rfq_id' => $rfq->id,
             'vendor_id' => $vendor->id,
             'status' => RfqInvitationStatus::Sent->value,
             'contact_email' => Str::slug($vendor->name) . '@example.com',
-        ]);
+        ], $attributes));
     }
 
     private function createQuotation(
@@ -254,6 +285,7 @@ class ProcurementCalendarApiTest extends TestCase
             'status' => QuotationStatus::submitted->value,
             'currency' => 'MYR',
             'total_amount' => '131100.00',
+            'valid_until' => '2026-06-25',
             'lead_time_days' => 14,
             'payment_terms' => 'Net 30',
             'delivery_terms' => 'DAP',
@@ -265,9 +297,9 @@ class ProcurementCalendarApiTest extends TestCase
         ], $attributes));
     }
 
-    private function createQuotationVersion(Tenant $tenant, Quotation $quotation, User $buyer): QuotationVersion
+    private function createQuotationVersion(Tenant $tenant, Quotation $quotation, User $buyer, array $attributes = []): QuotationVersion
     {
-        $version = QuotationVersion::query()->create([
+        $version = QuotationVersion::query()->create(array_merge([
             'tenant_id' => $tenant->id,
             'quotation_id' => $quotation->id,
             'version_number' => 1,
@@ -276,6 +308,7 @@ class ProcurementCalendarApiTest extends TestCase
             'status' => QuotationStatus::submitted->value,
             'currency' => 'MYR',
             'total_amount' => '131100.00',
+            'valid_until' => '2026-06-25',
             'lead_time_days' => 14,
             'payment_terms' => 'Net 30',
             'delivery_terms' => 'DAP',
@@ -283,7 +316,7 @@ class ProcurementCalendarApiTest extends TestCase
             'compliance_notes' => 'Compliant',
             'submitted_by_user_id' => $buyer->id,
             'submitted_at' => now(),
-        ]);
+        ], $attributes));
 
         $quotation->forceFill(['current_version_id' => $version->id])->save();
 
@@ -337,7 +370,7 @@ class ProcurementCalendarApiTest extends TestCase
             'freight_amount' => null,
             'discount_amount' => null,
             'total_amount' => '131100.00',
-            'requested_po_date' => null,
+            'requested_po_date' => '2026-06-21',
             'delivery_attention' => null,
             'finance_note' => null,
             'export_memo' => null,
