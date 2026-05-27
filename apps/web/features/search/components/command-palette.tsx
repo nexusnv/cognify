@@ -204,4 +204,5 @@ const resultIcons: Record<SearchResultViewModel["type"], LucideIcon> = {
   rfq: ReceiptText,
   quotation: ReceiptText,
   award: CheckCircle2,
+  po_handoff: ReceiptText,
 };

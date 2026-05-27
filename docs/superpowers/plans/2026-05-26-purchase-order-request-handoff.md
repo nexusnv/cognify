@@ -123,7 +123,7 @@ Do not implement:
 - Create: `apps/api/tests/Feature/PurchaseOrderRequestHandoffApiTest.php`
 - Modify: `apps/api/tests/Feature/RfqAwardApprovalApiTest.php`
 
-- [ ] **Step 1: Create failing feature test file**
+- [x] **Step 1: Create failing feature test file**
 
 Create `apps/api/tests/Feature/PurchaseOrderRequestHandoffApiTest.php` with these scenario names. Reuse tenant/auth/RFQ/recommendation fixture patterns from `RfqAwardApprovalApiTest.php` and quotation line-item setup from quotation version tests.
 
@@ -167,7 +167,7 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Fill the approval auto-create assertion**
+- [x] **Step 2: Fill the approval auto-create assertion**
 
 Use a helper that creates an approved-ready recommendation with a selected vendor, quotation, current version, line item, approval instance, and buyer/admin actor. The first test must assert this shape after approving the final task or directly exercising the approval callback through the existing award approval route:
 
@@ -192,7 +192,7 @@ $this->assertSame('Northwind Traders', data_get($handoff->source_snapshot, 'vend
 $this->assertSame('Pallet rack bay', data_get($handoff->line_snapshot, '0.description'));
 ```
 
-- [ ] **Step 3: Fill endpoint behavior tests**
+- [x] **Step 3: Fill endpoint behavior tests**
 
 Use these endpoint assertions:
 
@@ -226,7 +226,7 @@ $this->actingAsTenant($tenant, $buyer)
     ->assertJsonPath('data.readyByUserId', (string) $buyer->id);
 ```
 
-- [ ] **Step 4: Fill export tests**
+- [x] **Step 4: Fill export tests**
 
 Assert JSON and CSV exports:
 
@@ -246,7 +246,7 @@ $this->actingAsTenant($tenant, $buyer)
     ->assertSee('Pallet rack bay');
 ```
 
-- [ ] **Step 5: Add real session route-stack test**
+- [x] **Step 5: Add real session route-stack test**
 
 The real route-stack test must not use `actingAs()` for the verified part. It must call:
 
@@ -262,7 +262,7 @@ GET /api/rfqs/{rfq}/award-recommendation/po-handoff
 
 Expected after logout: `401`.
 
-- [ ] **Step 6: Run failing API tests**
+- [x] **Step 6: Run failing API tests**
 
 Run:
 
@@ -290,7 +290,7 @@ Expected: failures for missing table/model/routes/classes. Do not implement code
 - Modify: `apps/api/app/Audit/AuditSubject.php` or register audit type in `AppServiceProvider`
 - Modify: `apps/api/tests/Feature/SearchApiTest.php`
 
-- [ ] **Step 1: Write failing search provider tests**
+- [x] **Step 1: Write failing search provider tests**
 
 Extend `SearchApiTest` with:
 
@@ -355,7 +355,7 @@ private function createPurchaseOrderRequestHandoff(Tenant $tenant, array $attrib
 }
 ```
 
-- [ ] **Step 2: Create migration**
+- [x] **Step 2: Create migration**
 
 Create the handoff table:
 
@@ -408,7 +408,7 @@ Schema::create('purchase_order_request_handoffs', function (Blueprint $table): v
 });
 ```
 
-- [ ] **Step 3: Create status enum**
+- [x] **Step 3: Create status enum**
 
 ```php
 enum PurchaseOrderRequestHandoffStatus: string
@@ -425,7 +425,7 @@ enum PurchaseOrderRequestHandoffStatus: string
 }
 ```
 
-- [ ] **Step 4: Create model**
+- [x] **Step 4: Create model**
 
 Create `PurchaseOrderRequestHandoff` with `HasUuids`, fillable fields matching the migration, casts for decimals/dates/json/status, relationships to tenant, recommendation, approval instance, RFQ, requisition, project, vendor, quotation, quotation version, requested/ready/cancelled/exported users, and a `saving` guard that verifies all linked records belong to the same tenant.
 
@@ -440,7 +440,7 @@ public function assertLockVersion(int $lockVersion): void
 }
 ```
 
-- [ ] **Step 5: Create policy and register it**
+- [x] **Step 5: Create policy and register it**
 
 Policy methods:
 
@@ -465,7 +465,7 @@ Register audit subject:
 AuditSubject::registerType(PurchaseOrderRequestHandoff::class, 'po_handoff');
 ```
 
-- [ ] **Step 6: Create resource**
+- [x] **Step 6: Create resource**
 
 `PurchaseOrderRequestHandoffResource` should return:
 
@@ -505,7 +505,7 @@ AuditSubject::registerType(PurchaseOrderRequestHandoff::class, 'po_handoff');
 ]
 ```
 
-- [ ] **Step 7: Add search provider**
+- [x] **Step 7: Add search provider**
 
 Create `PurchaseOrderRequestHandoffSearchProvider` modeled on `RequisitionSearchProvider.php`:
 
@@ -518,11 +518,11 @@ Create `PurchaseOrderRequestHandoffSearchProvider` modeled on `RequisitionSearch
 
 Register it in `SearchService::providers()` after `AwardSearchProvider`.
 
-- [ ] **Step 8: Update search request validation**
+- [x] **Step 8: Update search request validation**
 
 Modify `SearchRequest` so `po_handoff` is an allowed `types[]` value.
 
-- [ ] **Step 9: Run model/search tests**
+- [x] **Step 9: Run model/search tests**
 
 Run:
 
@@ -551,11 +551,11 @@ git commit -m "feat: add purchase order handoff model and search"
 - Modify: `apps/api/Domains/Quotation/Actions/MarkRfqAwardRecommendationApproved.php`
 - Modify: `apps/api/tests/Feature/PurchaseOrderRequestHandoffApiTest.php`
 
-- [ ] **Step 1: Implement number generator**
+- [x] **Step 1: Implement number generator**
 
 `PurchaseOrderRequestHandoffNumber::next(Tenant $tenant): string` should generate `POH-YYYY-000001` using the current year and the tenant's latest handoff number for that year. Lock the query where possible. Keep it deterministic in tests by using `travelTo()`.
 
-- [ ] **Step 2: Implement snapshot builder**
+- [x] **Step 2: Implement snapshot builder**
 
 `BuildPurchaseOrderRequestHandoffSnapshot::handle(RfqAwardRecommendation $recommendation): array` returns:
 
@@ -607,7 +607,7 @@ Line mapping must use `QuotationVersionLineItem` fields:
 ]
 ```
 
-- [ ] **Step 3: Implement create/reveal action**
+- [x] **Step 3: Implement create/reveal action**
 
 `CreateOrRevealPurchaseOrderRequestHandoff::handle(RfqAwardRecommendation $recommendation, User $actor): PurchaseOrderRequestHandoff`
 
@@ -621,7 +621,7 @@ Rules:
 - Create `draft` with `requested_by_user_id = actor->id`.
 - Record `purchase_order_handoff.created`.
 
-- [ ] **Step 4: Implement update action**
+- [x] **Step 4: Implement update action**
 
 `UpdatePurchaseOrderRequestHandoff::handle(PurchaseOrderRequestHandoff $handoff, User $actor, array $data): PurchaseOrderRequestHandoff`
 
@@ -633,7 +633,7 @@ Rules:
 - Increment `lock_version`.
 - Record before/after audit.
 
-- [ ] **Step 5: Implement ready action**
+- [x] **Step 5: Implement ready action**
 
 `MarkPurchaseOrderRequestHandoffReady::handle(PurchaseOrderRequestHandoff $handoff, User $actor, int $lockVersion): PurchaseOrderRequestHandoff`
 
@@ -646,7 +646,7 @@ Rules:
 - Set `status=ready`, `ready_by_user_id`, `ready_at`, increment lock.
 - Record audit.
 
-- [ ] **Step 6: Implement cancel action**
+- [x] **Step 6: Implement cancel action**
 
 `CancelPurchaseOrderRequestHandoff::handle(PurchaseOrderRequestHandoff $handoff, User $actor, int $lockVersion, string $reason): PurchaseOrderRequestHandoff`
 
@@ -657,7 +657,7 @@ Rules:
 - Set `status=cancelled`, cancellation fields, increment lock.
 - Record audit.
 
-- [ ] **Step 7: Implement export action**
+- [x] **Step 7: Implement export action**
 
 `ExportPurchaseOrderRequestHandoff::handle(PurchaseOrderRequestHandoff $handoff, User $actor, string $format): array|string`
 
@@ -672,7 +672,7 @@ Rules:
 
 CSV headers must exactly match the design spec.
 
-- [ ] **Step 8: Wire approval integration**
+- [x] **Step 8: Wire approval integration**
 
 Modify `MarkRfqAwardRecommendationApproved` constructor:
 
@@ -691,7 +691,7 @@ $this->createOrRevealPoHandoff->handle($recommendation->fresh(), $actor);
 
 Keep it inside the same transaction boundary used by the approval action. If the current action is not wrapping this call in a transaction, wrap the status transition, audit event, and handoff creation in `DB::transaction()`.
 
-- [ ] **Step 9: Run API tests**
+- [x] **Step 9: Run API tests**
 
 Run:
 
@@ -722,7 +722,7 @@ git commit -m "feat: create purchase order handoffs from award approval"
 - Modify: generated files under `packages/api-client/src/generated/**`
 - Modify: `packages/api-client/src/generated/schemas/listGlobalSearchTypesItem.ts` through generation
 
-- [ ] **Step 1: Implement form requests**
+- [x] **Step 1: Implement form requests**
 
 `UpdatePurchaseOrderRequestHandoffRequest` rules:
 
@@ -751,7 +751,7 @@ git commit -m "feat: create purchase order handoffs from award approval"
 ]
 ```
 
-- [ ] **Step 2: Implement controller**
+- [x] **Step 2: Implement controller**
 
 Controller methods:
 
@@ -774,7 +774,7 @@ Every method must:
 - Return `['format' => 'json', 'exportedAt' => ..., 'handoff' => ...]` for JSON export.
 - Return `response($csv, 200, ['Content-Type' => 'text/csv; charset=UTF-8', 'Content-Disposition' => 'attachment; filename="'.$handoff->number.'.csv"'])` for CSV.
 
-- [ ] **Step 3: Add routes**
+- [x] **Step 3: Add routes**
 
 Inside the existing `RequireTenantHeader` RFQ award group in `apps/api/routes/api.php`:
 
@@ -788,7 +788,7 @@ Route::get('/po-handoffs/{handoff}/export.json', [PurchaseOrderRequestHandoffCon
 Route::get('/po-handoffs/{handoff}/export.csv', [PurchaseOrderRequestHandoffController::class, 'exportCsv']);
 ```
 
-- [ ] **Step 4: Update OpenAPI**
+- [x] **Step 4: Update OpenAPI**
 
 Add paths and schemas from the design spec. Also update global search type enums to include `po_handoff`:
 
@@ -798,7 +798,7 @@ Add paths and schemas from the design spec. Also update global search type enums
 
 Use `PurchaseOrderRequestHandoffResponse` as `{"data": PurchaseOrderRequestHandoff}`.
 
-- [ ] **Step 5: Regenerate client**
+- [x] **Step 5: Regenerate client**
 
 Run:
 
@@ -809,7 +809,7 @@ pnpm check:api-contract
 
 Expected: generated endpoint functions and schemas include the PO handoff APIs, and contract check exits 0.
 
-- [ ] **Step 6: Run API tests**
+- [x] **Step 6: Run API tests**
 
 Run:
 
@@ -845,7 +845,7 @@ git commit -m "feat: expose purchase order handoff API contract"
 - Modify: `apps/web/features/quotations/tests/quotation-award-recommendation-api.test.ts`
 - Modify: `apps/web/features/search/tests/command-palette.test.tsx`
 
-- [ ] **Step 1: Add web API wrappers**
+- [x] **Step 1: Add web API wrappers**
 
 In `quotation-award-recommendation-api.ts`, import generated JSON endpoints and schemas:
 
@@ -894,7 +894,7 @@ export async function downloadPurchaseOrderRequestHandoffCsv(handoffId: string, 
 }
 ```
 
-- [ ] **Step 2: Add hooks**
+- [x] **Step 2: Add hooks**
 
 In `use-rfq-award-recommendation.ts` add:
 
@@ -912,7 +912,7 @@ In `use-rfq-award-recommendation-actions.ts`, add create/update/ready/cancel/exp
 - `rfqAwardRecommendationQueryKey(rfqId, tenantId)`
 - `["search"]` only if existing search invalidation is already used; otherwise do not introduce broad invalidation.
 
-- [ ] **Step 3: Extend MSW fixture state**
+- [x] **Step 3: Extend MSW fixture state**
 
 In `quotation-award-recommendation-fixtures.ts`, add handoff state keyed by RFQ id:
 
@@ -943,7 +943,7 @@ For `rfq-approved-recommendation`, seed a draft handoff with:
 }
 ```
 
-- [ ] **Step 4: Add MSW handlers**
+- [x] **Step 4: Add MSW handlers**
 
 Add handlers for:
 
@@ -965,7 +965,7 @@ Handlers must simulate:
 - exported transition
 - cancelled terminal behavior
 
-- [ ] **Step 5: Update global search web contract**
+- [x] **Step 5: Update global search web contract**
 
 Update `GLOBAL_SEARCH_TYPES` in `apps/web/features/search/search-contract.ts` to include `ListGlobalSearchTypesItem.po_handoff`.
 
@@ -983,7 +983,7 @@ Add fixture in `search-fixtures.ts`:
 }
 ```
 
-- [ ] **Step 6: Run web API/search tests**
+- [x] **Step 6: Run web API/search tests**
 
 Run:
 
@@ -1011,7 +1011,7 @@ git commit -m "feat: add purchase order handoff web data layer"
 - Modify: `apps/web/features/quotations/workflows/rfq-award-recommendation-workspace.tsx`
 - Modify: `apps/web/features/quotations/tests/rfq-award-recommendation-workspace.test.tsx`
 
-- [ ] **Step 1: Write workspace tests**
+- [x] **Step 1: Write workspace tests**
 
 Add tests:
 
@@ -1046,7 +1046,7 @@ Download JSON
 Download CSV
 ```
 
-- [ ] **Step 2: Create panel component**
+- [x] **Step 2: Create panel component**
 
 Props:
 
@@ -1075,7 +1075,7 @@ Behavior:
 - `exported`: show last export and download buttons.
 - `cancelled`: show cancellation reason only.
 
-- [ ] **Step 3: Wire workspace**
+- [x] **Step 3: Wire workspace**
 
 In `rfq-award-recommendation-workspace.tsx`:
 
@@ -1085,7 +1085,7 @@ In `rfq-award-recommendation-workspace.tsx`:
 - Render panel after approval panel.
 - Invalidate handoff query on mutations.
 
-- [ ] **Step 4: Implement browser download**
+- [x] **Step 4: Implement browser download**
 
 For JSON export, use generated JSON endpoint and create a Blob client-side:
 
@@ -1095,7 +1095,7 @@ const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/j
 
 For CSV export, use the CSV Blob helper. Use an anchor with `download` to trigger the browser download. Keep this logic in the panel or a small feature-local utility under `apps/web/features/quotations/utils/download-file.ts`.
 
-- [ ] **Step 5: Run workspace tests**
+- [x] **Step 5: Run workspace tests**
 
 Run:
 
@@ -1122,7 +1122,7 @@ git commit -m "feat: add award workspace po handoff panel"
 - Modify: `docs/superpowers/plans/2026-05-26-purchase-order-request-handoff.md`
 - Review generated files under `packages/api-client/src/generated/**`
 
-- [ ] **Step 1: Run focused API verification**
+- [x] **Step 1: Run focused API verification**
 
 ```bash
 php artisan test --filter=PurchaseOrderRequestHandoffApiTest
@@ -1138,7 +1138,7 @@ Expected:
 - Search tests pass with `po_handoff`.
 - Routes include show/create/update/ready/cancel/export JSON/export CSV.
 
-- [ ] **Step 2: Run contract verification**
+- [x] **Step 2: Run contract verification**
 
 ```bash
 pnpm generate:api
@@ -1147,7 +1147,7 @@ pnpm check:api-contract
 
 Expected: no contract drift after generation.
 
-- [ ] **Step 3: Run focused web verification**
+- [x] **Step 3: Run focused web verification**
 
 ```bash
 pnpm --filter @cognify/web test -- quotation-award-recommendation-api
@@ -1157,7 +1157,7 @@ pnpm --filter @cognify/web test -- command-palette
 
 Expected: tests pass.
 
-- [ ] **Step 4: Run root verification**
+- [x] **Step 4: Run root verification**
 
 ```bash
 pnpm lint
@@ -1168,7 +1168,7 @@ git diff --check
 
 Expected: all commands exit 0.
 
-- [ ] **Step 5: Run scope audit**
+- [x] **Step 5: Run scope audit**
 
 Run:
 
@@ -1178,7 +1178,7 @@ rg -n "ERP|status sync|vendor notification|split award|procurement calendar|fina
 
 Expected: matches are limited to explicit non-goals, scope boundaries, and test labels. There must be no ERP adapter, vendor notification workflow, split-award implementation, finance queue, procurement calendar, or PO status sync.
 
-- [ ] **Step 6: Update roadmap**
+- [x] **Step 6: Update roadmap**
 
 Change P1-34 in `docs/01-product/feature-roadmap.md` after all verification passes:
 
@@ -1186,7 +1186,7 @@ Change P1-34 in `docs/01-product/feature-roadmap.md` after all verification pass
 | P1-34 | Purchase Order Request Handoff | Generate a structured handoff for ERP or finance systems after award approval. Even before direct ERP integration, Cognify should make the next operational step clear. | Fully Implemented | `docs/superpowers/specs/2026-05-26-purchase-order-request-handoff-design.md` | `docs/superpowers/plans/2026-05-26-purchase-order-request-handoff.md` |  | Implemented as an approved-award PO request handoff package with buyer/admin review, ready/export/cancel states, CSV/JSON export, audit events, and global search. Real ERP integration, PO number sync, vendor notifications, split awards, and procurement calendar remain downstream. |
 ```
 
-- [ ] **Step 7: Mark plan checkboxes**
+- [x] **Step 7: Mark plan checkboxes**
 
 Update this plan's checkboxes for completed tasks. Do not mark a task complete before its verification command has passed.
 

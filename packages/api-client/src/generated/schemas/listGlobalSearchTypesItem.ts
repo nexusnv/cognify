@@ -16,4 +16,5 @@ export const ListGlobalSearchTypesItem = {
   rfq: "rfq",
   quotation: "quotation",
   award: "award",
+  po_handoff: "po_handoff",
 } as const;

@@ -7,6 +7,7 @@ import { CommandPaletteHost } from "../../../components/shell/command-palette-ho
 import { multiTenantIdentity } from "../../identity/mocks/identity-fixtures";
 import { server } from "../../../tests/msw/server";
 import { rememberRecentRecord } from "../hooks/use-recent-records";
+import { searchResultFixtures } from "../mocks/search-fixtures";
 
 if (typeof window !== "undefined" && !window.ResizeObserver) {
   class ResizeObserver {
@@ -142,6 +143,24 @@ describe("command palette", () => {
     await user.click(previewResult);
     expect(router.push).toHaveBeenCalledWith("/system");
   });
+
+  it("renders purchase order handoff search results", async () => {
+    const user = userEvent.setup();
+
+    renderWithQuery(<CommandPaletteHost />);
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    await user.type(screen.getByPlaceholderText("Search or jump to..."), "POH-2026");
+
+    const result = await screen.findByRole("option", { name: /POH-2026-000001/ });
+    expect(result).toBeInTheDocument();
+    expect(screen.getByText("Northwind Traders")).toBeInTheDocument();
+
+    const handoffResult = searchResultFixtures.find((fixture) => fixture.type === "po_handoff");
+    await user.click(result);
+    expect(router.push).toHaveBeenCalledWith(handoffResult?.href);
+  });
+
 
   it("shows an explicit loading state while remote search is pending", async () => {
     const user = userEvent.setup();

@@ -8,6 +8,7 @@ export const GLOBAL_SEARCH_TYPES: NonNullable<ListGlobalSearchParams["types"]> =
   ListGlobalSearchTypesItem.rfq,
   ListGlobalSearchTypesItem.quotation,
   ListGlobalSearchTypesItem.award,
+  ListGlobalSearchTypesItem.po_handoff,
 ];
 
 export function matchesSearchResultQuery(result: SearchResult, query: string): boolean {

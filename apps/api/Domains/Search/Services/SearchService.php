@@ -7,6 +7,7 @@ use App\Tenancy\Tenant;
 use Domains\Search\Contracts\SearchProvider;
 use Domains\Search\Data\SearchResultData;
 use Domains\Search\Providers\AwardSearchProvider;
+use Domains\Search\Providers\PurchaseOrderRequestHandoffSearchProvider;
 use Domains\Search\Providers\ProcurementProjectSearchProvider;
 use Domains\Search\Providers\QuotationSearchProvider;
 use Domains\Search\Providers\RfqSearchProvider;
@@ -46,6 +47,7 @@ class SearchService
             app(RfqSearchProvider::class),
             app(QuotationSearchProvider::class),
             app(AwardSearchProvider::class),
+            app(PurchaseOrderRequestHandoffSearchProvider::class),
         ];
     }
 }

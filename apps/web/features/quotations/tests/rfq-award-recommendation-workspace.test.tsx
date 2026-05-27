@@ -6,7 +6,7 @@ import type {
 } from "@cognify/api-client/schemas";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw/server";
 import {
   quotationAwardRecommendationHandlers,
@@ -116,6 +116,95 @@ describe("RFQ award recommendation workspace", () => {
     expect(screen.queryByRole("button", { name: "Award vendor" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create PO handoff" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Notify vendors" })).not.toBeInTheDocument();
+  });
+
+  it("shows draft PO handoff review controls for approved recommendations", async () => {
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("heading", { name: "Award recommendation" });
+
+    expect(await screen.findByText("POH-2026-000001")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "PO request handoff" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Finance note")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save handoff review" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Mark ready" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Download JSON" })).not.toBeInTheDocument();
+  });
+
+  it("marks draft PO handoffs ready and shows export actions", async () => {
+    const user = userEvent.setup();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("region", { name: "PO request handoff" });
+
+    await user.click(await screen.findByRole("button", { name: "Mark ready" }));
+
+    expect(await screen.findByRole("button", { name: "Download JSON" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Download CSV" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Save handoff review" })).not.toBeInTheDocument();
+  });
+
+  it("downloads JSON and CSV exports for ready PO handoffs", async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi.mocked(URL.createObjectURL);
+    createObjectURL.mockClear();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("region", { name: "PO request handoff" });
+
+    await user.click(await screen.findByRole("button", { name: "Mark ready" }));
+    await user.click(await screen.findByRole("button", { name: "Download JSON" }));
+    await user.click(await screen.findByRole("button", { name: "Download CSV" }));
+
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(2));
+  });
+
+  it("shows exported metadata and repeat export actions", async () => {
+    const user = userEvent.setup();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("region", { name: "PO request handoff" });
+
+    await user.click(await screen.findByRole("button", { name: "Mark ready" }));
+    await user.click(await screen.findByRole("button", { name: "Download JSON" }));
+
+    expect(await screen.findByText(/Last exported/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download JSON" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Download CSV" })).toBeEnabled();
+  });
+
+  it("hides export actions for cancelled PO handoffs", async () => {
+    const user = userEvent.setup();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("region", { name: "PO request handoff" });
+
+    fireEvent.change(await screen.findByLabelText("Cancellation reason"), { target: { value: "Award superseded by a revised sourcing decision." } });
+    await user.click(screen.getByRole("button", { name: "Cancel handoff" }));
+
+    expect(await screen.findByText(/Cancelled: Award superseded/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Download JSON" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Download CSV" })).not.toBeInTheDocument();
+  });
+
+  it("does not show PO handoff actions before award approval", async () => {
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-pending-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("heading", { name: "Award recommendation" });
+
+    expect(screen.queryByRole("region", { name: "PO request handoff" })).not.toBeInTheDocument();
+  });
+
+  it("shows stale lock conflict errors from PO handoff mutations", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch("/api/po-handoffs/po-handoff-1", () =>
+        HttpResponse.json(
+          { error: { code: "invalid_state", message: "The PO handoff has changed. Reload and try again." } },
+          { status: 409 },
+        )),
+    );
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("region", { name: "PO request handoff" });
+
+    fireEvent.change(await screen.findByLabelText("Finance note"), { target: { value: "Route through finance control first." } });
+    await user.click(screen.getByRole("button", { name: "Save handoff review" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The PO handoff has changed. Reload and try again.");
   });
 
   it("shows approval route errors in the approval panel", async () => {

@@ -1,47 +1,62 @@
 import type {
   ApprovalPreview,
   ApprovalSummary,
+  CancelPurchaseOrderRequestHandoffRequest,
+  MarkPurchaseOrderRequestHandoffReadyRequest,
+  PurchaseOrderRequestHandoff,
   RfqAwardRecommendation,
   RfqAwardRecommendationDecision,
   RfqAwardRecommendationEvidenceReference,
   RfqAwardRecommendationEvidenceReferenceInput,
   SaveRfqAwardRecommendationRequest,
   SubmitRfqAwardRecommendationRequest,
+  UpdatePurchaseOrderRequestHandoffRequest,
 } from "@cognify/api-client/schemas";
 
 type AwardRecommendationFixtureState = {
   payload: RfqAwardRecommendation;
+  handoff: PurchaseOrderRequestHandoff | null;
 };
 
 const states = new Map<string, AwardRecommendationFixtureState>();
 
 export function resetQuotationAwardRecommendationMockState(): void {
   states.clear();
-  states.set("rfq-ready", { payload: buildFixture("rfq-ready") });
-  states.set("rfq-draft-recommendation", { payload: buildFixture("rfq-draft-recommendation", { recommendationStatus: "draft" }) });
+  states.set("rfq-ready", { payload: buildFixture("rfq-ready"), handoff: null });
+  states.set("rfq-draft-recommendation", {
+    payload: buildFixture("rfq-draft-recommendation", { recommendationStatus: "draft" }),
+    handoff: null,
+  });
   states.set("rfq-pending-recommendation", {
     payload: buildFixture("rfq-pending-recommendation", { recommendationStatus: "pending_approval" }),
+    handoff: null,
   });
   states.set("rfq-routed-recommendation", {
     payload: buildFixture("rfq-routed-recommendation", { recommendationStatus: "approval_routed" }),
+    handoff: null,
   });
   states.set("rfq-approved-recommendation", {
     payload: buildFixture("rfq-approved-recommendation", { recommendationStatus: "approved" }),
+    handoff: buildPoHandoffFixture("rfq-approved-recommendation"),
   });
   states.set("rfq-rejected-recommendation", {
     payload: buildFixture("rfq-rejected-recommendation", { recommendationStatus: "rejected" }),
+    handoff: null,
   });
   states.set("rfq-changes-requested-recommendation", {
     payload: buildFixture("rfq-changes-requested-recommendation", { recommendationStatus: "changes_requested" }),
+    handoff: null,
   });
   states.set("rfq-no-award-policy", {
     payload: buildFixture("rfq-no-award-policy", { recommendationStatus: "pending_approval" }),
+    handoff: null,
   });
   states.set("rfq-incomplete-scorecard", {
     payload: buildFixture("rfq-incomplete-scorecard", { scorecardStatus: "in_progress", scorecardCompletionStatus: "incomplete" }),
+    handoff: null,
   });
-  states.set("rfq-no-scorecard", { payload: buildFixture("rfq-no-scorecard", { withoutScorecard: true }) });
-  states.set("rfq-no-vendors", { payload: buildFixture("rfq-no-vendors", { withoutVendors: true }) });
+  states.set("rfq-no-scorecard", { payload: buildFixture("rfq-no-scorecard", { withoutScorecard: true }), handoff: null });
+  states.set("rfq-no-vendors", { payload: buildFixture("rfq-no-vendors", { withoutVendors: true }), handoff: null });
 }
 
 export function getQuotationAwardRecommendationFixture(rfqId: string): RfqAwardRecommendation | null {
@@ -49,6 +64,113 @@ export function getQuotationAwardRecommendationFixture(rfqId: string): RfqAwardR
   if (!state) return null;
 
   return structuredClone(state.payload);
+}
+
+export function getPurchaseOrderRequestHandoffFixture(rfqId: string): PurchaseOrderRequestHandoff | null {
+  const state = states.get(rfqId);
+  if (!state) throw new Error("RFQ award recommendation not found.");
+  if (state.payload.recommendation?.status !== "approved") {
+    throw new Error("Only approved award recommendations can create PO handoffs.");
+  }
+
+  state.handoff ??= buildPoHandoffFixture(rfqId);
+
+  return structuredClone(state.handoff);
+}
+
+export function createPurchaseOrderRequestHandoffFixture(rfqId: string): PurchaseOrderRequestHandoff {
+  const handoff = getPurchaseOrderRequestHandoffFixture(rfqId);
+  if (!handoff) throw new Error("PO handoff could not be created.");
+
+  return handoff;
+}
+
+export function updatePurchaseOrderRequestHandoffFixture(
+  handoffId: string,
+  payload: UpdatePurchaseOrderRequestHandoffRequest,
+): PurchaseOrderRequestHandoff {
+  const state = findStateByHandoffId(handoffId);
+  const handoff = state.handoff;
+  if (!handoff) throw new Error("PO handoff not found.");
+  if (handoff.status !== "draft") throw new Error("Only draft PO handoffs can be updated.");
+  assertLockVersion(handoff, payload.lockVersion);
+
+  handoff.review = {
+    requestedPoDate: Object.prototype.hasOwnProperty.call(payload, "requestedPoDate")
+      ? (payload.requestedPoDate ?? null)
+      : handoff.review.requestedPoDate,
+    deliveryAttention: Object.prototype.hasOwnProperty.call(payload, "deliveryAttention")
+      ? (payload.deliveryAttention ?? null)
+      : handoff.review.deliveryAttention,
+    financeNote: Object.prototype.hasOwnProperty.call(payload, "financeNote")
+      ? (payload.financeNote ?? null)
+      : handoff.review.financeNote,
+    exportMemo: Object.prototype.hasOwnProperty.call(payload, "exportMemo")
+      ? (payload.exportMemo ?? null)
+      : handoff.review.exportMemo,
+  };
+  handoff.lockVersion += 1;
+
+  return structuredClone(handoff);
+}
+
+export function markPurchaseOrderRequestHandoffReadyFixture(
+  handoffId: string,
+  payload: MarkPurchaseOrderRequestHandoffReadyRequest,
+): PurchaseOrderRequestHandoff {
+  const state = findStateByHandoffId(handoffId);
+  const handoff = state.handoff;
+  if (!handoff) throw new Error("PO handoff not found.");
+  if (handoff.status !== "draft") throw new Error("Only draft PO handoffs can be marked ready.");
+  assertLockVersion(handoff, payload.lockVersion);
+
+  handoff.status = "ready";
+  handoff.readyByUserId = "buyer-1";
+  handoff.readyAt = "2026-05-26T12:30:00.000000Z";
+  handoff.lockVersion += 1;
+  handoff.permissions = { canUpdate: false, canMarkReady: false, canExport: true, canCancel: true };
+
+  return structuredClone(handoff);
+}
+
+export function cancelPurchaseOrderRequestHandoffFixture(
+  handoffId: string,
+  payload: CancelPurchaseOrderRequestHandoffRequest,
+): PurchaseOrderRequestHandoff {
+  const state = findStateByHandoffId(handoffId);
+  const handoff = state.handoff;
+  if (!handoff) throw new Error("PO handoff not found.");
+  assertLockVersion(handoff, payload.lockVersion);
+
+  handoff.status = "cancelled";
+  handoff.cancelledReason = payload.reason;
+  handoff.lockVersion += 1;
+  handoff.permissions = { canUpdate: false, canMarkReady: false, canExport: false, canCancel: false };
+
+  return structuredClone(handoff);
+}
+
+export function exportPurchaseOrderRequestHandoffJsonFixture(handoffId: string) {
+  const handoff = markHandoffExported(handoffId, "json");
+
+  return {
+    format: "json",
+    exportedAt: handoff.lastExportedAt,
+    handoff,
+  };
+}
+
+export function exportPurchaseOrderRequestHandoffCsvFixture(handoffId: string): string {
+  const handoff = markHandoffExported(handoffId, "csv");
+  const source = handoff.source as {
+    rfq?: { number?: string };
+    vendor?: { name?: string };
+  };
+
+  return [
+    "handoff_number,handoff_status,rfq_number,vendor_name,description,line_total",
+    `${handoff.number},${handoff.status},${source.rfq?.number ?? ""},${source.vendor?.name ?? ""},${handoff.lines[0]?.description ?? ""},${handoff.lines[0]?.lineTotal ?? ""}`,
+  ].join("\n");
 }
 
 export function saveQuotationAwardRecommendationFixture(
@@ -433,6 +555,84 @@ function createEmptyRecommendation(rfqId: string): RfqAwardRecommendationDecisio
     changesRequestedFields: [],
     updatedAt: "2026-05-26T08:00:00.000000Z",
   };
+}
+
+function buildPoHandoffFixture(rfqId: string): PurchaseOrderRequestHandoff {
+  return {
+    id: "po-handoff-1",
+    number: "POH-2026-000001",
+    status: "draft",
+    rfqId,
+    recommendationId: `award-recommendation-${rfqId}`,
+    vendorId: "101",
+    currency: "USD",
+    totalAmount: "125000.00",
+    source: {
+      rfq: { number: "RFQ-2026-001" },
+      vendor: { name: "Northwind Traders" },
+      quotation: { number: "QT-2026-0101" },
+      quotationVersion: { versionNumber: 1 },
+      award: { rationale: "Best value overall with strong delivery confidence." },
+    },
+    lines: [
+      {
+        lineNumber: 1,
+        description: "Managed services",
+        quantity: "1.0000",
+        unitOfMeasure: "EA",
+        unitPrice: "125000.00",
+        lineTotal: "125000.00",
+        currency: "USD",
+      },
+    ],
+    approval: { finalDecision: "approved" },
+    evidence: [],
+    review: {
+      requestedPoDate: null,
+      deliveryAttention: null,
+      financeNote: null,
+      exportMemo: null,
+    },
+    readinessWarnings: [],
+    readyByUserId: null,
+    readyAt: null,
+    cancelledReason: null,
+    lastExportFormat: null,
+    lastExportedAt: null,
+    lockVersion: 1,
+    permissions: { canUpdate: true, canMarkReady: true, canExport: false, canCancel: true },
+  };
+}
+
+function findStateByHandoffId(handoffId: string): AwardRecommendationFixtureState {
+  for (const state of states.values()) {
+    if (state.handoff?.id === handoffId) return state;
+  }
+
+  throw new Error("PO handoff not found.");
+}
+
+function assertLockVersion(handoff: PurchaseOrderRequestHandoff, submittedLockVersion: number): void {
+  if (handoff.lockVersion !== submittedLockVersion) {
+    throw new Error("The PO handoff has changed. Reload and try again.");
+  }
+}
+
+function markHandoffExported(handoffId: string, format: "json" | "csv"): PurchaseOrderRequestHandoff {
+  const state = findStateByHandoffId(handoffId);
+  const handoff = state.handoff;
+  if (!handoff) throw new Error("PO handoff not found.");
+  if (handoff.status !== "ready" && handoff.status !== "exported") {
+    throw new Error("Only ready or exported PO handoffs can be exported.");
+  }
+
+  handoff.status = "exported";
+  handoff.lastExportFormat = format;
+  handoff.lastExportedAt = "2026-05-26T12:45:00.000000Z";
+  handoff.lockVersion += 1;
+  handoff.permissions = { canUpdate: false, canMarkReady: false, canExport: true, canCancel: true };
+
+  return structuredClone(handoff);
 }
 
 function approvalSummaryForStatus(status: ApprovalSummary["status"]): ApprovalSummary {

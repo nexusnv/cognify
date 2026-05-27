@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Audit\AuditEvent;
+use App\Audit\AuditSubject;
 use App\Audit\Policies\AuditEventPolicy;
 use App\Tenancy\CurrentTenant;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
@@ -12,6 +13,8 @@ use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Project\Policies\ProcurementProjectPolicy;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\Policies\PurchaseOrderRequestHandoffPolicy;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\RfqInvitation;
@@ -56,7 +59,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Rfq::class, RfqPolicy::class);
         Gate::policy(RfqAwardRecommendation::class, RfqAwardRecommendationPolicy::class);
         Gate::policy(RfqInvitation::class, RfqInvitationPolicy::class);
+        Gate::policy(PurchaseOrderRequestHandoff::class, PurchaseOrderRequestHandoffPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
+
+        AuditSubject::registerType(PurchaseOrderRequestHandoff::class, 'po_handoff');
     }
 }

@@ -25,6 +25,7 @@ import type {
   AttachmentResponse,
   AttachmentUploadRequest,
   AuditEventListResponse,
+  CancelPurchaseOrderRequestHandoffRequest,
   CancelRfqInvitationRequest,
   CollaborationCommentListResponse,
   CollaborationCommentResponse,
@@ -54,6 +55,7 @@ import type {
   ListVendorsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
+  MarkPurchaseOrderRequestHandoffReadyRequest,
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
@@ -63,6 +65,8 @@ import type {
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
+  PurchaseOrderRequestHandoffExport,
+  PurchaseOrderRequestHandoffResponse,
   QuotationComparisonNoteResponse,
   QuotationComparisonResponse,
   QuotationNormalizationResponse,
@@ -125,6 +129,7 @@ import type {
   UpdateApprovalPolicyRequest,
   UpdateCurrentUserProfileRequest,
   UpdateProcurementProjectRequest,
+  UpdatePurchaseOrderRequestHandoffRequest,
   UpdateRequisitionRequest,
   UpdateRfqInvitationStatusRequest,
   UpdateRfqScorecardScoresRequest,
@@ -8130,6 +8135,523 @@ export const previewRfqAwardRecommendationApproval = async (
 ): Promise<previewRfqAwardRecommendationApprovalResponse> => {
   return cognifyFetch<previewRfqAwardRecommendationApprovalResponse>(
     getPreviewRfqAwardRecommendationApprovalUrl(rfq),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Show RFQ award recommendation PO handoff
+ */
+export type showRfqAwardRecommendationPoHandoffResponse200 = {
+  data: PurchaseOrderRequestHandoffResponse;
+  status: 200;
+};
+
+export type showRfqAwardRecommendationPoHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showRfqAwardRecommendationPoHandoffResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showRfqAwardRecommendationPoHandoffResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showRfqAwardRecommendationPoHandoffResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type showRfqAwardRecommendationPoHandoffResponseSuccess =
+  showRfqAwardRecommendationPoHandoffResponse200 & {
+    headers: Headers;
+  };
+export type showRfqAwardRecommendationPoHandoffResponseError = (
+  | showRfqAwardRecommendationPoHandoffResponse401
+  | showRfqAwardRecommendationPoHandoffResponse403
+  | showRfqAwardRecommendationPoHandoffResponse404
+  | showRfqAwardRecommendationPoHandoffResponse409
+) & {
+  headers: Headers;
+};
+
+export type showRfqAwardRecommendationPoHandoffResponse =
+  | showRfqAwardRecommendationPoHandoffResponseSuccess
+  | showRfqAwardRecommendationPoHandoffResponseError;
+
+export const getShowRfqAwardRecommendationPoHandoffUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/po-handoff`;
+};
+
+export const showRfqAwardRecommendationPoHandoff = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<showRfqAwardRecommendationPoHandoffResponse> => {
+  return cognifyFetch<showRfqAwardRecommendationPoHandoffResponse>(
+    getShowRfqAwardRecommendationPoHandoffUrl(rfq),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create or reveal RFQ award recommendation PO handoff
+ */
+export type createRfqAwardRecommendationPoHandoffResponse200 = {
+  data: PurchaseOrderRequestHandoffResponse;
+  status: 200;
+};
+
+export type createRfqAwardRecommendationPoHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createRfqAwardRecommendationPoHandoffResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createRfqAwardRecommendationPoHandoffResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createRfqAwardRecommendationPoHandoffResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createRfqAwardRecommendationPoHandoffResponseSuccess =
+  createRfqAwardRecommendationPoHandoffResponse200 & {
+    headers: Headers;
+  };
+export type createRfqAwardRecommendationPoHandoffResponseError = (
+  | createRfqAwardRecommendationPoHandoffResponse401
+  | createRfqAwardRecommendationPoHandoffResponse403
+  | createRfqAwardRecommendationPoHandoffResponse404
+  | createRfqAwardRecommendationPoHandoffResponse409
+) & {
+  headers: Headers;
+};
+
+export type createRfqAwardRecommendationPoHandoffResponse =
+  | createRfqAwardRecommendationPoHandoffResponseSuccess
+  | createRfqAwardRecommendationPoHandoffResponseError;
+
+export const getCreateRfqAwardRecommendationPoHandoffUrl = (rfq: string) => {
+  return `/api/rfqs/${rfq}/award-recommendation/po-handoff`;
+};
+
+export const createRfqAwardRecommendationPoHandoff = async (
+  rfq: string,
+  options?: RequestInit,
+): Promise<createRfqAwardRecommendationPoHandoffResponse> => {
+  return cognifyFetch<createRfqAwardRecommendationPoHandoffResponse>(
+    getCreateRfqAwardRecommendationPoHandoffUrl(rfq),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Show purchase order request handoff
+ */
+export type showPurchaseOrderRequestHandoffResponse200 = {
+  data: PurchaseOrderRequestHandoffResponse;
+  status: 200;
+};
+
+export type showPurchaseOrderRequestHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showPurchaseOrderRequestHandoffResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showPurchaseOrderRequestHandoffResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showPurchaseOrderRequestHandoffResponseSuccess =
+  showPurchaseOrderRequestHandoffResponse200 & {
+    headers: Headers;
+  };
+export type showPurchaseOrderRequestHandoffResponseError = (
+  | showPurchaseOrderRequestHandoffResponse401
+  | showPurchaseOrderRequestHandoffResponse403
+  | showPurchaseOrderRequestHandoffResponse404
+) & {
+  headers: Headers;
+};
+
+export type showPurchaseOrderRequestHandoffResponse =
+  | showPurchaseOrderRequestHandoffResponseSuccess
+  | showPurchaseOrderRequestHandoffResponseError;
+
+export const getShowPurchaseOrderRequestHandoffUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}`;
+};
+
+export const showPurchaseOrderRequestHandoff = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<showPurchaseOrderRequestHandoffResponse> => {
+  return cognifyFetch<showPurchaseOrderRequestHandoffResponse>(
+    getShowPurchaseOrderRequestHandoffUrl(handoff),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Update purchase order request handoff review fields
+ */
+export type updatePurchaseOrderRequestHandoffResponse200 = {
+  data: PurchaseOrderRequestHandoffResponse;
+  status: 200;
+};
+
+export type updatePurchaseOrderRequestHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updatePurchaseOrderRequestHandoffResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updatePurchaseOrderRequestHandoffResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updatePurchaseOrderRequestHandoffResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updatePurchaseOrderRequestHandoffResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updatePurchaseOrderRequestHandoffResponseSuccess =
+  updatePurchaseOrderRequestHandoffResponse200 & {
+    headers: Headers;
+  };
+export type updatePurchaseOrderRequestHandoffResponseError = (
+  | updatePurchaseOrderRequestHandoffResponse401
+  | updatePurchaseOrderRequestHandoffResponse403
+  | updatePurchaseOrderRequestHandoffResponse404
+  | updatePurchaseOrderRequestHandoffResponse409
+  | updatePurchaseOrderRequestHandoffResponse422
+) & {
+  headers: Headers;
+};
+
+export type updatePurchaseOrderRequestHandoffResponse =
+  | updatePurchaseOrderRequestHandoffResponseSuccess
+  | updatePurchaseOrderRequestHandoffResponseError;
+
+export const getUpdatePurchaseOrderRequestHandoffUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}`;
+};
+
+export const updatePurchaseOrderRequestHandoff = async (
+  handoff: string,
+  updatePurchaseOrderRequestHandoffRequest: UpdatePurchaseOrderRequestHandoffRequest,
+  options?: RequestInit,
+): Promise<updatePurchaseOrderRequestHandoffResponse> => {
+  return cognifyFetch<updatePurchaseOrderRequestHandoffResponse>(
+    getUpdatePurchaseOrderRequestHandoffUrl(handoff),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updatePurchaseOrderRequestHandoffRequest),
+    },
+  );
+};
+
+/**
+ * @summary Mark purchase order request handoff ready
+ */
+export type markPurchaseOrderRequestHandoffReadyResponse200 = {
+  data: PurchaseOrderRequestHandoffResponse;
+  status: 200;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponseSuccess =
+  markPurchaseOrderRequestHandoffReadyResponse200 & {
+    headers: Headers;
+  };
+export type markPurchaseOrderRequestHandoffReadyResponseError = (
+  | markPurchaseOrderRequestHandoffReadyResponse401
+  | markPurchaseOrderRequestHandoffReadyResponse403
+  | markPurchaseOrderRequestHandoffReadyResponse404
+  | markPurchaseOrderRequestHandoffReadyResponse409
+  | markPurchaseOrderRequestHandoffReadyResponse422
+) & {
+  headers: Headers;
+};
+
+export type markPurchaseOrderRequestHandoffReadyResponse =
+  | markPurchaseOrderRequestHandoffReadyResponseSuccess
+  | markPurchaseOrderRequestHandoffReadyResponseError;
+
+export const getMarkPurchaseOrderRequestHandoffReadyUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/ready`;
+};
+
+export const markPurchaseOrderRequestHandoffReady = async (
+  handoff: string,
+  markPurchaseOrderRequestHandoffReadyRequest: MarkPurchaseOrderRequestHandoffReadyRequest,
+  options?: RequestInit,
+): Promise<markPurchaseOrderRequestHandoffReadyResponse> => {
+  return cognifyFetch<markPurchaseOrderRequestHandoffReadyResponse>(
+    getMarkPurchaseOrderRequestHandoffReadyUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(markPurchaseOrderRequestHandoffReadyRequest),
+    },
+  );
+};
+
+/**
+ * @summary Cancel purchase order request handoff
+ */
+export type cancelPurchaseOrderRequestHandoffResponse200 = {
+  data: PurchaseOrderRequestHandoffResponse;
+  status: 200;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponseSuccess =
+  cancelPurchaseOrderRequestHandoffResponse200 & {
+    headers: Headers;
+  };
+export type cancelPurchaseOrderRequestHandoffResponseError = (
+  | cancelPurchaseOrderRequestHandoffResponse401
+  | cancelPurchaseOrderRequestHandoffResponse403
+  | cancelPurchaseOrderRequestHandoffResponse404
+  | cancelPurchaseOrderRequestHandoffResponse409
+  | cancelPurchaseOrderRequestHandoffResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelPurchaseOrderRequestHandoffResponse =
+  | cancelPurchaseOrderRequestHandoffResponseSuccess
+  | cancelPurchaseOrderRequestHandoffResponseError;
+
+export const getCancelPurchaseOrderRequestHandoffUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/cancel`;
+};
+
+export const cancelPurchaseOrderRequestHandoff = async (
+  handoff: string,
+  cancelPurchaseOrderRequestHandoffRequest: CancelPurchaseOrderRequestHandoffRequest,
+  options?: RequestInit,
+): Promise<cancelPurchaseOrderRequestHandoffResponse> => {
+  return cognifyFetch<cancelPurchaseOrderRequestHandoffResponse>(
+    getCancelPurchaseOrderRequestHandoffUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(cancelPurchaseOrderRequestHandoffRequest),
+    },
+  );
+};
+
+/**
+ * @summary Export purchase order request handoff as JSON
+ */
+export type exportPurchaseOrderRequestHandoffJsonResponse200 = {
+  data: PurchaseOrderRequestHandoffExport;
+  status: 200;
+};
+
+export type exportPurchaseOrderRequestHandoffJsonResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type exportPurchaseOrderRequestHandoffJsonResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type exportPurchaseOrderRequestHandoffJsonResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type exportPurchaseOrderRequestHandoffJsonResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type exportPurchaseOrderRequestHandoffJsonResponseSuccess =
+  exportPurchaseOrderRequestHandoffJsonResponse200 & {
+    headers: Headers;
+  };
+export type exportPurchaseOrderRequestHandoffJsonResponseError = (
+  | exportPurchaseOrderRequestHandoffJsonResponse401
+  | exportPurchaseOrderRequestHandoffJsonResponse403
+  | exportPurchaseOrderRequestHandoffJsonResponse404
+  | exportPurchaseOrderRequestHandoffJsonResponse409
+) & {
+  headers: Headers;
+};
+
+export type exportPurchaseOrderRequestHandoffJsonResponse =
+  | exportPurchaseOrderRequestHandoffJsonResponseSuccess
+  | exportPurchaseOrderRequestHandoffJsonResponseError;
+
+export const getExportPurchaseOrderRequestHandoffJsonUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/export.json`;
+};
+
+export const exportPurchaseOrderRequestHandoffJson = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<exportPurchaseOrderRequestHandoffJsonResponse> => {
+  return cognifyFetch<exportPurchaseOrderRequestHandoffJsonResponse>(
+    getExportPurchaseOrderRequestHandoffJsonUrl(handoff),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Export purchase order request handoff as CSV
+ */
+export type exportPurchaseOrderRequestHandoffCsvResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type exportPurchaseOrderRequestHandoffCsvResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type exportPurchaseOrderRequestHandoffCsvResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type exportPurchaseOrderRequestHandoffCsvResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type exportPurchaseOrderRequestHandoffCsvResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type exportPurchaseOrderRequestHandoffCsvResponseSuccess =
+  exportPurchaseOrderRequestHandoffCsvResponse200 & {
+    headers: Headers;
+  };
+export type exportPurchaseOrderRequestHandoffCsvResponseError = (
+  | exportPurchaseOrderRequestHandoffCsvResponse401
+  | exportPurchaseOrderRequestHandoffCsvResponse403
+  | exportPurchaseOrderRequestHandoffCsvResponse404
+  | exportPurchaseOrderRequestHandoffCsvResponse409
+) & {
+  headers: Headers;
+};
+
+export type exportPurchaseOrderRequestHandoffCsvResponse =
+  | exportPurchaseOrderRequestHandoffCsvResponseSuccess
+  | exportPurchaseOrderRequestHandoffCsvResponseError;
+
+export const getExportPurchaseOrderRequestHandoffCsvUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/export.csv`;
+};
+
+export const exportPurchaseOrderRequestHandoffCsv = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<exportPurchaseOrderRequestHandoffCsvResponse> => {
+  return cognifyFetch<exportPurchaseOrderRequestHandoffCsvResponse>(
+    getExportPurchaseOrderRequestHandoffCsvUrl(handoff),
     {
       ...options,
       method: "GET",

@@ -107,6 +107,7 @@ class SearchRequest extends FormRequest
             'rfq',
             'quotation',
             'award',
+            'po_handoff',
         ];
     }
 
