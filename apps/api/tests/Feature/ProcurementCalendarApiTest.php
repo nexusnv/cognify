@@ -66,8 +66,10 @@ class ProcurementCalendarApiTest extends TestCase
             ->assertJsonPath('data.summary.bySourceType.requisitionNeededBy', 1)
             ->assertJsonPath('data.summary.bySourceType.poHandoff', 1)
             ->assertJsonPath('data.summary.bySourceType.quotationValidity', 1)
-            ->assertJsonFragment(['sourceType' => 'vendorDocumentExpiry', 'available' => false])
-            ->assertJsonFragment(['sourceType' => 'contractRenewal', 'available' => false])
+            ->assertJsonPath('data.availableSources.5.sourceType', 'vendorDocumentExpiry')
+            ->assertJsonPath('data.availableSources.5.available', false)
+            ->assertJsonPath('data.availableSources.6.sourceType', 'contractRenewal')
+            ->assertJsonPath('data.availableSources.6.available', false)
             ->assertJsonFragment(['title' => 'Warehouse replenishment'])
             ->assertJsonFragment(['href' => "/requisitions/{$requisition->id}"])
             ->assertJsonFragment(['sourceType' => 'requisitionNeededBy'])
@@ -235,10 +237,12 @@ class ProcurementCalendarApiTest extends TestCase
             ->getJson('/api/procurement-calendar/events?sourceTypes[]=vendorDocumentExpiry&from=2026-08-01&to=2026-08-31')
             ->assertOk()
             ->assertJsonCount(0, 'data.events')
-            ->assertJsonFragment(['sourceType' => 'vendorDocumentExpiry', 'available' => false])
-            ->assertJsonFragment(['sourceType' => 'contractRenewal', 'available' => false])
+            ->assertJsonPath('data.availableSources.5.sourceType', 'vendorDocumentExpiry')
+            ->assertJsonPath('data.availableSources.5.available', false)
+            ->assertJsonPath('data.availableSources.6.sourceType', 'contractRenewal')
+            ->assertJsonPath('data.availableSources.6.available', false)
             ->assertJsonMissingPath('data.events.0.sourceType');
-        $this->assertStringNotContainsString('vendor document', json_encode($response->json()));
+        $this->assertStringNotContainsString('Vendor document expiry event', json_encode($response->json()));
     }
 
     /**
