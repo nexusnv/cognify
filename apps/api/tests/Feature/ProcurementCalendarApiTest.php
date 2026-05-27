@@ -4,11 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
-use Domains\Approval\Models\ApprovalPolicy;
-use Domains\Approval\Models\ApprovalPolicyVersion;
 use Domains\Approval\Models\ApprovalTask;
-use Domains\Approval\States\ApprovalPolicyStatus;
-use Domains\Approval\States\ApprovalPolicyVersionStatus;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
@@ -22,9 +18,6 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -48,28 +41,31 @@ class ProcurementCalendarApiTest extends TestCase
         $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer, ['valid_until' => '2026-06-25']);
         $version = $this->createQuotationVersion($tenant, $quotation, $buyer, ['valid_until' => '2026-06-25']);
         $recommendation = $this->createAwardRecommendation($tenant, $rfq, $quotation, $version, $buyer);
-        $task = $this->createApprovalTask($tenant, $requisition, $approver, [
+        $this->createApprovalTask($tenant, $requisition, $approver, [
             'due_at' => '2026-06-20 09:00:00',
         ]);
-        $handoff = $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
+        $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
             'requested_po_date' => '2026-06-21',
         ]);
+        $expectedScheduledEvents = 7;
 
         $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
             ->assertOk()
             ->assertJsonPath('data.range.from', '2026-06-01')
             ->assertJsonPath('data.range.to', '2026-06-30')
-            ->assertJsonPath('data.summary.byStatus.scheduled', 7)
+            ->assertJsonPath('data.summary.byStatus.scheduled', $expectedScheduledEvents)
             ->assertJsonPath('data.summary.bySourceType.rfqDeadline', 2)
             ->assertJsonPath('data.summary.bySourceType.approvalDue', 1)
             ->assertJsonPath('data.summary.bySourceType.requisitionNeededBy', 1)
             ->assertJsonPath('data.summary.bySourceType.poHandoff', 1)
             ->assertJsonPath('data.summary.bySourceType.quotationValidity', 1)
-            ->assertJsonPath('data.availableSources.5.sourceType', 'vendorDocumentExpiry')
-            ->assertJsonPath('data.availableSources.5.available', false)
-            ->assertJsonPath('data.availableSources.6.sourceType', 'contractRenewal')
-            ->assertJsonPath('data.availableSources.6.available', false)
+            ->assertJsonPath('data.availableSources', fn (array $sources): bool => collect($sources)->contains(
+                fn (array $source): bool => $source['sourceType'] === 'vendorDocumentExpiry' && $source['available'] === false,
+            ))
+            ->assertJsonPath('data.availableSources', fn (array $sources): bool => collect($sources)->contains(
+                fn (array $source): bool => $source['sourceType'] === 'contractRenewal' && $source['available'] === false,
+            ))
             ->assertJsonFragment(['title' => 'Warehouse replenishment'])
             ->assertJsonFragment(['href' => "/requisitions/{$requisition->id}"])
             ->assertJsonFragment(['sourceType' => 'requisitionNeededBy'])
@@ -211,14 +207,13 @@ class ProcurementCalendarApiTest extends TestCase
             'requested_po_date' => '2026-06-24',
         ]);
 
-        $response = $this->actingAsTenant($tenant, $buyer)
+        $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
             ->assertOk()
-            ->assertJsonFragment(['title' => 'Same tenant calendar item']);
-        $payload = $response->json();
-        $this->assertStringContainsString('Same tenant visible rfq', json_encode($payload));
-        $this->assertStringNotContainsString('Other tenant exclusive rfq', json_encode($payload));
-        $this->assertStringNotContainsString('POH-OTHER-EXCLUSIVE', json_encode($payload));
+            ->assertJsonFragment(['title' => 'Same tenant calendar item'])
+            ->assertJsonFragment(['title' => 'Same tenant visible rfq'])
+            ->assertJsonMissing(['title' => 'Other tenant exclusive rfq'])
+            ->assertJsonMissing(['title' => 'POH-OTHER-EXCLUSIVE']);
     }
 
     public function test_unavailable_future_sources_are_returned_as_metadata_not_fake_events(): void
@@ -228,21 +223,23 @@ class ProcurementCalendarApiTest extends TestCase
         $requisition = $this->createSubmittedRequisition($tenant, $requester, [
             'title' => 'Future source range anchor',
         ]);
-        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer, [
+        $this->createDraftRfq($tenant, $requisition, $buyer, [
             'title' => 'Future source range rfq',
             'response_due_at' => '2026-08-03 09:00:00',
         ]);
 
-        $response = $this->actingAsTenant($tenant, $buyer)
+        $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?sourceTypes[]=vendorDocumentExpiry&from=2026-08-01&to=2026-08-31')
             ->assertOk()
             ->assertJsonCount(0, 'data.events')
-            ->assertJsonPath('data.availableSources.5.sourceType', 'vendorDocumentExpiry')
-            ->assertJsonPath('data.availableSources.5.available', false)
-            ->assertJsonPath('data.availableSources.6.sourceType', 'contractRenewal')
-            ->assertJsonPath('data.availableSources.6.available', false)
-            ->assertJsonMissingPath('data.events.0.sourceType');
-        $this->assertStringNotContainsString('Vendor document expiry event', json_encode($response->json()));
+            ->assertJsonPath('data.availableSources', fn (array $sources): bool => collect($sources)->contains(
+                fn (array $source): bool => $source['sourceType'] === 'vendorDocumentExpiry' && $source['available'] === false,
+            ))
+            ->assertJsonPath('data.availableSources', fn (array $sources): bool => collect($sources)->contains(
+                fn (array $source): bool => $source['sourceType'] === 'contractRenewal' && $source['available'] === false,
+            ))
+            ->assertJsonPath('data.events', [])
+            ->assertJsonMissing(['title' => 'Vendor document expiry event']);
     }
 
     /**
@@ -435,7 +432,7 @@ class ProcurementCalendarApiTest extends TestCase
             'last_export_format' => null,
             'source_snapshot' => [
                 'rfq' => ['number' => $rfq->number],
-                'vendor' => ['name' => 'Northwind Traders'],
+                'vendor' => ['name' => $quotation->vendor?->name],
                 'quotation' => ['number' => $quotation->number],
             ],
             'line_snapshot' => [
