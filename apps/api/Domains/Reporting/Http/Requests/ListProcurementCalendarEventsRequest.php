@@ -31,6 +31,17 @@ class ListProcurementCalendarEventsRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $sourceTypes = $this->queryArrayValues('sourceTypes');
+        $statuses = $this->queryArrayValues('statuses');
+
+        $this->merge(array_filter([
+            'sourceTypes' => $sourceTypes === [] ? null : $sourceTypes,
+            'statuses' => $statuses === [] ? null : $statuses,
+        ], fn ($value): bool => $value !== null));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -81,5 +92,33 @@ class ListProcurementCalendarEventsRequest extends FormRequest
             'q' => trim((string) $this->input('q', '')),
             'limit' => (int) $this->input('limit', 500),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function queryArrayValues(string $name): array
+    {
+        $queryString = (string) $this->server->get('QUERY_STRING', '');
+        if ($queryString === '') {
+            return [];
+        }
+
+        $values = [];
+        foreach (explode('&', $queryString) as $pair) {
+            if ($pair === '') {
+                continue;
+            }
+
+            [$key, $value] = array_pad(explode('=', $pair, 2), 2, '');
+            $decodedKey = urldecode($key);
+            if ($decodedKey !== $name && $decodedKey !== "{$name}[]") {
+                continue;
+            }
+
+            $values[] = urldecode($value);
+        }
+
+        return $values;
     }
 }

@@ -59,7 +59,7 @@ describe("procurement calendar api", () => {
       from: "2026-06-01",
       to: "2026-06-30",
       view: "month",
-      "sourceTypes[]": ["rfqDeadline"],
+      sourceTypes: ["rfqDeadline"],
     });
 
     expect(tenantHeader).toBe("tenant-1");

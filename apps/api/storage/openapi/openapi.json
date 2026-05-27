@@ -634,7 +634,7 @@
             }
           },
           {
-            "name": "sourceTypes[]",
+            "name": "sourceTypes",
             "in": "query",
             "required": false,
             "style": "form",
@@ -647,7 +647,7 @@
             }
           },
           {
-            "name": "statuses[]",
+            "name": "statuses",
             "in": "query",
             "required": false,
             "style": "form",
@@ -689,6 +689,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
           },
@@ -697,6 +700,9 @@
           },
           "422": {
             "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }

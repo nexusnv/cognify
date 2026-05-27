@@ -19,6 +19,8 @@ use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -88,7 +90,7 @@ class ProcurementCalendarApiTest extends TestCase
         $otherTask = $this->createApprovalTask($tenant, $requisition, $otherApprover, ['due_at' => '2026-06-13 09:00:00']);
 
         $this->actingAsTenant($tenant, $approver)
-            ->getJson('/api/procurement-calendar/events?sourceTypes[]=approvalDue&statuses[]=scheduled&from=2026-06-01&to=2026-06-30')
+            ->getJson('/api/procurement-calendar/events?sourceTypes=approvalDue&statuses=scheduled&from=2026-06-01&to=2026-06-30')
             ->assertOk()
             ->assertJsonCount(1, 'data.events')
             ->assertJsonPath('data.events.0.sourceType', 'approvalDue')
@@ -264,6 +266,45 @@ class ProcurementCalendarApiTest extends TestCase
             ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
             ->assertUnauthorized()
             ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
+    public function test_calendar_route_supports_real_session_login_logout(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+
+        $buyer->forceFill([
+            'email' => 'procurement-calendar-session@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->get('/sanctum/csrf-cookie')
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'procurement-calendar-session@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $tenant->id)
+            ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
+            ->assertUnauthorized();
     }
 
     public function test_same_day_all_day_sources_are_not_overdue_until_after_the_day(): void

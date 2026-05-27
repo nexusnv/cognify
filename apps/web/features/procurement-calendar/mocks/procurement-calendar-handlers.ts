@@ -15,8 +15,14 @@ export const procurementCalendarHandlers = [
       );
     }
 
-    const sourceTypes = url.searchParams.getAll("sourceTypes[]") as ProcurementCalendarSourceType[];
-    const statuses = url.searchParams.getAll("statuses[]") as ProcurementCalendarEventStatus[];
+    const sourceTypes = [
+      ...url.searchParams.getAll("sourceTypes"),
+      ...url.searchParams.getAll("sourceTypes[]"),
+    ] as ProcurementCalendarSourceType[];
+    const statuses = [
+      ...url.searchParams.getAll("statuses"),
+      ...url.searchParams.getAll("statuses[]"),
+    ] as ProcurementCalendarEventStatus[];
     const q = url.searchParams.get("q");
 
     return HttpResponse.json({

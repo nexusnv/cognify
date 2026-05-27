@@ -24,8 +24,10 @@ export function ProcurementCalendarAgendaView({
           type="button"
           data-testid="calendar-agenda-item"
           aria-pressed={selectedEventId === event.id}
-          className={`flex w-full items-start justify-between gap-3 rounded-md border px-3 py-3 text-left ${
-            selectedEventId === event.id ? "border-foreground bg-accent" : ""
+          className={`flex w-full items-start justify-between gap-3 rounded-md border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+            selectedEventId === event.id
+              ? "border-foreground bg-accent"
+              : "hover:border-muted-foreground hover:bg-muted/50"
           }`}
           onClick={() => onSelectEvent(event.id)}
         >

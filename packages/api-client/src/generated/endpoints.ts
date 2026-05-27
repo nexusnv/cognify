@@ -856,6 +856,11 @@ export type listProcurementCalendarEventsResponse200 = {
   status: 200;
 };
 
+export type listProcurementCalendarEventsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type listProcurementCalendarEventsResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -871,14 +876,21 @@ export type listProcurementCalendarEventsResponse422 = {
   status: 422;
 };
 
+export type listProcurementCalendarEventsResponse429 = {
+  data: TooManyRequestsResponse;
+  status: 429;
+};
+
 export type listProcurementCalendarEventsResponseSuccess =
   listProcurementCalendarEventsResponse200 & {
     headers: Headers;
   };
 export type listProcurementCalendarEventsResponseError = (
+  | listProcurementCalendarEventsResponse400
   | listProcurementCalendarEventsResponse401
   | listProcurementCalendarEventsResponse403
   | listProcurementCalendarEventsResponse422
+  | listProcurementCalendarEventsResponse429
 ) & {
   headers: Headers;
 };
@@ -893,7 +905,7 @@ export const getListProcurementCalendarEventsUrl = (
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["sourceTypes[]", "statuses[]"];
+    const explodeParameters = ["sourceTypes", "statuses"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

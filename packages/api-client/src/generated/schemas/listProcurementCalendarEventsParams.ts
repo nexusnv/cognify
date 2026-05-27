@@ -18,8 +18,8 @@ export type ListProcurementCalendarEventsParams = {
    */
   to: string;
   view?: ListProcurementCalendarEventsView;
-  "sourceTypes[]"?: ProcurementCalendarSourceType[];
-  "statuses[]"?: ProcurementCalendarEventStatus[];
+  sourceTypes?: ProcurementCalendarSourceType[];
+  statuses?: ProcurementCalendarEventStatus[];
   q?: string;
   /**
    * @minimum 1
