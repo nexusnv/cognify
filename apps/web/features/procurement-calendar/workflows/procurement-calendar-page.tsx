@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ProcurementCalendarEventSourceType,
@@ -66,13 +66,8 @@ export function ProcurementCalendarPage() {
     }));
   }, [calendar]);
 
-  useEffect(() => {
-    if (selectedEventId && !events.some((event) => event.id === selectedEventId)) {
-      setSelectedEventId(null);
-    }
-  }, [events, selectedEventId]);
-
   const selectedEvent = events.find((event) => event.id === selectedEventId) ?? null;
+  const visibleSelectedEventId = selectedEvent?.id ?? null;
   const isFiltered = Boolean(search.trim() || selectedSourceTypes.length > 0 || selectedStatuses.length > 0);
   const rangeLabel = formatDateRangeSummary(from, to);
 
@@ -159,7 +154,7 @@ export function ProcurementCalendarPage() {
                 {view === "month" ? (
                   <ProcurementCalendarMonthView
                     events={events}
-                    selectedEventId={selectedEventId}
+                    selectedEventId={visibleSelectedEventId}
                     onSelectEvent={setSelectedEventId}
                   />
                 ) : null}
@@ -168,7 +163,7 @@ export function ProcurementCalendarPage() {
                   <ProcurementCalendarWeekView
                     from={from}
                     events={events}
-                    selectedEventId={selectedEventId}
+                    selectedEventId={visibleSelectedEventId}
                     onSelectEvent={setSelectedEventId}
                   />
                 ) : null}
@@ -176,7 +171,7 @@ export function ProcurementCalendarPage() {
                 {view === "agenda" ? (
                   <ProcurementCalendarAgendaView
                     events={events}
-                    selectedEventId={selectedEventId}
+                    selectedEventId={visibleSelectedEventId}
                     onSelectEvent={setSelectedEventId}
                   />
                 ) : null}
