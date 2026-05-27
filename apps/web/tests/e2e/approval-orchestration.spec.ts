@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { signIn } from "./helpers/auth";
 
 test.describe("approval orchestration critical path", () => {
   test.describe.configure({ mode: "serial" });
@@ -83,17 +84,6 @@ test.describe("approval orchestration critical path", () => {
     await expect(page.getByText("Approval recorded")).toBeVisible();
   });
 });
-
-async function signIn(page: Page, email: string) {
-  await page.goto("/login");
-
-  await expect(page.getByRole("heading", { name: "Sign in to Cognify" })).toBeVisible();
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-
-  await expect(page.getByText("Signed in")).toBeVisible();
-}
 
 async function resetSession(page: Page) {
   await page.context().clearCookies();

@@ -4,11 +4,11 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { ProcurementCalendarEventSourceType } from "./procurementCalendarEventSourceType";
+import type { ProcurementCalendarSourceType } from "./procurementCalendarSourceType";
 import type { ProcurementCalendarAvailableSourceReason } from "./procurementCalendarAvailableSourceReason";
 
 export interface ProcurementCalendarAvailableSource {
-  sourceType: ProcurementCalendarEventSourceType;
+  sourceType: ProcurementCalendarSourceType;
   label: string;
   available: boolean;
   reason?: ProcurementCalendarAvailableSourceReason;

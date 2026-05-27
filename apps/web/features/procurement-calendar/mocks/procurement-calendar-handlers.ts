@@ -1,4 +1,5 @@
 import { HttpResponse, http } from "msw";
+import type { ProcurementCalendarEventStatus, ProcurementCalendarSourceType } from "@cognify/api-client/schemas";
 import { getFilteredProcurementCalendarFixture } from "./procurement-calendar-fixtures";
 
 export const procurementCalendarHandlers = [
@@ -14,8 +15,8 @@ export const procurementCalendarHandlers = [
       );
     }
 
-    const sourceTypes = url.searchParams.getAll("sourceTypes[]");
-    const statuses = url.searchParams.getAll("statuses[]");
+    const sourceTypes = url.searchParams.getAll("sourceTypes[]") as ProcurementCalendarSourceType[];
+    const statuses = url.searchParams.getAll("statuses[]") as ProcurementCalendarEventStatus[];
     const q = url.searchParams.get("q");
 
     return HttpResponse.json({
@@ -29,4 +30,3 @@ export const procurementCalendarHandlers = [
     });
   }),
 ];
-

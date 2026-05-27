@@ -299,6 +299,7 @@ export * from "./procurementCalendarEventSourceType";
 export * from "./procurementCalendarEventStatus";
 export * from "./procurementCalendarRange";
 export * from "./procurementCalendarRangeView";
+export * from "./procurementCalendarSourceType";
 export * from "./procurementCalendarSummary";
 export * from "./procurementCalendarSummaryBySourceType";
 export * from "./procurementCalendarSummaryByStatus";

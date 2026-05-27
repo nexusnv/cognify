@@ -49,7 +49,8 @@ final class RequisitionNeededByCalendarSource implements ProcurementCalendarSour
             )
             ->get()
             ->map(function (Requisition $requisition): ProcurementCalendarEvent {
-                $neededBy = CarbonImmutable::instance($requisition->needed_by_date)->startOfDay();
+                $neededByDate = CarbonImmutable::instance($requisition->needed_by_date)->startOfDay();
+                $neededByDueAt = CarbonImmutable::instance($requisition->needed_by_date)->endOfDay();
 
                 return new ProcurementCalendarEvent(
                     id: sprintf('requisition:%s:needed_by', (string) $requisition->id),
@@ -58,10 +59,10 @@ final class RequisitionNeededByCalendarSource implements ProcurementCalendarSour
                     sourceLabel: 'Requisition needed by',
                     title: (string) ($requisition->title ?: $requisition->number ?: 'Requisition needed by'),
                     description: $requisition->number ? sprintf('Requisition %s needed-by date', $requisition->number) : null,
-                    startsAt: $neededBy,
+                    startsAt: $neededByDate,
                     endsAt: null,
                     allDay: true,
-                    status: $this->statusFor($requisition, $neededBy),
+                    status: $this->statusFor($requisition, $neededByDueAt),
                     priority: 'normal',
                     record: [
                         'type' => 'requisition',

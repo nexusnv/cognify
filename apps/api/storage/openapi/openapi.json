@@ -603,6 +603,7 @@
           {
             "name": "from",
             "in": "query",
+            "description": "Inclusive range start. The range between from and to must not exceed 120 days; wider ranges return HTTP 422.",
             "required": true,
             "schema": {
               "type": "string",
@@ -612,6 +613,7 @@
           {
             "name": "to",
             "in": "query",
+            "description": "Inclusive range end. The range between from and to must not exceed 120 days; wider ranges return HTTP 422.",
             "required": true,
             "schema": {
               "type": "string",
@@ -640,7 +642,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/ProcurementCalendarEventSourceType"
+                "$ref": "#/components/schemas/ProcurementCalendarSourceType"
               }
             }
           },
@@ -8967,7 +8969,7 @@
         ],
         "properties": {
           "sourceType": {
-            "$ref": "#/components/schemas/ProcurementCalendarEventSourceType"
+            "$ref": "#/components/schemas/ProcurementCalendarSourceType"
           },
           "label": {
             "type": "string"
@@ -9081,6 +9083,16 @@
         }
       },
       "ProcurementCalendarEventSourceType": {
+        "type": "string",
+        "enum": [
+          "rfqDeadline",
+          "approvalDue",
+          "requisitionNeededBy",
+          "poHandoff",
+          "quotationValidity"
+        ]
+      },
+      "ProcurementCalendarSourceType": {
         "type": "string",
         "enum": [
           "rfqDeadline",

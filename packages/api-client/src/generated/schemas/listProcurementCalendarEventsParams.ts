@@ -5,14 +5,20 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListProcurementCalendarEventsView } from "./listProcurementCalendarEventsView";
-import type { ProcurementCalendarEventSourceType } from "./procurementCalendarEventSourceType";
+import type { ProcurementCalendarSourceType } from "./procurementCalendarSourceType";
 import type { ProcurementCalendarEventStatus } from "./procurementCalendarEventStatus";
 
 export type ListProcurementCalendarEventsParams = {
+  /**
+   * Inclusive range start. The range between from and to must not exceed 120 days; wider ranges return HTTP 422.
+   */
   from: string;
+  /**
+   * Inclusive range end. The range between from and to must not exceed 120 days; wider ranges return HTTP 422.
+   */
   to: string;
   view?: ListProcurementCalendarEventsView;
-  "sourceTypes[]"?: ProcurementCalendarEventSourceType[];
+  "sourceTypes[]"?: ProcurementCalendarSourceType[];
   "statuses[]"?: ProcurementCalendarEventStatus[];
   q?: string;
   /**

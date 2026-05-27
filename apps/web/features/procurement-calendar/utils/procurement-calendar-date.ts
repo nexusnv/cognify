@@ -2,12 +2,14 @@ import type { ProcurementCalendarEvent } from "@cognify/api-client/schemas";
 import type { ProcurementCalendarEventViewModel, ProcurementCalendarView } from "../types/procurement-calendar-view-model";
 
 const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "UTC",
   year: "numeric",
   month: "2-digit",
   day: "2-digit",
 });
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
   hour: "numeric",
   minute: "2-digit",
 });
@@ -26,7 +28,8 @@ export function toDateKey(date: Date) {
 }
 
 export function parseDateKey(value: string) {
-  return new Date(`${value}T00:00:00.000Z`);
+  const [year = "0", month = "1", day = "1"] = value.split("-");
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
 }
 
 export function addDays(dateKey: string, amount: number) {
@@ -48,7 +51,7 @@ export function getEventDateKey(event: ProcurementCalendarEvent) {
 
 export function formatDateHeading(dateKey: string) {
   const date = parseDateKey(dateKey);
-  return `${dateKey} · ${date.toLocaleDateString("en-US", { weekday: "short" })}`;
+  return `${dateKey} · ${date.toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short" })}`;
 }
 
 export function formatDateRangeSummary(from: string, to: string) {

@@ -80,7 +80,7 @@ final class PurchaseOrderHandoffCalendarSource implements ProcurementCalendarSou
             return 'completed';
         }
 
-        if ($date->isPast()) {
+        if ($date->lessThan(CarbonImmutable::today()->startOfDay())) {
             return 'overdue';
         }
 

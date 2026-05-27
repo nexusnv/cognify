@@ -2,8 +2,8 @@ import type {
   ListProcurementCalendarEventsView,
   ProcurementCalendarAvailableSource,
   ProcurementCalendarEvent,
-  ProcurementCalendarEventSourceType,
   ProcurementCalendarEventStatus,
+  ProcurementCalendarSourceType,
 } from "@cognify/api-client/schemas";
 
 export type ProcurementCalendarView = ListProcurementCalendarEventsView;
@@ -35,7 +35,7 @@ export const procurementCalendarStatusOptions: Array<{
   { value: "informational", label: "Informational" },
 ];
 
-const fallbackSourceLabels: Record<ProcurementCalendarEventSourceType, string> = {
+const fallbackSourceLabels: Record<ProcurementCalendarSourceType, string> = {
   rfqDeadline: "RFQ deadline",
   approvalDue: "Approval due",
   requisitionNeededBy: "Requisition needed by",
@@ -54,7 +54,7 @@ const statusLabels: Record<ProcurementCalendarEventStatus, string> = {
 };
 
 export function getProcurementCalendarSourceLabel(
-  sourceType: ProcurementCalendarEventSourceType,
+  sourceType: ProcurementCalendarSourceType,
   availableSources: ProcurementCalendarAvailableSource[],
 ) {
   return (

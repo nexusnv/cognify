@@ -1,8 +1,12 @@
+import {
+  ProcurementCalendarEventSourceType,
+  ProcurementCalendarSourceType,
+} from "@cognify/api-client/schemas";
 import type {
   ProcurementCalendarAvailableSource,
   ProcurementCalendarEvent,
   ProcurementCalendarEventCollection,
-  ProcurementCalendarEventSourceType,
+  ProcurementCalendarEventStatus,
 } from "@cognify/api-client/schemas";
 
 type CalendarFixtureState = {
@@ -14,7 +18,7 @@ const state: CalendarFixtureState = {
 };
 
 function buildAvailableSource(
-  sourceType: ProcurementCalendarEventSourceType,
+  sourceType: ProcurementCalendarSourceType,
   label: string,
   available: boolean,
   reason: string | null = null,
@@ -25,7 +29,7 @@ function buildAvailableSource(
 function buildEvent(overrides: Partial<ProcurementCalendarEvent>): ProcurementCalendarEvent {
   return {
     id: "calendar-event-1",
-    sourceType: "rfqDeadline",
+    sourceType: ProcurementCalendarEventSourceType.rfqDeadline,
     sourceId: "rfq-1",
     sourceLabel: "RFQ-2026-000041",
     title: "RFQ response due",
@@ -53,7 +57,7 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
   const events = [
     buildEvent({
       id: "calendar-event-rfq-deadline",
-      sourceType: "rfqDeadline",
+      sourceType: ProcurementCalendarEventSourceType.rfqDeadline,
       sourceId: "rfq-ready",
       sourceLabel: "RFQ-2026-000041",
       title: "RFQ response due",
@@ -66,7 +70,7 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
     }),
     buildEvent({
       id: "calendar-event-approval-due",
-      sourceType: "approvalDue",
+      sourceType: ProcurementCalendarEventSourceType.approvalDue,
       sourceId: "approval-task-1",
       sourceLabel: "Approval task #1",
       title: "Approval due",
@@ -79,7 +83,7 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
     }),
     buildEvent({
       id: "calendar-event-requisition-needed-by",
-      sourceType: "requisitionNeededBy",
+      sourceType: ProcurementCalendarEventSourceType.requisitionNeededBy,
       sourceId: "requisition-1",
       sourceLabel: "REQ-2026-001",
       title: "Requisition needed by date",
@@ -92,7 +96,7 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
     }),
     buildEvent({
       id: "calendar-event-po-handoff",
-      sourceType: "poHandoff",
+      sourceType: ProcurementCalendarEventSourceType.poHandoff,
       sourceId: "po-1",
       sourceLabel: "PO-2026-001",
       title: "PO handoff",
@@ -105,7 +109,7 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
     }),
     buildEvent({
       id: "calendar-event-quotation-validity",
-      sourceType: "quotationValidity",
+      sourceType: ProcurementCalendarEventSourceType.quotationValidity,
       sourceId: "quotation-1",
       sourceLabel: "QT-2026-041",
       title: "Quotation validity expiring",
@@ -142,13 +146,13 @@ function buildCalendarCollection(): ProcurementCalendarEventCollection {
       },
     },
     availableSources: [
-      buildAvailableSource("rfqDeadline", "RFQ deadline", true),
-      buildAvailableSource("approvalDue", "Approval due", true),
-      buildAvailableSource("requisitionNeededBy", "Requisition needed by", true),
-      buildAvailableSource("poHandoff", "PO handoff", true),
-      buildAvailableSource("quotationValidity", "Quotation validity", true),
-      buildAvailableSource("vendorDocumentExpiry", "Vendor document expiry", false, "No vendor document expiry events are available for this tenant."),
-      buildAvailableSource("contractRenewal", "Contract renewal", false, "No contract renewal events are available for this tenant."),
+      buildAvailableSource(ProcurementCalendarSourceType.rfqDeadline, "RFQ deadline", true),
+      buildAvailableSource(ProcurementCalendarSourceType.approvalDue, "Approval due", true),
+      buildAvailableSource(ProcurementCalendarSourceType.requisitionNeededBy, "Requisition needed by", true),
+      buildAvailableSource(ProcurementCalendarSourceType.poHandoff, "PO handoff", true),
+      buildAvailableSource(ProcurementCalendarSourceType.quotationValidity, "Quotation validity", true),
+      buildAvailableSource(ProcurementCalendarSourceType.vendorDocumentExpiry, "Vendor document expiry", false, "No vendor document expiry events are available for this tenant."),
+      buildAvailableSource(ProcurementCalendarSourceType.contractRenewal, "Contract renewal", false, "No contract renewal events are available for this tenant."),
     ],
     events,
   };
@@ -166,8 +170,8 @@ function matchesQuery(event: ProcurementCalendarEvent, q: string | null) {
 
 function matchesFilters(
   event: ProcurementCalendarEvent,
-  sourceTypes: string[],
-  statuses: string[],
+  sourceTypes: ProcurementCalendarSourceType[],
+  statuses: ProcurementCalendarEventStatus[],
   q: string | null,
   from: string,
   to: string,
@@ -184,8 +188,8 @@ export function getProcurementCalendarFixture() {
 export function getFilteredProcurementCalendarFixture(params: {
   from: string;
   to: string;
-  sourceTypes: string[];
-  statuses: string[];
+  sourceTypes: ProcurementCalendarSourceType[];
+  statuses: ProcurementCalendarEventStatus[];
   q: string | null;
 }) {
   const events = state.events.events.filter((event) =>

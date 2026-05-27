@@ -3,8 +3,8 @@
 import { Button } from "@cognify/ui";
 import type {
   ProcurementCalendarAvailableSource,
-  ProcurementCalendarEventSourceType,
   ProcurementCalendarEventStatus,
+  ProcurementCalendarSourceType,
 } from "@cognify/api-client/schemas";
 import {
   procurementCalendarStatusOptions,
@@ -22,8 +22,8 @@ type ProcurementCalendarFiltersProps = {
   onViewChange: (value: ProcurementCalendarView) => void;
   search: string;
   onSearchChange: (value: string) => void;
-  selectedSourceTypes: ProcurementCalendarEventSourceType[];
-  onSourceTypeToggle: (value: ProcurementCalendarEventSourceType) => void;
+  selectedSourceTypes: ProcurementCalendarSourceType[];
+  onSourceTypeToggle: (value: ProcurementCalendarSourceType) => void;
   selectedStatuses: ProcurementCalendarEventStatus[];
   onStatusToggle: (value: ProcurementCalendarEventStatus) => void;
   availableSources: ProcurementCalendarAvailableSource[];

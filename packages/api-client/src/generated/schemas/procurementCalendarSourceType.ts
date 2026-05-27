@@ -5,14 +5,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ProcurementCalendarEventSourceType =
-  (typeof ProcurementCalendarEventSourceType)[keyof typeof ProcurementCalendarEventSourceType];
+export type ProcurementCalendarSourceType =
+  (typeof ProcurementCalendarSourceType)[keyof typeof ProcurementCalendarSourceType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ProcurementCalendarEventSourceType = {
+export const ProcurementCalendarSourceType = {
   rfqDeadline: "rfqDeadline",
   approvalDue: "approvalDue",
   requisitionNeededBy: "requisitionNeededBy",
   poHandoff: "poHandoff",
   quotationValidity: "quotationValidity",
+  vendorDocumentExpiry: "vendorDocumentExpiry",
+  contractRenewal: "contractRenewal",
 } as const;

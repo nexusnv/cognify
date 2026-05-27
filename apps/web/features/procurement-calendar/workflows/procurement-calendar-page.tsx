@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type {
-  ProcurementCalendarEventSourceType,
   ProcurementCalendarEventStatus,
+  ProcurementCalendarSourceType,
 } from "@cognify/api-client/schemas";
 import { Button } from "@cognify/ui";
 import { useProcurementCalendarEvents } from "../hooks/use-procurement-calendar-events";
@@ -33,7 +33,7 @@ export function ProcurementCalendarPage() {
   const [from, setFrom] = useState(initialRange.from);
   const [to, setTo] = useState(initialRange.to);
   const [search, setSearch] = useState("");
-  const [selectedSourceTypes, setSelectedSourceTypes] = useState<ProcurementCalendarEventSourceType[]>([]);
+  const [selectedSourceTypes, setSelectedSourceTypes] = useState<ProcurementCalendarSourceType[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<ProcurementCalendarEventStatus[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 

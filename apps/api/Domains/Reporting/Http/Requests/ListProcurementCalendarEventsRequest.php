@@ -56,6 +56,10 @@ class ListProcurementCalendarEventsRequest extends FormRequest
                 return;
             }
 
+            if ($validator->errors()->has('from') || $validator->errors()->has('to')) {
+                return;
+            }
+
             $from = CarbonImmutable::parse((string) $this->input('from'));
             $to = CarbonImmutable::parse((string) $this->input('to'));
 

@@ -17,6 +17,7 @@ use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -139,6 +140,11 @@ class ProcurementCalendarApiTest extends TestCase
         [$tenant, $buyer] = $this->tenantUser('buyer');
 
         $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/procurement-calendar/events?from=not-a-date&to=2026-06-01')
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+
+        $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?from=2026-06-30&to=2026-06-01')
             ->assertStatus(422)
             ->assertJsonPath('error.code', 'validation_failed');
@@ -241,6 +247,51 @@ class ProcurementCalendarApiTest extends TestCase
             ))
             ->assertJsonPath('data.events', [])
             ->assertJsonMissing(['title' => 'Vendor document expiry event']);
+    }
+
+    public function test_calendar_requires_authentication(): void
+    {
+        $this->withHeader('X-Tenant-Id', '1')
+            ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
+            ->assertUnauthorized()
+            ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
+    public function test_calendar_stateful_request_without_session_is_unauthenticated(): void
+    {
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', '1')
+            ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
+            ->assertUnauthorized()
+            ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
+    public function test_same_day_all_day_sources_are_not_overdue_until_after_the_day(): void
+    {
+        $today = CarbonImmutable::today()->toDateString();
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $requester] = $this->tenantUser('requester', $tenant);
+        $requisition = $this->createSubmittedRequisition($tenant, $requester, [
+            'title' => 'Same day needed by',
+            'needed_by_date' => $today,
+        ]);
+        $rfq = $this->createDraftRfq($tenant, $requisition, $buyer);
+        $vendor = $this->createVendor($tenant, 'Same Day Vendor');
+        $invitation = $this->createRfqInvitation($tenant, $rfq, $vendor);
+        $quotation = $this->createQuotation($tenant, $rfq, $invitation, $vendor, $buyer);
+        $version = $this->createQuotationVersion($tenant, $quotation, $buyer);
+        $recommendation = $this->createAwardRecommendation($tenant, $rfq, $quotation, $version, $buyer);
+        $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
+            'number' => 'POH-SAME-DAY',
+            'requested_po_date' => $today,
+        ]);
+        $tomorrow = CarbonImmutable::today()->addDay()->toDateString();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/procurement-calendar/events?sourceTypes[]=requisitionNeededBy&sourceTypes[]=poHandoff&from={$today}&to={$tomorrow}")
+            ->assertOk()
+            ->assertJsonPath('data.summary.total', 2)
+            ->assertJsonPath('data.summary.byStatus.overdue', 0);
     }
 
     /**

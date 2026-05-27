@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { createRequisitionResponse201 } from "@cognify/api-client";
+import { signIn } from "./helpers/auth";
 
 test.describe("requisition authoring critical path", () => {
   test("logs in, saves a draft, applies a template, selects a suggestion, and shows a stale-save conflict", async ({
@@ -66,14 +67,3 @@ test.describe("requisition authoring critical path", () => {
     await expect(page.getByLabel("Title")).toHaveValue("Field laptop refresh v2");
   });
 });
-
-async function signIn(page: import("@playwright/test").Page) {
-  await page.goto("/login");
-
-  await expect(page.getByRole("heading", { name: "Sign in to Cognify" })).toBeVisible();
-  await page.getByLabel("Email").fill("test@example.com");
-  await page.getByLabel("Password").fill("password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-
-  await expect(page.getByText("Signed in")).toBeVisible();
-}
