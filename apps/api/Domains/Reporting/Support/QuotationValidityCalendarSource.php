@@ -74,7 +74,7 @@ final class QuotationValidityCalendarSource implements ProcurementCalendarSource
                     startsAt: $startsAt,
                     endsAt: null,
                     allDay: true,
-                    status: $this->statusFor($startsAt),
+                    status: 'informational',
                     priority: 'low',
                     record: [
                         'type' => 'quotation',
@@ -85,7 +85,6 @@ final class QuotationValidityCalendarSource implements ProcurementCalendarSource
                     context: array_filter([
                         'number' => $quotation->number,
                     ], static fn (mixed $value): bool => $value !== null && $value !== ''),
-                    summaryWeight: $quotation->valid_until !== null && $quotation->currentVersion?->valid_until !== null ? 2 : 1,
                 );
             })
             ->filter()
@@ -103,10 +102,5 @@ final class QuotationValidityCalendarSource implements ProcurementCalendarSource
         }
 
         return CarbonImmutable::instance($date);
-    }
-
-    private function statusFor(CarbonImmutable $date): string
-    {
-        return $date->isPast() ? 'overdue' : 'scheduled';
     }
 }

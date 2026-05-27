@@ -47,7 +47,7 @@ class ProcurementCalendarApiTest extends TestCase
         $this->createPurchaseOrderRequestHandoff($tenant, $recommendation, $rfq, $quotation, $version, $buyer, [
             'requested_po_date' => '2026-06-21',
         ]);
-        $expectedScheduledEvents = 7;
+        $expectedScheduledEvents = 5;
 
         $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/procurement-calendar/events?from=2026-06-01&to=2026-06-30')
@@ -55,6 +55,7 @@ class ProcurementCalendarApiTest extends TestCase
             ->assertJsonPath('data.range.from', '2026-06-01')
             ->assertJsonPath('data.range.to', '2026-06-30')
             ->assertJsonPath('data.summary.byStatus.scheduled', $expectedScheduledEvents)
+            ->assertJsonPath('data.summary.byStatus.informational', 1)
             ->assertJsonPath('data.summary.bySourceType.rfqDeadline', 2)
             ->assertJsonPath('data.summary.bySourceType.approvalDue', 1)
             ->assertJsonPath('data.summary.bySourceType.requisitionNeededBy', 1)

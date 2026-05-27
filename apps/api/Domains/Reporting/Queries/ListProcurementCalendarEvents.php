@@ -133,7 +133,7 @@ final class ListProcurementCalendarEvents
         ]);
 
         foreach ($events as $event) {
-            $summary->put($event->status, (int) $summary->get($event->status, 0) + $event->summaryWeight);
+            $summary->put($event->status, (int) $summary->get($event->status, 0) + 1);
         }
 
         return $summary->all();

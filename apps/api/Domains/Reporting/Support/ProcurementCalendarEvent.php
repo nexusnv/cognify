@@ -24,7 +24,6 @@ final class ProcurementCalendarEvent
         public readonly string $priority,
         public readonly ?array $record,
         public readonly array $context = [],
-        public readonly int $summaryWeight = 1,
     ) {}
 
     /**
