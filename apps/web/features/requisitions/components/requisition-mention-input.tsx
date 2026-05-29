@@ -23,16 +23,17 @@ export function RequisitionMentionInput({
         <PopoverContent className="w-64 p-2" align="start">
             <div className="space-y-1">
               {candidates.map((candidate) => (
-                <button
+                <Button
                   key={candidate.id}
                   type="button"
-                  className="block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  variant="ghost"
+                  className="h-auto w-full justify-start px-2 py-1.5 text-left text-sm"
                   onClick={() => {
                     if (!selectedIds.includes(candidate.id)) onChange([...selectedIds, candidate.id]);
                   }}
                 >
                   {candidate.name}
-                </button>
+                </Button>
               ))}
             </div>
         </PopoverContent>

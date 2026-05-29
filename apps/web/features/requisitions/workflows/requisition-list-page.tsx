@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Button, Input, NativeSelect } from "@cognify/ui";
+import { Button, Card, CardContent, Input, NativeSelect } from "@cognify/ui";
 import { useDataTableState } from "@/components/data-table/use-data-table-state";
 import { useRequisitions } from "../hooks/use-requisitions";
 import type { RequisitionQueuePreset, RequisitionStatus } from "../types/requisition-view-model";
@@ -114,7 +114,8 @@ export function RequisitionListPage() {
         ))}
       </div>
 
-      <div className="grid gap-3 rounded-md border p-3 md:grid-cols-2 xl:grid-cols-4">
+      <Card>
+        <CardContent className="grid gap-3 pt-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="space-y-1.5 text-sm font-medium">
           Search
           <Input
@@ -191,7 +192,8 @@ export function RequisitionListPage() {
         >
           Clear
         </Button>
-      </div>
+        </CardContent>
+      </Card>
 
       <RequisitionsTable
         requisitions={sortedRequisitions}

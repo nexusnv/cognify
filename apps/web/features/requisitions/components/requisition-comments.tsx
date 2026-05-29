@@ -51,7 +51,7 @@ export function RequisitionComments({
           <p className="text-sm text-muted-foreground">No comments yet.</p>
         ) : null}
         {(commentsQuery.data ?? []).map((comment) => (
-          <article key={comment.id} className="rounded-md border p-3 text-sm">
+          <article key={comment.id} className="rounded-md bg-muted/30 p-3 text-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">{comment.author.name}</p>
@@ -73,7 +73,7 @@ export function RequisitionComments({
       </ScrollArea>
       {canComment ? (
         <form
-          className="space-y-3 rounded-md border p-4"
+          className="space-y-3 rounded-md bg-muted/30 p-4"
           onSubmit={(event) => {
             event.preventDefault();
             if (!body.trim()) return;

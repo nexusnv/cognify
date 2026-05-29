@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, NativeSelect, Textarea } from "@cognify/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { getApiValidationErrors } from "@cognify/api-client";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { FormField } from "@/components/forms/form-field";
@@ -467,8 +467,11 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-5">
-          <section className="space-y-3 rounded-md border p-4">
-            <h2 className="text-base font-semibold">Request summary</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Request summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
             <FormField htmlFor="title" label="Title" error={errors.title?.[0]} required>
               <Input
                 id="title"
@@ -508,7 +511,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 disabled={!canEdit}
               />
             </FormField>
-          </section>
+            </CardContent>
+          </Card>
 
           <RequisitionTemplatePicker
             templates={templatesQuery.data ?? []}
@@ -516,17 +520,21 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             onApply={handleApplyTemplate}
           />
 
-          <section id="line-items" className="space-y-3 rounded-md border p-4">
+          <Card id="line-items">
+            <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold">Line items</h2>
+              <CardTitle>Line items</CardTitle>
               <Button type="button" variant="outline" onClick={addLineItem} disabled={!canEdit}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add item
               </Button>
             </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
             <div className="space-y-4">
               {values.lineItems.map((item, index) => (
-                <div key={index} className="rounded-md border p-3">
+                <Card key={index}>
+                  <CardContent className="pt-4">
                   <div className="grid gap-3 md:grid-cols-2">
                     <FormField
                       htmlFor={`item-name-${index}`}
@@ -638,7 +646,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       }));
                     }}
                   />
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
             {hasLineItemErrors ? (
@@ -646,10 +655,14 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 {lineItemErrorMessage ?? "Review the highlighted line item fields before submitting."}
               </p>
             ) : null}
-          </section>
+            </CardContent>
+          </Card>
 
-          <section className="space-y-3 rounded-md border p-4">
-            <h2 className="text-base font-semibold">Optional context</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Optional context</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
             <div className="grid gap-3 md:grid-cols-2">
               {renderDepartmentField()}
               <FormField htmlFor="project-id" label="Project" error={errors.projectId?.[0]}>
@@ -687,7 +700,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 </FormField>
               </div>
             </div>
-          </section>
+            </CardContent>
+          </Card>
         </div>
 
         <SubmissionChecklist values={values} />

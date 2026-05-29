@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Pencil, Send } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@cognify/ui";
+import { Alert, AlertDescription, AlertTitle, Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { AttachmentList } from "@/features/attachments/components/attachment-list";
 import { AttachmentUploader } from "@/features/attachments/components/attachment-uploader";
@@ -50,17 +50,13 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
 
   if (requisitionQuery.isLoading) {
     return (
-      <div className="rounded-md border p-4 text-sm text-muted-foreground">
-        Loading requisition workspace
-      </div>
+      <Card><CardContent className="pt-6 text-sm text-muted-foreground">Loading requisition workspace</CardContent></Card>
     );
   }
 
   if (requisitionQuery.isError || !requisition) {
     return (
-      <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        Requisition could not be loaded.
-      </div>
+      <Alert variant="destructive"><AlertTitle>Requisition</AlertTitle><AlertDescription>Requisition could not be loaded.</AlertDescription></Alert>
     );
   }
 
@@ -74,22 +70,20 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
   const actions = (
     <>
       {requisition.permissions.canSubmit ? (
-        <Link
-          href={`/requisitions/${requisition.id}/edit`}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-foreground px-3 text-sm font-medium text-background"
-        >
-          <Send className="h-4 w-4" aria-hidden="true" />
-          Review and submit
-        </Link>
+        <Button asChild className="min-h-11 w-full">
+          <Link href={`/requisitions/${requisition.id}/edit`}>
+            <Send className="h-4 w-4" aria-hidden="true" />
+            Review and submit
+          </Link>
+        </Button>
       ) : null}
       {requisition.permissions.canUpdate ? (
-        <Link
-          href={`/requisitions/${requisition.id}/edit`}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium"
-        >
-          <Pencil className="h-4 w-4" aria-hidden="true" />
-          Edit draft
-        </Link>
+        <Button asChild variant="outline" className="min-h-11 w-full">
+          <Link href={`/requisitions/${requisition.id}/edit`}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit draft
+          </Link>
+        </Button>
       ) : null}
       {requisition.permissions.canResubmit ? (
         <Button
@@ -232,43 +226,40 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
             }}
           />
           <RequisitionApprovalSummary requisitionId={requisition.id} />
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Quotation readiness</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <Card>
+            <CardHeader><CardTitle>Quotation readiness</CardTitle></CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
               Buyer intake, sourcing packages, and quotation comparisons are deferred to later
               workflow slices.
-            </p>
-          </section>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Evidence</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Evidence</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
               Upload supporting files directly in the requisition workspace.
-            </p>
-            <a
-              href="#evidence"
-              className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
-            >
-              Jump to evidence
-            </a>
-          </section>
+              </p>
+              <Button asChild variant="outline" className="mt-3">
+                <Link href="#evidence">Jump to evidence</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </>
       }
     >
       <RequisitionCorrectionPanel requisition={requisition} />
 
-      <section id="overview" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Overview</h2>
-        <p className="mt-2 text-sm leading-6">{requisition.businessJustification}</p>
-      </section>
+      <Card id="overview">
+        <CardHeader><CardTitle>Overview</CardTitle></CardHeader>
+        <CardContent><p className="text-sm leading-6">{requisition.businessJustification}</p></CardContent>
+      </Card>
 
-      <section id="line-items" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Line items</h2>
-        <div className="mt-3 space-y-2">
+      <Card id="line-items">
+        <CardHeader><CardTitle>Line items</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
           {requisition.lineItems.map((item, index) => (
-            <div
-              key={item.id ?? `${item.name}-${index}`}
-              className="grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-[minmax(0,1fr)_7rem_8rem]"
-            >
+            <Card key={item.id ?? `${item.name}-${index}`}>
+              <CardContent className="grid gap-2 pt-4 text-sm sm:grid-cols-[minmax(0,1fr)_7rem_8rem]">
               <span className="font-medium">{item.name}</span>
               <span className="tabular-nums">
                 {item.quantity} {item.unit}
@@ -279,36 +270,37 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
                   item.currency ?? requisition.currency ?? "MYR",
                 )}
               </span>
-            </div>
+              </CardContent>
+            </Card>
           ))}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section id="evidence" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Evidence</h2>
-        <div className="mt-3 space-y-3">
+      <Card id="evidence">
+        <CardHeader><CardTitle>Evidence</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
           <AttachmentUploader requisitionId={requisition.id} />
           <AttachmentList requisitionId={requisition.id} />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section id="comments" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Comments</h2>
-        <div className="mt-3">
+      <Card id="comments">
+        <CardHeader><CardTitle>Comments</CardTitle></CardHeader>
+        <CardContent>
           <RequisitionComments
             requisitionId={requisition.id}
             canComment={requisition.permissions.canComment}
             canMention={requisition.permissions.canMention}
           />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section id="activity" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Activity</h2>
-        <div className="mt-3">
+      <Card id="activity">
+        <CardHeader><CardTitle>Activity</CardTitle></CardHeader>
+        <CardContent>
           <RequisitionActivityTimeline events={activityQuery.data?.data ?? []} />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </RecordWorkspaceLayout>
   );
 }

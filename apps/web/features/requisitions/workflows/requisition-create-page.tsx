@@ -3,23 +3,20 @@
 import { RequisitionApprovalSummary } from "../components/requisition-approval-summary";
 import { RequisitionForm } from "../forms/requisition-form";
 import { useRequisition } from "../hooks/use-requisition";
+import { Alert, AlertDescription, AlertTitle, Card, CardContent } from "@cognify/ui";
 
 export function RequisitionCreatePage({ requisitionId }: { requisitionId?: string } = {}) {
   const requisitionQuery = useRequisition(requisitionId);
 
   if (requisitionId && requisitionQuery.isLoading) {
     return (
-      <div className="rounded-md border p-4 text-sm text-muted-foreground">
-        Loading requisition draft
-      </div>
+      <Card><CardContent className="pt-6 text-sm text-muted-foreground">Loading requisition draft</CardContent></Card>
     );
   }
 
   if (requisitionId && (requisitionQuery.isError || !requisitionQuery.data)) {
     return (
-      <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        Requisition draft could not be loaded.
-      </div>
+      <Alert variant="destructive"><AlertTitle>Requisition draft</AlertTitle><AlertDescription>Requisition draft could not be loaded.</AlertDescription></Alert>
     );
   }
 

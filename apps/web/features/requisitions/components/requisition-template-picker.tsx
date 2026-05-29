@@ -21,7 +21,8 @@ export function RequisitionTemplatePicker({
       </CardHeader>
       <CardContent className="space-y-3">
         {templates.map((template) => (
-          <div key={template.id} className="rounded-md border p-3">
+          <Card key={template.id}>
+            <CardContent className="pt-4">
             <p className="font-medium">{template.name}</p>
             {template.description ? (
               <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
@@ -51,9 +52,10 @@ export function RequisitionTemplatePicker({
                 <PopoverContent className="w-64 text-sm" align="start">
                   Replace mode overwrites existing draft fields with template defaults.
                 </PopoverContent>
-              </Popover>
+                </Popover>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </CardContent>
     </Card>

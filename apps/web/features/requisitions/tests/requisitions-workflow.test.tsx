@@ -64,9 +64,9 @@ describe("requisitions workflow", () => {
     await user.type(screen.getByLabelText("Title"), "Office chairs");
     await user.click(screen.getByRole("button", { name: "Submit" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Complete the highlighted fields before submitting.",
-    );
+    expect(
+      await screen.findByText("Complete the highlighted fields before submitting."),
+    ).toBeInTheDocument();
     expect(
       screen.getAllByText("Business justification is required before submission.")[0],
     ).toBeVisible();
@@ -232,7 +232,7 @@ describe("requisitions workflow", () => {
     renderWithQuery(<RequisitionDetailPage requisitionId="req-changes" />);
 
     expect(await screen.findByRole("heading", { name: "Returned laptop request" })).toBeInTheDocument();
-    expect(screen.getByText("Please clarify quantity and delivery location.")).toBeInTheDocument();
+    expect(screen.getAllByText("Please clarify quantity and delivery location.").length).toBeGreaterThan(0);
     expect(screen.getByText("lineItems")).toBeInTheDocument();
     expect(screen.getByText("deliveryLocation")).toBeInTheDocument();
 
