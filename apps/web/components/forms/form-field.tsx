@@ -1,5 +1,6 @@
 import { cloneElement } from "react";
 import type { ReactElement } from "react";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@cognify/ui";
 
 type FieldControlProps = React.InputHTMLAttributes<HTMLInputElement> &
   React.TextareaHTMLAttributes<HTMLTextAreaElement> &
@@ -27,17 +28,17 @@ export function FormField({
     undefined;
 
   return (
-    <div className="space-y-1.5">
+    <Field className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <label htmlFor={htmlFor} className="block text-sm font-medium">
+        <FieldLabel htmlFor={htmlFor} className="text-sm font-medium">
           {label}
-        </label>
+        </FieldLabel>
         {required ? <span className="text-xs text-muted-foreground">Required</span> : null}
       </div>
       {description ? (
-        <p id={descriptionId} className="text-sm text-muted-foreground">
+        <FieldDescription id={descriptionId} className="text-sm text-muted-foreground">
           {description}
-        </p>
+        </FieldDescription>
       ) : null}
       {cloneElement(children, {
         id: children.props.id ?? htmlFor,
@@ -47,10 +48,10 @@ export function FormField({
         required: required || children.props.required,
       })}
       {error ? (
-        <p id={errorId} className="text-sm text-red-700">
+        <FieldError id={errorId} className="text-sm text-red-700">
           {error}
-        </p>
+        </FieldError>
       ) : null}
-    </div>
+    </Field>
   );
 }
