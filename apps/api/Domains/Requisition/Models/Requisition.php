@@ -2,12 +2,14 @@
 
 namespace Domains\Requisition\Models;
 
+use App\Auth\TenantRole;
 use Domains\Attachment\Models\Attachment;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\States\RequisitionStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -150,5 +152,28 @@ class Requisition extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(ProcurementProject::class, 'project_id');
+    }
+
+    /**
+     * @param Builder<Requisition> $query
+     * @return Builder<Requisition>
+     */
+    public function scopeVisibleTo(Builder $query, User $user, ?string $role, int $tenantId): Builder
+    {
+        $query->where('tenant_id', $tenantId);
+
+        if ($role === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($role === TenantRole::Admin->value) {
+            return $query;
+        }
+
+        if ($role === TenantRole::Buyer->value || $role === TenantRole::Approver->value) {
+            return $query->where('status', RequisitionStatus::Submitted->value);
+        }
+
+        return $query->where('requester_id', $user->id);
     }
 }

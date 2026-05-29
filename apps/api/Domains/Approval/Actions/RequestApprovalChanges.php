@@ -6,7 +6,9 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Actions\Concerns\TerminatesApprovalInstanceTasks;
 use Domains\Approval\Models\ApprovalDelegation;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalDelegationStatus;
@@ -20,6 +22,8 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RequestApprovalChanges
 {
+    use TerminatesApprovalInstanceTasks;
+
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly ApprovalSubjectRegistry $subjectRegistry,
@@ -31,6 +35,7 @@ class RequestApprovalChanges
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion, string $reason, array $requestedFields = []): ApprovalTask
     {
         return DB::transaction(function () use ($tenant, $actor, $task, $lockVersion, $reason, $requestedFields): ApprovalTask {
+            $instance = $this->lockedInstanceForTask($tenant, $task);
             $task = ApprovalTask::query()->where('tenant_id', $tenant->id)->whereKey($task->id)->lockForUpdate()->firstOrFail();
 
             if ((int) $task->assignee_id !== (int) $actor->id) {
@@ -61,6 +66,10 @@ class RequestApprovalChanges
                 throw new ConflictHttpException('Approval task has changed. Refresh before trying again.');
             }
 
+            if ($instance->status !== ApprovalInstanceStatus::Active) {
+                throw new ConflictHttpException('Approval instance is no longer active.');
+            }
+
             $task->forceFill([
                 'status' => ApprovalTaskStatus::ChangesRequested,
                 'decision' => 'changes_requested',
@@ -75,20 +84,12 @@ class RequestApprovalChanges
                 'status' => ApprovalStageStatus::Completed,
                 'completed_at' => now(),
             ]);
-            $instance = $task->instance()->lockForUpdate()->firstOrFail();
-
-            if ($instance->status !== ApprovalInstanceStatus::Active) {
-                throw new ConflictHttpException('Approval instance is no longer active.');
-            }
 
             $instance->forceFill([
                 'status' => ApprovalInstanceStatus::ChangesRequested,
                 'completed_at' => now(),
             ])->save();
-            $task->instance->tasks()
-                ->where('id', '!=', $task->id)
-                ->where('status', ApprovalTaskStatus::Active)
-                ->update(['status' => ApprovalTaskStatus::Cancelled]);
+            $this->cancelRemainingTasks($instance, $task);
 
             $subject = $task->subject;
             if ($subject instanceof Model) {
@@ -107,5 +108,19 @@ class RequestApprovalChanges
 
             return $task->refresh()->load(['assignee', 'stage', 'instance', 'subject']);
         });
+    }
+
+    private function lockedInstanceForTask(Tenant $tenant, ApprovalTask $task): ApprovalInstance
+    {
+        $taskSnapshot = ApprovalTask::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($task->id)
+            ->firstOrFail();
+
+        return ApprovalInstance::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($taskSnapshot->approval_instance_id)
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 }

@@ -28,6 +28,16 @@ interface ApprovalSubjectHandler
 
     public function notificationBody(Model $subject): string;
 
+    public function canDelegateTo(Model $subject, User $delegate): bool;
+
+    public function delegationValidationMessage(Model $subject): string;
+
+    /**
+     * @param  array<string, mixed>  $stageTemplate
+     * @return iterable<int, User>
+     */
+    public function escalationFallbackRecipients(Tenant $tenant, Model $subject, array $stageTemplate): iterable;
+
     public function onRouted(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor): void;
 
     public function onApproved(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor): void;

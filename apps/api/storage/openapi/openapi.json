@@ -5094,7 +5094,7 @@
         }
       }
     },
-    "/api/quotations/{quotation}/versions/{version}": {
+    "/api/quotations/{quotation}/versions/{versionNumber}": {
       "get": {
         "operationId": "showQuotationVersion",
         "tags": [
@@ -5110,7 +5110,7 @@
             }
           },
           {
-            "name": "version",
+            "name": "versionNumber",
             "in": "path",
             "required": true,
             "schema": {
@@ -6851,6 +6851,48 @@
             "$ref": "#/components/responses/InvalidState"
           }
         }
+      },
+      "post": {
+        "operationId": "recordPurchaseOrderRequestHandoffJsonExport",
+        "summary": "Record purchase order request handoff JSON export",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded purchase order request handoff JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
       }
     },
     "/api/po-handoffs/{handoff}/export.csv": {
@@ -6874,6 +6916,48 @@
         "responses": {
           "200": {
             "description": "Purchase order request handoff CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recordPurchaseOrderRequestHandoffCsvExport",
+        "summary": "Record purchase order request handoff CSV export",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded purchase order request handoff CSV export",
             "content": {
               "text/csv": {
                 "schema": {
@@ -18491,7 +18575,14 @@
         ],
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/PurchaseOrderRequestHandoff"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderRequestHandoff"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },

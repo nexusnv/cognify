@@ -38,9 +38,11 @@ class ApproveApprovalTask
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion): ApprovalTask
     {
         return DB::transaction(function () use ($tenant, $actor, $task, $lockVersion): ApprovalTask {
+            $instance = $this->lockedInstanceForTask($tenant, $task);
             $task = $this->lockedTask($tenant, $task);
             $this->authorizeAssignee($actor, $task);
             $this->assertActiveTask($task, $lockVersion);
+            $this->assertActiveInstance($instance);
 
             $task->forceFill([
                 'status' => ApprovalTaskStatus::Approved,
@@ -62,7 +64,6 @@ class ApproveApprovalTask
                     'completed_at' => now(),
                 ])->save();
 
-                $instance = $task->instance()->lockForUpdate()->firstOrFail();
                 $nextStage = $this->nextBlockedStage($instance, $stage);
 
                 if ($nextStage instanceof ApprovalStage) {
@@ -104,6 +105,20 @@ class ApproveApprovalTask
 
             return $task->refresh()->load(['assignee', 'stage', 'instance', 'subject']);
         });
+    }
+
+    private function lockedInstanceForTask(Tenant $tenant, ApprovalTask $task): ApprovalInstance
+    {
+        $taskSnapshot = ApprovalTask::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($task->id)
+            ->firstOrFail();
+
+        return ApprovalInstance::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($taskSnapshot->approval_instance_id)
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 
     private function stageShouldComplete(ApprovalStage $stage, ApprovalTask $decidingTask): bool
@@ -248,6 +263,13 @@ class ApproveApprovalTask
 
         if ($task->status !== ApprovalTaskStatus::Active) {
             throw new ConflictHttpException('Only active approval tasks can be actioned.');
+        }
+    }
+
+    private function assertActiveInstance(ApprovalInstance $instance): void
+    {
+        if ($instance->status !== ApprovalInstanceStatus::Active) {
+            throw new ConflictHttpException('Approval instance is no longer active.');
         }
     }
 

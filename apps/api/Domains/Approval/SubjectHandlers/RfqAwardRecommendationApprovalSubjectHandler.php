@@ -15,6 +15,7 @@ use Domains\Quotation\Actions\RequestRfqAwardRecommendationChanges;
 use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Support\RfqScorecardCalculator;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 final class RfqAwardRecommendationApprovalSubjectHandler implements ApprovalSubjectHandler
 {
@@ -148,6 +149,30 @@ final class RfqAwardRecommendationApprovalSubjectHandler implements ApprovalSubj
         return 'Award recommendation for '.($subject->recommendedVendor?->name ?? $subject->rfq?->number ?? 'RFQ');
     }
 
+    public function canDelegateTo(Model $subject, User $delegate): bool
+    {
+        return true;
+    }
+
+    public function delegationValidationMessage(Model $subject): string
+    {
+        return 'The selected delegate cannot approve this subject.';
+    }
+
+    public function escalationFallbackRecipients(Tenant $tenant, Model $subject, array $stageTemplate): iterable
+    {
+        $fallbackApprovers = collect($stageTemplate['fallbackApprovers'] ?? []);
+
+        if ($fallbackApprovers->isEmpty()) {
+            return $this->usersForRole($tenant, 'buyer')
+                ->merge($this->usersForRole($tenant, 'admin'))
+                ->unique('id')
+                ->values();
+        }
+
+        return $this->resolveFallbackApprovers($tenant, $fallbackApprovers);
+    }
+
     public function onRouted(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor): void
     {
         assert($subject instanceof RfqAwardRecommendation);
@@ -186,5 +211,44 @@ final class RfqAwardRecommendationApprovalSubjectHandler implements ApprovalSubj
             ->firstWhere('quotationId', (string) $recommendation->recommended_quotation_id);
 
         return is_array($total) ? (float) $total['weightedTotal'] : null;
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $fallbackApprovers
+     * @return Collection<int, User>
+     */
+    private function resolveFallbackApprovers(Tenant $tenant, Collection $fallbackApprovers): Collection
+    {
+        return $fallbackApprovers
+            ->flatMap(function (mixed $approver) use ($tenant): Collection {
+                if (! is_array($approver)) {
+                    return collect();
+                }
+
+                if (($approver['type'] ?? null) === 'user' && isset($approver['userId'])) {
+                    $user = $tenant->users()->whereKey((int) $approver['userId'])->first();
+
+                    return $user instanceof User ? collect([$user]) : collect();
+                }
+
+                if (($approver['type'] ?? null) === 'role' && isset($approver['role'])) {
+                    return $this->usersForRole($tenant, (string) $approver['role']);
+                }
+
+                return collect();
+            })
+            ->unique('id')
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    private function usersForRole(Tenant $tenant, string $role): Collection
+    {
+        return $tenant->users()
+            ->wherePivot('role', $role)
+            ->orderBy('users.id')
+            ->get();
     }
 }

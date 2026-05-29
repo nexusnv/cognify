@@ -79,7 +79,7 @@ class SubmitRequisition
         });
     }
 
-    private function validateSubmission(Requisition $requisition): void
+    public function validateSubmission(Requisition $requisition): void
     {
         $requisition->loadMissing('lineItems');
 

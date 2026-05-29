@@ -9,11 +9,12 @@ use App\Notifications\NotificationData;
 use App\Notifications\NotificationPreferenceDefaults;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
+use Domains\Approval\Contracts\ApprovalSubjectHandler;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalTaskStatus;
-use Domains\Requisition\Models\Requisition;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class EscalateOverdueApprovalTasks
@@ -21,6 +22,7 @@ class EscalateOverdueApprovalTasks
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
+        private readonly ApprovalSubjectRegistry $subjects,
     ) {}
 
     public function handle(Tenant $tenant): int
@@ -32,7 +34,7 @@ class EscalateOverdueApprovalTasks
                 'assignee',
                 'originalAssignee',
                 'stage.instance.policyVersion',
-                'subject.requester',
+                'subject',
             ])
             ->where('tenant_id', $tenant->id)
             ->where('status', ApprovalTaskStatus::Active)
@@ -62,7 +64,7 @@ class EscalateOverdueApprovalTasks
                     'assignee',
                     'originalAssignee',
                     'stage.instance.policyVersion',
-                    'subject.requester',
+                    'subject',
                 ])
                 ->where('tenant_id', $tenant->id)
                 ->whereKey($task->id)
@@ -82,7 +84,10 @@ class EscalateOverdueApprovalTasks
             $policyVersion = $instance->policyVersion;
             $routeTemplate = $policyVersion?->route_template ?? ['stages' => []];
             $stageTemplate = $this->stageTemplateFor($routeTemplate['stages'] ?? [], $stage->name);
-            $fallbackAssignee = $this->fallbackAssigneeForTask($tenant, $task, $stageTemplate);
+            $subject = $task->subject;
+            assert($subject instanceof Model);
+            $handler = $this->subjects->forSubject($subject);
+            $fallbackAssignee = $this->fallbackAssigneeForTask($tenant, $task, $stageTemplate, $handler);
             $now = now();
             $escalationKey = sha1(sprintf('%s|%s|%s', $task->id, $task->approval_stage_id, $task->due_at?->toISOString() ?? ''));
             $escalationMetadata = array_filter([
@@ -146,23 +151,19 @@ class EscalateOverdueApprovalTasks
             ));
 
             if ($fallbackAssignee instanceof User) {
-                $subject = $task->subject;
-
-                if ($subject instanceof Requisition) {
-                    $this->notificationRecorder->record($tenant, [$fallbackAssignee], new NotificationData(
-                        type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
-                        title: 'Approval task escalated',
-                        body: $subject->title,
-                        href: "/approvals/tasks/{$escalatedTask->id}",
-                        subject: $subject,
-                        subjectLabel: $subject->number,
-                        metadata: [
-                            'approvalTaskId' => (string) $task->id,
-                            'escalatedTaskId' => (string) $escalatedTask->id,
-                            'escalationKey' => $escalationKey,
-                        ],
-                    ));
-                }
+                $this->notificationRecorder->record($tenant, [$fallbackAssignee], new NotificationData(
+                    type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+                    title: 'Approval task escalated',
+                    body: $handler->notificationBody($subject),
+                    href: "/approvals/tasks/{$escalatedTask->id}",
+                    subject: $subject,
+                    subjectLabel: $handler->notificationSubjectLabel($subject),
+                    metadata: [
+                        'approvalTaskId' => (string) $task->id,
+                        'escalatedTaskId' => (string) $escalatedTask->id,
+                        'escalationKey' => $escalationKey,
+                    ],
+                ));
             }
 
             return true;
@@ -191,50 +192,14 @@ class EscalateOverdueApprovalTasks
     /**
      * @param  array<string, mixed>  $stageTemplate
      */
-    private function fallbackAssigneeForTask(Tenant $tenant, ApprovalTask $task, array $stageTemplate): ?User
+    private function fallbackAssigneeForTask(Tenant $tenant, ApprovalTask $task, array $stageTemplate, ApprovalSubjectHandler $handler): ?User
     {
-        $fallbackApprovers = collect($stageTemplate['fallbackApprovers'] ?? []);
+        $subject = $task->subject;
+        assert($subject instanceof Model);
 
-        if ($fallbackApprovers->isEmpty()) {
-            return $this->usersForRole($tenant, 'buyer')
-                ->merge($this->usersForRole($tenant, 'admin'))
-                ->unique('id')
-                ->values()
-                ->first();
-        }
-
-        $candidates = $fallbackApprovers
-            ->flatMap(function (mixed $approver) use ($tenant): Collection {
-                if (! is_array($approver)) {
-                    return collect();
-                }
-
-                if (($approver['type'] ?? null) === 'user' && isset($approver['userId'])) {
-                    $user = $tenant->users()->whereKey((int) $approver['userId'])->first();
-
-                    return $user instanceof User ? collect([$user]) : collect();
-                }
-
-                if (($approver['type'] ?? null) === 'role' && isset($approver['role'])) {
-                    return $this->usersForRole($tenant, (string) $approver['role']);
-                }
-
-                return collect();
-            })
+        return collect($handler->escalationFallbackRecipients($tenant, $subject, $stageTemplate))
             ->unique('id')
-            ->values();
-
-        return $candidates->first();
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    private function usersForRole(Tenant $tenant, string $role): Collection
-    {
-        return $tenant->users()
-            ->wherePivot('role', $role)
-            ->orderBy('users.id')
-            ->get();
+            ->values()
+            ->first();
     }
 }

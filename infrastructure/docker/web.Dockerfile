@@ -17,6 +17,10 @@ ENV COGNIFY_API_URL=${COGNIFY_API_URL}
 
 RUN pnpm build
 
+RUN chown -R node:node /app
+
+USER node
+
 EXPOSE 3000
 
 CMD ["pnpm", "start"]

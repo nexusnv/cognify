@@ -6,7 +6,9 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Actions\Concerns\TerminatesApprovalInstanceTasks;
 use Domains\Approval\Models\ApprovalDelegation;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalDelegationStatus;
@@ -20,6 +22,8 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RejectApprovalTask
 {
+    use TerminatesApprovalInstanceTasks;
+
     public function __construct(
         private readonly ApprovalSubjectRegistry $subjectRegistry,
         private readonly AuditRecorder $auditRecorder,
@@ -28,9 +32,11 @@ class RejectApprovalTask
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, int $lockVersion, string $reason): ApprovalTask
     {
         return DB::transaction(function () use ($tenant, $actor, $task, $lockVersion, $reason): ApprovalTask {
+            $instance = $this->lockedInstanceForTask($tenant, $task);
             $task = $this->lockedTask($tenant, $task);
             $this->authorizeAssignee($actor, $task);
             $this->assertActiveTask($task, $lockVersion);
+            $this->assertActiveInstance($instance);
 
             $task->forceFill([
                 'status' => ApprovalTaskStatus::Rejected,
@@ -45,20 +51,12 @@ class RejectApprovalTask
                 'status' => ApprovalStageStatus::Completed,
                 'completed_at' => now(),
             ]);
-            $instance = $task->instance()->lockForUpdate()->firstOrFail();
-
-            if ($instance->status !== ApprovalInstanceStatus::Active) {
-                throw new ConflictHttpException('Approval instance is no longer active.');
-            }
 
             $instance->forceFill([
                 'status' => ApprovalInstanceStatus::Rejected,
                 'completed_at' => now(),
             ])->save();
-            $task->instance->tasks()
-                ->where('id', '!=', $task->id)
-                ->where('status', ApprovalTaskStatus::Active)
-                ->update(['status' => ApprovalTaskStatus::Cancelled]);
+            $this->cancelRemainingTasks($instance, $task);
 
             $subject = $task->subject;
             if ($subject instanceof Model) {
@@ -77,6 +75,20 @@ class RejectApprovalTask
 
             return $task->refresh()->load(['assignee', 'stage', 'instance', 'subject']);
         });
+    }
+
+    private function lockedInstanceForTask(Tenant $tenant, ApprovalTask $task): ApprovalInstance
+    {
+        $taskSnapshot = ApprovalTask::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($task->id)
+            ->firstOrFail();
+
+        return ApprovalInstance::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($taskSnapshot->approval_instance_id)
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 
     private function lockedTask(Tenant $tenant, ApprovalTask $task): ApprovalTask
@@ -105,6 +117,13 @@ class RejectApprovalTask
 
         if ($task->status !== ApprovalTaskStatus::Active) {
             throw new ConflictHttpException('Only active approval tasks can be actioned.');
+        }
+    }
+
+    private function assertActiveInstance(ApprovalInstance $instance): void
+    {
+        if ($instance->status !== ApprovalInstanceStatus::Active) {
+            throw new ConflictHttpException('Approval instance is no longer active.');
         }
     }
 

@@ -235,7 +235,7 @@ class SearchApiTest extends TestCase
 
     public function test_vendor_search_ranks_status_matches_before_risk_matches(): void
     {
-        [$tenant, $requester] = $this->tenantUser('requester');
+        [$tenant, $buyer] = $this->tenantUser('buyer');
         $statusMatch = $this->createVendor($tenant, [
             'name' => 'Metro Facilities',
             'status' => 'preferred',
@@ -249,7 +249,7 @@ class SearchApiTest extends TestCase
             'risk_rating' => 'preferred',
         ]);
 
-        $response = $this->actingAsTenant($tenant, $requester)
+        $response = $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/search?query=preferred&types[]=vendor&limit=10');
 
         $response->assertOk()
@@ -260,20 +260,20 @@ class SearchApiTest extends TestCase
 
     public function test_search_accepts_repeated_types_parameters_from_client_serialization(): void
     {
-        [$tenant, $requester] = $this->tenantUser('requester');
+        [$tenant, $buyer] = $this->tenantUser('buyer');
         $vendor = $this->createVendor($tenant, [
             'name' => 'Alpha Office Supplies',
             'status' => 'preferred',
             'category' => 'Office supplies',
             'risk_rating' => 'low',
         ]);
-        $project = $this->createProject($tenant, $requester, [
+        $project = $this->createProject($tenant, $buyer, [
             'number' => 'PRJ-2026-ALPHA',
             'name' => 'Alpha Workplace Refresh',
             'status' => 'active',
         ]);
 
-        $response = $this->actingAsTenant($tenant, $requester)
+        $response = $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/search?query=alpha&types=vendor&types=project');
 
         $response->assertOk()
@@ -286,7 +286,7 @@ class SearchApiTest extends TestCase
 
     public function test_search_preview_records_fall_back_to_system_when_unlinked(): void
     {
-        [$tenant, $requester] = $this->tenantUser('requester');
+        [$tenant, $buyer] = $this->tenantUser('buyer');
         $rfq = $this->createRfq($tenant, [
             'number' => 'RFQ-2026-FALLBACK',
             'title' => 'Fallback office package',
@@ -304,7 +304,7 @@ class SearchApiTest extends TestCase
             'quotation_id' => $quotation->id,
         ]);
 
-        $response = $this->actingAsTenant($tenant, $requester)
+        $response = $this->actingAsTenant($tenant, $buyer)
             ->getJson('/api/search?query=fallback&types[]=rfq&types[]=quotation&types[]=award&limit=10');
 
         $response->assertOk()
@@ -412,6 +412,100 @@ class SearchApiTest extends TestCase
             ->assertJsonMissing(['title' => 'Alpha hidden furniture package'])
             ->assertJsonMissing(['title' => 'QUO-2026-HIDDEN'])
             ->assertJsonMissing(['title' => 'AWD-2026-HIDDEN']);
+    }
+
+    public function test_requester_search_omits_hidden_same_tenant_preview_records(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+
+        $visibleVendor = $this->createVendor($tenant, [
+            'name' => 'Omega Visible Office Supplies',
+        ]);
+        $visibleProject = $this->createProject($tenant, $requester, [
+            'number' => 'PRJ-2026-OMEGA-VISIBLE',
+            'name' => 'Omega Visible Workplace Refresh',
+            'status' => 'active',
+        ]);
+        $visibleRequisition = $this->createRequisition($tenant, $requester, [
+            'title' => 'Omega visible workplace refresh',
+            'number' => 'REQ-2026-OMEGA-VISIBLE',
+            'project_id' => $visibleProject->id,
+        ]);
+        $visibleRfq = $this->createRfq($tenant, [
+            'number' => 'RFQ-2026-OMEGA-VISIBLE',
+            'title' => 'Omega visible furniture package',
+            'status' => 'open',
+            'project_id' => $visibleProject->id,
+            'requisition_id' => $visibleRequisition->id,
+        ]);
+        $visibleQuotation = $this->createQuotation($tenant, [
+            'number' => 'QUO-2026-OMEGA-VISIBLE',
+            'status' => 'received',
+            'vendor_id' => $visibleVendor->id,
+            'rfq_id' => $visibleRfq->id,
+        ]);
+        $visibleAward = $this->createAward($tenant, [
+            'number' => 'AWD-2026-OMEGA-VISIBLE',
+            'status' => 'recommended',
+            'vendor_id' => $visibleVendor->id,
+            'project_id' => $visibleProject->id,
+            'rfq_id' => $visibleRfq->id,
+            'quotation_id' => $visibleQuotation->id,
+        ]);
+
+        $hiddenVendor = $this->createVendor($tenant, [
+            'name' => 'Omega Hidden Office Supplies',
+        ]);
+        $hiddenProject = $this->createProject($tenant, $otherRequester, [
+            'number' => 'PRJ-2026-OMEGA-HIDDEN',
+            'name' => 'Omega Hidden Workplace Refresh',
+            'status' => 'active',
+        ]);
+        $hiddenRequisition = $this->createRequisition($tenant, $otherRequester, [
+            'title' => 'Omega hidden workplace refresh',
+            'number' => 'REQ-2026-OMEGA-HIDDEN',
+            'project_id' => $hiddenProject->id,
+        ]);
+        $hiddenRfq = $this->createRfq($tenant, [
+            'number' => 'RFQ-2026-OMEGA-HIDDEN',
+            'title' => 'Omega hidden furniture package',
+            'status' => 'open',
+            'project_id' => $hiddenProject->id,
+            'requisition_id' => $hiddenRequisition->id,
+        ]);
+        $hiddenQuotation = $this->createQuotation($tenant, [
+            'number' => 'QUO-2026-OMEGA-HIDDEN',
+            'status' => 'received',
+            'vendor_id' => $hiddenVendor->id,
+            'rfq_id' => $hiddenRfq->id,
+        ]);
+        $hiddenAward = $this->createAward($tenant, [
+            'number' => 'AWD-2026-OMEGA-HIDDEN',
+            'status' => 'recommended',
+            'vendor_id' => $hiddenVendor->id,
+            'project_id' => $hiddenProject->id,
+            'rfq_id' => $hiddenRfq->id,
+            'quotation_id' => $hiddenQuotation->id,
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson('/api/search?query=omega&types[]=vendor&types[]=rfq&types[]=quotation&types[]=award&limit=10');
+
+        $response->assertOk();
+
+        $idsByType = collect($response->json('data'))->groupBy('type')->map(
+            fn ($rows) => collect($rows)->pluck('id')->all(),
+        );
+
+        $this->assertContains((string) $visibleVendor->id, $idsByType->get('vendor', []));
+        $this->assertContains((string) $visibleRfq->id, $idsByType->get('rfq', []));
+        $this->assertContains((string) $visibleQuotation->id, $idsByType->get('quotation', []));
+        $this->assertContains((string) $visibleAward->id, $idsByType->get('award', []));
+        $this->assertNotContains((string) $hiddenVendor->id, $idsByType->get('vendor', []));
+        $this->assertNotContains((string) $hiddenRfq->id, $idsByType->get('rfq', []));
+        $this->assertNotContains((string) $hiddenQuotation->id, $idsByType->get('quotation', []));
+        $this->assertNotContains((string) $hiddenAward->id, $idsByType->get('award', []));
     }
 
     public function test_search_rejects_queries_shorter_than_two_characters(): void

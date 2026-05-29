@@ -6374,17 +6374,17 @@ export type showQuotationVersionResponse =
   | showQuotationVersionResponseSuccess
   | showQuotationVersionResponseError;
 
-export const getShowQuotationVersionUrl = (quotation: string, version: number) => {
-  return `/api/quotations/${quotation}/versions/${version}`;
+export const getShowQuotationVersionUrl = (quotation: string, versionNumber: number) => {
+  return `/api/quotations/${quotation}/versions/${versionNumber}`;
 };
 
 export const showQuotationVersion = async (
   quotation: string,
-  version: number,
+  versionNumber: number,
   options?: RequestInit,
 ): Promise<showQuotationVersionResponse> => {
   return cognifyFetch<showQuotationVersionResponse>(
-    getShowQuotationVersionUrl(quotation, version),
+    getShowQuotationVersionUrl(quotation, versionNumber),
     {
       ...options,
       method: "GET",
@@ -8691,6 +8691,68 @@ export const exportPurchaseOrderRequestHandoffJson = async (
 };
 
 /**
+ * @summary Record purchase order request handoff JSON export
+ */
+export type recordPurchaseOrderRequestHandoffJsonExportResponse200 = {
+  data: PurchaseOrderRequestHandoffExport;
+  status: 200;
+};
+
+export type recordPurchaseOrderRequestHandoffJsonExportResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordPurchaseOrderRequestHandoffJsonExportResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type recordPurchaseOrderRequestHandoffJsonExportResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordPurchaseOrderRequestHandoffJsonExportResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type recordPurchaseOrderRequestHandoffJsonExportResponseSuccess =
+  recordPurchaseOrderRequestHandoffJsonExportResponse200 & {
+    headers: Headers;
+  };
+export type recordPurchaseOrderRequestHandoffJsonExportResponseError = (
+  | recordPurchaseOrderRequestHandoffJsonExportResponse401
+  | recordPurchaseOrderRequestHandoffJsonExportResponse403
+  | recordPurchaseOrderRequestHandoffJsonExportResponse404
+  | recordPurchaseOrderRequestHandoffJsonExportResponse409
+) & {
+  headers: Headers;
+};
+
+export type recordPurchaseOrderRequestHandoffJsonExportResponse =
+  | recordPurchaseOrderRequestHandoffJsonExportResponseSuccess
+  | recordPurchaseOrderRequestHandoffJsonExportResponseError;
+
+export const getRecordPurchaseOrderRequestHandoffJsonExportUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/export.json`;
+};
+
+export const recordPurchaseOrderRequestHandoffJsonExport = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<recordPurchaseOrderRequestHandoffJsonExportResponse> => {
+  return cognifyFetch<recordPurchaseOrderRequestHandoffJsonExportResponse>(
+    getRecordPurchaseOrderRequestHandoffJsonExportUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
  * @summary Export purchase order request handoff as CSV
  */
 export type exportPurchaseOrderRequestHandoffCsvResponse200 = {
@@ -8748,6 +8810,68 @@ export const exportPurchaseOrderRequestHandoffCsv = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Record purchase order request handoff CSV export
+ */
+export type recordPurchaseOrderRequestHandoffCsvExportResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type recordPurchaseOrderRequestHandoffCsvExportResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordPurchaseOrderRequestHandoffCsvExportResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type recordPurchaseOrderRequestHandoffCsvExportResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordPurchaseOrderRequestHandoffCsvExportResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type recordPurchaseOrderRequestHandoffCsvExportResponseSuccess =
+  recordPurchaseOrderRequestHandoffCsvExportResponse200 & {
+    headers: Headers;
+  };
+export type recordPurchaseOrderRequestHandoffCsvExportResponseError = (
+  | recordPurchaseOrderRequestHandoffCsvExportResponse401
+  | recordPurchaseOrderRequestHandoffCsvExportResponse403
+  | recordPurchaseOrderRequestHandoffCsvExportResponse404
+  | recordPurchaseOrderRequestHandoffCsvExportResponse409
+) & {
+  headers: Headers;
+};
+
+export type recordPurchaseOrderRequestHandoffCsvExportResponse =
+  | recordPurchaseOrderRequestHandoffCsvExportResponseSuccess
+  | recordPurchaseOrderRequestHandoffCsvExportResponseError;
+
+export const getRecordPurchaseOrderRequestHandoffCsvExportUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/export.csv`;
+};
+
+export const recordPurchaseOrderRequestHandoffCsvExport = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<recordPurchaseOrderRequestHandoffCsvExportResponse> => {
+  return cognifyFetch<recordPurchaseOrderRequestHandoffCsvExportResponse>(
+    getRecordPurchaseOrderRequestHandoffCsvExportUrl(handoff),
+    {
+      ...options,
+      method: "POST",
     },
   );
 };

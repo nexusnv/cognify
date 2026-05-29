@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Auth\TenantRole;
 use App\Models\User;
+use App\Notifications\NotificationRecord;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
+use Domains\Approval\Actions\EscalateOverdueApprovalTasks;
 use Domains\Approval\Models\ApprovalPolicy;
 use Domains\Approval\Models\ApprovalPolicyVersion;
 use Domains\Approval\Models\ApprovalTask;
@@ -78,6 +80,64 @@ class RfqAwardApprovalApiTest extends TestCase
             'subject_id' => $recommendation->id,
             'assignee_id' => $approver->id,
             'status' => 'active',
+        ]);
+    }
+
+    public function test_award_routing_matches_award_specific_context_fields_before_fallback(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->pendingRecommendation($tenant, $buyer);
+
+        $this->createAwardPolicy($tenant, $buyer, $approver, [
+            'priority' => 200,
+            'rules' => [
+                ['field' => 'recommendedVendorId', 'operator' => 'equals', 'value' => (string) Str::uuid()],
+            ],
+            'stage_name' => 'Unmatched executive award review',
+        ]);
+        $matchingVersion = $this->createAwardPolicy($tenant, $buyer, $approver, [
+            'priority' => 50,
+            'rules' => [
+                ['field' => 'recommendedVendorId', 'operator' => 'equals', 'value' => (string) $recommendation->recommended_vendor_id],
+            ],
+            'stage_name' => 'Vendor-specific award review',
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/award-recommendation/approval-route")
+            ->assertOk()
+            ->assertJsonPath('data.currentStage.name', 'Vendor-specific award review');
+
+        $task = ApprovalTask::query()->where('subject_id', $recommendation->id)->firstOrFail();
+
+        $this->assertDatabaseHas('approval_instances', [
+            'subject_type' => RfqAwardRecommendation::class,
+            'subject_id' => $recommendation->id,
+            'approval_policy_version_id' => $matchingVersion->id,
+        ]);
+        $this->assertSame('Vendor-specific award review', $task->stage->name);
+    }
+
+    public function test_award_routing_without_matching_policy_or_ruleless_fallback_conflicts(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->pendingRecommendation($tenant, $buyer);
+        $this->createAwardPolicy($tenant, $buyer, $approver, [
+            'rules' => [
+                ['field' => 'recommendedVendorId', 'operator' => 'equals', 'value' => (string) Str::uuid()],
+            ],
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/award-recommendation/approval-route")
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'conflict');
+
+        $this->assertDatabaseMissing('approval_instances', [
+            'subject_type' => RfqAwardRecommendation::class,
+            'subject_id' => $recommendation->id,
         ]);
     }
 
@@ -213,6 +273,81 @@ class RfqAwardApprovalApiTest extends TestCase
         ]);
     }
 
+    public function test_rejecting_award_approval_cancels_future_blocked_tasks_and_reports_only_real_decisions(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        [, $financeApprover] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->routedSequentialRecommendation($tenant, $buyer, $firstApprover, $secondApprover, $financeApprover);
+
+        $decidingTask = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $activeSibling = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $secondApprover->id)->firstOrFail();
+        $futureTask = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $financeApprover->id)->firstOrFail();
+
+        $this->assertSame('active', $activeSibling->status->value);
+        $this->assertSame('blocked', $futureTask->status->value);
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$decidingTask->id}/reject", [
+                'lockVersion' => $decidingTask->lock_version,
+                'reason' => 'Recommendation rationale is incomplete.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'rejected');
+
+        $this->assertSame('rejected', $recommendation->refresh()->status->value);
+        $this->assertSame('cancelled', $activeSibling->refresh()->status->value);
+        $this->assertSame('cancelled', $futureTask->refresh()->status->value);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/rfqs/{$rfq->id}/award-recommendation/approval-summary")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'rejected')
+            ->assertJsonCount(1, 'data.completedDecisions')
+            ->assertJsonPath('data.completedDecisions.0.taskId', (string) $decidingTask->id)
+            ->assertJsonPath('data.completedDecisions.0.decision', 'rejected')
+            ->assertJsonPath('data.completedDecisions.0.decidedBy.id', (string) $firstApprover->id);
+    }
+
+    public function test_requesting_award_approval_changes_cancels_future_blocked_tasks_and_reports_only_real_decisions(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $firstApprover] = $this->tenantUser('approver', $tenant);
+        [, $secondApprover] = $this->tenantUser('approver', $tenant);
+        [, $financeApprover] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->routedSequentialRecommendation($tenant, $buyer, $firstApprover, $secondApprover, $financeApprover);
+
+        $decidingTask = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $activeSibling = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $secondApprover->id)->firstOrFail();
+        $futureTask = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $financeApprover->id)->firstOrFail();
+
+        $this->assertSame('active', $activeSibling->status->value);
+        $this->assertSame('blocked', $futureTask->status->value);
+
+        $this->actingAsTenant($tenant, $firstApprover)
+            ->postJson("/api/approval-tasks/{$decidingTask->id}/request-changes", [
+                'lockVersion' => $decidingTask->lock_version,
+                'reason' => 'Attach the final commercial clarification.',
+                'requestedFields' => ['rationale', 'evidence'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'changes_requested');
+
+        $this->assertSame('changes_requested', $recommendation->refresh()->status->value);
+        $this->assertSame('cancelled', $activeSibling->refresh()->status->value);
+        $this->assertSame('cancelled', $futureTask->refresh()->status->value);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/rfqs/{$rfq->id}/award-recommendation/approval-summary")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'changes_requested')
+            ->assertJsonCount(1, 'data.completedDecisions')
+            ->assertJsonPath('data.completedDecisions.0.taskId', (string) $decidingTask->id)
+            ->assertJsonPath('data.completedDecisions.0.decision', 'changes_requested')
+            ->assertJsonPath('data.completedDecisions.0.decidedBy.id', (string) $firstApprover->id);
+    }
+
     public function test_award_approval_task_resource_contains_award_subject_summary(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -305,6 +440,122 @@ class RfqAwardApprovalApiTest extends TestCase
         ]);
     }
 
+    public function test_award_approval_task_can_be_delegated(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [, $delegate] = $this->tenantUser('approver', $tenant);
+        [, $recommendation] = $this->routedRecommendation($tenant, $buyer, $approver);
+        $task = ApprovalTask::query()->where('subject_id', $recommendation->id)->firstOrFail();
+
+        $delegation = $this->actingAsTenant($tenant, $approver)
+            ->postJson('/api/approval-delegations', [
+                'delegateId' => $delegate->id,
+                'scope' => 'task_specific',
+                'startsAt' => now()->toISOString(),
+                'endsAt' => now()->addDay()->toISOString(),
+                'reason' => 'Covering award review.',
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $approver)
+            ->postJson("/api/approval-tasks/{$task->id}/delegate", [
+                'approvalDelegationId' => $delegation['id'],
+                'lockVersion' => $task->lock_version,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.assignee.id', (string) $delegate->id)
+            ->assertJsonPath('data.originalAssignee.id', (string) $approver->id)
+            ->assertJsonPath('data.subject.type', 'rfq_award_recommendation');
+
+        $delegatedTask = $task->refresh();
+
+        $this->actingAsTenant($tenant, $delegate)
+            ->postJson("/api/approval-tasks/{$delegatedTask->id}/approve", [
+                'lockVersion' => $delegatedTask->lock_version,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $notification = NotificationRecord::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('recipient_id', $delegate->id)
+            ->where('title', 'Approval task delegated')
+            ->firstOrFail();
+
+        $this->assertSame(RfqAwardRecommendation::class, $notification->subject_type);
+        $this->assertSame((string) $recommendation->id, (string) $notification->subject_id);
+        $this->assertSame('Award recommendation for '.$recommendation->recommendedVendor->name, $notification->body);
+        $this->assertSame($recommendation->rfq->number, $notification->metadata['subjectLabel'] ?? null);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $approver->id,
+            'event_type' => 'approval_task.delegated',
+            'subject_type' => RfqAwardRecommendation::class,
+            'subject_id' => $recommendation->id,
+        ]);
+    }
+
+    public function test_overdue_award_approval_task_escalates_through_subject_handler(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [, $fallbackApprover] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->pendingRecommendation($tenant, $buyer);
+        $this->createAwardPolicy($tenant, $buyer, $approver, [
+            'fallback_approvers' => [
+                ['type' => 'user', 'userId' => (string) $fallbackApprover->id, 'label' => $fallbackApprover->name],
+            ],
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/award-recommendation/approval-route")
+            ->assertOk();
+
+        $task = ApprovalTask::query()->where('subject_id', $recommendation->id)->where('assignee_id', $approver->id)->firstOrFail();
+        $this->makeTaskOverdue($task);
+
+        $this->assertSame(1, app(EscalateOverdueApprovalTasks::class)->handle($tenant));
+
+        $escalatedTask = ApprovalTask::query()
+            ->where('escalated_from_task_id', $task->id)
+            ->where('assignee_id', $fallbackApprover->id)
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('approval_tasks', [
+            'id' => $task->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'cancelled',
+        ]);
+        $this->assertSame('active', $escalatedTask->status->value);
+        $this->actingAsTenant($tenant, $fallbackApprover)
+            ->getJson("/api/approval-tasks/{$escalatedTask->id}")
+            ->assertOk()
+            ->assertJsonPath('data.assignee.id', (string) $fallbackApprover->id)
+            ->assertJsonPath('data.subject.type', 'rfq_award_recommendation')
+            ->assertJsonPath('data.subject.id', (string) $recommendation->id);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'event_type' => 'approval_task.escalated',
+            'subject_type' => RfqAwardRecommendation::class,
+            'subject_id' => $recommendation->id,
+        ]);
+
+        $notification = NotificationRecord::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('recipient_id', $fallbackApprover->id)
+            ->where('title', 'Approval task escalated')
+            ->firstOrFail();
+
+        $this->assertSame(RfqAwardRecommendation::class, $notification->subject_type);
+        $this->assertSame((string) $recommendation->id, (string) $notification->subject_id);
+        $this->assertSame('Award recommendation for '.$recommendation->recommendedVendor->name, $notification->body);
+        $this->assertSame($recommendation->rfq->number, $notification->metadata['subjectLabel'] ?? null);
+    }
+
     public function test_award_approval_routes_require_real_session_auth_and_tenant_context(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -365,6 +616,52 @@ class RfqAwardApprovalApiTest extends TestCase
         return [$rfq, $recommendation->refresh()];
     }
 
+    private function routedSequentialRecommendation(
+        Tenant $tenant,
+        User $buyer,
+        User $firstApprover,
+        User $secondApprover,
+        User $financeApprover,
+    ): array {
+        [$rfq, $recommendation] = $this->pendingRecommendation($tenant, $buyer);
+        $this->createAwardPolicy($tenant, $buyer, $firstApprover, [
+            'stages' => [
+                [
+                    'name' => 'Commercial approval',
+                    'completionRule' => 'all',
+                    'approvers' => [
+                        ['type' => 'user', 'userId' => (string) $firstApprover->id, 'label' => $firstApprover->name],
+                        ['type' => 'user', 'userId' => (string) $secondApprover->id, 'label' => $secondApprover->name],
+                    ],
+                    'fallbackApprovers' => [
+                        ['type' => 'role', 'role' => 'approver', 'label' => 'Approver fallback'],
+                    ],
+                ],
+                [
+                    'name' => 'Finance approval',
+                    'completionRule' => 'all',
+                    'approvers' => [
+                        ['type' => 'user', 'userId' => (string) $financeApprover->id, 'label' => $financeApprover->name],
+                    ],
+                    'fallbackApprovers' => [
+                        ['type' => 'role', 'role' => 'approver', 'label' => 'Approver fallback'],
+                    ],
+                ],
+            ],
+            'sla_rules' => [
+                ['stage' => 'Commercial approval', 'dueInHours' => 48],
+                ['stage' => 'Finance approval', 'dueInHours' => 72],
+            ],
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/award-recommendation/approval-route")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'active');
+
+        return [$rfq, $recommendation->refresh()];
+    }
+
     private function pendingRecommendation(Tenant $tenant, User $buyer): array
     {
         $rfq = $this->rfqWithApprovedQuotation($tenant, $buyer);
@@ -397,11 +694,11 @@ class RfqAwardApprovalApiTest extends TestCase
         return [$rfq, $recommendation];
     }
 
-    private function createAwardPolicy(Tenant $tenant, User $actor, User $approver): ApprovalPolicyVersion
+    private function createAwardPolicy(Tenant $tenant, User $actor, User $approver, array $attributes = []): ApprovalPolicyVersion
     {
         $policy = ApprovalPolicy::query()->create([
             'tenant_id' => $tenant->id,
-            'name' => 'Award recommendation approval',
+            'name' => $attributes['policy_name'] ?? 'Award recommendation approval',
             'description' => 'Commercial approval route for award recommendations.',
             'subject_type' => 'rfq_award_recommendation',
             'status' => ApprovalPolicyStatus::Active,
@@ -415,21 +712,21 @@ class RfqAwardApprovalApiTest extends TestCase
             'subject_type' => 'rfq_award_recommendation',
             'version_number' => 1,
             'status' => ApprovalPolicyVersionStatus::Published,
-            'priority' => 100,
-            'rules' => [['field' => 'recommendedAmount', 'operator' => 'gte', 'value' => 1]],
+            'priority' => $attributes['priority'] ?? 100,
+            'rules' => $attributes['rules'] ?? [['field' => 'recommendedAmount', 'operator' => 'gte', 'value' => 1]],
             'route_template' => [
-                'stages' => [[
-                    'name' => 'Commercial approval',
+                'stages' => $attributes['stages'] ?? [[
+                    'name' => $attributes['stage_name'] ?? 'Commercial approval',
                     'completionRule' => 'all',
                     'approvers' => [
                         ['type' => 'user', 'userId' => (string) $approver->id, 'label' => $approver->name],
                     ],
-                    'fallbackApprovers' => [
+                    'fallbackApprovers' => $attributes['fallback_approvers'] ?? [
                         ['type' => 'role', 'role' => 'approver', 'label' => 'Approver fallback'],
                     ],
                 ]],
             ],
-            'sla_rules' => [['stage' => 'Commercial approval', 'dueInHours' => 48]],
+            'sla_rules' => $attributes['sla_rules'] ?? [['stage' => 'Commercial approval', 'dueInHours' => 48]],
             'published_by' => $actor->id,
             'published_at' => now(),
         ]);
@@ -450,6 +747,19 @@ class RfqAwardApprovalApiTest extends TestCase
         $tenant->users()->attach($user->id, ['role' => TenantRole::from($role)->value]);
 
         return [$tenant, $user];
+    }
+
+    private function makeTaskOverdue(ApprovalTask $task): void
+    {
+        $task->forceFill([
+            'assigned_at' => now()->subHours(6),
+            'due_at' => now()->subHour(),
+        ])->save();
+
+        $task->stage->forceFill([
+            'activated_at' => $task->stage->activated_at ?? now()->subHours(6),
+            'due_at' => now()->subHour(),
+        ])->save();
     }
 
     private function rfqWithApprovedQuotation(Tenant $tenant, User $buyer): Rfq

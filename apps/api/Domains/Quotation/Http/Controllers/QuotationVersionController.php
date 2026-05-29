@@ -37,7 +37,7 @@ class QuotationVersionController extends Controller
         );
     }
 
-    public function show(CurrentTenant $currentTenant, int $quotation, int $version): QuotationVersionResource
+    public function show(CurrentTenant $currentTenant, int $quotation, int $versionNumber): QuotationVersionResource
     {
         $tenant = $this->tenantOrAbort($currentTenant);
         $model = $this->findTenantQuotation($tenant, $quotation);
@@ -48,7 +48,8 @@ class QuotationVersionController extends Controller
                 ->with(['lineItems', 'submittedByUser', 'quotation.rfq', 'currentNormalization'])
                 ->where('tenant_id', $tenant->id)
                 ->where('quotation_id', $model->id)
-                ->findOrFail($version)
+                ->where('version_number', $versionNumber)
+                ->firstOrFail()
         );
     }
 

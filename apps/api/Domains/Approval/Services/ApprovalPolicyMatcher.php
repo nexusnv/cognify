@@ -3,6 +3,7 @@
 namespace Domains\Approval\Services;
 
 use Domains\Approval\Data\ApprovalContextData;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApprovalPolicyMatcher
 {
@@ -17,7 +18,7 @@ class ApprovalPolicyMatcher
      *   warnings: array<int, array<string, string>>
      * }
      */
-    public function match(ApprovalContextData $context, array $candidates): array
+    public function match(ApprovalContextData $context, array $candidates, bool $allowUnmatchedPolicyFallback = false): array
     {
         usort($candidates, function (array $left, array $right): int {
             $priorityComparison = ((int) ($right['matchedVersion']['priority'] ?? 100)) <=> ((int) ($left['matchedVersion']['priority'] ?? 100));
@@ -62,8 +63,11 @@ class ApprovalPolicyMatcher
             )));
         }
 
-        $selected = $fallback ?? ($candidates[0] ?? null);
-        abort_if($selected === null, 404, 'No approval policy versions are available.');
+        if ($candidates === []) {
+            abort(404, 'No approval policy versions are available.');
+        }
+
+        $selected = $fallback ?? ($allowUnmatchedPolicyFallback ? $candidates[0] : null);
 
         $warnings = [];
         if ($fallback !== null) {
@@ -72,13 +76,15 @@ class ApprovalPolicyMatcher
                 'message' => 'No policy rules matched; using fallback policy version.',
             ];
             $matchedConditions = [];
-        } else {
+        } elseif ($allowUnmatchedPolicyFallback && $selected !== null) {
             $evaluation = $this->evaluateRules($context, $selected['rules'] ?? []);
             $matchedConditions = $evaluation['conditions'];
             $warnings[] = [
                 'code' => 'fallback_policy',
                 'message' => 'No policy rules matched; using the highest priority policy version.',
             ];
+        } else {
+            throw new ConflictHttpException('No approval policy version matched the approval context.');
         }
 
         if ($missingContextFields !== []) {
@@ -199,6 +205,7 @@ class ApprovalPolicyMatcher
     {
         return match ($field) {
             'tenantId' => $context->tenantId,
+            'subjectType' => $context->subjectType,
             'requisitionId' => $context->requisitionId,
             'requesterId' => $context->requesterId,
             'amount' => $context->amount,
@@ -209,6 +216,19 @@ class ApprovalPolicyMatcher
             'lineItemCategories' => $context->lineItemCategories,
             'riskClassification' => $context->riskClassification,
             'vendorId' => $context->vendorId,
+            'awardRecommendationId' => $context->awardRecommendationId,
+            'rfqId' => $context->rfqId,
+            'rfqNumber' => $context->rfqNumber,
+            'recommendedVendorId' => $context->recommendedVendorId,
+            'recommendedVendorName' => $context->recommendedVendorName,
+            'recommendedQuotationId' => $context->recommendedQuotationId,
+            'recommendedQuotationVersionId' => $context->recommendedQuotationVersionId,
+            'recommendedAmount' => $context->recommendedAmount,
+            'recommendedCurrency' => $context->recommendedCurrency,
+            'scorecardId' => $context->scorecardId,
+            'scorecardWeightedTotal' => $context->scorecardWeightedTotal,
+            'riskSummaryPresent' => $context->riskSummaryPresent,
+            'exceptionSummaryPresent' => $context->exceptionSummaryPresent,
             default => null,
         };
     }

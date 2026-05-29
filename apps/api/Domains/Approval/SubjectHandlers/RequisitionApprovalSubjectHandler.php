@@ -14,6 +14,7 @@ use Domains\Requisition\Actions\MarkRequisitionRejected;
 use Domains\Requisition\Actions\RequestRequisitionChanges;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 final class RequisitionApprovalSubjectHandler implements ApprovalSubjectHandler
 {
@@ -97,6 +98,30 @@ final class RequisitionApprovalSubjectHandler implements ApprovalSubjectHandler
         return $subject->title;
     }
 
+    public function canDelegateTo(Model $subject, User $delegate): bool
+    {
+        return ! $subject instanceof Requisition || (int) $subject->requester_id !== (int) $delegate->id;
+    }
+
+    public function delegationValidationMessage(Model $subject): string
+    {
+        return 'The delegate cannot be the requester of the requisition.';
+    }
+
+    public function escalationFallbackRecipients(Tenant $tenant, Model $subject, array $stageTemplate): iterable
+    {
+        $fallbackApprovers = collect($stageTemplate['fallbackApprovers'] ?? []);
+
+        if ($fallbackApprovers->isEmpty()) {
+            return $this->usersForRole($tenant, 'buyer')
+                ->merge($this->usersForRole($tenant, 'admin'))
+                ->unique('id')
+                ->values();
+        }
+
+        return $this->resolveFallbackApprovers($tenant, $fallbackApprovers);
+    }
+
     public function onRouted(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor): void
     {
         assert($subject instanceof Requisition);
@@ -127,5 +152,44 @@ final class RequisitionApprovalSubjectHandler implements ApprovalSubjectHandler
             'requestedFields' => $requestedFields,
             'approvalInstanceId' => $instance->id,
         ]);
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $fallbackApprovers
+     * @return Collection<int, User>
+     */
+    private function resolveFallbackApprovers(Tenant $tenant, Collection $fallbackApprovers): Collection
+    {
+        return $fallbackApprovers
+            ->flatMap(function (mixed $approver) use ($tenant): Collection {
+                if (! is_array($approver)) {
+                    return collect();
+                }
+
+                if (($approver['type'] ?? null) === 'user' && isset($approver['userId'])) {
+                    $user = $tenant->users()->whereKey((int) $approver['userId'])->first();
+
+                    return $user instanceof User ? collect([$user]) : collect();
+                }
+
+                if (($approver['type'] ?? null) === 'role' && isset($approver['role'])) {
+                    return $this->usersForRole($tenant, (string) $approver['role']);
+                }
+
+                return collect();
+            })
+            ->unique('id')
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    private function usersForRole(Tenant $tenant, string $role): Collection
+    {
+        return $tenant->users()
+            ->wherePivot('role', $role)
+            ->orderBy('users.id')
+            ->get();
     }
 }

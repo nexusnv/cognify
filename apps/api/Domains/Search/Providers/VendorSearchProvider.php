@@ -12,6 +12,8 @@ use Illuminate\Support\Collection;
 
 class VendorSearchProvider implements SearchProvider
 {
+    use AppliesActorSearchVisibility;
+
     public function type(): string
     {
         return 'vendor';
@@ -27,6 +29,7 @@ class VendorSearchProvider implements SearchProvider
         $builder = Vendor::query()
             ->where('tenant_id', $tenant->id);
 
+        $this->applyVendorVisibility($builder, $tenant, $user);
         $this->applySearchConstraint($builder, $normalizedQuery);
         $this->applyOrdering($builder, $normalizedQuery);
 

@@ -12,6 +12,8 @@ use Illuminate\Support\Collection;
 
 class RfqSearchProvider implements SearchProvider
 {
+    use AppliesActorSearchVisibility;
+
     public function type(): string
     {
         return 'rfq';
@@ -28,6 +30,7 @@ class RfqSearchProvider implements SearchProvider
             ->with(['project', 'requisition'])
             ->where('tenant_id', $tenant->id);
 
+        $this->applyRfqVisibility($builder, $tenant, $user);
         $this->applySearchConstraint($builder, $normalizedQuery);
         $this->applyOrdering($builder, $normalizedQuery);
 

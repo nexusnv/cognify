@@ -147,7 +147,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/po-handoffs/{handoff}/ready', [PurchaseOrderRequestHandoffController::class, 'ready']);
             Route::post('/po-handoffs/{handoff}/cancel', [PurchaseOrderRequestHandoffController::class, 'cancel']);
             Route::get('/po-handoffs/{handoff}/export.json', [PurchaseOrderRequestHandoffController::class, 'exportJson']);
+            Route::post('/po-handoffs/{handoff}/export.json', [PurchaseOrderRequestHandoffController::class, 'recordExportJson']);
             Route::get('/po-handoffs/{handoff}/export.csv', [PurchaseOrderRequestHandoffController::class, 'exportCsv']);
+            Route::post('/po-handoffs/{handoff}/export.csv', [PurchaseOrderRequestHandoffController::class, 'recordExportCsv']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);
@@ -169,7 +171,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/quotations/{quotation}/attachments', [RfqInvitationQuotationController::class, 'attachments']);
         Route::put('/quotations/{quotation}/manual-entry', [RfqInvitationQuotationController::class, 'saveManualEntry']);
         Route::get('/quotations/{quotation}/versions', [QuotationVersionController::class, 'index']);
-        Route::get('/quotations/{quotation}/versions/{version}', [QuotationVersionController::class, 'show']);
+        Route::get('/quotations/{quotation}/versions/{versionNumber}', [QuotationVersionController::class, 'show']);
         Route::post('/quotations/{quotation}/versions', [QuotationVersionController::class, 'store']);
         Route::get('/quotation-normalizations', [QuotationNormalizationController::class, 'index']);
         Route::get('/quotation-normalizations/{normalization}', [QuotationNormalizationController::class, 'show']);

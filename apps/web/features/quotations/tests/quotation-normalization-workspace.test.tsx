@@ -51,7 +51,7 @@ describe("Quotation normalization workspace", () => {
 
   it("lets a buyer save a bundled line mapping from one quotation line to one RFQ line", async () => {
     const user = userEvent.setup();
-    let requestedVersionId: string | null = null;
+    let requestedVersionNumber: string | null = null;
 
     server.use(
       http.get("/api/quotation-normalizations/:normalizationId", ({ params }) => {
@@ -107,10 +107,10 @@ describe("Quotation normalization workspace", () => {
           },
         });
       }),
-      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
-        requestedVersionId = String(params.versionId);
+      http.get("/api/quotations/:quotationId/versions/:versionNumber", ({ params }) => {
+        requestedVersionNumber = String(params.versionNumber);
 
-        if (requestedVersionId !== "2") {
+        if (requestedVersionNumber !== "2") {
           return HttpResponse.json(
             { error: { code: "not_found", message: "Quotation version not found." } },
             { status: 404 },
@@ -198,7 +198,7 @@ describe("Quotation normalization workspace", () => {
     });
 
     const lineMappings = await screen.findByTestId("normalization-line-mappings");
-    expect(requestedVersionId).toBe("2");
+    expect(requestedVersionNumber).toBe("2");
     expect(screen.queryByRole("option", { name: "Mock detail line that should be ignored" })).not.toBeInTheDocument();
     expect(await screen.findByRole("option", { name: "Fetched line from quotation version route" })).toBeInTheDocument();
     await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
@@ -212,7 +212,7 @@ describe("Quotation normalization workspace", () => {
     await user.click(within(lineMappings).getByRole("button", { name: "Save line mapping" }));
 
     await waitFor(() => {
-      expect(requestedVersionId).toBe("2");
+      expect(requestedVersionNumber).toBe("2");
       expect(screen.getByText("Bundle confirmed against vendor submission.")).toBeInTheDocument();
     });
   });
@@ -297,8 +297,8 @@ describe("Quotation normalization workspace", () => {
           },
         });
       }),
-      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
-        if (String(params.versionId) !== "9") {
+      http.get("/api/quotations/:quotationId/versions/:versionNumber", ({ params }) => {
+        if (String(params.versionNumber) !== "9") {
           return HttpResponse.json(
             { error: { code: "not_found", message: "Quotation version not found." } },
             { status: 404 },
@@ -516,10 +516,10 @@ describe("Quotation normalization workspace", () => {
           },
         });
       }),
-      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+      http.get("/api/quotations/:quotationId/versions/:versionNumber", ({ params }) => {
         return HttpResponse.json({
           data: {
-            id: String(params.versionId),
+            id: `quotation-version-${String(params.versionNumber)}`,
             quotationId: String(params.quotationId),
             versionNumber: 10,
             status: "received",
@@ -599,11 +599,11 @@ describe("Quotation normalization workspace", () => {
 
   it("disables approval while blocking issues remain and allows approval after they are resolved", async () => {
     const user = userEvent.setup();
-    let requestedVersionId: string | null = null;
+    let requestedVersionNumber: string | null = null;
 
     server.use(
-      http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
-        requestedVersionId = String(params.versionId);
+      http.get("/api/quotations/:quotationId/versions/:versionNumber", ({ params }) => {
+        requestedVersionNumber = String(params.versionNumber);
 
         return HttpResponse.json({
           data: {
@@ -692,7 +692,7 @@ describe("Quotation normalization workspace", () => {
     await waitFor(() => {
       expect(within(lineMappings).getByLabelText("Bundle description")).toHaveValue("Developer laptop bundle");
     });
-    expect(requestedVersionId).toBe("2");
+    expect(requestedVersionNumber).toBe("2");
     await user.selectOptions(within(lineMappings).getByLabelText("Quotation version line"), "quote-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("RFQ line"), "rfq-line-1");
     await user.selectOptions(within(lineMappings).getByLabelText("Pricing mode"), "bundle");

@@ -11,10 +11,11 @@ use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
+use Domains\Approval\States\ApprovalDelegationStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
-use Domains\Requisition\Models\Requisition;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -25,8 +26,8 @@ class DelegateApprovalTask
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+        private readonly ApprovalSubjectRegistry $subjects,
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, ApprovalTask $task, ApprovalDelegation $delegation, int $lockVersion): ApprovalTask
     {
@@ -69,25 +70,25 @@ class DelegateApprovalTask
             ])->save();
 
             $subject = $task->subject;
+            assert($subject instanceof Model);
+            $handler = $this->subjects->forSubject($subject);
             $delegate = $delegation->delegate;
             $originalAssignee = $task->originalAssignee;
-            if ($subject instanceof Requisition) {
-                $recipients = collect([$delegate, $originalAssignee])->filter()->unique('id')->values();
+            $recipients = collect([$delegate, $originalAssignee])->filter()->unique('id')->values();
 
-                if ($recipients->isNotEmpty()) {
-                    $this->notificationRecorder->record($tenant, $recipients, new NotificationData(
-                        type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
-                        title: 'Approval task delegated',
-                        body: $subject->title,
-                        href: "/approvals/tasks/{$task->id}",
-                        subject: $subject,
-                        subjectLabel: $subject->number,
-                        actor: $actor,
-                        metadata: [
-                            'delegationId' => (string) $delegation->id,
-                        ],
-                    ));
-                }
+            if ($recipients->isNotEmpty()) {
+                $this->notificationRecorder->record($tenant, $recipients, new NotificationData(
+                    type: NotificationPreferenceDefaults::EVENT_APPROVAL_TASK_ASSIGNED,
+                    title: 'Approval task delegated',
+                    body: $handler->notificationBody($subject),
+                    href: "/approvals/tasks/{$task->id}",
+                    subject: $subject,
+                    subjectLabel: $handler->notificationSubjectLabel($subject),
+                    actor: $actor,
+                    metadata: [
+                        'delegationId' => (string) $delegation->id,
+                    ],
+                ));
             }
 
             $this->auditRecorder->record(new AuditEventData(
@@ -102,7 +103,7 @@ class DelegateApprovalTask
                 ],
             ));
 
-            return $task->refresh()->load(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject.requester', 'subject.lineItems']);
+            return $task->refresh()->load(['assignee', 'originalAssignee', 'decidedBy', 'stage', 'instance', 'subject']);
         });
     }
 
@@ -130,7 +131,7 @@ class DelegateApprovalTask
             throw new AuthorizationException('You can only use your own delegations.');
         }
 
-        if ($delegation->status !== \Domains\Approval\States\ApprovalDelegationStatus::Active) {
+        if ($delegation->status !== ApprovalDelegationStatus::Active) {
             throw ValidationException::withMessages([
                 'approvalDelegationId' => ['The selected delegation is not active.'],
             ]);
@@ -145,10 +146,14 @@ class DelegateApprovalTask
             ]);
         }
 
-        $task->loadMissing('subject.requester');
-        if ($task->subject instanceof Requisition && (int) $task->subject->requester_id === (int) $delegation->delegate_id) {
+        $task->loadMissing('subject');
+        $subject = $task->subject;
+        assert($subject instanceof Model);
+        $handler = $this->subjects->forSubject($subject);
+
+        if (! $handler->canDelegateTo($subject, $delegation->delegate)) {
             throw ValidationException::withMessages([
-                'approvalDelegationId' => ['The delegate cannot be the requester of the requisition.'],
+                'approvalDelegationId' => [$handler->delegationValidationMessage($subject)],
             ]);
         }
     }

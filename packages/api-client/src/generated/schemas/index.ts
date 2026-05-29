@@ -356,6 +356,7 @@ export * from "./purchaseOrderRequestHandoffPermissions";
 export * from "./purchaseOrderRequestHandoffReadyAt";
 export * from "./purchaseOrderRequestHandoffReadyByUserId";
 export * from "./purchaseOrderRequestHandoffResponse";
+export * from "./purchaseOrderRequestHandoffResponseData";
 export * from "./purchaseOrderRequestHandoffReview";
 export * from "./purchaseOrderRequestHandoffReviewDeliveryAttention";
 export * from "./purchaseOrderRequestHandoffReviewExportMemo";
