@@ -43,6 +43,17 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe("identity workflow", () => {
+  it("presents a shadcn card-based procurement login experience", () => {
+    renderWithQuery(<LoginPage />);
+
+    expect(
+      screen.getByRole("heading", { name: "Sign in to your procurement workspace" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Governed intake")).toBeInTheDocument();
+    expect(screen.getByText("Audit-ready workflow")).toBeInTheDocument();
+    expect(screen.getByText("Supplier decisions")).toBeInTheDocument();
+  });
+
   it("signs in and loads current identity context", async () => {
     let csrfRequested = false;
     let loginXsrfHeader: string | null = null;

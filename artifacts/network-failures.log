@@ -1,0 +1,10 @@
+[desktop] HTTP_500 GET http://127.0.0.1:8880/api/me
+[desktop] REQUEST_FAILED GET http://127.0.0.1:8880/sanctum/csrf-cookie :: net::ERR_ABORTED
+[desktop] HTTP_422 POST http://127.0.0.1:8880/api/auth/login
+[desktop] REQUEST_FAILED GET http://127.0.0.1:8880/sanctum/csrf-cookie :: net::ERR_ABORTED
+[desktop] REQUEST_FAILED POST http://127.0.0.1:8880/api/auth/login :: net::ERR_ABORTED
+[desktop] REQUEST_FAILED POST http://127.0.0.1:8880/api/auth/logout :: net::ERR_ABORTED
+[desktop] HTTP_500 GET http://127.0.0.1:8880/api/notifications?status=unread&limit=20
+[desktop] HTTP_500 GET http://127.0.0.1:8880/api/me
+[mobile] REQUEST_FAILED GET http://127.0.0.1:8880/sanctum/csrf-cookie :: net::ERR_ABORTED
+[mobile] REQUEST_FAILED POST http://127.0.0.1:8880/api/auth/login :: net::ERR_ABORTED
