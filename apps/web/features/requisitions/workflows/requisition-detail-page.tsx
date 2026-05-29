@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Pencil, Send } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@cognify/ui";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { AttachmentList } from "@/features/attachments/components/attachment-list";
 import { AttachmentUploader } from "@/features/attachments/components/attachment-uploader";
@@ -91,9 +92,8 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
         </Link>
       ) : null}
       {requisition.permissions.canResubmit ? (
-        <button
+        <Button
           type="button"
-          className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
           onClick={() =>
             resubmitMutation.mutate(undefined, {
               onSuccess: () => toast.success("Requisition resubmitted"),
@@ -103,7 +103,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           disabled={resubmitMutation.isPending}
         >
           {resubmitMutation.isPending ? "Resubmitting" : "Resubmit"}
-        </button>
+        </Button>
       ) : null}
       {requisition.permissions.canRequestChanges ? (
         <RequisitionActionDialog

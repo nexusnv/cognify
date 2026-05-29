@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Popover, PopoverContent, PopoverTrigger } from "@cognify/ui";
 import type { RequisitionTemplate, RequisitionTemplateMode } from "../types/requisition-view-model";
 
 export function RequisitionTemplatePicker({
@@ -12,11 +13,13 @@ export function RequisitionTemplatePicker({
   onApply: (template: RequisitionTemplate, mode: RequisitionTemplateMode) => void;
 }) {
   if (templates.length === 0) return null;
-
   return (
-    <section className="space-y-3 rounded-md border p-4">
-      <h2 className="text-base font-semibold">Start from a template</h2>
-      <div className="grid gap-3">
+    <Card>
+      <CardHeader>
+        <CardTitle>Start from a template</CardTitle>
+        <CardDescription>Apply defaults to speed up draft entry.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
         {templates.map((template) => (
           <div key={template.id} className="rounded-md border p-3">
             <p className="font-medium">{template.name}</p>
@@ -24,28 +27,35 @@ export function RequisitionTemplatePicker({
               <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
-                className="min-h-10 rounded-md border px-3 text-sm font-medium"
+                variant="outline"
                 disabled={disabled}
                 aria-label={`Fill empty fields from ${template.name}`}
                 onClick={() => onApply(template, "fill-empty")}
               >
                 Fill empty fields
-              </button>
-              <button
-                type="button"
-                className="min-h-10 rounded-md border px-3 text-sm font-medium"
-                disabled={disabled}
-                aria-label={`Replace draft fields with ${template.name}`}
-                onClick={() => onApply(template, "replace")}
-              >
-                Replace draft fields
-              </button>
+              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={disabled}
+                    aria-label={`Replace draft fields with ${template.name}`}
+                    onClick={() => onApply(template, "replace")}
+                  >
+                    Replace draft fields
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 text-sm" align="start">
+                  Replace mode overwrites existing draft fields with template defaults.
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         ))}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

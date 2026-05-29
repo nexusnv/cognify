@@ -1,23 +1,18 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle, Button } from "@cognify/ui";
+
 export function RequisitionSaveConflictPanel({ onReload }: { onReload: () => void }) {
   return (
-    <div
-      role="alert"
-      className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
-    >
-      <p className="font-semibold">This draft changed elsewhere.</p>
-      <p className="mt-1">
+    <Alert className="border-amber-300 bg-amber-50 text-amber-950">
+      <AlertTitle>This draft changed elsewhere.</AlertTitle>
+      <AlertDescription className="mt-1">
         Your local edits are still on screen. Reload the latest server copy before deciding what to
         reapply.
-      </p>
-      <button
-        type="button"
-        className="mt-3 min-h-10 rounded-md border border-amber-400 px-3 font-medium"
-        onClick={onReload}
-      >
+      </AlertDescription>
+      <Button type="button" variant="outline" className="mt-3 border-amber-400" onClick={onReload}>
         Reload latest draft
-      </button>
-    </div>
+      </Button>
+    </Alert>
   );
 }
