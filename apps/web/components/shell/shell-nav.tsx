@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button, buttonVariants } from "@cognify/ui";
 import type { ShellNavGroup } from "./shell-types";
 import { isActivePath } from "./shell-utils";
 
@@ -29,7 +30,11 @@ export function ShellNav({
                     key={item.href}
                     role="link"
                     tabIndex={-1}
-                    className="flex min-h-10 items-center gap-3 rounded-md px-2 text-sm text-muted-foreground opacity-70"
+                    className={buttonVariants({
+                      variant: "ghost",
+                      className:
+                        "w-full justify-start px-2 text-muted-foreground opacity-70 hover:bg-transparent hover:text-muted-foreground",
+                    })}
                     aria-disabled="true"
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
@@ -39,21 +44,21 @@ export function ShellNav({
               }
 
               return (
-                <Link
+                <Button
                   key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={[
-                    "flex min-h-10 items-center gap-3 rounded-md px-2 text-sm font-medium",
-                    active
-                      ? "border border-foreground bg-foreground text-background"
-                      : "text-muted-foreground hover:bg-card hover:text-foreground",
-                  ].join(" ")}
+                  asChild
+                  variant={active ? "default" : "ghost"}
+                  className="min-h-10 w-full justify-start px-2"
                 >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {item.label}
-                </Link>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                </Button>
               );
             })}
           </div>
