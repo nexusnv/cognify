@@ -36,8 +36,6 @@ class RecordRfqInvitationPortalView
                     'invitationId' => (string) $locked->id,
                     'rfqId' => (string) $locked->rfq_id,
                     'vendorId' => (string) $locked->vendor_id,
-                    'ipAddress' => $request->ip(),
-                    'userAgent' => substr((string) $request->userAgent(), 0, 255),
                 ],
                 subjectDisplay: $locked->vendor?->name,
             ));

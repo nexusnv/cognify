@@ -121,15 +121,13 @@ class RfqInvitationPortalApiTest extends TestCase
             ->assertOk();
         $this->assertSame(1, $invitation->refresh()->portal_view_count);
 
-        $this->actingAsTenant($tenant, $buyer)
-            ->post("/api/vendor-portal/rfq-invitations/{$token}/quotation/attachments", [
+        $this->post("/api/vendor-portal/rfq-invitations/{$token}/quotation/attachments", [
                 'file' => UploadedFile::fake()->create('buyer-quote.pdf', 128, 'application/pdf'),
             ])
             ->assertCreated();
         $this->assertSame(1, $invitation->refresh()->portal_view_count);
 
-        $this->actingAsTenant($tenant, $buyer)
-            ->putJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/manual-entry", $this->validManualEntryPayload())
+        $this->putJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/manual-entry", $this->validManualEntryPayload())
             ->assertOk();
         $this->assertSame(1, $invitation->refresh()->portal_view_count);
     }

@@ -89,7 +89,17 @@ export const approvalPolicySchema = z
       .default([]),
   })
   .superRefine((value, context) => {
+    const allowedStages = new Set(value.routeTemplate.stages.map((stage) => stage.name));
+
     value.slaRules.forEach((rule, index) => {
+      if (!allowedStages.has(rule.stage)) {
+        context.addIssue({
+          code: "custom",
+          path: ["slaRules", index, "stage"],
+          message: `${rule.stage} is not a valid stage for ${value.subjectType} policies`,
+        });
+      }
+
       if (
         rule.escalateAfterHours !== undefined &&
         rule.escalateAfterHours < rule.dueInHours

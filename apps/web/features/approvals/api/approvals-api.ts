@@ -53,7 +53,6 @@ import type {
   ApprovalSummary,
   ApprovalTaskFilters,
   ApprovalPolicyFormValues,
-  ApprovalRouteTemplate,
   ApprovalPolicyVersion,
 } from "../types/approval-view-model";
 
@@ -236,13 +235,15 @@ export function mapApprovalPolicy(policy: ApiApprovalPolicy): ApprovalPolicy {
 export function mapApprovalPolicyVersion(version: ApiApprovalPolicyVersion): ApprovalPolicyVersion {
   return {
     ...version,
-    routeTemplate: normalizeApprovalRouteTemplate(version.routeTemplate as ApprovalRouteTemplate),
+    routeTemplate: normalizeApprovalRouteTemplate(version.routeTemplate),
     rules: version.rules as ApprovalPolicyVersion["rules"],
     slaRules: version.slaRules as ApprovalPolicyVersion["slaRules"],
   };
 }
 
-function normalizeApprovalRouteTemplate(routeTemplate: ApprovalRouteTemplate): ApprovalRouteTemplate {
+function normalizeApprovalRouteTemplate(
+  routeTemplate: ApiApprovalPolicyVersion["routeTemplate"],
+): ApprovalPolicyVersion["routeTemplate"] {
   return {
     stages: routeTemplate.stages.map((stage) => ({
       ...stage,

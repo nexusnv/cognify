@@ -19,10 +19,6 @@ class UpdateApprovalPolicyRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->has('subjectType')) {
-            return;
-        }
-
         $subjectType = $this->routePolicySubjectType();
 
         if ($subjectType !== null) {
@@ -32,10 +28,12 @@ class UpdateApprovalPolicyRequest extends FormRequest
 
     public function rules(): array
     {
+        $subjectType = $this->routePolicySubjectType();
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'subjectType' => ['sometimes', Rule::in(['requisition', 'rfq_award_recommendation'])],
+            'subjectType' => ['sometimes', Rule::in($subjectType !== null ? [$subjectType] : ['requisition', 'rfq_award_recommendation'])],
             'priority' => ['sometimes', 'integer', 'min:1'],
             'rules' => ['sometimes', 'array'],
             'rules.*.field' => ['required_with:rules.*', 'string', 'max:255'],

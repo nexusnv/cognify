@@ -10,6 +10,7 @@ use App\Notifications\NotificationData;
 use App\Notifications\NotificationPreferenceDefaults;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalTask;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
@@ -50,7 +51,7 @@ class CreateCollaborationComment
 
             $comment = CollaborationComment::query()->create([
                 'tenant_id' => $tenant->id,
-                'subject_type' => $subject::class,
+                'subject_type' => $subject->getMorphClass(),
                 'subject_id' => $subject->getKey(),
                 'author_id' => $actor->id,
                 'body' => $data['body'],
@@ -155,6 +156,10 @@ class CreateCollaborationComment
     {
         if ($subject instanceof Requisition) {
             return "/requisitions/{$subject->id}";
+        }
+
+        if ($subject instanceof ApprovalTask) {
+            return "/approvals/tasks/{$subject->id}";
         }
 
         return null;

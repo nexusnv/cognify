@@ -5,6 +5,9 @@ import type {
   ApprovalPreviewContext as ApiApprovalPreviewContext,
   ApprovalPreviewStage as ApiApprovalPreviewStage,
   ApprovalPreviewWarning as ApiApprovalPreviewWarning,
+  ApprovalRouteApproverTemplate as ApiApprovalRouteApproverTemplate,
+  ApprovalRouteStageTemplate as ApiApprovalRouteStageTemplate,
+  ApprovalRouteTemplate as ApiApprovalRouteTemplate,
   ApprovalSummary as ApiApprovalSummary,
   ApprovalDelegation as ApiApprovalDelegation,
   ApprovalSlaSummary as ApiApprovalSlaSummary,
@@ -23,23 +26,9 @@ export type ApprovalPolicyRule = {
   value: string | number | boolean | unknown[];
 };
 
-export type ApprovalRouteApprover = {
-  type: "role" | "user";
-  role?: string;
-  userId?: string;
-  label?: string;
-};
-
-export type ApprovalRouteStage = {
-  name: string;
-  completionRule: ApprovalCompletionRule;
-  approvers: ApprovalRouteApprover[];
-  fallbackApprovers: ApprovalRouteApprover[];
-};
-
-export type ApprovalRouteTemplate = {
-  stages: ApprovalRouteStage[];
-};
+export type ApprovalRouteApprover = ApiApprovalRouteApproverTemplate;
+export type ApprovalRouteStage = ApiApprovalRouteStageTemplate;
+export type ApprovalRouteTemplate = ApiApprovalRouteTemplate;
 
 export type ApprovalSlaRule = {
   stage: string;

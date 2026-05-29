@@ -287,6 +287,25 @@ class ApprovalPolicyApiTest extends TestCase
             ->assertJsonPath('data.versions.0.rules.0.field', 'riskClassification');
     }
 
+    public function test_policy_update_rejects_subject_type_that_does_not_match_existing_policy(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->awardPolicyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->patchJson("/api/approval-policies/{$policy['id']}", [
+                'subjectType' => 'requisition',
+                'rules' => [
+                    ['field' => 'amount', 'operator' => 'gte', 'value' => 1000],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
     public function test_admin_can_create_policy_version_draft(): void
     {
         [$tenant, $admin] = $this->tenantUser('admin');

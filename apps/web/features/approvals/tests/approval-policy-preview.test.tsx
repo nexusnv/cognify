@@ -62,7 +62,7 @@ describe("ApprovalPolicyPreview", () => {
 
     expect(await screen.findByText("RFQ award approval")).toBeInTheDocument();
     expect(screen.getByText(/version 1/i)).toBeInTheDocument();
-    expect(screen.getByText("Preview warnings")).toBeInTheDocument();
+    expect(screen.queryByText("Preview warnings")).not.toBeInTheDocument();
     expect(screen.getByText("Commercial review")).toBeInTheDocument();
     expect(screen.getByText(/Fallback: Admin fallback/)).toBeInTheDocument();
     expect(screen.getByText(/rfq_award_recommendation/)).toBeInTheDocument();

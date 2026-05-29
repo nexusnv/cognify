@@ -155,6 +155,29 @@ class ApprovalTaskCommentApiTest extends TestCase
         ]);
     }
 
+    public function test_task_comment_mentions_link_to_approval_task(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [, $admin] = $this->tenantUser('admin', $tenant);
+        $task = $this->approvalTask($tenant, $requester, $approver);
+
+        $this->actingAsTenant($tenant, $approver)
+            ->postJson("/api/approval-tasks/{$task->id}/comments", [
+                'body' => 'Please review this approval note.',
+                'mentionedUserIds' => [(string) $admin->id],
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'recipient_id' => $admin->id,
+            'actor_id' => $approver->id,
+            'type' => 'collaboration.mentioned',
+            'href' => "/approvals/tasks/{$task->id}",
+        ]);
+    }
+
     /**
      * @return array{0: Tenant, 1: User}
      */

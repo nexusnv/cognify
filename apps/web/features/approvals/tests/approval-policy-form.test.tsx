@@ -95,6 +95,18 @@ describe("ApprovalPolicyForm", () => {
       expect(screen.queryByLabelText("Rule 1 field")).not.toBeInTheDocument();
     });
   });
+
+  it("shows approver validation errors inline", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<ApprovalPolicyForm onSubmit={onSubmit} />, { wrapper: TestQueryProvider });
+
+    await user.clear(screen.getByLabelText("Approver role"));
+    await user.click(screen.getByRole("button", { name: "Save policy" }));
+
+    expect(await screen.findByText("Role is required for role approvers")).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });
 
 function TestQueryProvider({ children }: { children: ReactNode }) {

@@ -55,6 +55,15 @@ describe("approvalPolicySchema", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("rejects SLA rules that reference unknown route stages", () => {
+    const parsed = approvalPolicySchema.safeParse({
+      ...defaultApprovalPolicyValues,
+      slaRules: [{ stage: "Finance review", dueInHours: 48, escalateAfterHours: 72 }],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
   it("accepts award recommendation approval policies with fallback approvers", () => {
     const parsed = approvalPolicySchema.safeParse({
       ...defaultApprovalPolicyValues,
@@ -74,6 +83,7 @@ describe("approvalPolicySchema", () => {
           },
         ],
       },
+      slaRules: [{ stage: "Commercial review", dueInHours: 24, escalateAfterHours: 36 }],
     });
 
     expect(parsed.success).toBe(true);

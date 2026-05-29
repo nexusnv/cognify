@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import type { FieldErrors } from "react-hook-form";
 import { Button, NativeSelect, Textarea } from "@cognify/ui";
 import { ApprovalPolicyPreview } from "../components/approval-policy-preview";
 import {
@@ -245,11 +246,13 @@ export function ApprovalPolicyForm({
             title="Approver"
             prefix="routeTemplate.stages.0.approvers.0"
             register={register}
+            errors={errors}
           />
           <ApproverEditor
             title="Fallback approver"
             prefix="routeTemplate.stages.0.fallbackApprovers.0"
             register={register}
+            errors={errors}
           />
         </div>
 
@@ -267,6 +270,7 @@ function ApproverEditor({
   title,
   prefix,
   register,
+  errors,
 }: {
   title: string;
   prefix:
@@ -275,32 +279,42 @@ function ApproverEditor({
   register: ReturnType<
     typeof useForm<ApprovalPolicySchemaInput, unknown, ApprovalPolicySchemaValues>
   >["register"];
+  errors: FieldErrors<ApprovalPolicySchemaInput>;
 }) {
+  const typeError = nestedErrorMessage(errors, `${prefix}.type`);
+  const roleError = nestedErrorMessage(errors, `${prefix}.role`);
+  const userIdError = nestedErrorMessage(errors, `${prefix}.userId`);
+
   return (
     <fieldset className="grid gap-2 rounded-md border p-3">
       <legend className="px-1 text-sm font-semibold">{title}</legend>
       <label className="space-y-1 text-xs font-medium">
         Type
-        <NativeSelect {...register(`${prefix}.type`)} aria-label={`${title} type`}>
+        <NativeSelect {...register(`${prefix}.type`)} aria-label={`${title} type`} aria-invalid={Boolean(typeError)}>
           <option value="role">Role</option>
           <option value="user">User</option>
         </NativeSelect>
+        {typeError ? <span className="block text-xs text-red-600">{typeError}</span> : null}
       </label>
       <label className="space-y-1 text-xs font-medium">
         Role
         <input
           {...register(`${prefix}.role`)}
           aria-label={`${title} role`}
+          aria-invalid={Boolean(roleError)}
           className="min-h-11 w-full rounded-md border px-3 text-base"
         />
+        {roleError ? <span className="block text-xs text-red-600">{roleError}</span> : null}
       </label>
       <label className="space-y-1 text-xs font-medium">
         User ID
         <input
           {...register(`${prefix}.userId`)}
           aria-label={`${title} user ID`}
+          aria-invalid={Boolean(userIdError)}
           className="min-h-11 w-full rounded-md border px-3 text-base"
         />
+        {userIdError ? <span className="block text-xs text-red-600">{userIdError}</span> : null}
       </label>
       <label className="space-y-1 text-xs font-medium">
         Label
@@ -312,6 +326,21 @@ function ApproverEditor({
       </label>
     </fieldset>
   );
+}
+
+function nestedErrorMessage(errors: FieldErrors<ApprovalPolicySchemaInput>, path: string): string | undefined {
+  const error = path
+    .split(".")
+    .reduce<unknown>((value, key) => (
+      typeof value === "object" && value !== null ? (value as Record<string, unknown>)[key] : undefined
+    ), errors);
+
+  return typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+    ? (error as { message: string }).message
+    : undefined;
 }
 
 function defaultRuleValue(field: string): ApprovalPolicyRule["value"] {

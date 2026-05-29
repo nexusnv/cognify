@@ -69,15 +69,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Attachment::class, AttachmentPolicy::class);
         Gate::policy(ApprovalTask::class, ApprovalTaskPolicy::class);
 
-        AuditSubject::registerType(PurchaseOrderRequestHandoff::class, 'po_handoff');
         AuditSubject::registerType(ApprovalTask::class, 'approval_task');
-        AuditSubject::registerType(ProcurementProject::class, 'project');
-        AuditSubject::registerType(Rfq::class, 'rfq');
-        AuditSubject::registerType(RfqInvitation::class, 'rfq_invitation');
-        AuditSubject::registerType(Quotation::class, 'quotation');
-        AuditSubject::registerType(QuotationVersion::class, 'quotation_version');
-        AuditSubject::registerType(QuotationNormalization::class, 'quotation_normalization');
-        AuditSubject::registerType(RfqScorecard::class, 'scorecard');
-        AuditSubject::registerType(RfqAwardRecommendation::class, 'award');
     }
 }
