@@ -47,8 +47,8 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow={task.subject.number}
-        title={task.subject.title}
+        eyebrow={task.subject.number ?? undefined}
+        title={task.subject.title ?? "Approval task"}
         actions={
           <>
             <ApprovalStatusBadge status={task.status} />

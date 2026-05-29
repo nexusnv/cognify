@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, NativeSelect, Textarea } from "@cognify/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { getApiValidationErrors } from "@cognify/api-client";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { FormField } from "@/components/forms/form-field";
@@ -717,7 +717,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
       {pendingTemplate ? (
         <Dialog open onOpenChange={(open) => (!open ? setPendingTemplate(null) : undefined)}>
-          <DialogContent>
+          <DialogContent showCloseButton={false} className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle id="template-confirm-title">Apply template?</DialogTitle>
               <DialogDescription>
@@ -729,14 +729,15 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               <code>{pendingTemplate.mode}</code> mode.
             </p>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPendingTemplate(null)}
-                disabled={applyTemplateMutation.isPending}
-              >
-                Cancel
-              </Button>
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={applyTemplateMutation.isPending}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
               <Button
                 type="button"
                 onClick={() => applyTemplateNow(pendingTemplate.template, pendingTemplate.mode)}

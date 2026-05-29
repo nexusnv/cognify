@@ -45,32 +45,34 @@ export function RequisitionComments({
         <CardDescription>Collaboration history and mention updates.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-      <ScrollArea className="max-h-80 pr-3">
-      <div className="space-y-3">
-        {(commentsQuery.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No comments yet.</p>
-        ) : null}
-        {(commentsQuery.data ?? []).map((comment) => (
-          <article key={comment.id} className="rounded-md bg-muted/30 p-3 text-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-medium">{comment.author.name}</p>
-                <p className="text-xs text-muted-foreground">{formatTimestamp(comment.createdAt)}</p>
-              </div>
-            </div>
-            <p className="mt-2 whitespace-pre-wrap">{comment.body}</p>
-            {comment.mentions.length > 0 ? (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">Mentioned:</span>
-                {comment.mentions.map((mention) => (
-                  <Badge key={mention.mentionedUser.id} variant="secondary">{mention.mentionedUser.name}</Badge>
-                ))}
-              </div>
+        <ScrollArea className="max-h-80 pr-3">
+          <div className="space-y-3">
+            {(commentsQuery.data ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No comments yet.</p>
             ) : null}
-          </article>
-        ))}
-      </div>
-      </ScrollArea>
+            {(commentsQuery.data ?? []).map((comment) => (
+              <article key={comment.id} className="rounded-md bg-muted/30 p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{comment.author.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatTimestamp(comment.createdAt)}</p>
+                  </div>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap">{comment.body}</p>
+                {comment.mentions.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Mentioned:</span>
+                    {comment.mentions.map((mention) => (
+                      <Badge key={mention.mentionedUser.id} variant="secondary">
+                        {mention.mentionedUser.name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </ScrollArea>
       {canComment ? (
         <form
           className="space-y-3 rounded-md bg-muted/30 p-4"

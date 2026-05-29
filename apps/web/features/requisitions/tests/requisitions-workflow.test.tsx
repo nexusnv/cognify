@@ -130,9 +130,8 @@ describe("requisitions workflow", () => {
       "href",
       "/projects/501",
     );
-    expect(screen.getByRole("group", { name: "Record metadata" })).toHaveTextContent(
-      "Estimated total",
-    );
+    const sidebar = screen.getByRole("complementary", { name: "Record sidebar" });
+    expect(sidebar).toHaveTextContent("Approval summary");
     const sections = screen.getByRole("navigation", { name: "Record sections" });
     expect(within(sections).getByRole("link", { name: "Overview" })).toHaveAttribute(
       "href",
@@ -160,21 +159,17 @@ describe("requisitions workflow", () => {
     expect(evidenceSection).not.toBeNull();
     const evidence = within(evidenceSection as HTMLElement);
     expect(evidence.getByLabelText("Upload evidence")).toBeInTheDocument();
-    expect(await evidence.findByText("supplier-quote.pdf")).toBeInTheDocument();
-    await user.click(evidence.getByLabelText("Preview supplier-quote.pdf"));
+    expect(
+      evidence.getByRole("button", { name: "Open actions for supplier-quote.pdf" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Open actions for supplier-quote.pdf" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Preview" }));
     const panel = await screen.findByRole("dialog", { name: "supplier-quote.pdf" });
     expect(within(panel).getByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
 
-    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
-      "Approval summary",
-    );
     expect(await screen.findByText("Standard requisition approval")).toBeInTheDocument();
-    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
-      "Standard requisition approval",
-    );
-    expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
-      "Quotation readiness",
-    );
+    expect(sidebar).toHaveTextContent("Standard requisition approval");
+    expect(sidebar).toHaveTextContent("Quotation readiness");
   });
 
   it("shows live approval summary and task entry point for pending approvals", async () => {

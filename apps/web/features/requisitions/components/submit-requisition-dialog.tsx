@@ -19,7 +19,7 @@ export function SubmitRequisitionDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (!nextOpen ? onCancel() : undefined)}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent showCloseButton={false} className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Submit requisition?</DialogTitle>
           <DialogDescription>

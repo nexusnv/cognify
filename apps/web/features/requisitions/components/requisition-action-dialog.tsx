@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Button,
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -74,7 +75,7 @@ export function RequisitionActionDialog({
       <DialogTrigger asChild>
         <Button variant={triggerVariant}>{triggerLabel}</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent showCloseButton={false} className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -104,10 +105,16 @@ export function RequisitionActionDialog({
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Keep editing
-          </Button>
-          <Button variant={triggerVariant === "destructive" ? "destructive" : "default"} onClick={handleSubmit} disabled={isPending}>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">
+              Keep editing
+            </Button>
+          </DialogClose>
+          <Button
+            variant={triggerVariant === "destructive" ? "destructive" : "default"}
+            onClick={handleSubmit}
+            disabled={isPending}
+          >
             {isPending ? "Working" : confirmLabel}
           </Button>
         </DialogFooter>

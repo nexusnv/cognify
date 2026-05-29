@@ -86,7 +86,7 @@ function SheetContent({
       {},
       {
         children: [
-          React.createElement(SheetOverlay, null),
+          React.createElement(SheetOverlay, { key: "overlay" }),
           React.createElement(
             SheetPrimitive.Content,
             Object.assign(
@@ -109,13 +109,14 @@ function SheetContent({
               },
               {
                 children: [
-                  children,
+                  React.createElement(React.Fragment, { key: "children" }, children),
                   showCloseButton &&
                     React.createElement(
                       SheetPrimitive.Close,
                       Object.assign(
                         {},
                         {
+                          key: "close",
                           className:
                             "absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary",
                         },

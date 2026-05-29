@@ -54,7 +54,6 @@ export function RightPanelRoot() {
 
   return (
     <Sheet
-      modal={false}
       open={Boolean(panel)}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
