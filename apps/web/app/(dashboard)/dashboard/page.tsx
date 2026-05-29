@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, RefreshCw } from "lucide-react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Separator,
+} from "@cognify/ui";
 
 export default function DashboardPage() {
   return (
@@ -7,54 +17,73 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Procurement work queue and requisition starting point.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Procurement work queue and requisition starting point.
+          </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link
-            href="/requisitions/new"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-foreground px-4 text-sm font-medium text-background"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New requisition
-          </Link>
-          <Link
-            href="/requisitions"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-medium"
-          >
-            <FileText className="h-4 w-4" aria-hidden="true" />
-            View requisitions
-          </Link>
+          <Button asChild className="min-h-11">
+            <Link href="/requisitions/new">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New requisition
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="min-h-11">
+            <Link href="/requisitions">
+              <FileText className="h-4 w-4" aria-hidden="true" />
+              View requisitions
+            </Link>
+          </Button>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         {[
-          ["Drafts", "1", "Resume requester work"],
-          ["Submitted", "1", "Ready for review"],
-          ["Needs attention", "0", "No blocked requisitions"],
-        ].map(([label, value, helper]) => (
-          <section key={label} className="rounded-md border p-4">
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <p className="mt-2 font-mono text-2xl font-semibold tabular-nums">{value}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
-          </section>
+          { label: "Drafts", value: "1", helper: "Resume requester work", badge: "Active" },
+          { label: "Submitted", value: "1", helper: "Ready for review", badge: "In queue" },
+          { label: "Needs attention", value: "0", helper: "No blocked requisitions", badge: "Clear" },
+        ].map((item) => (
+          <Card key={item.label}>
+            <CardHeader className="gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{item.label}</CardTitle>
+                <Badge variant="secondary">{item.badge}</Badge>
+              </div>
+              <CardDescription className="text-3xl font-semibold text-foreground">{item.value}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground">{item.helper}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Recent requisition activity</h2>
-        <div className="mt-3 space-y-3 text-sm">
-          <div className="flex items-start justify-between gap-3 rounded-md border p-3">
+      <Card>
+        <CardHeader className="gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
+              <CardTitle className="text-base">Recent requisition activity</CardTitle>
+              <CardDescription>Latest queue events and next actions.</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm">
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Separator />
+          <div className="flex items-start justify-between gap-3 rounded-md bg-muted/30 p-3 text-sm">
+            <div className="space-y-1">
               <p className="font-medium">REQ-2026-000002 submitted</p>
               <p className="text-muted-foreground">Warehouse packing supplies moved to review.</p>
             </div>
-            <Link href="/requisitions/req-2" className="min-h-11 rounded-md border px-3 py-2">
-              Open
-            </Link>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/requisitions/req-2">Open</Link>
+            </Button>
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </section>
   );
 }

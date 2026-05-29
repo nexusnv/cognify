@@ -1,4 +1,22 @@
 import type { SystemStatusDemo } from "@cognify/api-client/schemas";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Progress,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@cognify/ui";
 
 const countLabels: Array<{ key: keyof SystemStatusDemo["counts"]; label: string }> = [
   { key: "tenants", label: "Tenants" },
@@ -13,12 +31,10 @@ const countLabels: Array<{ key: keyof SystemStatusDemo["counts"]; label: string 
 
 export function DemoDatasetSummary({ demo }: { demo: SystemStatusDemo }) {
   return (
-    <section aria-labelledby="demo-dataset-heading" className="space-y-3">
-      <div className="space-y-1">
-        <h2 id="demo-dataset-heading" className="text-base font-semibold">
-          Demo dataset
-        </h2>
-        <p className="text-sm text-muted-foreground">
+    <Card>
+      <CardHeader className="gap-2">
+        <CardTitle className="text-base">Demo dataset</CardTitle>
+        <CardDescription>
           {demo.seeded ? "Seeded locally" : "Not seeded yet"}
           {demo.lastSeededAt ? (
             <>
@@ -26,16 +42,40 @@ export function DemoDatasetSummary({ demo }: { demo: SystemStatusDemo }) {
               · Last seeded <time dateTime={demo.lastSeededAt}>{demo.lastSeededAt}</time>
             </>
           ) : null}
-        </p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {countLabels.map(({ key, label }) => (
-          <div key={key} className="rounded-md border p-4">
-            <div className="text-xs text-muted-foreground">{label}</div>
-            <div className="mt-1 text-2xl font-semibold">{demo.counts[key]}</div>
-          </div>
-        ))}
-      </div>
-    </section>
+        </CardDescription>
+        <Progress value={demo.seeded ? 100 : 0} />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!demo.seeded ? (
+          <Alert>
+            <AlertTitle>Demo data is missing</AlertTitle>
+            <AlertDescription>
+              Seed the tenant before using the preview environment for procurement flows.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Dataset</TableHead>
+              <TableHead>Count</TableHead>
+              <TableHead>Key</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {countLabels.map(({ key, label }) => (
+              <TableRow key={key}>
+                <TableCell>{label}</TableCell>
+                <TableCell className="font-semibold">{demo.counts[key]}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{key}</Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

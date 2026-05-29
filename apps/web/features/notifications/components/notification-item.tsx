@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { Notification } from "@cognify/api-client/schemas";
+import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cognify/ui";
 import { useMarkNotificationRead } from "../hooks/use-notifications";
 
 function formatCreatedAt(value: string) {
@@ -29,23 +30,33 @@ export function NotificationItem({ notification }: { notification: Notification 
   };
 
   return (
-    <li className="border-b last:border-b-0">
-      <button
-        type="button"
-        onClick={openNotification}
-        className="grid w-full gap-1 px-4 py-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <span className="flex items-center gap-2">
-          {unread && <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />}
-          <span className="text-sm font-medium">{notification.title}</span>
-        </span>
-        {notification.body && <span className="text-sm text-muted-foreground">{notification.body}</span>}
-        <span className="text-xs text-muted-foreground">
+    <Card
+      className={unread ? "border-primary/40" : undefined}
+      role="button"
+      tabIndex={0}
+      onClick={openNotification}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          void openNotification();
+        }
+      }}
+    >
+      <CardHeader className="gap-2 pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-sm">{notification.title}</CardTitle>
+          {unread ? <Badge variant="secondary">Unread</Badge> : <Badge variant="outline">Read</Badge>}
+        </div>
+        <CardDescription className="text-xs">
           {notification.actor?.name ? `${notification.actor.name} · ` : ""}
           {notification.subject?.label ? `${notification.subject.label} · ` : ""}
           {formatCreatedAt(notification.createdAt)}
-        </span>
-      </button>
-    </li>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
+        {notification.body ? <p className="text-sm text-muted-foreground">{notification.body}</p> : null}
+        <p className="text-sm font-medium text-primary">Open</p>
+      </CardContent>
+    </Card>
   );
 }
