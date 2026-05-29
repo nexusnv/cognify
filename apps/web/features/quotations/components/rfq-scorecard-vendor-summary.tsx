@@ -1,12 +1,16 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import type { RfqScorecard } from "@cognify/api-client/schemas";
 
 export function RfqScorecardVendorSummary({ scorecard }: { scorecard: RfqScorecard }) {
   return (
     <section className="grid gap-3 md:grid-cols-2" aria-label="Vendor summaries">
       {scorecard.vendors.map((vendor) => (
-        <article key={vendor.vendorId} className="rounded-md border p-4">
-          <h3 className="font-medium">{vendor.vendorName}</h3>
-          <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <Card key={vendor.vendorId}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{vendor.vendorName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+          <dl className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <dt className="text-muted-foreground">Weighted total</dt>
               <dd className="text-lg font-semibold">{vendor.weightedTotal}</dd>
@@ -24,7 +28,8 @@ export function RfqScorecardVendorSummary({ scorecard }: { scorecard: RfqScoreca
               <dd>{vendor.leadTimeDays != null ? `${vendor.leadTimeDays} days` : "No lead time"}</dd>
             </div>
           </dl>
-        </article>
+          </CardContent>
+        </Card>
       ))}
     </section>
   );

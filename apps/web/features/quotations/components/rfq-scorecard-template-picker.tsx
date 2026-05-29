@@ -1,4 +1,4 @@
-import { Button } from "@cognify/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import type { QuotationScoringTemplate } from "@cognify/api-client/schemas";
 
 export function RfqScorecardTemplatePicker({
@@ -17,16 +17,20 @@ export function RfqScorecardTemplatePicker({
       <h2 className="text-lg font-semibold">Apply scoring template</h2>
       <div className="grid gap-3 md:grid-cols-2">
         {activeTemplates.map((template) => (
-          <article key={template.id} className="rounded-md border p-4">
+          <article key={template.id}>
+          <Card>
+            <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-medium">{template.name}</h3>
+                <CardTitle className="text-base">{template.name}</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
               </div>
               <Button size="sm" disabled={isPending} onClick={() => onApply(template.id)}>
                 Apply
               </Button>
             </div>
+            </CardHeader>
+            <CardContent>
             <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
               <div>
                 <dt className="text-muted-foreground">Criteria</dt>
@@ -37,6 +41,8 @@ export function RfqScorecardTemplatePicker({
                 <dd>{template.criteria.reduce((sum, criterion) => sum + Number(criterion.weight), 0).toFixed(2)}</dd>
               </div>
             </dl>
+            </CardContent>
+          </Card>
           </article>
         ))}
       </div>

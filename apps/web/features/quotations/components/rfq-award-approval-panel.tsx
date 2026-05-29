@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { ApprovalSummary } from "@cognify/api-client/schemas";
 
@@ -28,10 +28,11 @@ export function RfqAwardApprovalPanel({
   const completedDecision = summary?.completedDecisions[0] ?? null;
 
   return (
-    <section id="approval" className="rounded-md border p-4" aria-label="Approval route">
+    <Card id="approval" role="region" aria-label="Approval route">
+      <CardHeader>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Approval route</h2>
+          <CardTitle className="text-base">Approval route</CardTitle>
           <p className="text-sm text-muted-foreground">Shared approval workflow for this award recommendation.</p>
         </div>
         {recommendationStatus === "pending_approval" && canRoute ? (
@@ -40,11 +41,13 @@ export function RfqAwardApprovalPanel({
           </Button>
         ) : null}
       </div>
+      </CardHeader>
+      <CardContent>
 
       {error ? (
-        <div role="alert" className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-          {getApprovalErrorMessage(error)}
-        </div>
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription>{getApprovalErrorMessage(error)}</AlertDescription>
+        </Alert>
       ) : null}
 
       {isLoading ? <p className="mt-3 text-sm text-muted-foreground">Loading approval route</p> : null}
@@ -67,16 +70,13 @@ export function RfqAwardApprovalPanel({
       ) : null}
 
       {summary?.status === "active" && summary.currentUserTaskId ? (
-        <Link
-          className="mt-4 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
-          href={`/approvals/tasks/${summary.currentUserTaskId}`}
-        >
-          Open approval task
-        </Link>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href={`/approvals/tasks/${summary.currentUserTaskId}`}>Open approval task</Link>
+        </Button>
       ) : null}
 
       {summary?.status && summary.status !== "active" ? (
-        <div className="mt-4 rounded-md border p-3 text-sm">
+        <div className="mt-4 rounded-md bg-muted/30 p-3 text-sm">
           <div className="font-medium">{approvalOutcomeLabel(summary.status)}</div>
           {completedDecision?.reason ? <p className="mt-1 text-muted-foreground">{completedDecision.reason}</p> : null}
         </div>
@@ -85,7 +85,8 @@ export function RfqAwardApprovalPanel({
       {!summary && !isLoading && recommendationStatus === "pending_approval" ? (
         <p className="mt-3 text-sm text-muted-foreground">No approval route has been started.</p>
       ) : null}
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 

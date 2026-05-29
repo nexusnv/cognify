@@ -1,4 +1,4 @@
-import { Badge } from "@cognify/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle, Progress, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cognify/ui";
 import type { QuotationComparisonVendor } from "@cognify/api-client/schemas";
 
 export function QuotationComparisonVendorSummary({
@@ -14,17 +14,20 @@ export function QuotationComparisonVendorSummary({
       </div>
       <div className="grid gap-3 lg:grid-cols-3">
         {vendors.map((vendor) => (
-          <article key={vendor.vendorId} className="rounded-md border p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-semibold">{vendor.vendorName}</h3>
-                <p className="text-xs text-muted-foreground">{vendor.quotationNumber}</p>
+          <Card key={vendor.vendorId}>
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base">{vendor.vendorName}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{vendor.quotationNumber}</p>
+                </div>
+                <Badge variant={vendor.readiness === "ready" ? "default" : "secondary"}>
+                  {vendor.readiness === "ready" ? "Ready" : "Normalization required"}
+                </Badge>
               </div>
-              <Badge variant={vendor.readiness === "ready" ? "default" : "secondary"}>
-                {vendor.readiness === "ready" ? "Ready" : "Normalization required"}
-              </Badge>
-            </div>
-            <dl className="mt-4 grid gap-2 text-sm">
+            </CardHeader>
+            <CardContent>
+            <dl className="grid gap-2 text-sm">
               <SummaryItem label="Total" value={formatMoney(vendor.currency, vendor.totalAmount)} />
               <SummaryItem label="Lead time" value={vendor.leadTimeDays != null ? `${vendor.leadTimeDays} days` : "Not available"} />
               <SummaryItem label="Payment" value={vendor.paymentTerms ?? "Not available"} />
@@ -35,7 +38,20 @@ export function QuotationComparisonVendorSummary({
                 value={`${vendor.issueCounts.blocking} blocking, ${vendor.issueCounts.warning} warning, ${vendor.issueCounts.info} info`}
               />
             </dl>
-          </article>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="mt-4">
+                    <Progress value={vendor.readiness === "ready" ? 100 : 60} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {vendor.readiness === "ready" ? "Normalization complete" : "Normalization follow-up required"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </section>

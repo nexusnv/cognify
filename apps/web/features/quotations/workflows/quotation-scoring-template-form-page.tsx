@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getApiErrorMessage } from "@cognify/api-client";
+import { Alert, AlertDescription, Card, CardContent } from "@cognify/ui";
 import { QuotationScoringTemplateForm } from "../components/quotation-scoring-template-form";
 import {
   useQuotationScoringTemplate,
@@ -15,14 +16,12 @@ export function QuotationScoringTemplateFormPage({ templateId }: { templateId?: 
   const template = templateQuery.data;
 
   if (!isNew && templateQuery.isLoading) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading scoring template</div>;
+    return <Card><CardContent className="py-4 text-sm text-muted-foreground">Loading scoring template</CardContent></Card>;
   }
 
   if (!isNew && (templateQuery.isError || !template)) {
     return (
-      <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        {getApiErrorMessage(templateQuery.error)}
-      </div>
+      <Alert variant="destructive"><AlertDescription>{getApiErrorMessage(templateQuery.error)}</AlertDescription></Alert>
     );
   }
 
@@ -36,9 +35,7 @@ export function QuotationScoringTemplateFormPage({ templateId }: { templateId?: 
       </header>
 
       {saveTemplate.isError ? (
-        <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-          {getApiErrorMessage(saveTemplate.error)}
-        </div>
+        <Alert variant="destructive"><AlertDescription>{getApiErrorMessage(saveTemplate.error)}</AlertDescription></Alert>
       ) : null}
 
       <QuotationScoringTemplateForm
