@@ -1,5 +1,6 @@
 import { FileClock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Badge, Card, CardContent, CardHeader, CardTitle, ScrollArea, Separator } from "@cognify/ui";
 
 const metadataValueMaxLength = 200;
 
@@ -38,51 +39,77 @@ export function ActivityTimeline({
   actionIcons?: ActivityTimelineActionIcons;
 }) {
   if (events.length === 0) {
-    return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
+    return (
+      <Card>
+        <CardContent className="py-6 text-sm text-muted-foreground">{emptyMessage}</CardContent>
+      </Card>
+    );
   }
 
   return (
-    <ol className="space-y-3">
-      {events.map((event) => {
-        const Icon = actionIcons[event.action] ?? actionIcons.default ?? FileClock;
-        const actorName = event.actor?.name ?? "System";
-        const formattedTime = formatOccurredAt(event.occurredAt);
-        const metadataEntries = event.metadata ? Object.entries(event.metadata).filter(([, value]) => value !== undefined && value !== null) : [];
+    <Card>
+      <CardHeader className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-base">Activity timeline</CardTitle>
+          <Badge variant="secondary">{events.length} events</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <ScrollArea className="max-h-96 pr-3">
+          <ol className="space-y-4">
+            {events.map((event, index) => {
+              const Icon = actionIcons[event.action] ?? actionIcons.default ?? FileClock;
+              const actorName = event.actor?.name ?? "System";
+              const formattedTime = formatOccurredAt(event.occurredAt);
+              const metadataEntries = event.metadata
+                ? Object.entries(event.metadata).filter(([, value]) => value !== undefined && value !== null)
+                : [];
 
-        return (
-          <li key={event.id} className="flex gap-3 rounded-md border p-3">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-card">
-              <Icon className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium">{event.message}</p>
-              <p className="text-sm text-muted-foreground">
-                {actorName} · {formattedTime}
-              </p>
-              {event.targetDisplay ? (
-                <p className="mt-1 text-xs text-muted-foreground">{event.targetDisplay}</p>
-              ) : null}
-              {metadataEntries.length > 0 ? (
-                <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
-                  {metadataEntries.map(([key, value]) => {
-                    const formattedValue = formatMetadataValue(value);
-
-                    return (
-                      <div key={key} className="contents">
-                        <dt className="font-medium text-muted-foreground">{key}</dt>
-                        <dd className="min-w-0 break-words" title={formattedValue.fullValue}>
-                          {formattedValue.displayValue}
-                        </dd>
+              return (
+                <li key={event.id} className="space-y-4">
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium">{event.message}</p>
+                        <Badge variant="outline" className="capitalize">
+                          {formatActionLabel(event.action)}
+                        </Badge>
                       </div>
-                    );
-                  })}
-                </dl>
-              ) : null}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+                      <p className="text-sm text-muted-foreground">
+                        {actorName} · {formattedTime}
+                      </p>
+                      {event.targetDisplay ? (
+                        <p className="text-xs text-muted-foreground">{event.targetDisplay}</p>
+                      ) : null}
+                      {metadataEntries.length > 0 ? (
+                        <dl className="grid gap-x-3 gap-y-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
+                          {metadataEntries.map(([key, value]) => {
+                            const formattedValue = formatMetadataValue(value);
+
+                            return (
+                              <div key={key} className="contents">
+                                <dt className="font-medium text-muted-foreground">{key}</dt>
+                                <dd className="min-w-0 break-words" title={formattedValue.fullValue}>
+                                  {formattedValue.displayValue}
+                                </dd>
+                              </div>
+                            );
+                          })}
+                        </dl>
+                      ) : null}
+                    </div>
+                  </div>
+                  {index < events.length - 1 ? <Separator /> : null}
+                </li>
+              );
+            })}
+          </ol>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -90,6 +117,10 @@ function formatOccurredAt(occurredAt: string) {
   const parsedDate = new Date(occurredAt);
 
   return Number.isNaN(parsedDate.getTime()) ? "Unknown date" : parsedDate.toLocaleString();
+}
+
+function formatActionLabel(action: string) {
+  return action.replaceAll(".", " ").replaceAll("_", " ");
 }
 
 function formatMetadataValue(value: unknown): FormattedMetadataValue {
