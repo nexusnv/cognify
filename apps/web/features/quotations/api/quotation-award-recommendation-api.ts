@@ -215,11 +215,30 @@ export async function downloadPurchaseOrderRequestHandoffCsv(
   if (response.status !== 200) throw response.data;
 
   const csvData: unknown = response.data;
-  if (csvData instanceof Blob) {
-    return csvData;
+  const contentType = normalizeCsvContentType(response.headers.get("content-type"));
+
+  if (isBlobLike(csvData)) {
+    return new Blob([await csvData.text()], { type: contentType });
   }
 
-  return new Blob([String(csvData)], {
-    type: response.headers.get("content-type") ?? "text/csv; charset=UTF-8",
-  });
+  return new Blob([String(csvData)], { type: contentType });
+}
+
+function isBlobLike(value: unknown): value is { text: () => Promise<string> } {
+  return typeof value === "object" && value !== null && typeof (value as { text?: unknown }).text === "function";
+}
+
+function normalizeCsvContentType(contentType: string | null): string {
+  const fallback = "text/csv;charset=utf-8";
+
+  if (contentType === null || contentType.trim() === "") {
+    return fallback;
+  }
+
+  return contentType
+    .toLowerCase()
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(";");
 }
