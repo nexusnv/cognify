@@ -25,7 +25,7 @@ class VendorPortalQuotationVersionController extends Controller
         $request->attributes->set('vendor_portal', true);
         // JsonResource resolves the current request instance when serializing.
         request()->attributes->set('vendor_portal', true);
-        $invitation = $resolve->handle($token, $request);
+        $invitation = $resolve->handle($token);
         $request->attributes->set('vendor_portal_can_edit_quotation', $invitation->canBeViewedInPortal());
         request()->attributes->set('vendor_portal_can_edit_quotation', $invitation->canBeViewedInPortal());
 
@@ -55,7 +55,7 @@ class VendorPortalQuotationVersionController extends Controller
         $request->attributes->set('vendor_portal', true);
         // JsonResource resolves the current request instance when serializing.
         request()->attributes->set('vendor_portal', true);
-        $invitation = $resolve->handle($token, $request);
+        $invitation = $resolve->handle($token);
         $request->attributes->set('vendor_portal_can_edit_quotation', $invitation->canBeViewedInPortal());
         request()->attributes->set('vendor_portal_can_edit_quotation', $invitation->canBeViewedInPortal());
 

@@ -11,10 +11,11 @@ use Domains\Project\Http\Resources\ProjectRequisitionResource;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProjectRequisitionController extends Controller
 {
-    public function index(CurrentTenant $currentTenant, int $project): JsonResponse
+    public function index(Request $request, CurrentTenant $currentTenant, int $project): JsonResponse
     {
         $projectModel = $this->findProject($currentTenant, $project);
         $this->authorize('view', $projectModel);
@@ -23,6 +24,7 @@ class ProjectRequisitionController extends Controller
             ->with(['requester', 'lineItems'])
             ->where('tenant_id', $projectModel->tenant_id)
             ->where('project_id', $projectModel->id)
+            ->visibleTo($request->user(), $currentTenant->roleFor($request->user()), $projectModel->tenant_id)
             ->latest('updated_at')
             ->get();
 

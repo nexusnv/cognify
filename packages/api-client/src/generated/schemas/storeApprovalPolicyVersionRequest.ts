@@ -4,6 +4,7 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { StoreApprovalPolicyVersionRequestSubjectType } from "./storeApprovalPolicyVersionRequestSubjectType";
 import type { ApprovalPolicyRule } from "./approvalPolicyRule";
 import type { ApprovalRouteTemplate } from "./approvalRouteTemplate";
 import type { ApprovalSlaRule } from "./approvalSlaRule";
@@ -11,6 +12,7 @@ import type { ApprovalSlaRule } from "./approvalSlaRule";
 export interface StoreApprovalPolicyVersionRequest {
   /** @minimum 1 */
   priority?: number;
+  subjectType?: StoreApprovalPolicyVersionRequestSubjectType;
   rules: ApprovalPolicyRule[];
   routeTemplate: ApprovalRouteTemplate;
   slaRules?: ApprovalSlaRule[];

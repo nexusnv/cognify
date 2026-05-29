@@ -33,13 +33,24 @@ class UpdatePurchaseOrderRequestHandoff
             $handoff->assertLockVersion((int) Arr::get($data, 'lockVersion'));
             $before = $handoff->only(['requested_po_date', 'delivery_attention', 'finance_note', 'export_memo', 'lock_version']);
 
-            $handoff->forceFill([
-                'requested_po_date' => Arr::get($data, 'requestedPoDate'),
-                'delivery_attention' => Arr::get($data, 'deliveryAttention'),
-                'finance_note' => Arr::get($data, 'financeNote'),
-                'export_memo' => Arr::get($data, 'exportMemo'),
+            $attributes = [
                 'lock_version' => $handoff->lock_version + 1,
-            ])->save();
+            ];
+
+            $optionalFields = [
+                'requestedPoDate' => 'requested_po_date',
+                'deliveryAttention' => 'delivery_attention',
+                'financeNote' => 'finance_note',
+                'exportMemo' => 'export_memo',
+            ];
+
+            foreach ($optionalFields as $inputKey => $column) {
+                if (Arr::exists($data, $inputKey)) {
+                    $attributes[$column] = $data[$inputKey];
+                }
+            }
+
+            $handoff->forceFill($attributes)->save();
 
             $this->auditRecorder->record(new AuditEventData(
                 tenant: $handoff->tenant,

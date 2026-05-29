@@ -22,7 +22,7 @@ class PreviewApprovalPolicy
      */
     public function handle(Tenant $tenant, User $actor, ApprovalContextData $context, array $candidates): ApprovalPreviewData
     {
-        $match = $this->matcher->match($context, $candidates);
+        $match = $this->matcher->match($context, $candidates, allowUnmatchedPolicyFallback: true);
         $route = $this->routeBuilder->build(
             $context,
             $match['matchedVersion'],

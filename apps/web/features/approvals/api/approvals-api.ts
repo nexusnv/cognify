@@ -1,4 +1,5 @@
 import {
+  createApprovalTaskComment as createApprovalTaskCommentEndpoint,
   createApprovalPolicy,
   createApprovalPolicyVersion,
   createApprovalDelegation,
@@ -8,6 +9,7 @@ import {
   getApprovalPolicy,
   getApprovalSlaSummary,
   getRequisitionApprovalSummary,
+  listApprovalTaskComments as listApprovalTaskCommentsEndpoint,
   listApprovalDelegationCandidates as listApprovalDelegationCandidatesEndpoint,
   listApprovalDelegations as listApprovalDelegationsEndpoint,
   listApprovalTasks as listApprovalTasksEndpoint,
@@ -28,6 +30,8 @@ import type {
   ApprovalTask as ApiApprovalTask,
   ApprovalTaskActionRequest,
   ApprovalTaskQueueResponse,
+  CollaborationComment,
+  CreateCollaborationCommentRequest,
   ApprovalPolicy as ApiApprovalPolicy,
   ApprovalPolicyListResponse,
   ApprovalPolicyVersion as ApiApprovalPolicyVersion,
@@ -134,6 +138,21 @@ export async function fetchApprovalTask(taskId: string) {
   return response.data.data as ApiApprovalTask;
 }
 
+export async function listApprovalTaskComments(taskId: string): Promise<CollaborationComment[]> {
+  const response = await listApprovalTaskCommentsEndpoint(taskId, withActiveTenantHeader());
+  if (response.status !== 200) throw response.data;
+  return response.data.data;
+}
+
+export async function createApprovalTaskComment(
+  taskId: string,
+  values: CreateCollaborationCommentRequest,
+): Promise<CollaborationComment> {
+  const response = await createApprovalTaskCommentEndpoint(taskId, values, withActiveTenantHeader());
+  if (response.status !== 201) throw response.data;
+  return response.data.data;
+}
+
 export async function markApprovalTaskViewed(taskId: string) {
   const response = await viewApprovalTask(taskId, withActiveTenantHeader());
   if (response.status !== 200) throw response.data;
@@ -216,9 +235,20 @@ export function mapApprovalPolicy(policy: ApiApprovalPolicy): ApprovalPolicy {
 export function mapApprovalPolicyVersion(version: ApiApprovalPolicyVersion): ApprovalPolicyVersion {
   return {
     ...version,
-    routeTemplate: version.routeTemplate as ApprovalPolicyVersion["routeTemplate"],
+    routeTemplate: normalizeApprovalRouteTemplate(version.routeTemplate),
     rules: version.rules as ApprovalPolicyVersion["rules"],
     slaRules: version.slaRules as ApprovalPolicyVersion["slaRules"],
+  };
+}
+
+function normalizeApprovalRouteTemplate(
+  routeTemplate: ApiApprovalPolicyVersion["routeTemplate"],
+): ApprovalPolicyVersion["routeTemplate"] {
+  return {
+    stages: routeTemplate.stages.map((stage) => ({
+      ...stage,
+      fallbackApprovers: stage.fallbackApprovers ?? [],
+    })),
   };
 }
 

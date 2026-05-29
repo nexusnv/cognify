@@ -97,6 +97,57 @@ class RequisitionApiTest extends TestCase
         ]);
     }
 
+    public function test_requester_cannot_create_requisition_on_hidden_same_tenant_project(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $hiddenProject = $this->createProject($tenant, $otherRequester);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson('/api/requisitions', [
+                'title' => 'Hidden project guess',
+                'projectId' => (string) $hiddenProject->id,
+                'lineItems' => [
+                    [
+                        'name' => 'Developer laptop',
+                        'quantity' => 1,
+                        'unit' => 'each',
+                        'estimatedUnitPrice' => '1800.00',
+                        'currency' => 'USD',
+                    ],
+                ],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('requisitions', [
+            'tenant_id' => $tenant->id,
+            'requester_id' => $requester->id,
+            'title' => 'Hidden project guess',
+            'project_id' => $hiddenProject->id,
+        ]);
+    }
+
+    public function test_requester_cannot_update_requisition_onto_hidden_same_tenant_project(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $requisition = $this->createDraft($tenant, $requester);
+        $hiddenProject = $this->createProject($tenant, $otherRequester);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->patchJson("/api/requisitions/{$requisition->id}", [
+                'lockVersion' => 0,
+                'projectId' => (string) $hiddenProject->id,
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('requisitions', [
+            'id' => $requisition->id,
+            'project_id' => null,
+            'lock_version' => 0,
+        ]);
+    }
+
     public function test_requester_must_send_current_lock_version_when_updating_draft(): void
     {
         [$tenant, $user] = $this->tenantUser('requester');
@@ -425,6 +476,31 @@ class RequisitionApiTest extends TestCase
         ]);
     }
 
+    public function test_requester_cannot_resubmit_invalid_change_requested_requisition(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $requisition = $this->createDraft($tenant, $requester, [
+            'status' => RequisitionStatus::ChangesRequested,
+            'business_justification' => '',
+            'change_request_reason' => 'Restore the missing justification.',
+            'change_request_fields' => ['businessJustification'],
+            'changes_requested_by_id' => $buyer->id,
+            'changes_requested_at' => now(),
+        ]);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/requisitions/{$requisition->id}/resubmit")
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonStructure(['error' => ['details' => ['fields' => ['businessJustification']]]]);
+
+        $this->assertDatabaseHas('requisitions', [
+            'id' => $requisition->id,
+            'status' => RequisitionStatus::ChangesRequested->value,
+        ]);
+    }
+
     public function test_requester_can_withdraw_submitted_requisition_with_reason(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -583,6 +659,19 @@ class RequisitionApiTest extends TestCase
         Sanctum::actingAs($user);
 
         return $this->withHeader('X-Tenant-Id', (string) $tenant->id);
+    }
+
+    private function createProject(Tenant $tenant, User $owner): ProcurementProject
+    {
+        return ProcurementProject::query()->create([
+            'tenant_id' => $tenant->id,
+            'owner_id' => $owner->id,
+            'number' => sprintf('PRJ-2026-%06d', ProcurementProject::query()->where('tenant_id', $tenant->id)->count() + 1),
+            'name' => 'Hidden workspace',
+            'status' => 'active',
+            'budget_amount' => '25000.00',
+            'currency' => 'MYR',
+        ]);
     }
 
     /**

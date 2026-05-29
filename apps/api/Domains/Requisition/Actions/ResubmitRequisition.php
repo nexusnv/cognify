@@ -20,6 +20,7 @@ class ResubmitRequisition
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
+        private readonly SubmitRequisition $submitRequisition,
     ) {
     }
 
@@ -28,6 +29,8 @@ class ResubmitRequisition
         if ($requisition->status !== RequisitionStatus::ChangesRequested) {
             throw new ConflictHttpException('Only change-requested requisitions can be resubmitted.');
         }
+
+        $this->submitRequisition->validateSubmission($requisition);
 
         return DB::transaction(function () use ($tenant, $actor, $requisition): Requisition {
             $requisition->forceFill([

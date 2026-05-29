@@ -23,17 +23,12 @@ export function RequisitionCreatePage({ requisitionId }: { requisitionId?: strin
     );
   }
 
-  const initialRequisition =
-    requisitionQuery.data && requisitionQuery.data.status === "changes_requested"
-      ? { ...requisitionQuery.data, status: "draft" as const }
-      : requisitionQuery.data;
-
   return (
     <div className="space-y-6">
       {requisitionId && requisitionQuery.data ? (
         <RequisitionApprovalSummary requisitionId={requisitionId} />
       ) : null}
-      <RequisitionForm initialRequisition={initialRequisition} />
+      <RequisitionForm initialRequisition={requisitionQuery.data} />
     </div>
   );
 }

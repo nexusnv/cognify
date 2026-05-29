@@ -47,6 +47,32 @@ describe("quotation award recommendation api", () => {
     expect(tenantHeader).toBe("tenant-42");
   });
 
+  it("downloads CSV through the generated state-changing export route with tenant and CSRF headers", async () => {
+    document.cookie = "XSRF-TOKEN=csrf-token";
+    let capturedTenantHeader: string | null = null;
+    let capturedCsrfHeader: string | null = null;
+    let recordedExport = false;
+
+    server.use(
+      http.post("/api/po-handoffs/:handoff/export.csv", ({ request }) => {
+        recordedExport = true;
+        capturedTenantHeader = request.headers.get("X-Tenant-Id");
+        capturedCsrfHeader = request.headers.get("X-XSRF-TOKEN");
+
+        return new HttpResponse("handoff_number\nPOH-2026-000001", {
+          headers: { "Content-Type": "text/csv; charset=UTF-8" },
+        });
+      }),
+    );
+
+    const csvExport = await downloadPurchaseOrderRequestHandoffCsv("po-handoff-1", "tenant-1");
+
+    expect(recordedExport).toBe(true);
+    expect(capturedTenantHeader).toBe("tenant-1");
+    expect(capturedCsrfHeader).toBe("csrf-token");
+    await expect(csvExport.text()).resolves.toContain("POH-2026-000001");
+  });
+
   it("supports save, submit, and withdraw lifecycle", async () => {
     const saved = await saveRfqAwardRecommendation(
       "rfq-ready",

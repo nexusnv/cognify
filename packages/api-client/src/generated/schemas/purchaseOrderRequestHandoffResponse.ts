@@ -4,8 +4,8 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { PurchaseOrderRequestHandoff } from "./purchaseOrderRequestHandoff";
+import type { PurchaseOrderRequestHandoffResponseData } from "./purchaseOrderRequestHandoffResponseData";
 
 export interface PurchaseOrderRequestHandoffResponse {
-  data: PurchaseOrderRequestHandoff;
+  data: PurchaseOrderRequestHandoffResponseData;
 }

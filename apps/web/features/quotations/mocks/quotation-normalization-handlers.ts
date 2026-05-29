@@ -132,13 +132,13 @@ export const quotationNormalizationHandlers = [
     return HttpResponse.json({ data: structuredClone(normalization) });
   }),
 
-  http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+  http.get("/api/quotations/:quotationId/versions/:versionNumber", ({ params }) => {
     const quotationId = String(params.quotationId);
-    const versionId = String(params.versionId);
+    const versionNumber = String(params.versionNumber);
     const normalization = normalizations.find(
       (fixture) =>
         fixture.source.quotationId === quotationId &&
-        String(fixture.source.versionNumber) === versionId,
+        String(fixture.source.versionNumber) === versionNumber,
     );
     if (!normalization) return notFound();
 

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { server } from "@/tests/msw/server";
+import { approvalTaskFixtures } from "../mocks/approval-fixtures";
 import { ApprovalTaskDetailPage } from "../workflows/approval-task-detail-page";
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -57,5 +58,30 @@ describe("approval task actions", () => {
     expect(
       await screen.findByText("Approval task has changed. Refresh before trying again."),
     ).toBeInTheDocument();
+  });
+
+  it("hides decision actions when backend permissions deny them on an active task", async () => {
+    const viewOnlyTask = {
+      ...structuredClone(approvalTaskFixtures[0]!),
+      id: "view-only-task",
+      permissions: {
+        canView: true,
+        canApprove: false,
+        canReject: false,
+        canRequestChanges: false,
+      },
+    };
+    server.use(
+      http.get("/api/approval-tasks/view-only-task", () => {
+        return HttpResponse.json({ data: viewOnlyTask });
+      }),
+    );
+
+    renderWithQuery(<ApprovalTaskDetailPage taskId="view-only-task" />);
+
+    expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Request changes" })).not.toBeInTheDocument();
   });
 });

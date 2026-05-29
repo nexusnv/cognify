@@ -6,8 +6,7 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
-use Domains\Project\Models\ProcurementProject;
-use Domains\Project\States\ProjectStatus;
+use Domains\Project\Actions\AuthorizesRequisitionProjectLinking;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Services\RequisitionNumberGenerator;
 use Domains\Requisition\States\RequisitionStatus;
@@ -15,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateRequisitionDraft
 {
+    use AuthorizesRequisitionProjectLinking;
+
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly RequisitionNumberGenerator $numberGenerator,
@@ -29,11 +30,7 @@ class CreateRequisitionDraft
         return DB::transaction(function () use ($tenant, $actor, $data): Requisition {
             $projectId = $data['projectId'] ?? null;
             if ($projectId !== null && $projectId !== '') {
-                ProcurementProject::query()
-                    ->where('tenant_id', $tenant->id)
-                    ->whereKey($projectId)
-                    ->whereNotIn('status', [ProjectStatus::Completed, ProjectStatus::Cancelled])
-                    ->firstOrFail();
+                $this->findVisibleLinkableProject($tenant, $actor, $projectId);
             }
 
             $requisition = Requisition::query()->create([

@@ -230,11 +230,24 @@ function parseMultipartUploadText(body: string) {
 }
 
 function extractMultipartField(body: string, fieldName: string) {
-  const match = body.match(
-    new RegExp(`name="${fieldName}"\\r?\\n\\r?\\n([\\s\\S]*?)(?:\\r?\\n--|$)`),
-  );
+  const nameIndex = body.indexOf(`name="${fieldName}"`);
+  if (nameIndex < 0) return null;
 
-  return match?.[1]?.trim() ?? null;
+  const crlfValueStart = body.indexOf("\r\n\r\n", nameIndex);
+  const lfValueStart = body.indexOf("\n\n", nameIndex);
+  const valueStart =
+    crlfValueStart >= 0 && (lfValueStart < 0 || crlfValueStart < lfValueStart)
+      ? crlfValueStart + 4
+      : lfValueStart >= 0
+        ? lfValueStart + 2
+        : -1;
+  if (valueStart < 0) return null;
+
+  const boundaryLine = body.split(/\r?\n/, 1)[0] ?? "";
+  const valueEnd = boundaryLine ? body.indexOf(boundaryLine, valueStart) : -1;
+  const value = valueEnd >= 0 ? body.slice(valueStart, valueEnd) : body.slice(valueStart);
+
+  return value.trim() || null;
 }
 
 function validationError(message: string) {

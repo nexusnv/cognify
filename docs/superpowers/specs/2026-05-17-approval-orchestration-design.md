@@ -99,6 +99,10 @@ Adjacent roadmap capabilities are only integration surfaces:
 - Reopening rejected or cancelled approval instances without a separate future correction workflow.
 - Moving approval-specific UI, policy language, approval status badges, or task copy into `packages/ui`.
 
+### 3.3 Historical note
+
+As of 2026-05-28, the later award-approval and PO-handoff slices intentionally auto-create or reveal a draft PO handoff after final award approval. That downstream operational behavior does not change the scope boundaries above; it is recorded here so the approval epic remains historically accurate without rewriting its original requisition-only scope.
+
 ## 4. Runbook Alignment
 
 This epic follows the feature-development runbook order:

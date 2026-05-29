@@ -169,6 +169,143 @@ class ApprovalPolicyApiTest extends TestCase
             ]);
     }
 
+    public function test_preview_rejects_rule_fields_for_wrong_subject_type(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies/preview', [
+                'policyName' => 'Award route preview',
+                'rules' => [
+                    [
+                        'field' => 'department',
+                        'operator' => 'equals',
+                        'value' => 'Operations',
+                    ],
+                ],
+                'routeTemplate' => [
+                    'stages' => [
+                        [
+                            'name' => 'Commercial review',
+                            'completionRule' => 'all',
+                            'approvers' => [['type' => 'role', 'role' => 'buyer']],
+                            'fallbackApprovers' => [['type' => 'role', 'role' => 'admin']],
+                        ],
+                    ],
+                ],
+                'context' => [
+                    'subjectType' => 'rfq_award_recommendation',
+                    'recommendedAmount' => 10000,
+                    'recommendedCurrency' => 'MYR',
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonPath('error.details.fields', [
+                'rules.0.field' => ['department is not available for rfq_award_recommendation policies.'],
+            ]);
+    }
+
+    public function test_award_policy_version_validation_uses_parent_subject_type(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->awardPolicyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $version = $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policies/{$policy['id']}/versions", [
+                'rules' => [
+                    ['field' => 'recommendedAmount', 'operator' => 'gte', 'value' => 10000],
+                ],
+                'routeTemplate' => [
+                    'stages' => [
+                        [
+                            'name' => 'Commercial review',
+                            'completionRule' => 'all',
+                            'approvers' => [['type' => 'role', 'role' => 'buyer']],
+                            'fallbackApprovers' => [['type' => 'role', 'role' => 'admin']],
+                        ],
+                    ],
+                ],
+                'slaRules' => [['stage' => 'Commercial review', 'dueInHours' => 24]],
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $this->assertDatabaseHas('approval_policy_versions', [
+            'id' => $version['id'],
+            'subject_type' => 'rfq_award_recommendation',
+        ]);
+    }
+
+    public function test_policy_version_rejects_subject_type_that_does_not_match_parent_policy(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->awardPolicyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/approval-policies/{$policy['id']}/versions", [
+                'subjectType' => 'requisition',
+                'rules' => [
+                    ['field' => 'amount', 'operator' => 'gte', 'value' => 1000],
+                ],
+                'routeTemplate' => [
+                    'stages' => [
+                        [
+                            'name' => 'Commercial review',
+                            'completionRule' => 'all',
+                            'approvers' => [['type' => 'role', 'role' => 'buyer']],
+                        ],
+                    ],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
+    public function test_award_policy_update_validation_uses_existing_subject_when_omitted(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->awardPolicyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->patchJson("/api/approval-policies/{$policy['id']}", [
+                'rules' => [
+                    ['field' => 'riskClassification', 'operator' => 'equals', 'value' => 'high'],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.subjectType', 'rfq_award_recommendation')
+            ->assertJsonPath('data.versions.0.rules.0.field', 'riskClassification');
+    }
+
+    public function test_policy_update_rejects_subject_type_that_does_not_match_existing_policy(): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+        $policy = $this->actingAsTenant($tenant, $admin)
+            ->postJson('/api/approval-policies', $this->awardPolicyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $admin)
+            ->patchJson("/api/approval-policies/{$policy['id']}", [
+                'subjectType' => 'requisition',
+                'rules' => [
+                    ['field' => 'amount', 'operator' => 'gte', 'value' => 1000],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
+    }
+
     public function test_admin_can_create_policy_version_draft(): void
     {
         [$tenant, $admin] = $this->tenantUser('admin');
@@ -367,6 +504,46 @@ class ApprovalPolicyApiTest extends TestCase
                     'stage' => 'Manager review',
                     'dueInHours' => 48,
                     'escalateAfterHours' => 72,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function awardPolicyPayload(): array
+    {
+        return [
+            'name' => 'Award recommendation approval',
+            'description' => 'Commercial approval route for award recommendations.',
+            'subjectType' => 'rfq_award_recommendation',
+            'rules' => [
+                [
+                    'field' => 'recommendedAmount',
+                    'operator' => 'gte',
+                    'value' => 10000,
+                ],
+            ],
+            'routeTemplate' => [
+                'stages' => [
+                    [
+                        'name' => 'Commercial review',
+                        'completionRule' => 'all',
+                        'approvers' => [
+                            ['type' => 'role', 'role' => 'buyer'],
+                        ],
+                        'fallbackApprovers' => [
+                            ['type' => 'role', 'role' => 'admin'],
+                        ],
+                    ],
+                ],
+            ],
+            'slaRules' => [
+                [
+                    'stage' => 'Commercial review',
+                    'dueInHours' => 24,
+                    'escalateAfterHours' => 48,
                 ],
             ],
         ];

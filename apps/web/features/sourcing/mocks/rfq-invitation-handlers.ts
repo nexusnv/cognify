@@ -187,15 +187,12 @@ export const rfqInvitationHandlers = [
     return HttpResponse.json({ data: structuredClone(state.versions) });
   }),
 
-  http.get("/api/quotations/:quotationId/versions/:versionId", ({ params }) => {
+  http.get("/api/quotations/:quotationId/versions/:versionNumber", ({ params }) => {
     const state = findQuotationStateByQuotationId(String(params.quotationId));
     if (!state) return quotationNotFound();
 
-    const versionNumber = Number(params.versionId);
-    const version =
-      state.versions.find((candidate) => candidate.versionNumber === versionNumber) ??
-      state.versions.find((candidate) => candidate.id === String(params.versionId)) ??
-      null;
+    const versionNumber = Number(params.versionNumber);
+    const version = state.versions.find((candidate) => candidate.versionNumber === versionNumber) ?? null;
     if (!version) return quotationVersionNotFound();
 
     return HttpResponse.json({ data: structuredClone(version) });
@@ -883,10 +880,24 @@ function parseSizeBytes(value: string | null): number | null {
 }
 
 function extractMultipartField(body: string, fieldName: string) {
-  const fieldMatch = body.match(
-    new RegExp(`name="${fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\r?\\n\\r?\\n([^\\r\\n]+)`),
-  );
-  return fieldMatch?.[1]?.trim() ?? null;
+  const nameIndex = body.indexOf(`name="${fieldName}"`);
+  if (nameIndex < 0) return null;
+
+  const crlfValueStart = body.indexOf("\r\n\r\n", nameIndex);
+  const lfValueStart = body.indexOf("\n\n", nameIndex);
+  const valueStart =
+    crlfValueStart >= 0 && (lfValueStart < 0 || crlfValueStart < lfValueStart)
+      ? crlfValueStart + 4
+      : lfValueStart >= 0
+        ? lfValueStart + 2
+        : -1;
+  if (valueStart < 0) return null;
+
+  const boundaryLine = body.split(/\r?\n/, 1)[0] ?? "";
+  const valueEnd = boundaryLine ? body.indexOf(boundaryLine, valueStart) : -1;
+  const value = valueEnd >= 0 ? body.slice(valueStart, valueEnd) : body.slice(valueStart);
+
+  return value.trim() || null;
 }
 
 function isFileLike(value: FormDataEntryValue | null): value is File {

@@ -98,7 +98,7 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
         $this->assertDatabaseCount('purchase_order_request_handoffs', 1);
     }
 
-    public function test_buyer_can_create_or_reveal_handoff_for_already_approved_recommendation(): void
+    public function test_buyer_can_show_existing_handoff_for_already_approved_recommendation(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
         [, $approver] = $this->tenantUser('approver', $tenant);
@@ -113,13 +113,59 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ->assertJsonPath('data.permissions.canMarkReady', true);
     }
 
+    public function test_get_handoff_for_rfq_is_read_only_when_handoff_is_missing(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->approvedRecommendation($tenant, $buyer, $approver);
+
+        PurchaseOrderRequestHandoff::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('rfq_award_recommendation_id', $recommendation->id)
+            ->delete();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/rfqs/{$rfq->id}/award-recommendation/po-handoff")
+            ->assertOk()
+            ->assertJsonPath('data', null);
+
+        $this->assertDatabaseMissing('purchase_order_request_handoffs', [
+            'tenant_id' => $tenant->id,
+            'rfq_award_recommendation_id' => $recommendation->id,
+        ]);
+    }
+
+    public function test_post_handoff_for_rfq_creates_or_reveals_for_already_approved_recommendation(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation] = $this->approvedRecommendation($tenant, $buyer, $approver);
+
+        PurchaseOrderRequestHandoff::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('rfq_award_recommendation_id', $recommendation->id)
+            ->delete();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/rfqs/{$rfq->id}/award-recommendation/po-handoff")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.source.rfq.number', 'RFQ-2026-POH');
+
+        $this->assertDatabaseHas('purchase_order_request_handoffs', [
+            'tenant_id' => $tenant->id,
+            'rfq_award_recommendation_id' => $recommendation->id,
+            'status' => 'draft',
+        ]);
+    }
+
     public function test_non_approved_recommendations_cannot_create_handoffs(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
         [$rfq] = $this->pendingRecommendation($tenant, $buyer);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson("/api/rfqs/{$rfq->id}/award-recommendation/po-handoff")
+            ->postJson("/api/rfqs/{$rfq->id}/award-recommendation/po-handoff")
             ->assertConflict();
     }
 
@@ -161,6 +207,30 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ->assertJsonPath('data.review.exportMemo', 'Upload to ERP batch MY-0626.');
     }
 
+    public function test_update_preserves_omitted_optional_handoff_fields(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation, $quotation, $version] = $this->approvedRecommendation($tenant, $buyer, $approver);
+        $handoffId = $this->seedPurchaseOrderRequestHandoff($tenant, $buyer, $rfq, $recommendation, $quotation, $version, [
+            'requested_po_date' => '2026-06-15',
+            'delivery_attention' => 'Warehouse receiving',
+            'finance_note' => 'Charge to expansion budget.',
+            'export_memo' => 'Upload to ERP batch MY-0626.',
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->patchJson("/api/po-handoffs/{$handoffId}", [
+                'lockVersion' => 1,
+                'requestedPoDate' => '2026-06-20',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.review.requestedPoDate', '2026-06-20')
+            ->assertJsonPath('data.review.deliveryAttention', 'Warehouse receiving')
+            ->assertJsonPath('data.review.financeNote', 'Charge to expansion budget.')
+            ->assertJsonPath('data.review.exportMemo', 'Upload to ERP batch MY-0626.');
+    }
+
     public function test_ready_action_validates_blockers_and_records_ready_actor(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
@@ -189,7 +259,7 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ->assertJsonPath('data.readyByUserId', (string) $buyer->id);
     }
 
-    public function test_json_export_returns_structured_payload_and_marks_handoff_exported(): void
+    public function test_json_export_get_returns_structured_payload_without_mutating_handoff_state(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');
         [, $approver] = $this->tenantUser('approver', $tenant);
@@ -206,6 +276,41 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ->assertJsonPath('format', 'json')
             ->assertJsonPath('handoff.number', 'POH-2026-000001')
             ->assertJsonPath('handoff.lines.0.description', 'Pallet rack bay');
+
+        $this->assertDatabaseHas('purchase_order_request_handoffs', [
+            'id' => $handoffId,
+            'status' => 'ready',
+            'last_exported_by_user_id' => null,
+            'last_exported_at' => null,
+            'last_export_format' => null,
+            'lock_version' => 1,
+        ]);
+    }
+
+    public function test_json_export_post_records_export_state_change(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation, $quotation, $version] = $this->approvedRecommendation($tenant, $buyer, $approver);
+        $handoffId = $this->seedPurchaseOrderRequestHandoff($tenant, $buyer, $rfq, $recommendation, $quotation, $version, [
+            'status' => 'ready',
+            'ready_by_user_id' => $buyer->id,
+            'ready_at' => now(),
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/po-handoffs/{$handoffId}/export.json")
+            ->assertOk()
+            ->assertJsonPath('format', 'json')
+            ->assertJsonPath('handoff.number', 'POH-2026-000001');
+
+        $this->assertDatabaseHas('purchase_order_request_handoffs', [
+            'id' => $handoffId,
+            'status' => 'exported',
+            'last_exported_by_user_id' => $buyer->id,
+            'last_export_format' => 'json',
+            'lock_version' => 2,
+        ]);
     }
 
     public function test_csv_export_returns_expected_headers_and_line_rows(): void
@@ -225,6 +330,15 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ->assertHeader('content-type', 'text/csv; charset=UTF-8')
             ->assertSee('handoff_number,')
             ->assertSee('Pallet rack bay');
+
+        $this->assertDatabaseHas('purchase_order_request_handoffs', [
+            'id' => $handoffId,
+            'status' => 'ready',
+            'last_exported_by_user_id' => null,
+            'last_exported_at' => null,
+            'last_export_format' => null,
+            'lock_version' => 1,
+        ]);
     }
 
     public function test_repeat_export_records_audit_without_duplicate_handoff(): void
@@ -239,11 +353,11 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
         ]);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson("/api/po-handoffs/{$handoffId}/export.json")
+            ->postJson("/api/po-handoffs/{$handoffId}/export.json")
             ->assertOk();
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson("/api/po-handoffs/{$handoffId}/export.json")
+            ->postJson("/api/po-handoffs/{$handoffId}/export.json")
             ->assertOk();
 
         $this->assertDatabaseCount('purchase_order_request_handoffs', 1);
@@ -262,7 +376,7 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
         ]);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson("/api/po-handoffs/{$handoffId}/export.json")
+            ->postJson("/api/po-handoffs/{$handoffId}/export.json")
             ->assertConflict();
     }
 
@@ -364,7 +478,7 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
-            ->getJson("/api/po-handoffs/{$handoffId}/export.json")
+            ->postJson("/api/po-handoffs/{$handoffId}/export.json")
             ->assertOk();
 
         $this->withHeader('Origin', 'http://localhost:8880')

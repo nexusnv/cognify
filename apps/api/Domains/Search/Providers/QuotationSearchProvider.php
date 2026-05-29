@@ -12,6 +12,8 @@ use Illuminate\Support\Collection;
 
 class QuotationSearchProvider implements SearchProvider
 {
+    use AppliesActorSearchVisibility;
+
     public function type(): string
     {
         return 'quotation';
@@ -28,6 +30,7 @@ class QuotationSearchProvider implements SearchProvider
             ->with(['rfq.project', 'vendor'])
             ->where('tenant_id', $tenant->id);
 
+        $this->applyQuotationVisibility($builder, $tenant, $user);
         $this->applySearchConstraint($builder, $normalizedQuery);
         $this->applyOrdering($builder, $normalizedQuery);
 

@@ -9,6 +9,7 @@ import type {
 import { ApprovalActionDialog } from "../components/approval-action-dialog";
 import { ApprovalDelegationDialog } from "../components/approval-delegation-dialog";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
+import { ApprovalTaskComments } from "../components/approval-task-comments";
 import { useApprovalTaskActions } from "../hooks/use-approval-task-actions";
 import { useApprovalTask } from "../hooks/use-approval-tasks";
 
@@ -28,6 +29,10 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
   const isAwardRecommendation = task.subject.type === "rfq_award_recommendation";
   const awardMetadata = task.subject.metadata as ApprovalAwardRecommendationSubjectMetadata;
   const requisitionMetadata = task.subject.metadata as ApprovalRequisitionSubjectMetadata;
+  const canApprove = task.permissions.canApprove;
+  const canReject = task.permissions.canReject;
+  const canRequestChanges = task.permissions.canRequestChanges;
+  const hasDecisionAction = canApprove || canReject || canRequestChanges;
 
   return (
     <div className="space-y-6">
@@ -68,50 +73,56 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
 
       <section className="rounded-md border p-4">
         <h2 className="text-base font-semibold">Decision</h2>
-        {task.status === "active" ? (
+        {task.status === "active" && hasDecisionAction ? (
           <div className="mt-4 flex flex-wrap gap-2">
-            <ApprovalActionDialog
-              action="approve"
-              triggerLabel="Approve"
-              title="Approve task?"
-              confirmLabel="Confirm approval"
-              lockVersion={task.lockVersion}
-              isPending={actions.approve.isPending}
-              onSubmit={async ({ lockVersion }) => {
-                await actions.approve.mutateAsync(
-                  { lockVersion },
-                  { onSuccess: () => toast.success("Approval recorded") },
-                );
-              }}
-            />
-            <ApprovalActionDialog
-              action="reject"
-              triggerLabel="Reject"
-              title="Reject task?"
-              confirmLabel="Confirm rejection"
-              lockVersion={task.lockVersion}
-              isPending={actions.reject.isPending}
-              onSubmit={async ({ lockVersion, reason }) => {
-                await actions.reject.mutateAsync(
-                  { lockVersion, reason: reason ?? "" },
-                  { onSuccess: () => toast.success(rejectionSuccessMessage(task.subject.type)) },
-                );
-              }}
-            />
-            <ApprovalActionDialog
-              action="request-changes"
-              triggerLabel="Request changes"
-              title="Request changes?"
-              confirmLabel="Confirm request changes"
-              lockVersion={task.lockVersion}
-              isPending={actions.requestChanges.isPending}
-              onSubmit={async ({ lockVersion, reason, requestedFields }) => {
-                await actions.requestChanges.mutateAsync(
-                  { lockVersion, reason: reason ?? "", requestedFields },
-                  { onSuccess: () => toast.success("Changes requested") },
-                );
-              }}
-            />
+            {canApprove ? (
+              <ApprovalActionDialog
+                action="approve"
+                triggerLabel="Approve"
+                title="Approve task?"
+                confirmLabel="Confirm approval"
+                lockVersion={task.lockVersion}
+                isPending={actions.approve.isPending}
+                onSubmit={async ({ lockVersion }) => {
+                  await actions.approve.mutateAsync(
+                    { lockVersion },
+                    { onSuccess: () => toast.success("Approval recorded") },
+                  );
+                }}
+              />
+            ) : null}
+            {canReject ? (
+              <ApprovalActionDialog
+                action="reject"
+                triggerLabel="Reject"
+                title="Reject task?"
+                confirmLabel="Confirm rejection"
+                lockVersion={task.lockVersion}
+                isPending={actions.reject.isPending}
+                onSubmit={async ({ lockVersion, reason }) => {
+                  await actions.reject.mutateAsync(
+                    { lockVersion, reason: reason ?? "" },
+                    { onSuccess: () => toast.success(rejectionSuccessMessage(task.subject.type)) },
+                  );
+                }}
+              />
+            ) : null}
+            {canRequestChanges ? (
+              <ApprovalActionDialog
+                action="request-changes"
+                triggerLabel="Request changes"
+                title="Request changes?"
+                confirmLabel="Confirm request changes"
+                lockVersion={task.lockVersion}
+                isPending={actions.requestChanges.isPending}
+                onSubmit={async ({ lockVersion, reason, requestedFields }) => {
+                  await actions.requestChanges.mutateAsync(
+                    { lockVersion, reason: reason ?? "", requestedFields },
+                    { onSuccess: () => toast.success("Changes requested") },
+                  );
+                }}
+              />
+            ) : null}
             <ApprovalDelegationDialog taskId={task.id} lockVersion={task.lockVersion} />
           </div>
         ) : (
@@ -140,6 +151,13 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         >
           {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
         </Link>
+      </section>
+
+      <section className="rounded-md border p-4">
+        <h2 className="text-base font-semibold">Comments</h2>
+        <div className="mt-4">
+          <ApprovalTaskComments taskId={task.id} />
+        </div>
       </section>
     </div>
   );

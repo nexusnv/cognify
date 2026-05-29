@@ -195,6 +195,38 @@ describe("RFQ invitation workflow", () => {
     });
   });
 
+  it("lets a buyer upload multiple quotation files through repeated single-file uploads", async () => {
+    const user = userEvent.setup();
+
+    render(<RfqDraftWorkspace rfqId="rfq-1" />, { wrapper: TestAppProviders });
+
+    const invitationCard = (await screen.findByText("Northwind Traders")).closest(
+      "[data-testid='rfq-invitation-card']",
+    );
+    expect(invitationCard).toBeTruthy();
+
+    const card = within(invitationCard as HTMLElement);
+    const input = card.getByLabelText("Buyer-received quotation file");
+    const uploadButton = card.getByRole("button", { name: "Upload buyer-received quotation" });
+
+    await user.upload(input, new File(["first"], "buyer-received-quotation-v1.pdf", { type: "application/pdf" }));
+    await user.click(uploadButton);
+
+    await waitFor(() => {
+      expect(card.getByText("1 file received")).toBeInTheDocument();
+      expect(card.getAllByText("buyer-received-quotation-v1.pdf").length).toBeGreaterThan(0);
+    });
+
+    await user.upload(input, new File(["second"], "buyer-received-quotation-v2.pdf", { type: "application/pdf" }));
+    await user.click(uploadButton);
+
+    await waitFor(() => {
+      expect(card.getByText("2 files received")).toBeInTheDocument();
+      expect(card.getAllByText("buyer-received-quotation-v1.pdf").length).toBeGreaterThan(0);
+      expect(card.getAllByText("buyer-received-quotation-v2.pdf").length).toBeGreaterThan(0);
+    });
+  });
+
   it("lets a buyer save structured quotation terms and line items", async () => {
     const user = userEvent.setup();
 

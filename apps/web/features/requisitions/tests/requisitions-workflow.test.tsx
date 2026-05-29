@@ -7,6 +7,7 @@ import { RightPanelProvider } from "@/components/right-panel/right-panel-provide
 import { RightPanelRoot } from "@/components/right-panel/right-panel-root";
 import { server } from "@/tests/msw/server";
 import { requisitionFixtures } from "../mocks/requisitions-fixtures";
+import { RequisitionForm } from "../forms/requisition-form";
 import { RequisitionCreatePage } from "../workflows/requisition-create-page";
 import { RequisitionDetailPage } from "../workflows/requisition-detail-page";
 import { RequisitionListPage } from "../workflows/requisition-list-page";
@@ -241,6 +242,19 @@ describe("requisitions workflow", () => {
       expect(screen.getAllByText("Submitted")[0]).toBeInTheDocument();
     });
     expect(screen.getByText("Requisition resubmitted")).toBeInTheDocument();
+  });
+
+  it("lets requesters edit change-requested requisitions without exposing draft submit", async () => {
+    const requisition = requisitionFixtures.find((item) => item.id === "req-changes");
+
+    renderWithQuery(<RequisitionForm initialRequisition={requisition!} />);
+
+    const title = screen.getByLabelText("Title");
+    expect(title).toHaveValue("Returned laptop request");
+    expect(title).not.toBeDisabled();
+    expect(screen.getByLabelText("Delivery location")).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save changes" })).not.toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
   });
 
   it("requires a reason before withdrawing a requisition", async () => {

@@ -24,7 +24,7 @@ describe("useCreateQuotationVersion", () => {
     window.localStorage.clear();
   });
 
-  it("stores the created version under the version id detail key", async () => {
+  it("stores the created version under the version number detail key", async () => {
     storeActiveTenantId("tenant-1");
     const createdVersion = {
       id: "501",
@@ -53,7 +53,7 @@ describe("useCreateQuotationVersion", () => {
     );
   });
 
-  it("does not fetch quotation version details for non-finite version ids", () => {
+  it("does not fetch quotation version details for non-finite version numbers", () => {
     storeActiveTenantId("tenant-1");
 
     renderHook(() => useQuotationVersion("quotation-1", Number.NaN), {

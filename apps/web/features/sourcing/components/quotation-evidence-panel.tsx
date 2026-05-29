@@ -152,6 +152,7 @@ export function QuotationEvidencePanel({
             />
           </label>
 
+          <p className="text-xs text-muted-foreground sm:col-start-1">Upload one file at a time.</p>
           <Button type="button" onClick={() => void handleUpload()} disabled={!selectedFile || !canUpload || uploadMutation.isPending}>
             Upload buyer-received quotation
           </Button>

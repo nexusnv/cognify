@@ -1,10 +1,11 @@
 import {
   cancelPurchaseOrderRequestHandoff,
   createRfqAwardRecommendationPoHandoff,
-  exportPurchaseOrderRequestHandoffJson,
   getRfqAwardRecommendationApprovalSummary,
   markPurchaseOrderRequestHandoffReady,
   previewRfqAwardRecommendationApproval,
+  recordPurchaseOrderRequestHandoffCsvExport,
+  recordPurchaseOrderRequestHandoffJsonExport,
   routeRfqAwardRecommendationForApproval,
   saveRfqAwardRecommendation as saveRfqAwardRecommendationEndpoint,
   showRfqAwardRecommendation as showRfqAwardRecommendationEndpoint,
@@ -194,7 +195,7 @@ export async function exportRfqAwardRecommendationPoHandoffJson(
   handoffId: string,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<PurchaseOrderRequestHandoffExport> {
-  const response = await exportPurchaseOrderRequestHandoffJson(handoffId, withActiveTenantHeader(tenantId)).catch(
+  const response = await recordPurchaseOrderRequestHandoffJsonExport(handoffId, withActiveTenantHeader(tenantId)).catch(
     throwResponseData,
   );
 
@@ -207,14 +208,37 @@ export async function downloadPurchaseOrderRequestHandoffCsv(
   handoffId: string,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<Blob> {
-  const response = await fetch(`/api/po-handoffs/${handoffId}/export.csv`, {
-    credentials: "include",
-    headers: tenantId ? { "X-Tenant-Id": tenantId } : undefined,
-  });
+  const response = await recordPurchaseOrderRequestHandoffCsvExport(handoffId, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
 
-  if (!response.ok) {
-    throw await response.json().catch(() => ({ error: { message: "CSV export failed." } }));
+  if (response.status !== 200) throw response.data;
+
+  const csvData: unknown = response.data;
+  const contentType = normalizeCsvContentType(response.headers.get("content-type"));
+
+  if (isBlobLike(csvData)) {
+    return new Blob([await csvData.text()], { type: contentType });
   }
 
-  return response.blob();
+  return new Blob([String(csvData)], { type: contentType });
+}
+
+function isBlobLike(value: unknown): value is { text: () => Promise<string> } {
+  return typeof value === "object" && value !== null && typeof (value as { text?: unknown }).text === "function";
+}
+
+function normalizeCsvContentType(contentType: string | null): string {
+  const fallback = "text/csv;charset=utf-8";
+
+  if (contentType === null || contentType.trim() === "") {
+    return fallback;
+  }
+
+  return contentType
+    .toLowerCase()
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(";");
 }

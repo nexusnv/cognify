@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ApprovalStageMap } from "../components/approval-stage-map";
 import { ApprovalPolicyPreview } from "../components/approval-policy-preview";
 import { defaultApprovalPolicyValues } from "../schemas/approval-policy-schema";
+import { awardApprovalPreviewFixture } from "../mocks/approval-fixtures";
 import { ApprovalPolicyDetailPage } from "../workflows/approval-policy-detail-page";
 
 function TestQueryProvider({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,51 @@ describe("ApprovalPolicyPreview", () => {
     expect(screen.getByText(/Buyer fallback/)).toBeInTheDocument();
     expect(screen.getByText("Computed preview only")).toBeInTheDocument();
     expect(screen.queryByText("Preview warnings")).not.toBeInTheDocument();
+  });
+
+  it("renders award preview context with stages warnings and fallback approvers", async () => {
+    render(
+      <ApprovalPolicyPreview
+        values={{
+          ...defaultApprovalPolicyValues,
+          name: "RFQ award approval",
+          subjectType: "rfq_award_recommendation",
+          rules: [
+            { field: "recommendedAmount", operator: "gte", value: 100000 },
+            { field: "riskSummaryPresent", operator: "equals", value: true },
+          ],
+          routeTemplate: {
+            stages: [
+              {
+                name: "Commercial review",
+                completionRule: "all",
+                approvers: [{ type: "role", role: "buyer", label: "Buyer" }],
+                fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+              },
+            ],
+          },
+          slaRules: [{ stage: "Commercial review", dueInHours: 24, escalateAfterHours: 36 }],
+        }}
+      />,
+      { wrapper: TestQueryProvider },
+    );
+
+    expect(await screen.findByText("RFQ award approval")).toBeInTheDocument();
+    expect(screen.getByText(/version 1/i)).toBeInTheDocument();
+    expect(screen.queryByText("Preview warnings")).not.toBeInTheDocument();
+    expect(screen.getByText("Commercial review")).toBeInTheDocument();
+    expect(screen.getByText(/Fallback: Admin fallback/)).toBeInTheDocument();
+    expect(screen.getByText(/rfq_award_recommendation/)).toBeInTheDocument();
+  });
+
+  it("renders provided award preview fixtures without querying", () => {
+    render(<ApprovalPolicyPreview preview={awardApprovalPreviewFixture} />, {
+      wrapper: TestQueryProvider,
+    });
+
+    expect(screen.getByText("RFQ award approval")).toBeInTheDocument();
+    expect(screen.getByText("recommendedAmount gte 100000 matched")).toBeInTheDocument();
+    expect(screen.getByText(/Admin fallback/)).toBeInTheDocument();
   });
 
   it("shows empty stage state", () => {

@@ -414,7 +414,7 @@ function mapCollaborationComments(
 function mapCollaborationComment(comment: ApiCollaborationComment): CollaborationComment {
   return {
     id: comment.id,
-    subjectType: comment.subjectType,
+    subjectType: "requisition",
     subjectId: comment.subjectId,
     author: mapUserSummary(comment.author),
     body: comment.body,

@@ -195,12 +195,53 @@ class QuotationVersionApiTest extends TestCase
             ->firstOrFail();
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson("/api/quotations/{$quotation->id}/versions/{$firstVersion->id}")
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$firstVersion->version_number}")
             ->assertOk()
             ->assertJsonPath('data.id', (string) $firstVersion->id)
             ->assertJsonPath('data.isCurrent', false)
             ->assertJsonPath('data.permissions.canEdit', false)
             ->assertJsonPath('data.manualEntry.totalAmount', '12470.00');
+    }
+
+    public function test_buyer_shows_version_detail_by_version_number_not_record_id(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $decoyVendor = $this->vendor($tenant, ['name' => 'Decoy Vendor']);
+        $targetVendor = $this->vendor($tenant, ['name' => 'Target Vendor']);
+        $decoyInvitation = $this->invitation($tenant, $rfq, $decoyVendor, [
+            'contact_email' => 'decoy-vendor@example.test',
+        ]);
+        $targetInvitation = $this->invitation($tenant, $rfq, $targetVendor, [
+            'contact_email' => 'target-vendor@example.test',
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->putJson("/api/rfq-invitations/{$decoyInvitation->id}/quotation/manual-entry", $this->validManualEntryPayload([
+                'quotationReference' => 'DECOY-Q-2026-001',
+            ]))
+            ->assertOk();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->putJson("/api/rfq-invitations/{$targetInvitation->id}/quotation/manual-entry", $this->validManualEntryPayload([
+                'quotationReference' => 'TARGET-Q-2026-001',
+                'totalAmount' => '12470.00',
+            ]))
+            ->assertOk();
+
+        $quotation = Quotation::query()->where('rfq_invitation_id', $targetInvitation->id)->firstOrFail();
+        $version = QuotationVersion::query()->where('quotation_id', $quotation->id)->firstOrFail();
+
+        $this->assertSame(1, $version->version_number);
+        $this->assertNotSame($version->version_number, $version->id);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->version_number}")
+            ->assertOk()
+            ->assertJsonPath('data.id', (string) $version->id)
+            ->assertJsonPath('data.versionNumber', 1)
+            ->assertJsonPath('data.manualEntry.quotationReference', 'TARGET-Q-2026-001');
     }
 
     public function test_current_version_exposes_active_normalization_summary(): void
@@ -238,7 +279,7 @@ class QuotationVersionApiTest extends TestCase
             ->assertJsonPath('data.0.activeNormalization.normalizationRevision', 2);
 
         $this->actingAsTenant($tenant, $buyer)
-            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->id}")
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->version_number}")
             ->assertOk()
             ->assertJsonPath('data.activeNormalization.status', 'ready_for_approval')
             ->assertJsonPath('data.activeNormalization.normalizationRevision', 2);
@@ -309,7 +350,7 @@ class QuotationVersionApiTest extends TestCase
             ->assertNotFound();
 
         $this->actingAsTenant($otherTenant, $otherBuyer)
-            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->id}")
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->version_number}")
             ->assertNotFound();
 
         $this->actingAsTenant($otherTenant, $otherBuyer)
@@ -342,7 +383,7 @@ class QuotationVersionApiTest extends TestCase
             ->assertJsonPath('error.code', 'ambiguous_tenant');
 
         $this->withoutHeader('X-Tenant-Id')
-            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->id}")
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->version_number}")
             ->assertStatus(400)
             ->assertJsonPath('error.code', 'ambiguous_tenant');
 
@@ -376,7 +417,7 @@ class QuotationVersionApiTest extends TestCase
             ->assertJsonPath('error.message', 'Tenant membership is required.');
 
         $this->withHeader('X-Tenant-Id', (string) $wrongTenant->id)
-            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->id}")
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->version_number}")
             ->assertForbidden()
             ->assertJsonPath('error.message', 'Tenant membership is required.');
 
@@ -456,7 +497,7 @@ class QuotationVersionApiTest extends TestCase
             ->assertUnauthorized();
 
         $this->withHeader('X-Tenant-Id', (string) $tenant->id)
-            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->id}")
+            ->getJson("/api/quotations/{$quotation->id}/versions/{$version->version_number}")
             ->assertUnauthorized();
 
         $this->withHeader('X-Tenant-Id', (string) $tenant->id)

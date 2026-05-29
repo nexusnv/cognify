@@ -2,11 +2,9 @@
 
 namespace Domains\Search\Providers;
 
-use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Requisition\Models\Requisition;
-use Domains\Requisition\States\RequisitionStatus;
 use Domains\Search\Contracts\SearchProvider;
 use Domains\Search\Data\SearchResultData;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,17 +48,7 @@ class RequisitionSearchProvider implements SearchProvider
 
     private function applyVisibility(Builder $builder, User $user, Tenant $tenant): void
     {
-        $role = $tenant->roleFor($user);
-
-        if ($role === TenantRole::Buyer->value || $role === TenantRole::Approver->value) {
-            $builder->where('status', RequisitionStatus::Submitted);
-
-            return;
-        }
-
-        if ($role !== TenantRole::Admin->value) {
-            $builder->where('requester_id', $user->id);
-        }
+        $builder->visibleTo($user, $tenant->roleFor($user), $tenant->id);
     }
 
     private function applySearchConstraint(Builder $builder, string $query): void

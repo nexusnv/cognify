@@ -514,7 +514,17 @@
               "type": "string",
               "enum": [
                 "requisition",
-                "attachment"
+                "attachment",
+                "project",
+                "rfq",
+                "rfq_invitation",
+                "quotation",
+                "quotation_version",
+                "quotation_normalization",
+                "scorecard",
+                "award",
+                "approval_task",
+                "po_handoff"
               ]
             }
           },
@@ -3264,6 +3274,99 @@
         }
       }
     },
+    "/api/approval-tasks/{approvalTask}/comments": {
+      "get": {
+        "operationId": "listApprovalTaskComments",
+        "summary": "List comments for an approval task",
+        "tags": [
+          "Approval Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "approvalTask",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval task identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval task comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCommentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApprovalTaskComment",
+        "summary": "Create a comment on an approval task",
+        "tags": [
+          "Approval Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "approvalTask",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval task identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollaborationCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCommentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
     "/api/approval-tasks/{approvalTask}/approve": {
       "post": {
         "operationId": "approveApprovalTask",
@@ -5094,7 +5197,7 @@
         }
       }
     },
-    "/api/quotations/{quotation}/versions/{version}": {
+    "/api/quotations/{quotation}/versions/{versionNumber}": {
       "get": {
         "operationId": "showQuotationVersion",
         "tags": [
@@ -5110,7 +5213,7 @@
             }
           },
           {
-            "name": "version",
+            "name": "versionNumber",
             "in": "path",
             "required": true,
             "schema": {
@@ -6851,6 +6954,48 @@
             "$ref": "#/components/responses/InvalidState"
           }
         }
+      },
+      "post": {
+        "operationId": "recordPurchaseOrderRequestHandoffJsonExport",
+        "summary": "Record purchase order request handoff JSON export",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded purchase order request handoff JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderRequestHandoffExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
       }
     },
     "/api/po-handoffs/{handoff}/export.csv": {
@@ -6874,6 +7019,48 @@
         "responses": {
           "200": {
             "description": "Purchase order request handoff CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recordPurchaseOrderRequestHandoffCsvExport",
+        "summary": "Record purchase order request handoff CSV export",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded purchase order request handoff CSV export",
             "content": {
               "text/csv": {
                 "schema": {
@@ -7611,6 +7798,12 @@
             "items": {
               "$ref": "#/components/schemas/ApprovalRouteApproverTemplate"
             }
+          },
+          "fallbackApprovers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalRouteApproverTemplate"
+            }
           }
         },
         "additionalProperties": true
@@ -7973,7 +8166,17 @@
             "type": "string",
             "enum": [
               "requisition",
-              "attachment"
+              "attachment",
+              "project",
+              "rfq",
+              "rfq_invitation",
+              "quotation",
+              "quotation_version",
+              "quotation_normalization",
+              "scorecard",
+              "award",
+              "po_handoff",
+              "approval_task"
             ]
           },
           "id": {
@@ -8010,7 +8213,8 @@
           "subjectType": {
             "type": "string",
             "enum": [
-              "requisition"
+              "requisition",
+              "approval_task"
             ]
           },
           "subjectId": {
@@ -10669,6 +10873,13 @@
           "priority": {
             "type": "integer",
             "minimum": 1
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "rfq_award_recommendation"
+            ]
           },
           "rules": {
             "type": "array",
@@ -18491,7 +18702,14 @@
         ],
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/PurchaseOrderRequestHandoff"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderRequestHandoff"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },

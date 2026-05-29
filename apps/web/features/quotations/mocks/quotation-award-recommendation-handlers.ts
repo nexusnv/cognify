@@ -219,7 +219,25 @@ export const quotationAwardRecommendationHandlers = [
     }
   }),
 
+  http.post("/api/po-handoffs/:handoff/export.json", ({ params }) => {
+    try {
+      return HttpResponse.json(exportPurchaseOrderRequestHandoffJsonFixture(String(params.handoff)));
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff JSON export could not be generated.");
+    }
+  }),
+
   http.get("/api/po-handoffs/:handoff/export.csv", ({ params }) => {
+    try {
+      return new HttpResponse(exportPurchaseOrderRequestHandoffCsvFixture(String(params.handoff)), {
+        headers: { "Content-Type": "text/csv; charset=UTF-8" },
+      });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "PO handoff CSV export could not be generated.");
+    }
+  }),
+
+  http.post("/api/po-handoffs/:handoff/export.csv", ({ params }) => {
     try {
       return new HttpResponse(exportPurchaseOrderRequestHandoffCsvFixture(String(params.handoff)), {
         headers: { "Content-Type": "text/csv; charset=UTF-8" },

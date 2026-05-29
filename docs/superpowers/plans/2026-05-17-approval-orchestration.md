@@ -32,6 +32,7 @@
 - Escalation jobs are idempotent and must not duplicate tasks, audit events, or notifications.
 - Policy previews compute route explanations but do not create approval tasks or send notifications.
 - Keep approval UI in `apps/web/features/approvals`; keep requisition integration in `apps/web/features/requisitions`; keep `packages/ui` primitive-only.
+- Historical note as of 2026-05-28: final award approval now intentionally auto-creates or reveals a draft PO handoff, and the handoff action is idempotent. Approval remains the decision boundary.
 
 ## File Map
 

@@ -26,7 +26,7 @@ class RequisitionCommentController extends Controller
         $comments = CollaborationComment::query()
             ->with(['author', 'mentions.mentionedUser'])
             ->where('tenant_id', $tenant->id)
-            ->where('subject_type', Requisition::class)
+            ->where('subject_type', $requisition->getMorphClass())
             ->where('subject_id', $requisition->id)
             ->oldest('created_at')
             ->get();

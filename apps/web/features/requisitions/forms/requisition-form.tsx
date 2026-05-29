@@ -144,7 +144,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     ];
   }, [initialRequisition, projectsQuery.data?.data]);
 
-  const canEdit = status === "draft";
+  const canEdit = initialRequisition?.permissions.canUpdate ?? status === "draft";
+  const canSubmit = status === "draft" && (initialRequisition?.permissions.canSubmit ?? true);
+  const saveLabel = status === "draft" ? "Save draft" : "Save changes";
   const errorSummary = useMemo(
     () => withFieldIds(flattenZodFieldErrors(collapsedFieldErrors(errors)), requisitionFieldIds),
     [errors],
@@ -443,7 +445,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             {submittedNotice ? "Requisition submitted" : saveStateLabel(saveController.saveState)}
           </p>
           <p className="mt-1 text-sm font-medium">
-            {status === "submitted" ? "Submitted" : "Draft"}
+            {requisitionStatusLabel(status)}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -451,18 +453,20 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             type="button"
             className="min-h-11 rounded-md border px-4 text-sm font-medium disabled:opacity-50"
             onClick={handleSaveDraft}
-            disabled={status !== "draft" || saveController.saveState === "saving"}
+            disabled={!canEdit || saveController.saveState === "saving"}
           >
-            Save draft
+            {saveLabel}
           </button>
-          <button
-            type="button"
-            className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
-            onClick={handleSubmitAttempt}
-            disabled={status !== "draft" || submitDraft.isPending}
-          >
-            Submit
-          </button>
+          {canSubmit ? (
+            <button
+              type="button"
+              className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
+              onClick={handleSubmitAttempt}
+              disabled={submitDraft.isPending}
+            >
+              Submit
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -486,6 +490,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 value={values.title}
                 aria-invalid={Boolean(errors.title)}
                 onChange={(event) => updateValue("title", event.target.value)}
+                disabled={!canEdit}
               />
             </FormField>
             <FormField
@@ -501,6 +506,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 value={values.neededByDate}
                 aria-invalid={Boolean(errors.neededByDate)}
                 onChange={(event) => updateValue("neededByDate", event.target.value)}
+                disabled={!canEdit}
               />
             </FormField>
             <FormField
@@ -515,13 +521,14 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 value={values.businessJustification}
                 aria-invalid={Boolean(errors.businessJustification)}
                 onChange={(event) => updateValue("businessJustification", event.target.value)}
+                disabled={!canEdit}
               />
             </FormField>
           </section>
 
           <RequisitionTemplatePicker
             templates={templatesQuery.data ?? []}
-            disabled={status !== "draft"}
+            disabled={!canEdit}
             onApply={handleApplyTemplate}
           />
 
@@ -532,7 +539,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 type="button"
                 className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium"
                 onClick={addLineItem}
-                disabled={status !== "draft"}
+                disabled={!canEdit}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add item
@@ -554,7 +561,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         aria-invalid={Boolean(errors[`lineItems.${index}.name`])}
                         aria-describedby={lineItemsErrorId}
                         onChange={(event) => updateLineItem(index, "name", event.target.value)}
-                        disabled={status !== "draft"}
+                        disabled={!canEdit}
                       />
                     </FormField>
                     <FormField
@@ -571,7 +578,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         aria-invalid={Boolean(errors[`lineItems.${index}.quantity`])}
                         aria-describedby={lineItemsErrorId}
                         onChange={(event) => updateLineItem(index, "quantity", event.target.value)}
-                        disabled={status !== "draft"}
+                        disabled={!canEdit}
                       />
                     </FormField>
                     <FormField
@@ -586,7 +593,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         aria-invalid={Boolean(errors[`lineItems.${index}.unit`])}
                         aria-describedby={lineItemsErrorId}
                         onChange={(event) => updateLineItem(index, "unit", event.target.value)}
-                        disabled={status !== "draft"}
+                        disabled={!canEdit}
                       />
                     </FormField>
                     <FormField
@@ -605,7 +612,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         onChange={(event) =>
                           updateLineItem(index, "estimatedUnitPrice", event.target.value)
                         }
-                        disabled={status !== "draft"}
+                        disabled={!canEdit}
                       />
                     </FormField>
                     <FormField
@@ -620,7 +627,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         aria-invalid={Boolean(errors[`lineItems.${index}.currency`])}
                         aria-describedby={lineItemsErrorId}
                         onChange={(event) => updateLineItem(index, "currency", event.target.value)}
-                        disabled={status !== "draft"}
+                        disabled={!canEdit}
                       />
                     </FormField>
                     <button
@@ -628,7 +635,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium md:self-end"
                       onClick={() => removeLineItem(index)}
                       aria-label={`Remove line item ${index + 1}`}
-                      disabled={status !== "draft"}
+                      disabled={!canEdit}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Remove
@@ -676,7 +683,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                   value={values.projectId}
                   aria-invalid={Boolean(errors.projectId)}
                   onChange={(event) => updateValue("projectId", event.target.value)}
-                  disabled={status !== "draft"}
+                  disabled={!canEdit}
                 >
                   <option value="">No project</option>
                   {selectableProjects.map((project) => (
@@ -700,7 +707,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                     value={values.deliveryLocation}
                     aria-invalid={Boolean(errors.deliveryLocation)}
                     onChange={(event) => updateValue("deliveryLocation", event.target.value)}
-                    disabled={status !== "draft"}
+                    disabled={!canEdit}
                   />
                 </FormField>
               </div>
@@ -895,6 +902,21 @@ function uniqueTextOptions(options: string[], currentValue: string): string[] {
 function firstFieldError(errors: Record<string, string[]>, prefix: string): string | undefined {
   const entry = Object.entries(errors).find(([field]) => field.startsWith(`${prefix}.`));
   return entry?.[1]?.[0];
+}
+
+function requisitionStatusLabel(status: Requisition["status"]): string {
+  const labels: Record<Requisition["status"], string> = {
+    draft: "Draft",
+    submitted: "Submitted",
+    pending_approval: "Pending approval",
+    changes_requested: "Changes requested",
+    approved: "Approved",
+    rejected: "Rejected",
+    withdrawn: "Withdrawn",
+    cancelled: "Cancelled",
+  };
+
+  return labels[status];
 }
 
 function clearFieldErrors(

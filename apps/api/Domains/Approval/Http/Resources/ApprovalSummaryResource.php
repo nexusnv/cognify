@@ -19,7 +19,8 @@ class ApprovalSummaryResource extends JsonResource
     public function toArray(Request $request): array
     {
         $activeTasks = $this->tasks->where('status', ApprovalTaskStatus::Active);
-        $completedTasks = $this->tasks->reject(fn ($task): bool => $task->status === ApprovalTaskStatus::Active);
+        $completedDecisions = $this->tasks
+            ->filter(fn ($task): bool => $task->decision !== null && $task->decided_at !== null);
         $currentStage = $this->stages->firstWhere('sequence', $this->current_stage_sequence);
         $currentUserTask = $activeTasks->firstWhere('assignee_id', $request->user()?->id);
 
@@ -47,7 +48,7 @@ class ApprovalSummaryResource extends JsonResource
                     'email' => $task->assignee->email,
                     'taskId' => (string) $task->id,
                 ])->values()->all(),
-            'completedDecisions' => $completedTasks->map(fn ($task): array => [
+            'completedDecisions' => $completedDecisions->map(fn ($task): array => [
                 'taskId' => (string) $task->id,
                 'decision' => $task->decision,
                 'reason' => $task->decision_reason,

@@ -52,21 +52,21 @@ class ExportPurchaseOrderRequestHandoff
     /**
      * @return array<string, mixed>|string
      */
-    public function handle(PurchaseOrderRequestHandoff $handoff, User $actor, string $format): array|string
+    public function handle(PurchaseOrderRequestHandoff $handoff, User $actor, string $format, bool $recordExport = true): array|string
     {
+        if (! $recordExport) {
+            $this->assertExportable($handoff, $format);
+
+            return $format === 'json' ? $this->jsonPayload($handoff) : $this->csvPayload($handoff);
+        }
+
         return DB::transaction(function () use ($handoff, $actor, $format): array|string {
             $handoff = PurchaseOrderRequestHandoff::query()
                 ->whereKey($handoff->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (! in_array($format, ['json', 'csv'], true)) {
-                throw new InvalidArgumentException('PO handoff export format must be json or csv.');
-            }
-
-            if (! in_array($handoff->statusState(), [PurchaseOrderRequestHandoffStatus::Ready, PurchaseOrderRequestHandoffStatus::Exported], true)) {
-                throw new ConflictHttpException('Only ready or exported PO handoffs can be exported.');
-            }
+            $this->assertExportable($handoff, $format);
 
             $before = $handoff->only(['status', 'last_exported_by_user_id', 'last_exported_at', 'last_export_format', 'lock_version']);
             $payload = $format === 'json' ? $this->jsonPayload($handoff) : $this->csvPayload($handoff);
@@ -93,6 +93,17 @@ class ExportPurchaseOrderRequestHandoff
 
             return $payload;
         });
+    }
+
+    private function assertExportable(PurchaseOrderRequestHandoff $handoff, string $format): void
+    {
+        if (! in_array($format, ['json', 'csv'], true)) {
+            throw new InvalidArgumentException('PO handoff export format must be json or csv.');
+        }
+
+        if (! in_array($handoff->statusState(), [PurchaseOrderRequestHandoffStatus::Ready, PurchaseOrderRequestHandoffStatus::Exported], true)) {
+            throw new ConflictHttpException('Only ready or exported PO handoffs can be exported.');
+        }
     }
 
     /**

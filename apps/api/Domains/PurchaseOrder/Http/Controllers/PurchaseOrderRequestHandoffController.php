@@ -27,7 +27,6 @@ class PurchaseOrderRequestHandoffController extends Controller
     public function showForRfq(
         CurrentTenant $currentTenant,
         int $rfq,
-        CreateOrRevealPurchaseOrderRequestHandoff $action,
     ): JsonResponse {
         $tenant = $this->tenantOrAbort($currentTenant);
         $model = $this->findTenantRfq($tenant, $rfq);
@@ -36,16 +35,9 @@ class PurchaseOrderRequestHandoffController extends Controller
         $this->authorize('create', [PurchaseOrderRequestHandoff::class, $tenant]);
 
         $handoff = $this->findTenantHandoffForRecommendation($tenant, $recommendation);
-
-        if ($handoff === null) {
-            if ($recommendation->statusState() !== RfqAwardRecommendationStatus::Approved) {
-                throw new ConflictHttpException('Only approved award recommendations can create PO handoffs.');
-            }
-
-            $handoff = $action->handle($recommendation, request()->user());
+        if ($handoff !== null) {
+            $this->authorize('view', $handoff);
         }
-
-        $this->authorize('view', $handoff);
 
         return $this->resourceResponse($handoff);
     }
@@ -121,6 +113,17 @@ class PurchaseOrderRequestHandoffController extends Controller
         $handoff = $this->findTenantHandoff($this->tenantOrAbort($currentTenant), $handoff);
         $this->authorize('export', $handoff);
 
+        return response()->json($action->handle($handoff, request()->user(), 'json', recordExport: false));
+    }
+
+    public function recordExportJson(
+        CurrentTenant $currentTenant,
+        PurchaseOrderRequestHandoff $handoff,
+        ExportPurchaseOrderRequestHandoff $action,
+    ): JsonResponse {
+        $handoff = $this->findTenantHandoff($this->tenantOrAbort($currentTenant), $handoff);
+        $this->authorize('export', $handoff);
+
         return response()->json($action->handle($handoff, request()->user(), 'json'));
     }
 
@@ -132,8 +135,26 @@ class PurchaseOrderRequestHandoffController extends Controller
         $handoff = $this->findTenantHandoff($this->tenantOrAbort($currentTenant), $handoff);
         $this->authorize('export', $handoff);
 
+        $csv = $action->handle($handoff, request()->user(), 'csv', recordExport: false);
+
+        return $this->csvResponse($handoff, $csv);
+    }
+
+    public function recordExportCsv(
+        CurrentTenant $currentTenant,
+        PurchaseOrderRequestHandoff $handoff,
+        ExportPurchaseOrderRequestHandoff $action,
+    ): Response {
+        $handoff = $this->findTenantHandoff($this->tenantOrAbort($currentTenant), $handoff);
+        $this->authorize('export', $handoff);
+
         $csv = $action->handle($handoff, request()->user(), 'csv');
 
+        return $this->csvResponse($handoff, $csv);
+    }
+
+    private function csvResponse(PurchaseOrderRequestHandoff $handoff, string $csv): Response
+    {
         return response($csv, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="'.$handoff->number.'.csv"',
@@ -179,10 +200,10 @@ class PurchaseOrderRequestHandoffController extends Controller
         return $tenantHandoff;
     }
 
-    private function resourceResponse(PurchaseOrderRequestHandoff $handoff): JsonResponse
+    private function resourceResponse(?PurchaseOrderRequestHandoff $handoff): JsonResponse
     {
         return response()->json([
-            'data' => (new PurchaseOrderRequestHandoffResource($handoff))->resolve(),
+            'data' => $handoff === null ? null : (new PurchaseOrderRequestHandoffResource($handoff))->resolve(),
         ]);
     }
 

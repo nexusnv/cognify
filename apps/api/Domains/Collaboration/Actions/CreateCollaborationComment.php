@@ -4,13 +4,16 @@ namespace Domains\Collaboration\Actions;
 
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
+use App\Audit\AuditSubject;
 use App\Models\User;
 use App\Notifications\NotificationData;
 use App\Notifications\NotificationPreferenceDefaults;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalTask;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Requisition\Models\Requisition;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -27,24 +30,29 @@ class CreateCollaborationComment
     /**
      * @param  array{body:string,mentionedUserIds?:array<int,string>}  $data
      */
-    public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): CollaborationComment
+    public function handle(Tenant $tenant, User $actor, Model $subject, array $data): CollaborationComment
     {
-        if (! $actor->can('comment', $requisition)) {
+        $ability = $subject instanceof Requisition ? 'comment' : 'view';
+
+        if (! $actor->can($ability, $subject)) {
             throw new AccessDeniedHttpException('You are not allowed to perform this action.');
         }
 
         $mentionedUsers = $this->visibleMentionedUsers(
             tenant: $tenant,
             actor: $actor,
-            requisition: $requisition,
+            subject: $subject,
             mentionedUserIds: $data['mentionedUserIds'] ?? [],
         );
 
-        return DB::transaction(function () use ($tenant, $actor, $requisition, $data, $mentionedUsers): CollaborationComment {
+        return DB::transaction(function () use ($tenant, $actor, $subject, $data, $mentionedUsers): CollaborationComment {
+            $subjectType = AuditSubject::typeFor($subject);
+            $subjectDisplay = AuditSubject::displayFor($subject) ?? $subjectType.' #'.$subject->getKey();
+
             $comment = CollaborationComment::query()->create([
                 'tenant_id' => $tenant->id,
-                'subject_type' => Requisition::class,
-                'subject_id' => $requisition->id,
+                'subject_type' => $subject->getMorphClass(),
+                'subject_id' => $subject->getKey(),
                 'author_id' => $actor->id,
                 'body' => $data['body'],
             ]);
@@ -62,10 +70,10 @@ class CreateCollaborationComment
                 tenant: $tenant,
                 actor: $actor,
                 action: 'collaboration.comment_created',
-                subject: $requisition,
+                subject: $subject,
                 metadata: [
-                    'subjectType' => 'requisition',
-                    'subjectId' => (string) $requisition->id,
+                    'subjectType' => $subjectType,
+                    'subjectId' => (string) $subject->getKey(),
                     'mentionCount' => count($mentionIds),
                     'mentionedUserIds' => $mentionIds,
                 ],
@@ -73,7 +81,7 @@ class CreateCollaborationComment
                     'body' => $comment->body,
                     'mentionCount' => count($mentionIds),
                 ],
-                subjectDisplay: $requisition->number,
+                subjectDisplay: $subjectDisplay,
             ));
 
             if ($mentionedUsers->isNotEmpty()) {
@@ -81,13 +89,13 @@ class CreateCollaborationComment
                     tenant: $tenant,
                     actor: $actor,
                     action: 'collaboration.mentioned',
-                    subject: $requisition,
+                    subject: $subject,
                     metadata: [
-                        'subjectType' => 'requisition',
-                        'subjectId' => (string) $requisition->id,
+                        'subjectType' => $subjectType,
+                        'subjectId' => (string) $subject->getKey(),
                         'mentionedUserIds' => $mentionIds,
                     ],
-                    subjectDisplay: $requisition->number,
+                    subjectDisplay: $subjectDisplay,
                 ));
 
                 $this->notificationRecorder->record(
@@ -96,13 +104,14 @@ class CreateCollaborationComment
                     data: new NotificationData(
                         type: NotificationPreferenceDefaults::EVENT_COLLABORATION_MENTIONED,
                         title: 'You were mentioned',
-                        body: "{$actor->name} mentioned you on {$requisition->number}.",
-                        href: "/requisitions/{$requisition->id}",
-                        subject: $requisition,
-                        subjectLabel: $requisition->number,
+                        body: "{$actor->name} mentioned you on {$subjectDisplay}.",
+                        href: $this->subjectHref($subject),
+                        subject: $subject,
+                        subjectLabel: $subjectDisplay,
                         metadata: [
                             'commentId' => (string) $comment->id,
-                            'number' => $requisition->number,
+                            'subjectType' => $subjectType,
+                            'subjectId' => (string) $subject->getKey(),
                         ],
                         actor: $actor,
                     ),
@@ -117,7 +126,7 @@ class CreateCollaborationComment
      * @param  array<int, string>  $mentionedUserIds
      * @return Collection<int, User>
      */
-    private function visibleMentionedUsers(Tenant $tenant, User $actor, Requisition $requisition, array $mentionedUserIds): Collection
+    private function visibleMentionedUsers(Tenant $tenant, User $actor, Model $subject, array $mentionedUserIds): Collection
     {
         $selected = collect($mentionedUserIds)
             ->filter(fn (string $userId): bool => $userId !== '')
@@ -127,7 +136,7 @@ class CreateCollaborationComment
         $visibleUsers = $tenant->users()
             ->whereIn('users.id', $selected)
             ->get()
-            ->filter(fn (User $user): bool => Gate::forUser($user)->allows('view', $requisition))
+            ->filter(fn (User $user): bool => Gate::forUser($user)->allows('view', $subject))
             ->values();
 
         $invalid = $selected->diff($visibleUsers->pluck('id')->map(fn (int $id): string => (string) $id));
@@ -141,5 +150,18 @@ class CreateCollaborationComment
         return $visibleUsers->filter(
             fn (User $user): bool => $selected->contains((string) $user->id),
         )->values();
+    }
+
+    private function subjectHref(Model $subject): ?string
+    {
+        if ($subject instanceof Requisition) {
+            return "/requisitions/{$subject->id}";
+        }
+
+        if ($subject instanceof ApprovalTask) {
+            return "/approvals/tasks/{$subject->id}";
+        }
+
+        return null;
     }
 }

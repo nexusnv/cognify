@@ -581,6 +581,33 @@ class ProcurementProjectApiTest extends TestCase
             ->assertJsonPath('data.0.status', 'submitted');
     }
 
+    public function test_project_requisition_list_filters_linked_requisitions_by_actor_visibility(): void
+    {
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $otherRequester] = $this->tenantUser('requester', $tenant);
+        $project = $this->createProject($tenant, $otherRequester, ['status' => 'active']);
+        $visibleRequisition = $this->createRequisition($tenant, $requester, [
+            'project_id' => $project->id,
+            'status' => RequisitionStatus::Draft,
+            'title' => 'Requester visible linked requisition',
+        ]);
+        $hiddenRequisition = $this->createRequisition($tenant, $otherRequester, [
+            'project_id' => $project->id,
+            'status' => RequisitionStatus::Draft,
+            'title' => 'Requester hidden linked requisition',
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/projects/{$project->id}/requisitions");
+
+        $response->assertOk();
+
+        $ids = array_column($response->json('data'), 'id');
+
+        $this->assertContains((string) $visibleRequisition->id, $ids);
+        $this->assertNotContains((string) $hiddenRequisition->id, $ids);
+    }
+
     public function test_project_search_results_link_to_project_workspace(): void
     {
         [$tenant, $buyer] = $this->tenantUser('buyer');

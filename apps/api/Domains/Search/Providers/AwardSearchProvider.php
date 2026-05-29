@@ -12,6 +12,8 @@ use Illuminate\Support\Collection;
 
 class AwardSearchProvider implements SearchProvider
 {
+    use AppliesActorSearchVisibility;
+
     public function type(): string
     {
         return 'award';
@@ -28,6 +30,7 @@ class AwardSearchProvider implements SearchProvider
             ->with(['project', 'rfq', 'quotation', 'vendor'])
             ->where('tenant_id', $tenant->id);
 
+        $this->applyAwardVisibility($builder, $tenant, $user);
         $this->applySearchConstraint($builder, $normalizedQuery);
         $this->applyOrdering($builder, $normalizedQuery);
 

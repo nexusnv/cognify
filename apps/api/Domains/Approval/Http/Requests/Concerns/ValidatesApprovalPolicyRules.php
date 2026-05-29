@@ -10,6 +10,7 @@ trait ValidatesApprovalPolicyRules
     {
         $validator->after(function (Validator $validator): void {
             $this->validateBetweenRuleBounds($validator);
+            $this->validateRuleFieldsForSubject($validator);
         });
     }
 
@@ -37,6 +38,42 @@ trait ValidatesApprovalPolicyRules
                     'Between bounds must contain exactly two numeric values in ascending order.',
                 );
             }
+        }
+    }
+
+    private function validateRuleFieldsForSubject(Validator $validator): void
+    {
+        $subjectType = $this->input('subjectType', $this->input('context.subjectType', 'requisition'));
+        $supportedFields = match ($subjectType) {
+            'rfq_award_recommendation' => [
+                'recommendedAmount',
+                'recommendedCurrency',
+                'recommendedVendorId',
+                'scorecardWeightedTotal',
+                'riskClassification',
+                'riskSummaryPresent',
+                'exceptionSummaryPresent',
+            ],
+            default => [
+                'amount',
+                'department',
+                'costCenter',
+                'projectId',
+                'riskClassification',
+            ],
+        };
+
+        foreach ((array) $this->input('rules', []) as $index => $rule) {
+            $field = $rule['field'] ?? null;
+
+            if (! is_string($field) || in_array($field, $supportedFields, true)) {
+                continue;
+            }
+
+            $validator->errors()->add(
+                "rules.{$index}.field",
+                "{$field} is not available for {$subjectType} policies.",
+            );
         }
     }
 }
