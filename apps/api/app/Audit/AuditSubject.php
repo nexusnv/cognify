@@ -3,6 +3,15 @@
 namespace App\Audit;
 
 use Domains\Attachment\Models\Attachment;
+use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationNormalization;
+use Domains\Quotation\Models\QuotationVersion;
+use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
+use Domains\Quotation\Models\RfqInvitation;
+use Domains\Quotation\Models\RfqScorecard;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,6 +23,15 @@ class AuditSubject
     protected static array $typeMap = [
         Requisition::class => 'requisition',
         Attachment::class => 'attachment',
+        ProcurementProject::class => 'project',
+        Rfq::class => 'rfq',
+        RfqInvitation::class => 'rfq_invitation',
+        Quotation::class => 'quotation',
+        QuotationVersion::class => 'quotation_version',
+        QuotationNormalization::class => 'quotation_normalization',
+        RfqScorecard::class => 'scorecard',
+        RfqAwardRecommendation::class => 'award',
+        PurchaseOrderRequestHandoff::class => 'po_handoff',
     ];
 
     /**
@@ -32,6 +50,14 @@ class AuditSubject
         foreach ($mapping as $class => $key) {
             static::registerType($class, $key);
         }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function publicTypes(): array
+    {
+        return array_values(array_unique(static::$typeMap));
     }
 
     public static function typeFor(Model|string $subject): string

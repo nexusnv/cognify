@@ -53,6 +53,7 @@ export function ApprovalPolicyDetailPage({ policyId }: { policyId: string }) {
             disabled={createVersionMutation.isPending}
             onClick={async () => {
               await createVersionMutation.mutateAsync({
+                subjectType: policy.subjectType,
                 priority: latestVersion.priority,
                 rules: latestVersion.rules,
                 routeTemplate: latestVersion.routeTemplate,

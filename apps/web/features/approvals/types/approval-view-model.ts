@@ -24,7 +24,7 @@ export type ApprovalPolicyRule = {
 };
 
 export type ApprovalRouteApprover = {
-  type: string;
+  type: "role" | "user";
   role?: string;
   userId?: string;
   label?: string;
@@ -34,6 +34,7 @@ export type ApprovalRouteStage = {
   name: string;
   completionRule: ApprovalCompletionRule;
   approvers: ApprovalRouteApprover[];
+  fallbackApprovers: ApprovalRouteApprover[];
 };
 
 export type ApprovalRouteTemplate = {

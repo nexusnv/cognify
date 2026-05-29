@@ -27,9 +27,12 @@ class RequisitionApprovalApiTest extends TestCase
         [, $financeApprover] = $this->tenantUser('approver', $tenant);
         $requisition = $this->routeSequentialRequisition($tenant, $requester, $firstApprover, $secondApprover, $financeApprover);
 
-        $decidingTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
-        $activeSibling = ApprovalTask::query()->where('assignee_id', $secondApprover->id)->firstOrFail();
-        $futureTask = ApprovalTask::query()->where('assignee_id', $financeApprover->id)->firstOrFail();
+        $taskQuery = ApprovalTask::query()
+            ->where('subject_type', Requisition::class)
+            ->where('subject_id', $requisition->id);
+        $decidingTask = (clone $taskQuery)->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $activeSibling = (clone $taskQuery)->where('assignee_id', $secondApprover->id)->firstOrFail();
+        $futureTask = (clone $taskQuery)->where('assignee_id', $financeApprover->id)->firstOrFail();
 
         $this->assertSame('active', $activeSibling->status->value);
         $this->assertSame('blocked', $futureTask->status->value);
@@ -70,9 +73,12 @@ class RequisitionApprovalApiTest extends TestCase
         [, $financeApprover] = $this->tenantUser('approver', $tenant);
         $requisition = $this->routeSequentialRequisition($tenant, $requester, $firstApprover, $secondApprover, $financeApprover);
 
-        $decidingTask = ApprovalTask::query()->where('assignee_id', $firstApprover->id)->firstOrFail();
-        $activeSibling = ApprovalTask::query()->where('assignee_id', $secondApprover->id)->firstOrFail();
-        $futureTask = ApprovalTask::query()->where('assignee_id', $financeApprover->id)->firstOrFail();
+        $taskQuery = ApprovalTask::query()
+            ->where('subject_type', Requisition::class)
+            ->where('subject_id', $requisition->id);
+        $decidingTask = (clone $taskQuery)->where('assignee_id', $firstApprover->id)->firstOrFail();
+        $activeSibling = (clone $taskQuery)->where('assignee_id', $secondApprover->id)->firstOrFail();
+        $futureTask = (clone $taskQuery)->where('assignee_id', $financeApprover->id)->firstOrFail();
 
         $this->assertSame('active', $activeSibling->status->value);
         $this->assertSame('blocked', $futureTask->status->value);

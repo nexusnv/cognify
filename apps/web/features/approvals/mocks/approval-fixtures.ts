@@ -7,6 +7,7 @@ import type {
   ApprovalPreview,
   ApprovalPreviewContext,
 } from "../types/approval-view-model";
+import type { CollaborationComment } from "@cognify/api-client/schemas";
 
 export const approvalPolicyFixture: ApprovalPolicy = {
   id: "ap-100",
@@ -32,6 +33,7 @@ export const approvalPolicyFixture: ApprovalPolicy = {
             name: "Manager review",
             completionRule: "all",
             approvers: [{ type: "role", role: "approver", label: "Approver" }],
+            fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
           },
         ],
       },
@@ -116,6 +118,120 @@ export const approvalPreviewFixture: ApprovalPreview = {
   estimatedDueAt: "2026-05-19T00:00:00.000Z",
   createsTasks: false,
   context: approvalPreviewContextFixture,
+};
+
+export const awardApprovalPolicyFixture: ApprovalPolicy = {
+  ...approvalPolicyFixture,
+  id: "ap-award-100",
+  name: "RFQ award approval",
+  description: "Commercial approval route for RFQ award recommendations.",
+  subjectType: "rfq_award_recommendation",
+  versions: [
+    {
+      ...approvalPolicyFixture.versions[0]!,
+      id: "apv-award-100",
+      policyId: "ap-award-100",
+      rules: [
+        { field: "recommendedAmount", operator: "gte", value: 100000 },
+        { field: "riskSummaryPresent", operator: "equals", value: true },
+      ],
+      routeTemplate: {
+        stages: [
+          {
+            name: "Commercial review",
+            completionRule: "all",
+            approvers: [{ type: "role", role: "buyer", label: "Buyer" }],
+            fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+          },
+        ],
+      },
+      slaRules: [{ stage: "Commercial review", dueInHours: 24, escalateAfterHours: 36 }],
+    },
+  ],
+};
+
+export const awardApprovalPreviewContextFixture: ApprovalPreviewContext = {
+  tenantId: "tenant-1",
+  subjectType: "rfq_award_recommendation",
+  requisitionId: null,
+  requesterId: null,
+  amount: 0,
+  currency: null,
+  department: null,
+  costCenter: null,
+  projectId: null,
+  lineItemCategories: [],
+  riskClassification: null,
+  vendorId: null,
+  awardRecommendationId: "award-preview",
+  rfqId: "rfq-preview",
+  rfqNumber: "RFQ-PREVIEW",
+  recommendedVendorId: "vendor-preview",
+  recommendedVendorName: "Preview vendor",
+  recommendedQuotationId: "quotation-preview",
+  recommendedQuotationVersionId: "quotation-version-preview",
+  recommendedAmount: 125000,
+  recommendedCurrency: "MYR",
+  scorecardId: "scorecard-preview",
+  scorecardWeightedTotal: 86.5,
+  riskSummaryPresent: true,
+  exceptionSummaryPresent: false,
+};
+
+export const awardApprovalPreviewFixture: ApprovalPreview = {
+  matchedPolicy: {
+    id: awardApprovalPolicyFixture.id,
+    tenantId: awardApprovalPolicyFixture.tenantId,
+    name: awardApprovalPolicyFixture.name,
+    subjectType: awardApprovalPolicyFixture.subjectType,
+    status: awardApprovalPolicyFixture.status,
+  },
+  matchedVersion: {
+    id: awardApprovalPolicyFixture.versions[0].id,
+    tenantId: awardApprovalPolicyFixture.tenantId,
+    policyId: awardApprovalPolicyFixture.id,
+    versionNumber: awardApprovalPolicyFixture.versions[0].versionNumber,
+    status: awardApprovalPolicyFixture.versions[0].status,
+    priority: awardApprovalPolicyFixture.versions[0].priority,
+    rules: awardApprovalPolicyFixture.versions[0].rules,
+    routeTemplate: awardApprovalPolicyFixture.versions[0].routeTemplate,
+    slaRules: awardApprovalPolicyFixture.versions[0].slaRules,
+  },
+  matchedConditions: [
+    {
+      field: "recommendedAmount",
+      operator: "gte",
+      value: 100000,
+      matched: true,
+      summary: "recommendedAmount gte 100000 matched",
+    },
+    {
+      field: "riskSummaryPresent",
+      operator: "equals",
+      value: true,
+      matched: true,
+      summary: "riskSummaryPresent equals true matched",
+    },
+  ],
+  stages: [
+    {
+      name: "Commercial review",
+      completionRule: "all",
+      approvers: [{ type: "role", role: "buyer", label: "Buyer" }],
+      fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+      dueAt: "2026-05-19T00:00:00.000Z",
+      warnings: [],
+    },
+  ],
+  warnings: [
+    {
+      code: "missing_context",
+      message: "Missing required approval context affected policy matching: recommendedVendorId",
+    },
+  ],
+  estimatedDueAt: "2026-05-19T00:00:00.000Z",
+  createsTasks: false,
+  context: awardApprovalPreviewContextFixture,
 };
 
 export const submittedRequisitionApprovalPreviewFixture: ApprovalPreview = {
@@ -308,6 +424,21 @@ export const approvalTaskFixtures: ApprovalTask[] = [
     },
   },
 ];
+
+export const approvalTaskCommentFixtures: Record<string, CollaborationComment[]> = {
+  "task-1": [
+    {
+      id: "approval-comment-1",
+      subjectType: "approval_task",
+      subjectId: "task-1",
+      author: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+      body: "Can you confirm budget owner alignment?",
+      mentions: [],
+      createdAt: "2026-05-18T02:00:00.000Z",
+      updatedAt: "2026-05-18T02:00:00.000Z",
+    },
+  ],
+};
 
 export const approvalSummaryFixture: ApprovalSummary = {
   id: "instance-1",

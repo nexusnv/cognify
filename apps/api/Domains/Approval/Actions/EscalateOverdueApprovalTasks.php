@@ -10,8 +10,10 @@ use App\Notifications\NotificationPreferenceDefaults;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Approval\Contracts\ApprovalSubjectHandler;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
+use Domains\Approval\States\ApprovalInstanceStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -59,6 +61,7 @@ class EscalateOverdueApprovalTasks
     private function escalateTask(Tenant $tenant, ApprovalTask $task): bool
     {
         return DB::transaction(function () use ($tenant, $task): bool {
+            $instance = $this->lockedInstanceForTask($tenant, $task);
             $task = ApprovalTask::query()
                 ->with([
                     'assignee',
@@ -79,8 +82,11 @@ class EscalateOverdueApprovalTasks
                 return false;
             }
 
-            $stage = $task->stage()->with('instance.policyVersion')->lockForUpdate()->firstOrFail();
-            $instance = $task->instance()->with('policyVersion')->lockForUpdate()->firstOrFail();
+            if ($instance->status !== ApprovalInstanceStatus::Active) {
+                return false;
+            }
+
+            $stage = $task->stage()->lockForUpdate()->firstOrFail();
             $policyVersion = $instance->policyVersion;
             $routeTemplate = $policyVersion?->route_template ?? ['stages' => []];
             $stageTemplate = $this->stageTemplateFor($routeTemplate['stages'] ?? [], $stage->name);
@@ -168,6 +174,21 @@ class EscalateOverdueApprovalTasks
 
             return true;
         });
+    }
+
+    private function lockedInstanceForTask(Tenant $tenant, ApprovalTask $task): ApprovalInstance
+    {
+        $taskSnapshot = ApprovalTask::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($task->id)
+            ->firstOrFail();
+
+        return ApprovalInstance::query()
+            ->with('policyVersion')
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($taskSnapshot->approval_instance_id)
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 
     /**

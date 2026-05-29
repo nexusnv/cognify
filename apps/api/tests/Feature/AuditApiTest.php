@@ -5,12 +5,24 @@ namespace Tests\Feature;
 use App\Audit\AuditEvent;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
+use App\Audit\AuditSubject;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Attachment\Models\Attachment;
+use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationNormalization;
+use Domains\Quotation\Models\QuotationVersion;
+use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
+use Domains\Quotation\Models\RfqInvitation;
+use Domains\Quotation\Models\RfqScorecard;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AuditApiTest extends TestCase
@@ -165,6 +177,27 @@ class AuditApiTest extends TestCase
             ->assertJsonPath('data.0.action', 'requisition.created');
     }
 
+    #[DataProvider('p1SubjectTypesProvider')]
+    public function test_audit_feed_filters_p1_subject_types(string $subjectType, string $subjectClass): void
+    {
+        [$tenant, $admin] = $this->tenantUser('admin');
+
+        $this->auditSubject($tenant, $admin, $subjectClass, $subjectType.'.queried', 501, $subjectType.'-subject');
+        if ($subjectType === 'requisition') {
+            $this->auditSubject($tenant, $admin, Attachment::class, 'attachment.created', 502, 'attachment-baseline');
+        } else {
+            $this->audit($tenant, $admin, $this->requisition($tenant, $admin), 'requisition.created');
+        }
+
+        $this->actingAsTenant($tenant, $admin)
+            ->getJson("/api/audit/events?subjectType={$subjectType}&perPage=50")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.action', $subjectType.'.queried')
+            ->assertJsonPath('data.0.subject.type', $subjectType)
+            ->assertJsonPath('data.0.subject.id', '501');
+    }
+
     public function test_requisition_activity_uses_shared_audit_resource_shape(): void
     {
         [$tenant, $requester] = $this->tenantUser('requester');
@@ -241,6 +274,49 @@ class AuditApiTest extends TestCase
             'subject_id' => $subject->id,
             'subject_display' => $subject->number,
             'metadata' => ['status' => $subject->status->value],
+            'occurred_at' => $occurredAt ?? now(),
+        ]);
+    }
+
+    /**
+     * @return array<int, array{0: string, 1: class-string}>
+     */
+    public static function p1SubjectTypesProvider(): array
+    {
+        return [
+            ['requisition', Requisition::class],
+            ['attachment', Attachment::class],
+            ['project', ProcurementProject::class],
+            ['rfq', Rfq::class],
+            ['rfq_invitation', RfqInvitation::class],
+            ['quotation', Quotation::class],
+            ['quotation_version', QuotationVersion::class],
+            ['quotation_normalization', QuotationNormalization::class],
+            ['scorecard', RfqScorecard::class],
+            ['award', RfqAwardRecommendation::class],
+            ['approval_task', \Domains\Approval\Models\ApprovalTask::class],
+            ['po_handoff', PurchaseOrderRequestHandoff::class],
+        ];
+    }
+
+    private function auditSubject(
+        Tenant $tenant,
+        User $actor,
+        string $subjectClass,
+        string $action,
+        int $subjectId,
+        string $subjectDisplay,
+        ?string $occurredAt = null,
+    ): AuditEvent {
+        return AuditEvent::query()->create([
+            'tenant_id' => $tenant->id,
+            'actor_id' => $actor->id,
+            'event_type' => $action,
+            'action' => $action,
+            'subject_type' => $subjectClass,
+            'subject_id' => $subjectId,
+            'subject_display' => $subjectDisplay,
+            'metadata' => [],
             'occurred_at' => $occurredAt ?? now(),
         ]);
     }

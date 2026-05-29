@@ -2,9 +2,9 @@
 
 namespace Domains\Collaboration\Http\Resources;
 
+use App\Audit\AuditSubject;
 use App\Models\User;
 use Domains\Collaboration\Models\CollaborationComment;
-use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
@@ -23,7 +23,7 @@ class CollaborationCommentResource extends JsonResource
 
         return [
             'id' => (string) $this->id,
-            'subjectType' => $this->subject_type === Requisition::class ? 'requisition' : 'unknown',
+            'subjectType' => AuditSubject::typeFor($this->subject_type),
             'subjectId' => (string) $this->subject_id,
             'author' => $this->userSummary($this->whenLoaded('author')),
             'body' => $this->body,

@@ -514,7 +514,17 @@
               "type": "string",
               "enum": [
                 "requisition",
-                "attachment"
+                "attachment",
+                "project",
+                "rfq",
+                "rfq_invitation",
+                "quotation",
+                "quotation_version",
+                "quotation_normalization",
+                "scorecard",
+                "award",
+                "approval_task",
+                "po_handoff"
               ]
             }
           },
@@ -3260,6 +3270,99 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/approval-tasks/{approvalTask}/comments": {
+      "get": {
+        "operationId": "listApprovalTaskComments",
+        "summary": "List comments for an approval task",
+        "tags": [
+          "Approval Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "approvalTask",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval task identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval task comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCommentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApprovalTaskComment",
+        "summary": "Create a comment on an approval task",
+        "tags": [
+          "Approval Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "approvalTask",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Approval task identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollaborationCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCommentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
           }
         }
       }
@@ -7695,6 +7798,12 @@
             "items": {
               "$ref": "#/components/schemas/ApprovalRouteApproverTemplate"
             }
+          },
+          "fallbackApprovers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalRouteApproverTemplate"
+            }
           }
         },
         "additionalProperties": true
@@ -8057,7 +8166,17 @@
             "type": "string",
             "enum": [
               "requisition",
-              "attachment"
+              "attachment",
+              "project",
+              "rfq",
+              "rfq_invitation",
+              "quotation",
+              "quotation_version",
+              "quotation_normalization",
+              "scorecard",
+              "award",
+              "po_handoff",
+              "approval_task"
             ]
           },
           "id": {
@@ -8094,7 +8213,8 @@
           "subjectType": {
             "type": "string",
             "enum": [
-              "requisition"
+              "requisition",
+              "approval_task"
             ]
           },
           "subjectId": {
@@ -10753,6 +10873,13 @@
           "priority": {
             "type": "integer",
             "minimum": 1
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": [
+              "requisition",
+              "rfq_award_recommendation"
+            ]
           },
           "rules": {
             "type": "array",

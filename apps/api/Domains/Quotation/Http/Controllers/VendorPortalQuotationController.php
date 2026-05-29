@@ -20,7 +20,7 @@ class VendorPortalQuotationController extends Controller
     public function show(string $token, ResolveRfqInvitationPortalAccess $resolve, Request $request): JsonResponse|QuotationResource
     {
         $request->attributes->set('vendor_portal', true);
-        $invitation = $resolve->handle($token, $request);
+        $invitation = $resolve->handle($token);
         $request->attributes->set('vendor_portal_can_edit_quotation', $invitation->canBeViewedInPortal());
         $quotation = $this->findTenantQuotationByInvitation($invitation->tenant, $invitation->id);
 
@@ -34,10 +34,10 @@ class VendorPortalQuotationController extends Controller
         StoreAttachmentRequest $request,
         ResolveRfqInvitationPortalAccess $resolve,
         StoreQuotationAttachment $storeQuotationAttachment,
-    ): JsonResponse {
+        ): JsonResponse {
         $request->attributes->set('vendor_portal', true);
         request()->attributes->set('vendor_portal', true);
-        $invitation = $resolve->handle($token, $request);
+        $invitation = $resolve->handle($token);
         $request->attributes->set('vendor_portal_can_edit_quotation', true);
         request()->attributes->set('vendor_portal_can_edit_quotation', true);
 
@@ -62,7 +62,7 @@ class VendorPortalQuotationController extends Controller
         $request->attributes->set('vendor_portal_can_edit_quotation', true);
         request()->attributes->set('vendor_portal', true);
         request()->attributes->set('vendor_portal_can_edit_quotation', true);
-        $invitation = $resolve->handle($token, $request);
+        $invitation = $resolve->handle($token);
 
         return new QuotationResource($saveQuotationManualEntry->handle(
             $invitation->tenant,

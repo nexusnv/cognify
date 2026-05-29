@@ -11,4 +11,5 @@ export type CollaborationCommentSubjectType =
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const CollaborationCommentSubjectType = {
   requisition: "requisition",
+  approval_task: "approval_task",
 } as const;

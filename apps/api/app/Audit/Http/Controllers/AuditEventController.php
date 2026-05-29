@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 
 class AuditEventController extends Controller
@@ -20,7 +21,7 @@ class AuditEventController extends Controller
         $validated = $request->validate([
             'action' => ['sometimes', 'string', 'max:120'],
             'actorId' => ['sometimes', 'integer'],
-            'subjectType' => ['sometimes', 'string', Rule::in(['requisition'])],
+            'subjectType' => ['sometimes', 'string', Rule::in(AuditSubject::publicTypes())],
             'subjectId' => ['sometimes', 'integer'],
             'occurredFrom' => ['sometimes', 'date'],
             'occurredTo' => ['sometimes', 'date', 'after_or_equal:occurredFrom'],
@@ -36,7 +37,17 @@ class AuditEventController extends Controller
 
         $query->when($validated['action'] ?? null, fn ($query, string $action) => $query->where('action', $action));
         $query->when($validated['actorId'] ?? null, fn ($query, int $actorId) => $query->where('actor_id', $actorId));
-        $query->when($validated['subjectType'] ?? null, fn ($query, string $subjectType) => $query->where('subject_type', AuditSubject::classFor($subjectType)));
+        if (($validated['subjectType'] ?? null) !== null) {
+            $subjectClass = AuditSubject::classFor($validated['subjectType']);
+
+            if ($subjectClass === null) {
+                throw ValidationException::withMessages([
+                    'subjectType' => ['The selected subject type is invalid.'],
+                ]);
+            }
+
+            $query->where('subject_type', $subjectClass);
+        }
         $query->when($validated['subjectId'] ?? null, fn ($query, int $subjectId) => $query->where('subject_id', $subjectId));
         $query->when($validated['occurredFrom'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '>=', Carbon::parse($date)->startOfDay()));
         $query->when($validated['occurredTo'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '<=', Carbon::parse($date)->endOfDay()));

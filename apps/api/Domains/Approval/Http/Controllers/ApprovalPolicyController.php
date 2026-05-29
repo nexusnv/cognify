@@ -63,13 +63,14 @@ class ApprovalPolicyController extends Controller
     ): JsonResponse {
         $tenant = $this->tenantOrAbort($currentTenant);
         $context = ApprovalContextData::fromArray((string) $tenant->id, $request->validated('context', []));
+        $subjectType = $context->subjectType;
 
         $candidates = [[
             'matchedPolicy' => [
                 'id' => 'preview',
                 'tenantId' => (string) $tenant->id,
                 'name' => $request->validated('policyName', 'Preview policy'),
-                'subjectType' => 'requisition',
+                'subjectType' => $subjectType,
                 'status' => 'draft',
             ],
             'matchedVersion' => [

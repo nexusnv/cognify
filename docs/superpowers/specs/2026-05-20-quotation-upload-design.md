@@ -18,7 +18,7 @@
 
 This slice lets buyers and invited vendors upload quotation files against an RFQ invitation. It turns the existing read-only vendor portal into the first response capture surface and gives buyers a controlled way to record quotation evidence received outside Cognify.
 
-The result is a durable tenant-scoped `Quotation` record linked to an RFQ, vendor, invitation, and one or more attachments. This slice deliberately stops at file-backed quotation capture. Structured commercial fields, manual line item entry, quotation versioning, normalization, comparison, scoring, award decisions, award approvals, and purchase order handoff are later slices.
+The result is a durable tenant-scoped `Quotation` record linked to an RFQ, vendor, invitation, and attachments uploaded one file at a time. This slice deliberately stops at file-backed quotation capture. Structured commercial fields, manual line item entry, quotation versioning, normalization, comparison, scoring, award decisions, award approvals, and purchase order handoff are later slices.
 
 ## Problem
 
@@ -66,10 +66,10 @@ Vendor upload:
 ```txt
 vendor opens portal token
   -> system validates invitation state and token expiry
-  -> vendor selects quotation file or files
-  -> system validates files
+  -> vendor selects one quotation file
+  -> system validates the file
   -> system creates or reuses the invitation quotation
-  -> system stores attachments against the quotation
+  -> system stores the attachment against the quotation
   -> portal shows submitted evidence status
 ```
 
@@ -78,10 +78,10 @@ Buyer upload:
 ```txt
 buyer opens RFQ workspace
   -> buyer selects an invitation
-  -> buyer uploads vendor quotation file or files
+  -> buyer uploads one vendor quotation file
   -> system validates buyer permission, RFQ, invitation, and vendor
   -> system creates or reuses the invitation quotation
-  -> system stores attachments against the quotation
+  -> system stores the attachment against the quotation
   -> RFQ workspace shows quotation evidence status
 ```
 
@@ -92,8 +92,8 @@ Workflow rules:
 - Buyer uploads require authenticated tenant context and RFQ invitation management permission.
 - Vendor uploads derive tenant context from the portal token and never trust `X-Tenant-Id`.
 - Each invitation can have one active quotation capture record in this slice.
-- Multiple files can be attached to the same quotation.
-- Uploading more files to an existing quotation appends evidence. It does not create a new version in this slice.
+- Multiple files can be attached to the same quotation by repeating single-file uploads.
+- Uploading another file to an existing quotation appends evidence. It does not create a new version in this slice.
 - File delete behavior should follow the attachment policy. If delete is allowed, deletion must be audited.
 
 ## Backend Design
@@ -144,14 +144,14 @@ Proposed vendor portal endpoints:
 - `GET /api/vendor-portal/rfq-invitations/{token}/quotation`
   Returns current quotation evidence status for the invitation.
 - `POST /api/vendor-portal/rfq-invitations/{token}/quotation/attachments`
-  Uploads one or more files as vendor-submitted quotation evidence.
+  Uploads one file per request as vendor-submitted quotation evidence.
 
 Proposed authenticated endpoints:
 
 - `GET /api/rfq-invitations/{invitation}/quotation`
   Returns current quotation evidence status for buyer/admin review.
 - `POST /api/rfq-invitations/{invitation}/quotation/attachments`
-  Uploads one or more files as buyer-submitted quotation evidence.
+  Uploads one file per request as buyer-submitted quotation evidence.
 - `GET /api/quotations/{quotation}/attachments`
   Lists quotation attachments where the actor is authorized.
 

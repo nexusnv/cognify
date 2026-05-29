@@ -16,7 +16,7 @@ export function ApprovalStageMap({
         const approverLabels = stage.approvers
           .map((approver) => approver.label ?? approver.role ?? approver.userId ?? approver.type)
           .join(", ");
-        const fallbackLabels = stage.fallbackApprovers
+        const fallbackLabels = (stage.fallbackApprovers ?? [])
           .map((approver) => approver.label ?? approver.role ?? approver.userId ?? approver.type)
           .join(", ");
         return (

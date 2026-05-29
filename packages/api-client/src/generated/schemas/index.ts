@@ -960,6 +960,7 @@ export * from "./storeApprovalPolicyRequest";
 export * from "./storeApprovalPolicyRequestDescription";
 export * from "./storeApprovalPolicyRequestSubjectType";
 export * from "./storeApprovalPolicyVersionRequest";
+export * from "./storeApprovalPolicyVersionRequestSubjectType";
 export * from "./storeProcurementProjectRequest";
 export * from "./submitRequisitionResponse";
 export * from "./submitRfqAwardRecommendationRequest";

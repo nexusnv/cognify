@@ -17,6 +17,7 @@ use Domains\Approval\Http\Controllers\ApprovalTaskController;
 use Domains\Approval\Http\Controllers\RequisitionApprovalController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
+use Domains\Collaboration\Http\Controllers\ApprovalTaskCommentController;
 use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
@@ -111,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/approval-tasks/{approvalTask}/reject', [ApprovalTaskController::class, 'reject']);
         Route::post('/approval-tasks/{approvalTask}/request-changes', [ApprovalTaskController::class, 'requestChanges']);
         Route::post('/approval-tasks/{approvalTask}/delegate', [ApprovalTaskController::class, 'delegate']);
+        Route::get('/approval-tasks/{approvalTask}/comments', [ApprovalTaskCommentController::class, 'index']);
+        Route::post('/approval-tasks/{approvalTask}/comments', [ApprovalTaskCommentController::class, 'store']);
 
         Route::get('/sourcing/intake-reviews', [SourcingIntakeReviewController::class, 'index']);
         Route::get('/sourcing/intake-reviews/{review}', [SourcingIntakeReviewController::class, 'show']);

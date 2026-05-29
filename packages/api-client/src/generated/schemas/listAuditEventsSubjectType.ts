@@ -12,4 +12,14 @@ export type ListAuditEventsSubjectType =
 export const ListAuditEventsSubjectType = {
   requisition: "requisition",
   attachment: "attachment",
+  project: "project",
+  rfq: "rfq",
+  rfq_invitation: "rfq_invitation",
+  quotation: "quotation",
+  quotation_version: "quotation_version",
+  quotation_normalization: "quotation_normalization",
+  scorecard: "scorecard",
+  award: "award",
+  approval_task: "approval_task",
+  po_handoff: "po_handoff",
 } as const;

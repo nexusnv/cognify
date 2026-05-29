@@ -12,5 +12,6 @@ export interface ApprovalRouteStageTemplate {
   completionRule: ApprovalRouteStageTemplateCompletionRule;
   /** @minItems 1 */
   approvers: ApprovalRouteApproverTemplate[];
+  fallbackApprovers?: ApprovalRouteApproverTemplate[];
   [key: string]: unknown;
 }

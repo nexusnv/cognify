@@ -1,22 +1,30 @@
 import { http, HttpResponse } from "msw";
 import {
+  approvalTaskCommentFixtures,
   approvalSummaryFixture,
   approvalDelegationFixtures,
   approvalSlaSummaryFixture,
   approvalTaskFixtures,
   approvalPolicyFixture,
   approvalPreviewFixture,
+  awardApprovalPolicyFixture,
+  awardApprovalPreviewFixture,
   fallbackApprovalPreviewFixture,
   parallelAllApprovalPreviewFixture,
   parallelAnyApprovalPreviewFixture,
   submittedRequisitionApprovalPreviewFixture,
 } from "./approval-fixtures";
 import { requisitionFixtures } from "@/features/requisitions/mocks/requisitions-fixtures";
+import type { CollaborationComment } from "@cognify/api-client/schemas";
 import type { ApprovalDelegation, ApprovalPolicy } from "../types/approval-view-model";
 
-let policies: ApprovalPolicy[] = [structuredClone(approvalPolicyFixture)];
+let policies: ApprovalPolicy[] = [
+  structuredClone(approvalPolicyFixture),
+  structuredClone(awardApprovalPolicyFixture),
+];
 let tasks = structuredClone(approvalTaskFixtures);
 let delegations = structuredClone(approvalDelegationFixtures);
+let comments = structuredClone(approvalTaskCommentFixtures);
 
 type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
   Pick<
@@ -25,9 +33,10 @@ type ApprovalPolicyPayload = Partial<ApprovalPolicy> &
   >;
 
 export function resetApprovalMockState() {
-  policies = [structuredClone(approvalPolicyFixture)];
+  policies = [structuredClone(approvalPolicyFixture), structuredClone(awardApprovalPolicyFixture)];
   tasks = structuredClone(approvalTaskFixtures);
   delegations = structuredClone(approvalDelegationFixtures);
+  comments = structuredClone(approvalTaskCommentFixtures);
 }
 
 export const approvalHandlers = [
@@ -65,6 +74,38 @@ export const approvalHandlers = [
     if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
     task.viewedAt = "2026-05-18T01:00:00.000Z";
     return HttpResponse.json({ data: task });
+  }),
+  http.get("/api/approval-tasks/:taskId/comments", ({ params }) => {
+    const taskId = String(params.taskId);
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+
+    return HttpResponse.json({ data: comments[taskId] ?? [] });
+  }),
+  http.post("/api/approval-tasks/:taskId/comments", async ({ params, request }) => {
+    const taskId = String(params.taskId);
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
+
+    const body = (await request.json()) as { body?: string };
+    if (!body.body?.trim()) {
+      return HttpResponse.json({ error: { code: "validation_failed" } }, { status: 422 });
+    }
+
+    const comment: CollaborationComment = {
+      id: `approval-comment-${(comments[taskId] ?? []).length + 1}`,
+      subjectType: "approval_task",
+      subjectId: taskId,
+      author: { id: "user-2", name: "Priya Buyer", email: "priya.buyer@acme.test" },
+      body: body.body,
+      mentions: [],
+      createdAt: "2026-05-18T03:00:00.000Z",
+      updatedAt: "2026-05-18T03:00:00.000Z",
+    };
+
+    comments[taskId] = [...(comments[taskId] ?? []), comment];
+
+    return HttpResponse.json({ data: comment }, { status: 201 });
   }),
   http.post("/api/approval-tasks/:taskId/approve", async ({ params, request }) => {
     const task = tasks.find((item) => item.id === params.taskId);
@@ -191,8 +232,13 @@ export const approvalHandlers = [
     return HttpResponse.json({ data: policy });
   }),
   http.post("/api/approval-policies/preview", async ({ request }) => {
-    const body = (await request.json()) as { context?: { requisitionId?: string } };
-    const preview = previewForRequisition(body.context?.requisitionId);
+    const body = (await request.json()) as {
+      context?: { requisitionId?: string; subjectType?: string };
+    };
+    const preview =
+      body.context?.subjectType === "rfq_award_recommendation"
+        ? awardApprovalPreviewFixture
+        : previewForRequisition(body.context?.requisitionId);
 
     return HttpResponse.json({ data: preview });
   }),
@@ -203,7 +249,7 @@ export const approvalHandlers = [
       id: `ap-${policies.length + 101}`,
       name: body.name ?? "Untitled policy",
       description: body.description ?? "",
-      subjectType: "requisition",
+      subjectType: body.subjectType ?? "requisition",
       versions: [
         {
           ...structuredClone(approvalPolicyFixture.versions[0]!),

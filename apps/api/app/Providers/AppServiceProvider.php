@@ -6,6 +6,8 @@ use App\Audit\AuditEvent;
 use App\Audit\AuditSubject;
 use App\Audit\Policies\AuditEventPolicy;
 use App\Tenancy\CurrentTenant;
+use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Policies\ApprovalTaskPolicy;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\SubjectHandlers\RequisitionApprovalSubjectHandler;
 use Domains\Approval\SubjectHandlers\RfqAwardRecommendationApprovalSubjectHandler;
@@ -18,8 +20,11 @@ use Domains\PurchaseOrder\Policies\PurchaseOrderRequestHandoffPolicy;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\RfqInvitation;
+use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
+use Domains\Quotation\Models\QuotationVersion;
+use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\Policies\QuotationComparisonNotePolicy;
 use Domains\Quotation\Models\SourcingIntakeReview;
 use Domains\Quotation\Policies\QuotationNormalizationPolicy;
@@ -62,7 +67,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(PurchaseOrderRequestHandoff::class, PurchaseOrderRequestHandoffPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
+        Gate::policy(ApprovalTask::class, ApprovalTaskPolicy::class);
 
         AuditSubject::registerType(PurchaseOrderRequestHandoff::class, 'po_handoff');
+        AuditSubject::registerType(ApprovalTask::class, 'approval_task');
+        AuditSubject::registerType(ProcurementProject::class, 'project');
+        AuditSubject::registerType(Rfq::class, 'rfq');
+        AuditSubject::registerType(RfqInvitation::class, 'rfq_invitation');
+        AuditSubject::registerType(Quotation::class, 'quotation');
+        AuditSubject::registerType(QuotationVersion::class, 'quotation_version');
+        AuditSubject::registerType(QuotationNormalization::class, 'quotation_normalization');
+        AuditSubject::registerType(RfqScorecard::class, 'scorecard');
+        AuditSubject::registerType(RfqAwardRecommendation::class, 'award');
     }
 }

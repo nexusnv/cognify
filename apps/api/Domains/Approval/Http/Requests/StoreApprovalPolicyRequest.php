@@ -33,6 +33,8 @@ class StoreApprovalPolicyRequest extends FormRequest
             'routeTemplate.stages.*.completionRule' => ['required', Rule::in(['all', 'any'])],
             'routeTemplate.stages.*.approvers' => ['required', 'array', 'min:1'],
             'routeTemplate.stages.*.approvers.*.type' => ['required', 'string', 'max:255'],
+            'routeTemplate.stages.*.fallbackApprovers' => ['sometimes', 'array'],
+            'routeTemplate.stages.*.fallbackApprovers.*.type' => ['required_with:routeTemplate.stages.*.fallbackApprovers.*', 'string', 'max:255'],
             'slaRules' => ['sometimes', 'array'],
             'slaRules.*.stage' => ['required_with:slaRules.*', 'string', 'max:255'],
             'slaRules.*.dueInHours' => ['required_with:slaRules.*', 'integer', 'min:1'],

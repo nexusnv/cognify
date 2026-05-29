@@ -9,6 +9,7 @@ import type {
 import { ApprovalActionDialog } from "../components/approval-action-dialog";
 import { ApprovalDelegationDialog } from "../components/approval-delegation-dialog";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
+import { ApprovalTaskComments } from "../components/approval-task-comments";
 import { useApprovalTaskActions } from "../hooks/use-approval-task-actions";
 import { useApprovalTask } from "../hooks/use-approval-tasks";
 
@@ -150,6 +151,13 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
         >
           {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
         </Link>
+      </section>
+
+      <section className="rounded-md border p-4">
+        <h2 className="text-base font-semibold">Comments</h2>
+        <div className="mt-4">
+          <ApprovalTaskComments taskId={task.id} />
+        </div>
       </section>
     </div>
   );

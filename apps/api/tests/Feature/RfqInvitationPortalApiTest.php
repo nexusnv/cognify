@@ -15,7 +15,9 @@ use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -95,6 +97,41 @@ class RfqInvitationPortalApiTest extends TestCase
         ]);
         $this->assertSame(1, $invitation->refresh()->portal_view_count);
         $this->assertNotNull($invitation->portal_last_viewed_at);
+    }
+
+    public function test_vendor_portal_package_and_quotation_routes_only_record_views_for_the_package_open_route(): void
+    {
+        Storage::fake('attachments');
+
+        [$tenant, $requester] = $this->tenantUser('requester');
+        [, $buyer] = $this->tenantUser('buyer', $tenant);
+        $rfq = $this->draftRfq($tenant, $requester, $buyer);
+        $invitation = $this->invitation($tenant, $rfq, $this->vendor($tenant));
+        $token = $this->issuePortalToken($tenant, $buyer, $invitation);
+
+        $this->getJson("/api/vendor-portal/rfq-invitations/{$token}")
+            ->assertOk();
+        $this->assertSame(1, $invitation->refresh()->portal_view_count);
+
+        $this->getJson("/api/vendor-portal/rfq-invitations/{$token}/quotation")
+            ->assertOk();
+        $this->assertSame(1, $invitation->refresh()->portal_view_count);
+
+        $this->getJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/versions")
+            ->assertOk();
+        $this->assertSame(1, $invitation->refresh()->portal_view_count);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->post("/api/vendor-portal/rfq-invitations/{$token}/quotation/attachments", [
+                'file' => UploadedFile::fake()->create('buyer-quote.pdf', 128, 'application/pdf'),
+            ])
+            ->assertCreated();
+        $this->assertSame(1, $invitation->refresh()->portal_view_count);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->putJson("/api/vendor-portal/rfq-invitations/{$token}/quotation/manual-entry", $this->validManualEntryPayload())
+            ->assertOk();
+        $this->assertSame(1, $invitation->refresh()->portal_view_count);
     }
 
     public function test_invalid_expired_cancelled_declined_and_expired_invitation_tokens_do_not_expose_rfq_details(): void
@@ -249,5 +286,45 @@ class RfqInvitationPortalApiTest extends TestCase
             'response_due_at' => now()->addDays(14),
             'sent_at' => now(),
         ], $overrides));
+    }
+
+    private function validManualEntryPayload(array $overrides = []): array
+    {
+        return array_replace_recursive([
+            'quotationReference' => 'NW-Q-2026-041',
+            'quotedAt' => '2026-05-20',
+            'validUntil' => '2026-06-20',
+            'currency' => 'USD',
+            'subtotalAmount' => '12000.00',
+            'taxAmount' => '720.00',
+            'freightAmount' => '250.00',
+            'discountAmount' => '500.00',
+            'totalAmount' => '12470.00',
+            'paymentTerms' => 'Net 30',
+            'deliveryTerms' => 'Delivered to site',
+            'leadTimeDays' => 21,
+            'warrantyTerms' => '3 years onsite',
+            'exclusions' => 'Installation not included',
+            'complianceNotes' => 'Meets requested hardware specification',
+            'buyerNotes' => null,
+            'vendorNotes' => 'Subject to stock availability',
+            'lineItems' => [
+                [
+                    'description' => 'Developer laptop',
+                    'quantity' => '10.0000',
+                    'unit' => 'each',
+                    'unitPrice' => '1200.00',
+                    'subtotalAmount' => '12000.00',
+                    'taxAmount' => '720.00',
+                    'totalAmount' => '12720.00',
+                    'leadTimeDays' => 21,
+                    'manufacturer' => 'Lenovo',
+                    'modelNumber' => 'ThinkPad T-series',
+                    'alternateOffered' => false,
+                    'complianceStatus' => 'compliant',
+                    'notes' => 'Quoted as requested',
+                ],
+            ],
+        ], $overrides);
     }
 }

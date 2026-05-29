@@ -4143,6 +4143,125 @@ export const viewApprovalTask = async (
 };
 
 /**
+ * @summary List comments for an approval task
+ */
+export type listApprovalTaskCommentsResponse200 = {
+  data: CollaborationCommentListResponse;
+  status: 200;
+};
+
+export type listApprovalTaskCommentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApprovalTaskCommentsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listApprovalTaskCommentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listApprovalTaskCommentsResponseSuccess = listApprovalTaskCommentsResponse200 & {
+  headers: Headers;
+};
+export type listApprovalTaskCommentsResponseError = (
+  | listApprovalTaskCommentsResponse401
+  | listApprovalTaskCommentsResponse403
+  | listApprovalTaskCommentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listApprovalTaskCommentsResponse =
+  | listApprovalTaskCommentsResponseSuccess
+  | listApprovalTaskCommentsResponseError;
+
+export const getListApprovalTaskCommentsUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/comments`;
+};
+
+export const listApprovalTaskComments = async (
+  approvalTask: string,
+  options?: RequestInit,
+): Promise<listApprovalTaskCommentsResponse> => {
+  return cognifyFetch<listApprovalTaskCommentsResponse>(
+    getListApprovalTaskCommentsUrl(approvalTask),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create a comment on an approval task
+ */
+export type createApprovalTaskCommentResponse201 = {
+  data: CollaborationCommentResponse;
+  status: 201;
+};
+
+export type createApprovalTaskCommentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createApprovalTaskCommentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createApprovalTaskCommentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createApprovalTaskCommentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createApprovalTaskCommentResponseSuccess = createApprovalTaskCommentResponse201 & {
+  headers: Headers;
+};
+export type createApprovalTaskCommentResponseError = (
+  | createApprovalTaskCommentResponse401
+  | createApprovalTaskCommentResponse403
+  | createApprovalTaskCommentResponse404
+  | createApprovalTaskCommentResponse422
+) & {
+  headers: Headers;
+};
+
+export type createApprovalTaskCommentResponse =
+  | createApprovalTaskCommentResponseSuccess
+  | createApprovalTaskCommentResponseError;
+
+export const getCreateApprovalTaskCommentUrl = (approvalTask: string) => {
+  return `/api/approval-tasks/${approvalTask}/comments`;
+};
+
+export const createApprovalTaskComment = async (
+  approvalTask: string,
+  createCollaborationCommentRequest: CreateCollaborationCommentRequest,
+  options?: RequestInit,
+): Promise<createApprovalTaskCommentResponse> => {
+  return cognifyFetch<createApprovalTaskCommentResponse>(
+    getCreateApprovalTaskCommentUrl(approvalTask),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createCollaborationCommentRequest),
+    },
+  );
+};
+
+/**
  * @summary Approve approval task
  */
 export type approveApprovalTaskResponse200 = {

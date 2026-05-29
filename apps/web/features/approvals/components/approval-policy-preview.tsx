@@ -25,7 +25,8 @@ export function ApprovalPolicyPreview({
   description = "Loading approval route preview.",
 }: ApprovalPolicyPreviewProps) {
   const hasEmptyDraft = preview === undefined && (values?.routeTemplate.stages.length ?? 0) === 0;
-  const previewQuery = useApprovalPreview(values, context, preview === undefined && !hasEmptyDraft);
+  const previewContext = context ?? previewContextForValues(values);
+  const previewQuery = useApprovalPreview(values, previewContext, preview === undefined && !hasEmptyDraft);
   const data = preview ?? previewQuery.data;
 
   if (previewQuery.isError && preview === undefined && !hasEmptyDraft) {
@@ -111,6 +112,17 @@ export function ApprovalPolicyPreview({
               </ul>
             </div>
           ) : null}
+
+          <div className="rounded-md border p-3">
+            <h3 className="text-sm font-semibold">Route stages</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {data.stages.length} stage{data.stages.length === 1 ? "" : "s"} matched for{" "}
+              {data.context.subjectType}.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Fallback approvers are shown inside each stage.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-3 rounded-md border p-3">
@@ -142,4 +154,44 @@ export function ApprovalPolicyPreview({
       </div>
     </section>
   );
+}
+
+function previewContextForValues(values?: ApprovalPolicyFormValues): ApprovalPreviewContext | undefined {
+  if (!values) return undefined;
+
+  if (values.subjectType === "rfq_award_recommendation") {
+    return {
+      tenantId: "tenant-1",
+      subjectType: "rfq_award_recommendation",
+      awardRecommendationId: "award-preview",
+      rfqId: "rfq-preview",
+      rfqNumber: "RFQ-PREVIEW",
+      recommendedVendorId: "vendor-preview",
+      recommendedVendorName: "Preview vendor",
+      recommendedQuotationId: "quotation-preview",
+      recommendedQuotationVersionId: "quotation-version-preview",
+      recommendedAmount: 125000,
+      recommendedCurrency: "MYR",
+      scorecardId: "scorecard-preview",
+      scorecardWeightedTotal: 86.5,
+      riskClassification: "high",
+      riskSummaryPresent: true,
+      exceptionSummaryPresent: false,
+    };
+  }
+
+  return {
+    tenantId: "tenant-1",
+    subjectType: "requisition",
+    requisitionId: "req-preview",
+    requesterId: "user-preview",
+    amount: 3400,
+    currency: "MYR",
+    department: "Operations",
+    costCenter: "OPS-220",
+    projectId: "project-preview",
+    lineItemCategories: ["Packing box bundle"],
+    riskClassification: "medium",
+    vendorId: "vendor-preview",
+  };
 }
