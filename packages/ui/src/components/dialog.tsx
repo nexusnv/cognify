@@ -117,10 +117,11 @@ function DialogContent({
                         },
                         {
                           children: [
-                            React.createElement(XIcon, null),
+                            React.createElement(XIcon, { key: "icon" }),
                             React.createElement(
                               "span",
                               {
+                                key: "label",
                                 className: "sr-only",
                               },
                               "Close",

@@ -197,6 +197,7 @@ export function ProcurementCalendarFilters({
                       title={source.reason ?? undefined}
                     >
                       <Checkbox
+                        aria-label={source.label}
                         checked={checked}
                         disabled={!source.available}
                         onCheckedChange={() => onSourceTypeToggle(source.sourceType)}
@@ -228,6 +229,7 @@ export function ProcurementCalendarFilters({
                 {procurementCalendarStatusOptions.map((status) => (
                   <label key={status.value} className="flex items-center gap-3 rounded-md bg-muted/30 p-3 text-sm">
                     <Checkbox
+                      aria-label={status.label}
                       checked={selectedStatuses.includes(status.value)}
                       onCheckedChange={() => onStatusToggle(status.value)}
                     />

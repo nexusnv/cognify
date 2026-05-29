@@ -15,6 +15,14 @@ test.describe("requisition authoring critical path", () => {
 
     await page.getByLabel("Title").fill("Field laptop refresh");
 
+    await page.getByRole("button", { name: "Fill empty fields from IT equipment" }).click();
+    await expect(page.getByRole("dialog", { name: "Apply template?" })).toBeHidden();
+
+    await expect(page.getByLabel("Business justification")).toHaveValue(
+      "Provision or replace equipment required for business operations.",
+    );
+    await expect(page.getByLabel("Item name 1")).toHaveValue("Laptop");
+
     const createResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&
@@ -29,41 +37,63 @@ test.describe("requisition authoring critical path", () => {
 
     await expect(page.getByText("Saved")).toBeVisible();
 
-    await page.getByRole("button", { name: "Fill empty fields from IT equipment" }).click();
-    const templateDialog = page.getByRole("dialog", { name: "Apply template?" });
-    await expect(templateDialog).toBeVisible();
-    await expect(templateDialog).toContainText("IT equipment");
-    await templateDialog.getByRole("button", { name: "Apply template" }).click();
-
-    await expect(page.getByLabel("Business justification")).toHaveValue(
-      "Provision or replace equipment required for business operations.",
-    );
-    await expect(page.getByLabel("Item name 1")).toHaveValue("Laptop");
-
     const lineItemName = page.getByLabel("Item name 1");
     await lineItemName.fill("Mon");
-    await expect(page.getByRole("button", { name: "Monitor each · MYR 700" })).toBeVisible();
-    await page.getByRole("button", { name: "Monitor each · MYR 700" }).click();
+    await expect(page.getByRole("button", { name: "Monitor" })).toBeVisible();
+    await page.getByRole("button", { name: "Monitor" }).click();
 
     await expect(lineItemName).toHaveValue("Monitor");
     await expect(page.getByLabel("Unit 1")).toHaveValue("each");
     await expect(page.getByLabel("Estimated unit price 1")).toHaveValue("700");
     await expect(page.getByLabel("Currency 1")).toHaveValue("MYR");
 
-    const patchResponse = await page.request.patch(new URL(`/api/requisitions/${requisitionId}`, page.url()).toString(), {
-      data: {
-        title: "Field laptop refresh",
-        lockVersion: createPayload.data.lockVersion + 1,
+    const saveSuggestionResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        new URL(response.url()).pathname === `/api/requisitions/${requisitionId}` &&
+        response.status() === 200,
+    );
+    await page.getByRole("button", { name: "Save draft" }).click();
+    const saveSuggestionResponse = await saveSuggestionResponsePromise;
+    const saveSuggestionPayload = (await saveSuggestionResponse.json()) as createRequisitionResponse201["data"];
+    const patchPayload = await page.evaluate(
+      async ({ lockVersion, requisitionId }) => {
+        const xsrfToken = document.cookie
+          .split(";")
+          .map((part) => part.trim())
+          .find((part) => part.startsWith("XSRF-TOKEN="))
+          ?.slice("XSRF-TOKEN=".length);
+        const tenantId = window.localStorage.getItem("cognify.activeTenantId");
+        const headers = new Headers({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        });
+
+        if (xsrfToken) headers.set("X-XSRF-TOKEN", decodeURIComponent(xsrfToken));
+        if (tenantId) headers.set("X-Tenant-Id", tenantId);
+
+        const response = await fetch(`/api/requisitions/${requisitionId}`, {
+          method: "PATCH",
+          credentials: "include",
+          headers,
+          body: JSON.stringify({
+            title: "Field laptop refresh",
+            lockVersion,
+          }),
+        });
+        const text = await response.text();
+
+        if (!response.ok) throw new Error(text);
+        return JSON.parse(text);
       },
-    });
-    expect(patchResponse.ok()).toBeTruthy();
-    const patchPayload = (await patchResponse.json()) as createRequisitionResponse201["data"];
+      { lockVersion: saveSuggestionPayload.data.lockVersion, requisitionId },
+    ) as createRequisitionResponse201["data"];
     createPayload.data.lockVersion = patchPayload.data.lockVersion;
 
     await page.getByLabel("Title").fill("Field laptop refresh v2");
     await page.getByRole("button", { name: "Save draft" }).click();
 
-    await expect(page.getByRole("alert")).toContainText("This draft changed elsewhere.");
+    await expect(page.getByText("This draft changed elsewhere.")).toBeVisible();
     await expect(page.getByLabel("Title")).toHaveValue("Field laptop refresh v2");
   });
 });

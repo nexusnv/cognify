@@ -1,4 +1,5 @@
 import Link from "next/link";
+import * as React from "react";
 import {
   Breadcrumb,
   BreadcrumbItem as BreadcrumbPrimitiveItem,
@@ -17,18 +18,20 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
           const key = item.id ?? item.href ?? `${item.label}-${index}`;
 
           return (
-            <BreadcrumbPrimitiveItem key={key} className="min-w-0">
+            <React.Fragment key={key}>
               {index > 0 ? <BreadcrumbSeparator className="shrink-0" /> : null}
-              {item.href && !current ? (
-                <BreadcrumbLink asChild className="truncate">
-                  <Link href={item.href}>{item.label}</Link>
-                </BreadcrumbLink>
-              ) : (
-                <span className="truncate text-foreground" aria-current={current ? "page" : undefined}>
-                  {item.label}
-                </span>
-              )}
-            </BreadcrumbPrimitiveItem>
+              <BreadcrumbPrimitiveItem className="min-w-0">
+                {item.href && !current ? (
+                  <BreadcrumbLink asChild className="truncate">
+                    <Link href={item.href}>{item.label}</Link>
+                  </BreadcrumbLink>
+                ) : (
+                  <span className="truncate text-foreground" aria-current={current ? "page" : undefined}>
+                    {item.label}
+                  </span>
+                )}
+              </BreadcrumbPrimitiveItem>
+            </React.Fragment>
           );
         })}
       </BreadcrumbList>

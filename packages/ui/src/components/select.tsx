@@ -62,12 +62,13 @@ function SelectTrigger({
       },
       {
         children: [
-          children,
+          React.createElement(React.Fragment, { key: "children" }, children),
           React.createElement(
             SelectPrimitive.Icon,
             Object.assign(
               {},
               {
+                key: "icon",
                 asChild: true,
               },
               {
@@ -118,12 +119,13 @@ function SelectContent({
             },
             {
               children: [
-                React.createElement(SelectScrollUpButton, null),
+                React.createElement(SelectScrollUpButton, { key: "scroll-up" }),
                 React.createElement(
                   SelectPrimitive.Viewport,
                   Object.assign(
                     {},
                     {
+                      key: "viewport",
                       className: cn(
                         "p-1",
                         position === "popper" &&
@@ -135,7 +137,7 @@ function SelectContent({
                     },
                   ),
                 ),
-                React.createElement(SelectScrollDownButton, null),
+                React.createElement(SelectScrollDownButton, { key: "scroll-down" }),
               ],
             },
           ),
@@ -179,6 +181,7 @@ function SelectItem({
           React.createElement(
             "span",
             {
+              key: "indicator",
               "data-slot": "select-item-indicator",
               className: "absolute right-2 flex size-3.5 items-center justify-center",
             },
@@ -205,6 +208,7 @@ function SelectItem({
             Object.assign(
               {},
               {
+                key: "text",
                 children: children,
               },
             ),

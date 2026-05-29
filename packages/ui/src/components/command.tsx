@@ -43,37 +43,6 @@ function CommandDialog({
       {
         children: [
           React.createElement(
-            DialogHeader,
-            Object.assign(
-              {},
-              {
-                className: "sr-only",
-              },
-              {
-                children: [
-                  React.createElement(
-                    DialogTitle,
-                    Object.assign(
-                      {},
-                      {
-                        children: title,
-                      },
-                    ),
-                  ),
-                  React.createElement(
-                    DialogDescription,
-                    Object.assign(
-                      {},
-                      {
-                        children: description,
-                      },
-                    ),
-                  ),
-                ],
-              },
-            ),
-          ),
-          React.createElement(
             DialogContent,
             Object.assign(
               {},
@@ -82,19 +51,56 @@ function CommandDialog({
                 showCloseButton: showCloseButton,
               },
               {
-                children: React.createElement(
-                  Command,
-                  Object.assign(
-                    {},
-                    {
-                      className:
-                        "**:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
-                    },
-                    {
-                      children: children,
-                    },
+                children: [
+                  React.createElement(
+                    DialogHeader,
+                    Object.assign(
+                      {},
+                      {
+                        key: "header",
+                        className: "sr-only",
+                      },
+                      {
+                        children: [
+                          React.createElement(
+                            DialogTitle,
+                            Object.assign(
+                              {},
+                              {
+                                key: "title",
+                                children: title,
+                              },
+                            ),
+                          ),
+                          React.createElement(
+                            DialogDescription,
+                            Object.assign(
+                              {},
+                              {
+                                key: "description",
+                                children: description,
+                              },
+                            ),
+                          ),
+                        ],
+                      },
+                    ),
                   ),
-                ),
+                  React.createElement(
+                    Command,
+                    Object.assign(
+                      {},
+                      {
+                        key: "command",
+                        className:
+                          "**:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
+                      },
+                      {
+                        children: children,
+                      },
+                    ),
+                  ),
+                ],
               },
             ),
           ),

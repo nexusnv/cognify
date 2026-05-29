@@ -26,7 +26,7 @@ class ProcurementProjectController extends Controller
         $role = $currentTenant->roleFor($request->user());
 
         $query = ProcurementProject::query()
-            ->with(['owner', 'cancelledBy', 'completedBy', 'requisitions'])
+            ->with(['owner', 'cancelledBy', 'completedBy'])
             ->where('tenant_id', $tenant->id);
 
         $this->applyVisibilityScope($query, $request->user(), $role, $tenant->id);
@@ -81,7 +81,7 @@ class ProcurementProjectController extends Controller
 
     public function show(Request $request, CurrentTenant $currentTenant, int $project): ProcurementProjectResource
     {
-        $project = $this->findTenantProject($currentTenant, $project)->load(['owner', 'cancelledBy', 'completedBy', 'requisitions']);
+        $project = $this->findTenantProject($currentTenant, $project)->load(['owner', 'cancelledBy', 'completedBy']);
         $this->authorize('view', $project);
 
         return new ProcurementProjectResource($project);
