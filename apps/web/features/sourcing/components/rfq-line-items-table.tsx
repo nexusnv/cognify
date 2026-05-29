@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
-import { Button } from "@cognify/ui";
+import { Button, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea } from "@cognify/ui";
 
 export type RfqLineItemEditorValue = {
   id: string;
@@ -60,25 +60,25 @@ export function RfqLineItemsTable({
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <table className="min-w-[64rem] w-full border-separate border-spacing-0 text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="border-b px-3 py-2 text-left font-medium">Source item</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Description</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Quantity</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Unit</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Notes</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Est. unit price</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="min-w-[64rem]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Source item</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead>Notes</TableHead>
+              <TableHead>Est. unit price</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {items.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-5 text-sm text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={7} className="px-3 py-5 text-sm text-muted-foreground">
                   No line items yet.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : null}
             {items.map((item, index) => {
               const prefix = `lineItems.${index}`;
@@ -88,17 +88,17 @@ export function RfqLineItemsTable({
               const notesError = errors[`${prefix}.notes`]?.[0];
 
               return (
-                <tr key={item.id} className="align-top">
-                  <td className="border-b px-3 py-3">
+                <TableRow key={item.id} className="align-top">
+                  <TableCell className="px-3 py-3">
                     <div className="space-y-1">
                       <p className="font-medium">{item.name || "Line item"}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatEstimatedUnitPrice(item.estimatedUnitPrice, item.currency)}
                       </p>
                     </div>
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <input
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
+                    <Input
                       id={`line-items-${index}-description`}
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.description}
@@ -118,14 +118,14 @@ export function RfqLineItemsTable({
                         {descriptionError}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <input
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
+                    <Input
                       id={`line-items-${index}-quantity`}
                       type="number"
                       inputMode="decimal"
                       step="0.01"
-                      className="min-h-11 w-full rounded-md border px-3 text-base"
+                      className="min-h-11 w-full text-base"
                       value={item.quantity}
                       disabled={disabled}
                       aria-label={`Line item ${index + 1} quantity`}
@@ -143,9 +143,9 @@ export function RfqLineItemsTable({
                         {quantityError}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <input
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
+                    <Input
                       id={`line-items-${index}-unit`}
                       className="min-h-11 w-full rounded-md border px-3 text-base"
                       value={item.unit}
@@ -160,11 +160,11 @@ export function RfqLineItemsTable({
                         {unitError}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <textarea
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
+                    <Textarea
                       id={`line-items-${index}-notes`}
-                      className="min-h-20 w-full rounded-md border px-3 py-2 text-sm"
+                      className="min-h-20 w-full text-sm"
                       value={item.notes}
                       disabled={disabled}
                       aria-label={`Line item ${index + 1} notes`}
@@ -177,11 +177,11 @@ export function RfqLineItemsTable({
                         {notesError}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3 font-mono tabular-nums">
+                  </TableCell>
+                  <TableCell className="px-3 py-3 font-mono tabular-nums">
                     {formatEstimatedUnitPrice(item.estimatedUnitPrice, item.currency, true)}
-                  </td>
-                  <td className="border-b px-3 py-3">
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
                     <Button
                       type="button"
                       variant="ghost"
@@ -192,12 +192,12 @@ export function RfqLineItemsTable({
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Remove
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

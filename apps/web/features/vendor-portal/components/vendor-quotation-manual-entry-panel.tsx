@@ -6,7 +6,7 @@ import type {
   QuotationVendorPortal,
   SaveQuotationManualEntryRequestForVendor,
 } from "@cognify/api-client/schemas";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from "@cognify/ui";
 import { useVendorQuotationManualEntry } from "../hooks/use-vendor-quotation";
 import {
   formValuesFromQuotation,
@@ -95,11 +95,14 @@ function VendorQuotationManualEntryForm({
   }
 
   return (
-    <section className="rounded-md border p-4">
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Structured quotation response</CardTitle>
+      </CardHeader>
+      <CardContent>
       <div className="space-y-3">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h3 className="text-base font-semibold">Structured quotation response</h3>
             <p className={completeness ? "text-sm text-emerald-700" : "text-sm text-muted-foreground"}>{statusLabel}</p>
           </div>
         </div>
@@ -107,7 +110,7 @@ function VendorQuotationManualEntryForm({
         <div className="grid gap-3 lg:grid-cols-3">
           <label className="block text-sm font-medium">
             Quotation reference
-            <input
+            <Input
               aria-label="Quotation reference"
               className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
               value={values.quotationReference ?? ""}
@@ -117,7 +120,7 @@ function VendorQuotationManualEntryForm({
           </label>
           <label className="block text-sm font-medium">
             Currency
-            <input
+            <Input
               aria-label="Currency"
               className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal uppercase outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
               value={values.currency ?? ""}
@@ -128,7 +131,7 @@ function VendorQuotationManualEntryForm({
           </label>
           <label className="block text-sm font-medium">
             Total amount
-            <input
+            <Input
               aria-label="Total amount"
               className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
               value={values.totalAmount ?? ""}
@@ -170,12 +173,13 @@ function VendorQuotationManualEntryForm({
         </div>
 
         {errorMessage ? (
-          <p role="alert" className="text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 

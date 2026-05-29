@@ -1,5 +1,5 @@
 import { FilePlus2, Trash2 } from "lucide-react";
-import { Button } from "@cognify/ui";
+import { Button, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 
 export type RfqRequiredDocumentEditorValue = {
   id: string;
@@ -52,22 +52,22 @@ export function RfqRequiredDocumentsEditor({
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <table className="min-w-[52rem] w-full border-separate border-spacing-0 text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="border-b px-3 py-2 text-left font-medium">Key</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Label</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Required</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="min-w-[52rem]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Key</TableHead>
+              <TableHead>Label</TableHead>
+              <TableHead>Required</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {items.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-5 text-sm text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={4} className="px-3 py-5 text-sm text-muted-foreground">
                   No required documents yet.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : null}
             {items.map((item, index) => {
               const prefix = `requiredDocuments.${index}`;
@@ -75,11 +75,11 @@ export function RfqRequiredDocumentsEditor({
               const labelError = errors[`${prefix}.label`]?.[0];
 
               return (
-                <tr key={item.id} className="align-top">
-                  <td className="border-b px-3 py-3">
-                    <input
+                <TableRow key={item.id} className="align-top">
+                  <TableCell className="px-3 py-3">
+                    <Input
                       id={`required-documents-${index}-key`}
-                      className="min-h-11 w-full rounded-md border px-3 text-base"
+                      className="min-h-11 w-full text-base"
                       value={item.key}
                       disabled={disabled}
                       aria-label={`Required document ${index + 1} key`}
@@ -92,11 +92,11 @@ export function RfqRequiredDocumentsEditor({
                         {keyError}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <input
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
+                    <Input
                       id={`required-documents-${index}-label`}
-                      className="min-h-11 w-full rounded-md border px-3 text-base"
+                      className="min-h-11 w-full text-base"
                       value={item.label}
                       disabled={disabled}
                       aria-label={`Required document ${index + 1} label`}
@@ -112,8 +112,8 @@ export function RfqRequiredDocumentsEditor({
                         {labelError}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
                     <label
                       className="inline-flex min-h-11 items-center gap-2 text-sm"
                       aria-label={`Required document ${index + 1} required`}
@@ -129,8 +129,8 @@ export function RfqRequiredDocumentsEditor({
                       />
                       Required
                     </label>
-                  </td>
-                  <td className="border-b px-3 py-3">
+                  </TableCell>
+                  <TableCell className="px-3 py-3">
                     <Button
                       type="button"
                       variant="ghost"
@@ -141,12 +141,12 @@ export function RfqRequiredDocumentsEditor({
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Remove
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

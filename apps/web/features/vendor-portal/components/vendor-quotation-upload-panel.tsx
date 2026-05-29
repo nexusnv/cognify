@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input, Progress } from "@cognify/ui";
 import { useVendorQuotation, useVendorQuotationUpload, useVendorQuotationVersions } from "../hooks/use-vendor-quotation";
 import { VendorQuotationManualEntryPanel } from "./vendor-quotation-manual-entry-panel";
 import { VendorQuotationVersionHistory } from "./vendor-quotation-version-history";
@@ -64,10 +65,13 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
   }
 
   return (
-    <section className="rounded-lg border p-6">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Quotation upload</CardTitle>
+      </CardHeader>
+      <CardContent>
       <div className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Quotation upload</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Upload the buyer-requested quotation file for this RFQ invitation.
           </p>
@@ -122,7 +126,7 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
               <label className="block text-sm font-medium" htmlFor="quotation-file">
                 Quotation file
               </label>
-              <input
+              <Input
                 ref={fileInputRef}
                 id="quotation-file"
                 type="file"
@@ -139,19 +143,16 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
               <p className="text-xs text-muted-foreground">Selected file: {selectedFile.name}</p>
             ) : null}
 
+            {uploadMutation.isPending ? <Progress value={66} className="h-2" /> : null}
             {errorMessage ? (
-              <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-                {errorMessage}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
             ) : null}
 
-            <button
-              type="submit"
-              className="inline-flex min-h-9 items-center rounded-md bg-foreground px-3 text-sm font-medium text-background disabled:opacity-50"
-              disabled={uploadDisabled}
-            >
+            <Button type="submit" disabled={uploadDisabled}>
               {uploadMutation.isPending ? "Uploading quotation..." : "Upload quotation"}
-            </button>
+            </Button>
           </form>
         )}
 
@@ -162,7 +163,8 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
           </>
         )}
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 
