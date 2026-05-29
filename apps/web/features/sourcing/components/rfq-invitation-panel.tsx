@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Input, Textarea } from "@cognify/ui";
 import { RfqInvitationDialog } from "./rfq-invitation-dialog";
 import { QuotationEvidencePanel } from "./quotation-evidence-panel";
 import { RfqInvitationStatusBadge } from "./rfq-invitation-status-badge";
@@ -222,7 +222,7 @@ export function RfqInvitationPanel({
 
   if (invitationQuery.isLoading && invitations.length === 0) {
     return (
-      <section id="vendor-invitations" className="rounded-md border p-4">
+      <section id="vendor-invitations" className="space-y-2">
         <h2 className="text-base font-semibold">Vendor invitations</h2>
         <p className="mt-2 text-sm text-muted-foreground">Loading invitation records...</p>
       </section>
@@ -231,17 +231,17 @@ export function RfqInvitationPanel({
 
   if (invitationQuery.isError) {
     return (
-      <section id="vendor-invitations" className="rounded-md border p-4">
+      <section id="vendor-invitations" className="space-y-2">
         <h2 className="text-base font-semibold">Vendor invitations</h2>
-        <div role="alert" className="mt-3 rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-          {getApiErrorMessage(invitationQuery.error)}
-        </div>
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription>{getApiErrorMessage(invitationQuery.error)}</AlertDescription>
+        </Alert>
       </section>
     );
   }
 
   return (
-    <section id="vendor-invitations" ref={panelRef} tabIndex={-1} className="rounded-md border p-4">
+    <section id="vendor-invitations" ref={panelRef} tabIndex={-1} className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="space-y-1">
@@ -270,7 +270,7 @@ export function RfqInvitationPanel({
             <article
               key={invitation.id}
               data-testid="rfq-invitation-card"
-              className="rounded-md border p-4"
+              className="rounded-lg bg-muted/20 p-4"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
@@ -371,7 +371,7 @@ export function RfqInvitationPanel({
             </article>
           ))
         ) : (
-          <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+          <div className="rounded-lg bg-muted/30 p-4 text-sm text-muted-foreground">
             No invitations recorded yet. Invite vendors to track response status here.
           </div>
         )}
@@ -411,10 +411,10 @@ export function RfqInvitationPanel({
           </label>
           <label className="block text-sm font-medium">
             Response due date
-            <input
+            <Input
               aria-label="Response due date"
-              className="mt-1 min-h-11 w-full rounded-md border bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
               type="datetime-local"
+              className="mt-1 text-base font-normal"
               value={createResponseDueAt}
               onChange={(event) => {
                 setCreateError(null);

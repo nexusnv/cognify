@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@cognify/ui";
+import { Alert, AlertDescription, Badge, Button, Card, CardContent } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { useQuotationScoringTemplates } from "../hooks/use-quotation-scoring-templates";
@@ -30,7 +30,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
   const [drafts, setDrafts] = useState<Record<string, { score: string; note: string }>>({});
 
   if (scorecardQuery.isLoading) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading RFQ scoring workspace</div>;
+    return <Card><CardContent className="py-4 text-sm text-muted-foreground">Loading RFQ scoring workspace</CardContent></Card>;
   }
 
   const noScorecard = scorecardQuery.isError && errorCode(scorecardQuery.error) === "not_found";
@@ -54,9 +54,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
 
   if (scorecardQuery.isError || !scorecard) {
     return (
-      <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        {getApiErrorMessage(scorecardQuery.error)}
-      </div>
+      <Alert variant="destructive"><AlertDescription>{getApiErrorMessage(scorecardQuery.error)}</AlertDescription></Alert>
     );
   }
 
@@ -74,7 +72,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
       backLabel="Back to comparison"
       eyebrow={scorecard.rfq.number}
       title={scorecard.rfq.title}
-      status={<span className="rounded-full border px-2 py-1 text-xs font-medium">Scoring</span>}
+      status={<Badge variant="outline">Scoring</Badge>}
       metadata={[
         { id: "status", label: "Scorecard status", value: scorecard.scorecard.status },
         { id: "template", label: "Template", value: scorecard.scorecard.templateName },

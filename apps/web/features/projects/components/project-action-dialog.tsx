@@ -1,8 +1,16 @@
 "use client";
 
-import type { KeyboardEvent, MouseEvent } from "react";
-import { useEffect, useId, useRef, useState } from "react";
-import { Button, Textarea } from "@cognify/ui";
+import { useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Textarea,
+} from "@cognify/ui";
 
 export function ProjectActionDialog({
   action,
@@ -26,21 +34,6 @@ export function ProjectActionDialog({
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-  const titleId = useId();
-
-  useEffect(() => {
-    if (!open) {
-      previousFocusRef.current?.focus();
-      previousFocusRef.current = null;
-      return;
-    }
-
-    const focusableElements = getFocusableElements(modalRef.current);
-    (focusableElements[0] ?? modalRef.current)?.focus();
-  }, [open]);
 
   async function handleSubmit() {
     if (action === "cancel" && !reason.trim()) {
@@ -60,113 +53,51 @@ export function ProjectActionDialog({
     setReason("");
   }
 
-  function handleDialogKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      setOpen(false);
-      return;
-    }
-
-    if (event.key !== "Tab") return;
-
-    const focusableElements = getFocusableElements(modalRef.current);
-    if (focusableElements.length === 0) {
-      event.preventDefault();
-      modalRef.current?.focus();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (event.shiftKey && document.activeElement === firstElement) {
-      event.preventDefault();
-      lastElement.focus();
-      return;
-    }
-
-    if (!event.shiftKey && document.activeElement === lastElement) {
-      event.preventDefault();
-      firstElement.focus();
-    }
-  }
-
-  function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
-    if (event.target === event.currentTarget) {
-      setOpen(false);
-    }
-  }
-
   return (
     <>
-      <Button
-        ref={triggerRef}
-        variant={triggerVariant}
-        onClick={() => {
-          previousFocusRef.current =
-            document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
-          setOpen(true);
-        }}
-      >
+      <Button variant={triggerVariant} onClick={() => setOpen(true)}>
         {triggerLabel}
       </Button>
-      {!open ? null : (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={handleBackdropClick}
-        >
-          <div
-            ref={modalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            tabIndex={-1}
-            onKeyDown={handleDialogKeyDown}
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-          >
-            <div className="space-y-2">
-              <h2 id={titleId} className="text-lg font-semibold">
-                {title}
-              </h2>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-            {action === "cancel" ? (
-              <label className="mt-4 block text-sm font-medium">
-                Reason
-                <Textarea
-                  aria-label="Reason"
-                  className="mt-1"
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </label>
-            ) : null}
-            {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Keep editing
-              </Button>
-              <Button
-                variant={triggerVariant === "destructive" ? "destructive" : "default"}
-                onClick={() => void handleSubmit()}
-                disabled={isPending}
-              >
-                {isPending ? "Working" : confirmLabel}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) {
+            setError(null);
+            setReason("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          {action === "cancel" ? (
+            <label className="space-y-1.5 text-sm font-medium">
+              Reason
+              <Textarea
+                aria-label="Reason"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </label>
+          ) : null}
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Keep editing
+            </Button>
+            <Button
+              variant={triggerVariant === "destructive" ? "destructive" : "default"}
+              onClick={() => void handleSubmit()}
+              disabled={isPending}
+            >
+              {isPending ? "Working" : confirmLabel}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
-}
-
-function getFocusableElements(container: HTMLElement | null) {
-  if (!container) return [];
-
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
 }

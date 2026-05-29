@@ -5,12 +5,29 @@ import { describe, expect, it, vi } from "vitest";
 import { RightPanelProvider, useRightPanel } from "./right-panel-provider";
 import { RightPanelRoot } from "./right-panel-root";
 
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver = ResizeObserver as unknown as typeof window.ResizeObserver;
+  globalThis.ResizeObserver = ResizeObserver as unknown as typeof globalThis.ResizeObserver;
+}
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/requisitions",
 }));
 
 function PanelHarness() {
   const rightPanel = useRightPanel();
+  const replacementPanel = {
+    id: "replacement",
+    title: "Replacement panel",
+    description: "Replacement details",
+    content: <p>Second panel content</p>,
+  } as const;
 
   return (
     <>
@@ -22,24 +39,19 @@ function PanelHarness() {
             title: "Field laptop refresh",
             description: "REQ-2026-000001",
             size: "md",
-            content: <p>Requester: Test User</p>,
+            content: (
+              <div className="space-y-3">
+                <p>Requester: Test User</p>
+                <button type="button" onClick={() => rightPanel.openPanel(replacementPanel)}>
+                  Replace panel
+                </button>
+              </div>
+            ),
             footer: <Link href="/requisitions/req-1">Open workspace</Link>,
           })
         }
       >
         Open panel
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          rightPanel.openPanel({
-            id: "replacement",
-            title: "Replacement panel",
-            content: <p>Second panel content</p>,
-          })
-        }
-      >
-        Replace panel
       </button>
       <RightPanelRoot />
     </>
@@ -98,7 +110,9 @@ describe("right panel", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open panel" }));
-    await user.click(screen.getByTestId("right-panel-overlay"));
+    const overlay = document.querySelector('[data-slot="sheet-overlay"]');
+    expect(overlay).not.toBeNull();
+    await user.click(overlay as Element);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

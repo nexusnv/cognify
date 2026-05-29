@@ -51,9 +51,7 @@ describe("attachments workflow", () => {
 
     expect(await screen.findByText("supplier-quote.pdf")).toBeInTheDocument();
     expect(screen.getByText("spec-sheet.png")).toBeInTheDocument();
-    expect(screen.getByLabelText("Preview supplier-quote.pdf")).toBeInTheDocument();
-    expect(screen.getByLabelText("Download supplier-quote.pdf")).toBeInTheDocument();
-    expect(screen.getByLabelText("Delete supplier-quote.pdf")).toBeInTheDocument();
+    expect(screen.getByLabelText("Open actions for supplier-quote.pdf")).toBeInTheDocument();
   });
 
   it("renders a list error state when attachments fail to load", async () => {
@@ -94,13 +92,12 @@ describe("attachments workflow", () => {
 
     expect(await screen.findByText("supplier-quote.pdf")).toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("Preview supplier-quote.pdf"));
+    await user.click(screen.getByLabelText("Open actions for supplier-quote.pdf"));
+    await user.click(await screen.findByRole("menuitem", { name: "Preview" }));
 
     const panel = await screen.findByRole("dialog", { name: "supplier-quote.pdf" });
     expect(panel).toBeInTheDocument();
-    expect(
-      within(panel).getByRole("heading", { name: "supplier-quote.pdf", level: 2 }),
-    ).toBeInTheDocument();
+    expect(within(panel).getByRole("heading", { name: "supplier-quote.pdf" })).toBeInTheDocument();
     expect(await within(panel).findByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
   });
 
@@ -109,7 +106,8 @@ describe("attachments workflow", () => {
 
     renderWithQuery(<AttachmentList requisitionId="req-1" />);
 
-    await user.click(await screen.findByLabelText("Preview supplier-quote.pdf"));
+    await user.click(await screen.findByLabelText("Open actions for supplier-quote.pdf"));
+    await user.click(await screen.findByRole("menuitem", { name: "Preview" }));
 
     const panel = await screen.findByRole("dialog", { name: "supplier-quote.pdf" });
     expect(within(panel).getByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
@@ -178,7 +176,8 @@ describe("attachments workflow", () => {
     renderWithQuery(<AttachmentList requisitionId="req-1" />);
 
     expect(await screen.findByText("supplier-quote.pdf")).toBeInTheDocument();
-    await user.click(screen.getByLabelText("Download supplier-quote.pdf"));
+    await user.click(screen.getByLabelText("Open actions for supplier-quote.pdf"));
+    await user.click(await screen.findByRole("menuitem", { name: "Download" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not download supplier-quote.pdf.",
@@ -192,7 +191,8 @@ describe("attachments workflow", () => {
 
     expect(await screen.findByText("supplier-quote.pdf")).toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("Delete supplier-quote.pdf"));
+    await user.click(screen.getByLabelText("Open actions for supplier-quote.pdf"));
+    await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
 
     await waitFor(() => {
       expect(screen.queryByText("supplier-quote.pdf")).not.toBeInTheDocument();

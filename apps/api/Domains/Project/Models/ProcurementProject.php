@@ -133,7 +133,7 @@ class ProcurementProject extends Model
                 ->orWhereExists(function ($subquery) use ($user, $role, $tenantId): void {
                     $subquery->selectRaw('1')
                         ->from('requisitions')
-                        ->whereColumn('requisitions.project_id', 'procurement_projects.id')
+                        ->whereRaw('requisitions.project_id = CAST(procurement_projects.id AS TEXT)')
                         ->where('requisitions.tenant_id', $tenantId)
                         ->where(function ($visibleQuery) use ($user, $role): void {
                             if ($role === TenantRole::Requester->value) {

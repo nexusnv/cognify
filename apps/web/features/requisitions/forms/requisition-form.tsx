@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { NativeSelect } from "@cognify/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { getApiValidationErrors } from "@cognify/api-client";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { FormField } from "@/components/forms/form-field";
@@ -333,9 +333,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     if (departments.length === 0) {
       return (
         <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-          <input
+          <Input
             id="department"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.department}
             aria-invalid={Boolean(errors.department)}
             disabled={!canEdit}
@@ -351,9 +350,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
     return (
       <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-        <select
+        <NativeSelect
           id="department"
-          className="min-h-11 w-full rounded-md border px-3 text-base"
           value={values.department}
           aria-invalid={Boolean(errors.department)}
           disabled={!canEdit}
@@ -367,7 +365,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               {department}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FormField>
     );
   }
@@ -378,9 +376,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     if (costCenters.length === 0) {
       return (
         <FormField htmlFor="cost-center" label="Cost center" error={errors.costCenter?.[0]}>
-          <input
+          <Input
             id="cost-center"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.costCenter}
             aria-invalid={Boolean(errors.costCenter)}
             disabled={!canEdit}
@@ -403,9 +400,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
     return (
       <FormField htmlFor="cost-center" label="Cost center" error={errors.costCenter?.[0]}>
-        <select
+        <NativeSelect
           id="cost-center"
-          className="min-h-11 w-full rounded-md border px-3 text-base"
           value={
             values.costCenter
               ? costCenters.some((item) => item.code === values.costCenter)
@@ -428,7 +424,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               {costCenter}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FormField>
     );
   }
@@ -449,23 +445,13 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            className="min-h-11 rounded-md border px-4 text-sm font-medium disabled:opacity-50"
-            onClick={handleSaveDraft}
-            disabled={!canEdit || saveController.saveState === "saving"}
-          >
+          <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={!canEdit || saveController.saveState === "saving"}>
             {saveLabel}
-          </button>
+          </Button>
           {canSubmit ? (
-            <button
-              type="button"
-              className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
-              onClick={handleSubmitAttempt}
-              disabled={submitDraft.isPending}
-            >
+            <Button type="button" onClick={handleSubmitAttempt} disabled={submitDraft.isPending}>
               Submit
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
@@ -481,12 +467,14 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-5">
-          <section className="space-y-3 rounded-md border p-4">
-            <h2 className="text-base font-semibold">Request summary</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Request summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
             <FormField htmlFor="title" label="Title" error={errors.title?.[0]} required>
-              <input
+              <Input
                 id="title"
-                className="min-h-11 w-full rounded-md border px-3 text-base"
                 value={values.title}
                 aria-invalid={Boolean(errors.title)}
                 onChange={(event) => updateValue("title", event.target.value)}
@@ -499,10 +487,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               error={errors.neededByDate?.[0]}
               required
             >
-              <input
+              <Input
                 id="needed-by"
                 type="date"
-                className="min-h-11 w-full rounded-md border px-3 text-base"
                 value={values.neededByDate}
                 aria-invalid={Boolean(errors.neededByDate)}
                 onChange={(event) => updateValue("neededByDate", event.target.value)}
@@ -515,16 +502,17 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               error={errors.businessJustification?.[0]}
               required
             >
-              <textarea
+              <Textarea
                 id="business-justification"
-                className="min-h-28 w-full rounded-md border px-3 py-2 text-base"
+                className="min-h-28"
                 value={values.businessJustification}
                 aria-invalid={Boolean(errors.businessJustification)}
                 onChange={(event) => updateValue("businessJustification", event.target.value)}
                 disabled={!canEdit}
               />
             </FormField>
-          </section>
+            </CardContent>
+          </Card>
 
           <RequisitionTemplatePicker
             templates={templatesQuery.data ?? []}
@@ -532,31 +520,29 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             onApply={handleApplyTemplate}
           />
 
-          <section id="line-items" className="space-y-3 rounded-md border p-4">
+          <Card id="line-items">
+            <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold">Line items</h2>
-              <button
-                type="button"
-                className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium"
-                onClick={addLineItem}
-                disabled={!canEdit}
-              >
+              <CardTitle>Line items</CardTitle>
+              <Button type="button" variant="outline" onClick={addLineItem} disabled={!canEdit}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add item
-              </button>
+              </Button>
             </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
             <div className="space-y-4">
               {values.lineItems.map((item, index) => (
-                <div key={index} className="rounded-md border p-3">
+                <Card key={index}>
+                  <CardContent className="pt-4">
                   <div className="grid gap-3 md:grid-cols-2">
                     <FormField
                       htmlFor={`item-name-${index}`}
                       label={`Item name ${index + 1}`}
                       error={errors[`lineItems.${index}.name`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`item-name-${index}`}
-                        className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.name}
                         aria-invalid={Boolean(errors[`lineItems.${index}.name`])}
                         aria-describedby={lineItemsErrorId}
@@ -569,11 +555,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Quantity ${index + 1}`}
                       error={errors[`lineItems.${index}.quantity`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`quantity-${index}`}
                         type="number"
                         min="0"
-                        className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.quantity}
                         aria-invalid={Boolean(errors[`lineItems.${index}.quantity`])}
                         aria-describedby={lineItemsErrorId}
@@ -586,9 +571,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Unit ${index + 1}`}
                       error={errors[`lineItems.${index}.unit`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`unit-${index}`}
-                        className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.unit}
                         aria-invalid={Boolean(errors[`lineItems.${index}.unit`])}
                         aria-describedby={lineItemsErrorId}
@@ -601,11 +585,10 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Estimated unit price ${index + 1}`}
                       error={errors[`lineItems.${index}.estimatedUnitPrice`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`unit-price-${index}`}
                         type="number"
                         min="0"
-                        className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.estimatedUnitPrice}
                         aria-invalid={Boolean(errors[`lineItems.${index}.estimatedUnitPrice`])}
                         aria-describedby={lineItemsErrorId}
@@ -620,9 +603,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Currency ${index + 1}`}
                       error={errors[`lineItems.${index}.currency`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`currency-${index}`}
-                        className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.currency ?? ""}
                         aria-invalid={Boolean(errors[`lineItems.${index}.currency`])}
                         aria-describedby={lineItemsErrorId}
@@ -630,16 +612,17 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         disabled={!canEdit}
                       />
                     </FormField>
-                    <button
+                    <Button
                       type="button"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium md:self-end"
+                      variant="outline"
+                      className="md:self-end"
                       onClick={() => removeLineItem(index)}
                       aria-label={`Remove line item ${index + 1}`}
                       disabled={!canEdit}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Remove
-                    </button>
+                    </Button>
                   </div>
                   <RequisitionLineItemSuggestionCombobox
                     search={item.name}
@@ -663,7 +646,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       }));
                     }}
                   />
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
             {hasLineItemErrors ? (
@@ -671,10 +655,14 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 {lineItemErrorMessage ?? "Review the highlighted line item fields before submitting."}
               </p>
             ) : null}
-          </section>
+            </CardContent>
+          </Card>
 
-          <section className="space-y-3 rounded-md border p-4">
-            <h2 className="text-base font-semibold">Optional context</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Optional context</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
             <div className="grid gap-3 md:grid-cols-2">
               {renderDepartmentField()}
               <FormField htmlFor="project-id" label="Project" error={errors.projectId?.[0]}>
@@ -701,9 +689,9 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               {renderCostCenterField()}
               <div className="md:col-span-2">
                 <FormField htmlFor="delivery-location" label="Delivery location" error={errors.deliveryLocation?.[0]}>
-                  <textarea
+                  <Textarea
                     id="delivery-location"
-                    className="min-h-20 w-full rounded-md border px-3 py-2 text-base"
+                    className="min-h-20"
                     value={values.deliveryLocation}
                     aria-invalid={Boolean(errors.deliveryLocation)}
                     onChange={(event) => updateValue("deliveryLocation", event.target.value)}
@@ -712,7 +700,8 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                 </FormField>
               </div>
             </div>
-          </section>
+            </CardContent>
+          </Card>
         </div>
 
         <SubmissionChecklist values={values} />
@@ -727,45 +716,38 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
       />
 
       {pendingTemplate ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="template-confirm-title"
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-          >
-            <h2 id="template-confirm-title" className="text-lg font-semibold">
-              Apply template?
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              This draft already has content. Confirm how you want the template to be applied.
-            </p>
-            <p className="mt-3 text-sm">
+        <Dialog open onOpenChange={(open) => (!open ? setPendingTemplate(null) : undefined)}>
+          <DialogContent showCloseButton={false} className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle id="template-confirm-title">Apply template?</DialogTitle>
+              <DialogDescription>
+                This draft already has content. Confirm how you want the template to be applied.
+              </DialogDescription>
+            </DialogHeader>
+            <p className="mt-1 text-sm">
               <strong>{pendingTemplate.template.name}</strong> will be applied using the{" "}
               <code>{pendingTemplate.mode}</code> mode.
             </p>
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={applyTemplateMutation.isPending}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
                 type="button"
-                className="min-h-11 rounded-md border px-4 text-sm font-medium"
-                onClick={() => setPendingTemplate(null)}
-                disabled={applyTemplateMutation.isPending}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
-                onClick={() =>
-                  applyTemplateNow(pendingTemplate.template, pendingTemplate.mode)
-                }
+                onClick={() => applyTemplateNow(pendingTemplate.template, pendingTemplate.mode)}
                 disabled={applyTemplateMutation.isPending}
               >
                 {applyTemplateMutation.isPending ? "Applying" : "Apply template"}
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       ) : null}
     </form>
   );

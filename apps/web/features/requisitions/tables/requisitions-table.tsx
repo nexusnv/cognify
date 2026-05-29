@@ -3,6 +3,7 @@
 import { ExternalLink, PanelRightOpen } from "lucide-react";
 import Link from "next/link";
 import { DataTable } from "@/components/data-table/data-table";
+import { Button, Card, CardContent } from "@cognify/ui";
 import type {
   DataTableColumn,
   DataTablePagination,
@@ -131,46 +132,50 @@ export function RequisitionsTable({
       pagination={pagination}
       renderRowActions={(requisition) => (
         <div className="flex items-center gap-2">
-          <button
+          <Button
             type="button"
-            className="inline-flex min-h-11 items-center justify-center rounded-md border px-3"
+            variant="outline"
+            size="icon"
             onClick={() => rightPanel.openPanel(requisitionPanel(requisition))}
             aria-label={`Open details panel for ${requisition.number}`}
           >
             <PanelRightOpen className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <Link
-            href={`/requisitions/${requisition.id}`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3"
-          >
-            Open
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/requisitions/${requisition.id}`}>
+              Open
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
         </div>
       )}
       renderMobileRow={(requisition) => (
-        <Link href={`/requisitions/${requisition.id}`} className="block rounded-md border p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium">{requisition.title}</p>
-              <p className="mt-1 font-mono text-xs text-muted-foreground">{requisition.number}</p>
-            </div>
-            <RequisitionStatusBadge status={requisition.status} size="compact" />
-          </div>
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span>Needed {requisition.neededByDate}</span>
-            <span className="font-mono tabular-nums">
-              {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
-            </span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {requisition.projectSummary ? requisition.projectSummary.number : "No project"}
-          </div>
-          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-            <span>{requisition.department ?? "No department"}</span>
-            <span>Updated {formatDateLabel(requisition.updatedAt)}</span>
-          </div>
-        </Link>
+        <Card className="gap-0 py-0">
+          <CardContent className="p-4">
+            <Link href={`/requisitions/${requisition.id}`} className="block">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{requisition.title}</p>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{requisition.number}</p>
+                </div>
+                <RequisitionStatusBadge status={requisition.status} size="compact" />
+              </div>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span>Needed {requisition.neededByDate}</span>
+                <span className="font-mono tabular-nums">
+                  {formatMoney(requisition.estimatedTotal, requisition.currency ?? "MYR")}
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {requisition.projectSummary ? requisition.projectSummary.number : "No project"}
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{requisition.department ?? "No department"}</span>
+                <span>Updated {formatDateLabel(requisition.updatedAt)}</span>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
       )}
     />
   );

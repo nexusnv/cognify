@@ -6,7 +6,7 @@ import type {
   ProcurementCalendarEventStatus,
   ProcurementCalendarSourceType,
 } from "@cognify/api-client/schemas";
-import { Button } from "@cognify/ui";
+import { Button, Card, CardContent } from "@cognify/ui";
 import { useProcurementCalendarEvents } from "../hooks/use-procurement-calendar-events";
 import { ProcurementCalendarAgendaView } from "../components/procurement-calendar-agenda-view";
 import { ProcurementCalendarEventDetail } from "../components/procurement-calendar-event-detail";
@@ -36,6 +36,8 @@ export function ProcurementCalendarPage() {
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<ProcurementCalendarSourceType[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<ProcurementCalendarEventStatus[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [rangePreset, setRangePreset] = useState<"month" | "week" | "custom">("month");
 
   const query = useMemo(
     () => ({
@@ -67,7 +69,6 @@ export function ProcurementCalendarPage() {
   }, [calendar]);
 
   const selectedEvent = events.find((event) => event.id === selectedEventId) ?? null;
-  const visibleSelectedEventId = selectedEvent?.id ?? null;
   const isFiltered = Boolean(search.trim() || selectedSourceTypes.length > 0 || selectedStatuses.length > 0);
   const rangeLabel = formatDateRangeSummary(from, to);
 
@@ -85,17 +86,25 @@ export function ProcurementCalendarPage() {
 
       <ProcurementCalendarFilters
         from={from}
-        onFromChange={setFrom}
+        onFromChange={(value) => {
+          setFrom(value);
+          setRangePreset("custom");
+        }}
         to={to}
-        onToChange={setTo}
+        onToChange={(value) => {
+          setTo(value);
+          setRangePreset("custom");
+        }}
         onToday={() => {
           const nextRange = getDefaultCalendarRange(view);
           setFrom(nextRange.from);
           setTo(nextRange.to);
+          setRangePreset(view === "week" ? "week" : "month");
         }}
         view={view}
         onViewChange={(nextView) => {
           setView(nextView);
+          setRangePreset(nextView === "week" ? "week" : "month");
           if (nextView === "week") {
             const nextRange = getDefaultCalendarRange("week");
             setFrom(nextRange.from);
@@ -103,7 +112,10 @@ export function ProcurementCalendarPage() {
           }
         }}
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setRangePreset("custom");
+        }}
         selectedSourceTypes={selectedSourceTypes}
         onSourceTypeToggle={(value) => setSelectedSourceTypes((current) => toggleItem(current, value))}
         selectedStatuses={selectedStatuses}
@@ -113,6 +125,22 @@ export function ProcurementCalendarPage() {
           setSearch("");
           setSelectedSourceTypes([]);
           setSelectedStatuses([]);
+        }}
+        rangePreset={rangePreset}
+        onRangePresetChange={(value) => {
+          setRangePreset(value);
+          if (value === "month") {
+            const nextRange = getDefaultCalendarRange("month");
+            setView("month");
+            setFrom(nextRange.from);
+            setTo(nextRange.to);
+          }
+          if (value === "week") {
+            const nextRange = getDefaultCalendarRange("week");
+            setView("week");
+            setFrom(nextRange.from);
+            setTo(nextRange.to);
+          }
         }}
       />
 
@@ -154,8 +182,11 @@ export function ProcurementCalendarPage() {
                 {view === "month" ? (
                   <ProcurementCalendarMonthView
                     events={events}
-                    selectedEventId={visibleSelectedEventId}
-                    onSelectEvent={setSelectedEventId}
+                    selectedEventId={selectedEvent?.id ?? null}
+                    onSelectEvent={(eventId) => {
+                      setSelectedEventId(eventId);
+                      setDetailOpen(true);
+                    }}
                   />
                 ) : null}
 
@@ -163,21 +194,36 @@ export function ProcurementCalendarPage() {
                   <ProcurementCalendarWeekView
                     from={from}
                     events={events}
-                    selectedEventId={visibleSelectedEventId}
-                    onSelectEvent={setSelectedEventId}
+                    selectedEventId={selectedEvent?.id ?? null}
+                    onSelectEvent={(eventId) => {
+                      setSelectedEventId(eventId);
+                      setDetailOpen(true);
+                    }}
                   />
                 ) : null}
 
                 {view === "agenda" ? (
                   <ProcurementCalendarAgendaView
                     events={events}
-                    selectedEventId={visibleSelectedEventId}
-                    onSelectEvent={setSelectedEventId}
+                    selectedEventId={selectedEvent?.id ?? null}
+                    onSelectEvent={(eventId) => {
+                      setSelectedEventId(eventId);
+                      setDetailOpen(true);
+                    }}
                   />
                 ) : null}
               </section>
 
-              <ProcurementCalendarEventDetail event={selectedEvent} />
+              <ProcurementCalendarEventDetail
+                event={selectedEvent}
+                open={detailOpen}
+                onOpenChange={(open) => {
+                  setDetailOpen(open);
+                  if (!open) {
+                    setSelectedEventId((current) => current);
+                  }
+                }}
+              />
             </div>
           )}
         </>
@@ -202,10 +248,12 @@ function StatePanel({
   role?: "status";
 }) {
   return (
-    <div role={role} className="space-y-2 rounded-md border p-4 text-sm">
-      <p className="font-medium">{title}</p>
-      {message ? <p className="text-muted-foreground">{message}</p> : null}
-      {action ? <div>{action}</div> : null}
-    </div>
+    <Card role={role}>
+      <CardContent className="space-y-2 py-4 text-sm">
+        <p className="font-medium">{title}</p>
+        {message ? <p className="text-muted-foreground">{message}</p> : null}
+        {action ? <div>{action}</div> : null}
+      </CardContent>
+    </Card>
   );
 }

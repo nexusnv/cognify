@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApprovalSlaSummary as ApprovalSlaSummaryData } from "@cognify/api-client/schemas";
+import { Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 
 export function ApprovalSlaSummary({
   summary,
@@ -10,11 +11,23 @@ export function ApprovalSlaSummary({
   state?: "idle" | "loading" | "error";
 }) {
   if (state === "loading") {
-    return <p className="rounded-md border p-4 text-sm text-muted-foreground">Loading approval SLA summary</p>;
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">
+          Loading approval SLA summary
+        </CardContent>
+      </Card>
+    );
   }
 
   if (state === "error") {
-    return <p className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Approval SLA summary could not be loaded.</p>;
+    return (
+      <Card className="border-destructive/30 bg-destructive/5">
+        <CardContent className="p-4 text-sm text-destructive">
+          Approval SLA summary could not be loaded.
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!summary) {
@@ -22,28 +35,35 @@ export function ApprovalSlaSummary({
   }
 
   return (
-    <section className="space-y-3" aria-label="Approval SLA summary">
-      <div className="grid gap-3 md:grid-cols-5">
-        <Metric label="Assigned" value={summary.assigned} />
-        <Metric label="Due soon" value={summary.dueSoon} />
-        <Metric label="Overdue" value={summary.overdue} />
-        <Metric label="Escalated" value={summary.escalated} />
-        <Metric label="Average age" value={`${summary.averageAgeMinutes} min`} />
-      </div>
-      {summary.oldestPendingApproval ? (
-        <p className="text-sm text-muted-foreground">
-          Oldest pending: {summary.oldestPendingApproval.title} · {summary.oldestPendingApproval.ageMinutes} min
-        </p>
-      ) : null}
-    </section>
+    <Card role="region" aria-label="Approval SLA summary">
+      <CardHeader>
+        <CardTitle className="text-base">Approval SLA summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-5">
+          <Metric label="Assigned" value={summary.assigned} />
+          <Metric label="Due soon" value={summary.dueSoon} />
+          <Metric label="Overdue" value={summary.overdue} />
+          <Metric label="Escalated" value={summary.escalated} />
+          <Metric label="Average age" value={`${summary.averageAgeMinutes} min`} />
+        </div>
+        {summary.oldestPendingApproval ? (
+          <p className="text-sm text-muted-foreground">
+            Oldest pending: {summary.oldestPendingApproval.title} · {summary.oldestPendingApproval.ageMinutes} min
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-md border p-3">
-      <dt className="text-xs uppercase text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-lg font-semibold">{value}</dd>
-    </div>
+    <Card>
+      <CardContent className="space-y-1 p-3">
+        <dt className="text-xs uppercase text-muted-foreground">{label}</dt>
+        <dd className="text-lg font-semibold">{value}</dd>
+      </CardContent>
+    </Card>
   );
 }

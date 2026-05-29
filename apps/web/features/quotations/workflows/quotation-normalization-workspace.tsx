@@ -1,6 +1,7 @@
 "use client";
 
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
+import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { useQuotationVersion } from "@/features/sourcing/hooks/use-quotation-versions";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import {
@@ -36,9 +37,9 @@ export function QuotationNormalizationWorkspace({
 
   if (normalizationQuery.isLoading) {
     return (
-      <div aria-label="Loading quotation normalization workspace" className="rounded-md border p-4 text-sm text-muted-foreground">
-        Loading quotation normalization workspace
-      </div>
+      <Card aria-label="Loading quotation normalization workspace">
+        <CardContent className="py-4 text-sm text-muted-foreground">Loading quotation normalization workspace</CardContent>
+      </Card>
     );
   }
 
@@ -51,9 +52,7 @@ export function QuotationNormalizationWorkspace({
         : getApiErrorMessage(normalizationQuery.error);
 
     return (
-      <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        {message}
-      </div>
+      <Alert variant="destructive"><AlertDescription>{message}</AlertDescription></Alert>
     );
   }
 
@@ -95,9 +94,12 @@ export function QuotationNormalizationWorkspace({
       ]}
       sidebar={
         <>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Overview</h2>
-            <dl className="mt-3 grid gap-3 text-sm">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <dl className="grid gap-3 text-sm">
               <div>
                 <dt className="text-muted-foreground">RFQ</dt>
                 <dd className="font-medium">{normalization.source.rfqNumber ?? normalization.source.rfqId ?? "No RFQ"}</dd>
@@ -113,7 +115,8 @@ export function QuotationNormalizationWorkspace({
                 </div>
               ) : null}
             </dl>
-          </section>
+            </CardContent>
+          </Card>
           <QuotationNormalizationApprovalPanel
             normalization={normalization}
             canEdit={canEdit}
@@ -127,12 +130,16 @@ export function QuotationNormalizationWorkspace({
         </>
       }
     >
-      <section id="overview" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Source version summary</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+      <Card id="overview">
+        <CardHeader>
+          <CardTitle className="text-base">Source version summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+        <p className="text-sm text-muted-foreground">
           Compare the current quotation version values against the normalized output before approval.
         </p>
-      </section>
+        </CardContent>
+      </Card>
 
       <section id="header-fields" className="space-y-4">
         {normalization.fields.map((field) => (

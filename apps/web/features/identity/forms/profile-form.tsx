@@ -1,15 +1,32 @@
 "use client";
 
-import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { CurrentUserProfile } from "@cognify/api-client/schemas";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@cognify/ui";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import {
   defaultNotificationPreferences,
   profileSchema,
   type ProfileFormValues,
 } from "../schemas/profile-schema";
 import { useProfileUpdate } from "../hooks/use-profile-update";
-import type { CurrentUserProfile } from "@cognify/api-client/schemas";
-import { useEffect } from "react";
+import { FormField } from "@/components/forms/form-field";
 import { NotificationPreferencesFields } from "@/features/notifications/components/notification-preferences-fields";
 
 function getProfileFormValues(profile: CurrentUserProfile): ProfileFormValues {
@@ -60,107 +77,72 @@ export function ProfileForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium">
-          Name
-        </label>
-        <input
-          id="name"
-          {...register("name")}
-          className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
-        />
-        {errors.name && (
-          <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
-        )}
-      </div>
+      <FormField htmlFor="name" label="Name" error={errors.name?.message} required>
+        <Input {...register("name")} />
+      </FormField>
 
-      <div>
-        <label htmlFor="avatarUrl" className="block text-sm font-medium">
-          Avatar URL
-        </label>
-        <input
-          id="avatarUrl"
-          {...register("avatarUrl")}
-          className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
-        />
-        {errors.avatarUrl && (
-          <p className="mt-1 text-sm text-red-500">
-            {errors.avatarUrl.message}
-          </p>
-        )}
-      </div>
+      <FormField htmlFor="avatarUrl" label="Avatar URL" error={errors.avatarUrl?.message}>
+        <Input {...register("avatarUrl")} />
+      </FormField>
 
-      <div>
-        <label htmlFor="timezone" className="block text-sm font-medium">
-          Timezone
-        </label>
-        <input
-          id="timezone"
-          {...register("timezone")}
-          className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
-        />
-        {errors.timezone && (
-          <p className="mt-1 text-sm text-red-500">
-            {errors.timezone.message}
-          </p>
-        )}
-      </div>
+      <FormField htmlFor="timezone" label="Timezone" error={errors.timezone?.message} required>
+        <Input {...register("timezone")} />
+      </FormField>
 
-      <div>
-        <label htmlFor="locale" className="block text-sm font-medium">
-          Locale
-        </label>
-        <input
-          id="locale"
-          {...register("locale")}
-          className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
-        />
-        {errors.locale && (
-          <p className="mt-1 text-sm text-red-500">
-            {errors.locale.message}
-          </p>
-        )}
-      </div>
+      <FormField htmlFor="locale" label="Locale" error={errors.locale?.message} required>
+        <Input {...register("locale")} />
+      </FormField>
 
-      <div>
-        <label htmlFor="theme" className="block text-sm font-medium">
-          Theme
-        </label>
-        <select
-          id="theme"
-          {...register("theme")}
-          className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
-        >
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-          <option value="system">System</option>
-        </select>
-        {errors.theme && (
-          <p className="mt-1 text-sm text-red-500">
-            {errors.theme.message}
-          </p>
+      <Controller
+        control={control}
+        name="theme"
+        render={({ field }) => (
+          <Field>
+            <FieldLabel htmlFor="theme">Theme</FieldLabel>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger
+                id="theme"
+                className="w-full"
+                aria-invalid={Boolean(errors.theme)}
+                aria-describedby={errors.theme ? "theme-error" : undefined}
+              >
+                <SelectValue placeholder="Select a theme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
+            <FieldError id="theme-error">{errors.theme?.message}</FieldError>
+          </Field>
         )}
-      </div>
+      />
 
       <NotificationPreferencesFields
         preferences={notificationPreferences}
         setValue={setValue}
       />
 
-      <button
+      <Button
         type="submit"
         disabled={updateMutation.isPending || !isDirty}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        className="w-full"
       >
         {updateMutation.isPending ? "Saving..." : "Save profile"}
-      </button>
+      </Button>
 
       {updateMutation.isSuccess && (
-        <p className="text-sm text-green-600">Profile saved</p>
+        <Alert>
+          <AlertTitle>Profile saved</AlertTitle>
+          <AlertDescription>Your profile changes were saved.</AlertDescription>
+        </Alert>
       )}
 
       {updateMutation.error && (
-        <p className="text-sm text-red-500">Failed to save profile</p>
+        <Alert variant="destructive">
+          <AlertDescription>Failed to save profile.</AlertDescription>
+        </Alert>
       )}
     </form>
   );

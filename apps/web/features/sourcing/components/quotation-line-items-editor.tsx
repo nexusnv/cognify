@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { Button, Input, NativeSelect, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea } from "@cognify/ui";
 import type { QuotationManualEntryFormValues } from "../schemas/quotation-manual-entry-schema";
 
 export function QuotationLineItemsEditor({
@@ -57,76 +57,76 @@ export function QuotationLineItemsEditor({
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <table className="min-w-[66rem] w-full border-separate border-spacing-0 text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="border-b px-3 py-2 text-left font-medium">Description</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Quantity</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Unit</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Unit price</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Total amount</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Compliance</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Notes</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="min-w-[66rem]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Description</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead>Unit price</TableHead>
+              <TableHead>Total amount</TableHead>
+              <TableHead>Compliance</TableHead>
+              <TableHead>Notes</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {lineItems.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-5 text-sm text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={8} className="px-3 py-5 text-sm text-muted-foreground">
                   No structured line items recorded yet.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : null}
 
             {lineItems.map((lineItem, index) => (
-              <tr key={buildRowKey(lineItem, index)} className="align-top">
-                <td className="border-b px-3 py-3">
-                  <input
+              <TableRow key={buildRowKey(lineItem, index)} className="align-top">
+                <TableCell className="px-3 py-3">
+                  <Input
                     aria-label={`Line ${index + 1} description`}
-                    className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-11 w-full text-base"
                     value={lineItem.description ?? ""}
                     disabled={disabled}
                     onChange={(event) => updateLineItem(index, { description: event.target.value })}
                   />
-                </td>
-                <td className="border-b px-3 py-3">
-                  <input
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <Input
                     aria-label={`Line ${index + 1} quantity`}
                     className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     value={lineItem.quantity ?? ""}
                     disabled={disabled}
                     onChange={(event) => updateLineItem(index, { quantity: event.target.value })}
                   />
-                </td>
-                <td className="border-b px-3 py-3">
-                  <input
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <Input
                     aria-label={`Line ${index + 1} unit`}
                     className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     value={lineItem.unit ?? ""}
                     disabled={disabled}
                     onChange={(event) => updateLineItem(index, { unit: event.target.value })}
                   />
-                </td>
-                <td className="border-b px-3 py-3">
-                  <input
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <Input
                     aria-label={`Line ${index + 1} unit price`}
                     className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     value={lineItem.unitPrice ?? ""}
                     disabled={disabled}
                     onChange={(event) => updateLineItem(index, { unitPrice: event.target.value })}
                   />
-                </td>
-                <td className="border-b px-3 py-3">
-                  <input
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <Input
                     aria-label={`Line ${index + 1} total amount`}
                     className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     value={lineItem.totalAmount ?? ""}
                     disabled={disabled}
                     onChange={(event) => updateLineItem(index, { totalAmount: event.target.value })}
                   />
-                </td>
-                <td className="border-b px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">
                   <NativeSelect
                     aria-label={`Line ${index + 1} compliance status`}
                     value={lineItem.complianceStatus ?? ""}
@@ -145,8 +145,8 @@ export function QuotationLineItemsEditor({
                     <option value="non_compliant">Non-compliant</option>
                     <option value="alternate">Alternate offered</option>
                   </NativeSelect>
-                </td>
-                <td className="border-b px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">
                   <Textarea
                     aria-label={`Line ${index + 1} notes`}
                     className="min-h-20"
@@ -154,8 +154,8 @@ export function QuotationLineItemsEditor({
                     disabled={disabled}
                     onChange={(event) => updateLineItem(index, { notes: event.target.value })}
                   />
-                </td>
-                <td className="border-b px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">
                   <Button
                     type="button"
                     variant="ghost"
@@ -167,11 +167,11 @@ export function QuotationLineItemsEditor({
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                     Remove
                   </Button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@cognify/ui";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CommandPalette } from "@/features/search/components/command-palette";
@@ -22,15 +23,16 @@ export function CommandPaletteHost() {
 
   return (
     <>
-      <button
+      <Button
         type="button"
-        className="inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        variant="outline"
+        className="min-h-10 text-muted-foreground"
         aria-label="Open command palette"
         onClick={() => setOpen((current) => !current)}
       >
         <Search className="h-4 w-4" aria-hidden="true" />
         <span className="hidden sm:inline">Search</span>
-      </button>
+      </Button>
       {open ? <CommandPalette open={open} onOpenChange={setOpen} /> : null}
     </>
   );

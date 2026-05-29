@@ -12,6 +12,7 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "audit:shadcn-ui": "node tooling/scripts/audit-shadcn-first-ui.mjs",
     "generate:api": "pnpm --filter @cognify/api-client generate",
     "check:api-contract": "pnpm --filter @cognify/api-client check:contract",
     "api:test": "cd apps/api && php artisan test",

@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
-import { FormErrorSummary } from "@/components/forms/form-error-summary";
+import { Alert, AlertDescription, AlertTitle, Button, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { FormField } from "@/components/forms/form-field";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useCreateProject, useUpdateProject } from "../hooks/use-project-actions";
@@ -138,32 +137,45 @@ export function ProjectForm({
 
   return (
     <form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
-      {formError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
-        >
-          {formError}
-        </div>
+      {summaryErrors.length > 0 || formError ? (
+        <Alert variant={summaryErrors.length > 0 ? "default" : "destructive"}>
+          <AlertTitle>
+            {summaryErrors.length > 0
+              ? "Resolve the highlighted project fields before continuing."
+              : "Project could not be saved."}
+          </AlertTitle>
+          <AlertDescription>
+            {summaryErrors.length > 0 ? (
+              <ul className="ml-4 list-disc space-y-1">
+                {summaryErrors.map((error) => (
+                  <li key={`${error.field}-${error.message}`}>
+                    <a className="underline underline-offset-4" href={`#${error.fieldId}`}>
+                      {error.message}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              formError
+            )}
+          </AlertDescription>
+        </Alert>
       ) : null}
-      <FormErrorSummary
-        title="Resolve the highlighted project fields before continuing."
-        errors={summaryErrors}
-      />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <FormField htmlFor="name" label="Project name" error={errors.name?.[0]} required>
-          <input
+        <FormField htmlFor="name" label="Project name" required>
+          <Input
             id="name"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
+            aria-invalid={Boolean(errors.name)}
             value={values.name}
             onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
           />
         </FormField>
 
-        <FormField htmlFor="ownerId" label="Owner" error={errors.ownerId?.[0]} required>
+        <FormField htmlFor="ownerId" label="Owner" required>
           <NativeSelect
             id="ownerId"
+            aria-invalid={Boolean(errors.ownerId)}
             value={values.ownerId}
             onChange={(event) =>
               setValues((current) => ({ ...current, ownerId: event.target.value }))
@@ -178,10 +190,10 @@ export function ProjectForm({
           </NativeSelect>
         </FormField>
 
-        <FormField htmlFor="budgetAmount" label="Budget" error={errors.budgetAmount?.[0]} required>
-          <input
+        <FormField htmlFor="budgetAmount" label="Budget" required>
+          <Input
             id="budgetAmount"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
+            aria-invalid={Boolean(errors.budgetAmount)}
             value={values.budgetAmount}
             inputMode="decimal"
             onChange={(event) =>
@@ -190,10 +202,10 @@ export function ProjectForm({
           />
         </FormField>
 
-        <FormField htmlFor="currency" label="Currency" error={errors.currency?.[0]} required>
-          <input
+        <FormField htmlFor="currency" label="Currency" required>
+          <Input
             id="currency"
-            className="min-h-11 w-full rounded-md border px-3 text-base uppercase"
+            aria-invalid={Boolean(errors.currency)}
             value={values.currency}
             maxLength={3}
             onChange={(event) =>
@@ -202,10 +214,10 @@ export function ProjectForm({
           />
         </FormField>
 
-        <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-          <input
+        <FormField htmlFor="department" label="Department">
+          <Input
             id="department"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
+            aria-invalid={Boolean(errors.department)}
             value={values.department}
             onChange={(event) =>
               setValues((current) => ({ ...current, department: event.target.value }))
@@ -213,10 +225,10 @@ export function ProjectForm({
           />
         </FormField>
 
-        <FormField htmlFor="costCenter" label="Cost center" error={errors.costCenter?.[0]}>
-          <input
+        <FormField htmlFor="costCenter" label="Cost center">
+          <Input
             id="costCenter"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
+            aria-invalid={Boolean(errors.costCenter)}
             value={values.costCenter}
             onChange={(event) =>
               setValues((current) => ({ ...current, costCenter: event.target.value }))
@@ -224,11 +236,11 @@ export function ProjectForm({
           />
         </FormField>
 
-        <FormField htmlFor="targetStartDate" label="Target start" error={errors.targetStartDate?.[0]}>
-          <input
+        <FormField htmlFor="targetStartDate" label="Target start">
+          <Input
             id="targetStartDate"
             type="date"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
+            aria-invalid={Boolean(errors.targetStartDate)}
             value={values.targetStartDate}
             onChange={(event) =>
               setValues((current) => ({ ...current, targetStartDate: event.target.value }))
@@ -239,12 +251,11 @@ export function ProjectForm({
         <FormField
           htmlFor="targetCompletionDate"
           label="Target completion"
-          error={errors.targetCompletionDate?.[0]}
         >
-          <input
+          <Input
             id="targetCompletionDate"
             type="date"
-            className="min-h-11 w-full rounded-md border px-3 text-base"
+            aria-invalid={Boolean(errors.targetCompletionDate)}
             value={values.targetCompletionDate}
             onChange={(event) =>
               setValues((current) => ({ ...current, targetCompletionDate: event.target.value }))
@@ -253,9 +264,10 @@ export function ProjectForm({
         </FormField>
       </div>
 
-      <FormField htmlFor="charter" label="Charter" error={errors.charter?.[0]}>
+      <FormField htmlFor="charter" label="Charter">
         <Textarea
           id="charter"
+          aria-invalid={Boolean(errors.charter)}
           value={values.charter}
           onChange={(event) => setValues((current) => ({ ...current, charter: event.target.value }))}
         />

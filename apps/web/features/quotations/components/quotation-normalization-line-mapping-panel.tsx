@@ -1,7 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  NativeSelect,
+  Textarea,
+} from "@cognify/ui";
 import type { QuotationLineItem, QuotationNormalization, QuotationNormalizationLineGroup } from "@cognify/api-client/schemas";
 
 type DraftState = {
@@ -148,16 +168,17 @@ function QuotationNormalizationLineMappingDraftPanel({
   const hasSelectableRfqLines = rfqOptions.length > 0;
 
   return (
-    <section id="line-mappings" data-testid="normalization-line-mappings" className="rounded-md border p-4">
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold">Line mappings</h2>
+    <Card id="line-mappings" data-testid="normalization-line-mappings">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-base">Line mappings</CardTitle>
         <p className="text-sm text-muted-foreground">Review how the current quotation version maps into comparable RFQ line bundles.</p>
-      </div>
+      </CardHeader>
+      <CardContent>
 
       {normalization.lineGroups.length > 0 ? (
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           {normalization.lineGroups.map((group: QuotationNormalizationLineGroup) => (
-            <div key={group.id} className="rounded-md border bg-muted/20 p-3">
+            <div key={group.id} className="rounded-md bg-muted/30 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-medium">{group.description}</p>
                 <p className="text-xs text-muted-foreground">{group.pricingMode}</p>
@@ -169,7 +190,7 @@ function QuotationNormalizationLineMappingDraftPanel({
           ))}
         </div>
       ) : (
-        <p className="mt-4 text-sm text-muted-foreground">No buyer-reviewed mapping has been saved yet.</p>
+        <p className="text-sm text-muted-foreground">No buyer-reviewed mapping has been saved yet.</p>
       )}
 
       {canEdit ? (
@@ -247,8 +268,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Currency
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1"
               value={draft.currency}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), currency: event.target.value }))
@@ -257,8 +278,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Bundle description
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1"
               value={draft.description}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), description: event.target.value }))
@@ -267,8 +288,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Quantity
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1"
               value={draft.quantity}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), quantity: event.target.value }))
@@ -277,8 +298,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Unit
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1"
               value={draft.unit}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), unit: event.target.value }))
@@ -287,8 +308,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Bundle total
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1"
               value={draft.bundleTotalAmount}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), bundleTotalAmount: event.target.value }))
@@ -306,11 +327,9 @@ function QuotationNormalizationLineMappingDraftPanel({
             />
           </label>
           {!hasSelectableRfqLines ? (
-            <p id="rfq-line-unavailable" className="text-sm text-amber-700 lg:col-span-2">
-              No RFQ line items are available to map this quotation version.
-            </p>
+            <Alert id="rfq-line-unavailable" className="lg:col-span-2 border-amber-300 bg-amber-50 text-amber-950"><AlertDescription>No RFQ line items are available to map this quotation version.</AlertDescription></Alert>
           ) : null}
-          <div className="lg:col-span-2">
+          <div className="flex gap-2 lg:col-span-2">
             <Button
               type="button"
               disabled={
@@ -326,9 +345,25 @@ function QuotationNormalizationLineMappingDraftPanel({
             >
               Save line mapping
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="outline">Reset draft</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset line mapping draft?</AlertDialogTitle>
+                  <AlertDialogDescription>This will discard unsaved edits in this panel.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => setDraftOverride(null)}>Reset</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       ) : null}
-    </section>
+      </CardContent>
+    </Card>
   );
 }

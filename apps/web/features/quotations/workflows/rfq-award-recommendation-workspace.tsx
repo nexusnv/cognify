@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Badge, Button, Card, CardContent, CardHeader, CardTitle, Textarea } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import type { RfqAwardRecommendation, RfqAwardRecommendationEvidenceReferenceInput } from "@cognify/api-client/schemas";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
@@ -40,7 +40,7 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
   const query = useRfqAwardRecommendation(rfqId);
 
   if (query.isLoading) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading RFQ award recommendation workspace</div>;
+    return <Card><CardContent className="py-4 text-sm text-muted-foreground">Loading RFQ award recommendation workspace</CardContent></Card>;
   }
 
   if (query.isError || !query.data) {
@@ -50,7 +50,7 @@ export function RfqAwardRecommendationWorkspace({ rfqId }: { rfqId: string }) {
       : code === "not_found"
         ? "This award recommendation could not be found."
         : getRawErrorMessage(query.error) ?? getApiErrorMessage(query.error);
-    return <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">{message}</div>;
+    return <Alert variant="destructive"><AlertDescription>{message}</AlertDescription></Alert>;
   }
 
   return <RfqAwardRecommendationWorkspaceContent key={rfqId} initialContext={query.data} rfqId={rfqId} />;
@@ -97,7 +97,7 @@ function RfqAwardRecommendationWorkspaceContent({
       backLabel="Back to comparison"
       eyebrow={context.rfq.number ?? context.rfq.id}
       title="Award recommendation"
-      status={<span className="rounded-full border px-2 py-1 text-xs font-medium">Award recommendation</span>}
+      status={<Badge variant="outline">Award recommendation</Badge>}
       metadata={[
         { id: "rfq-title", label: "RFQ title", value: context.rfq.title ?? "Unknown RFQ" },
         { id: "status", label: "Recommendation status", value: recommendationStatus },
@@ -123,7 +123,7 @@ function RfqAwardRecommendationWorkspaceContent({
       )}
     >
       <section id="overview" className="space-y-5">
-        {!hasVendors ? <div className="rounded-md border p-4 text-sm text-muted-foreground">No vendor quotations are available for recommendation.</div> : null}
+        {!hasVendors ? <Card><CardContent className="py-4 text-sm text-muted-foreground">No vendor quotations are available for recommendation.</CardContent></Card> : null}
         <div className="flex flex-wrap gap-2">
         <Link className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent" href={context.links.comparison}>
           Open comparison
@@ -187,7 +187,7 @@ function RfqAwardRecommendationWorkspaceContent({
         </Button>
         </div>
       </section>
-      {mutationError ? <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">{getMutationErrorMessage(mutationError)}</div> : null}
+      {mutationError ? <Alert variant="destructive"><AlertDescription>{getMutationErrorMessage(mutationError)}</AlertDescription></Alert> : null}
       {blockingReason ? <p className="text-sm text-amber-700">{blockingReason}</p> : null}
       <RfqAwardApprovalPanel
         recommendationStatus={recommendationStatus}
@@ -265,8 +265,11 @@ function RfqAwardRecommendationWorkspaceContent({
         />
       </section>
       {isPending && context.permissions.canWithdrawAwardRecommendation ? (
-        <section className="rounded-md border p-4" aria-label="Withdraw recommendation">
-          <h2 className="text-base font-semibold">Withdraw pending recommendation</h2>
+        <Card aria-label="Withdraw recommendation">
+          <CardHeader>
+            <CardTitle className="text-base">Withdraw pending recommendation</CardTitle>
+          </CardHeader>
+          <CardContent>
           <Textarea aria-label="Withdrawal reason" value={withdrawReason} onChange={(event) => setWithdrawReason(event.target.value)} />
           <Button
             className="mt-3"
@@ -287,7 +290,8 @@ function RfqAwardRecommendationWorkspaceContent({
           >
             Withdraw recommendation
           </Button>
-        </section>
+          </CardContent>
+        </Card>
       ) : null}
       {selectedOption?.scorecard?.missingRequiredCount && selectedOption.scorecard.missingRequiredCount > 0 ? (
         <p className="text-sm text-amber-700">Selected vendor has missing required scores.</p>

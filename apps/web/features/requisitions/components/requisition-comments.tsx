@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ScrollArea, Textarea } from "@cognify/ui";
 import {
   useCreateRequisitionComment,
   useRequisitionComments,
@@ -30,39 +31,51 @@ export function RequisitionComments({
   const [selectedMentionIds, setSelectedMentionIds] = useState<string[]>([]);
 
   if (commentsQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading comments</p>;
+    return <Card><CardContent className="pt-6 text-sm text-muted-foreground">Loading comments</CardContent></Card>;
   }
 
   if (commentsQuery.isError) {
-    return <p className="text-sm text-red-700">Comments could not be loaded.</p>;
+    return <Card><CardContent className="pt-6 text-sm text-red-700">Comments could not be loaded.</CardContent></Card>;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
-        {(commentsQuery.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No comments yet.</p>
-        ) : null}
-        {(commentsQuery.data ?? []).map((comment) => (
-          <article key={comment.id} className="rounded-md border p-3 text-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-medium">{comment.author.name}</p>
-                <p className="text-xs text-muted-foreground">{formatTimestamp(comment.createdAt)}</p>
-              </div>
-            </div>
-            <p className="mt-2 whitespace-pre-wrap">{comment.body}</p>
-            {comment.mentions.length > 0 ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Mentioned: {comment.mentions.map((mention) => mention.mentionedUser.name).join(", ")}
-              </p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Comments</CardTitle>
+        <CardDescription>Collaboration history and mention updates.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ScrollArea className="max-h-80 pr-3">
+          <div className="space-y-3">
+            {(commentsQuery.data ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No comments yet.</p>
             ) : null}
-          </article>
-        ))}
-      </div>
+            {(commentsQuery.data ?? []).map((comment) => (
+              <article key={comment.id} className="rounded-md bg-muted/30 p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{comment.author.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatTimestamp(comment.createdAt)}</p>
+                  </div>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap">{comment.body}</p>
+                {comment.mentions.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Mentioned:</span>
+                    {comment.mentions.map((mention) => (
+                      <Badge key={mention.mentionedUser.id} variant="secondary">
+                        {mention.mentionedUser.name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </ScrollArea>
       {canComment ? (
         <form
-          className="space-y-3 rounded-md border p-4"
+          className="space-y-3 rounded-md bg-muted/30 p-4"
           onSubmit={(event) => {
             event.preventDefault();
             if (!body.trim()) return;
@@ -84,15 +97,10 @@ export function RequisitionComments({
             );
           }}
         >
-          <label className="block text-sm font-medium">
-            Comment
-            <textarea
-              aria-label="Comment"
-              className="mt-1 min-h-24 w-full rounded-md border px-3 py-2 text-base font-normal"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-            />
-          </label>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Comment</p>
+            <Textarea aria-label="Comment" className="min-h-24" value={body} onChange={(event) => setBody(event.target.value)} />
+          </div>
           {canMention ? (
             <RequisitionMentionInput
               candidates={mentionCandidatesQuery.data ?? []}
@@ -100,19 +108,16 @@ export function RequisitionComments({
               onChange={setSelectedMentionIds}
             />
           ) : null}
-          <button
-            type="submit"
-            className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
-            disabled={createComment.isPending}
-          >
+          <Button type="submit" disabled={createComment.isPending}>
             {createComment.isPending ? "Posting" : "Post comment"}
-          </button>
+          </Button>
         </form>
       ) : (
         <p className="text-sm text-muted-foreground">
           Comments are locked for this requisition state.
         </p>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

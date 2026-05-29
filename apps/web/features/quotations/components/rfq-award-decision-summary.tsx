@@ -1,4 +1,4 @@
-import { Badge } from "@cognify/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import type { RfqAwardRecommendation } from "@cognify/api-client/schemas";
 
 type Props = {
@@ -16,9 +16,11 @@ export function RfqAwardDecisionSummary({ context, submitBlockReason, draftSelec
   const pending = recommendation?.status === "pending_approval";
 
   return (
-    <section className="rounded-md border p-4" aria-label="Decision summary">
-      <h2 className="text-base font-semibold">Summary</h2>
-      <div className="mt-3 space-y-2 text-sm">
+    <Card aria-label="Decision summary">
+      <CardHeader>
+        <CardTitle className="text-base">Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
         <p>Vendor: {selected?.vendorName ?? "Not selected"}</p>
         <p>Quotation version: {draftSelection.recommendedQuotationVersionId ?? "Not selected"}</p>
         <p>Status: <Badge variant={pending ? "secondary" : "outline"}>{recommendation?.status ?? "draft"}</Badge></p>
@@ -28,7 +30,7 @@ export function RfqAwardDecisionSummary({ context, submitBlockReason, draftSelec
         {submitBlockReason ? <p>{submitBlockReason}</p> : null}
         {pending ? <p>Recommendation is pending approval and read-only.</p> : null}
         {recommendation?.withdrawalReason ? <p>Withdrawal reason: {recommendation.withdrawalReason}</p> : null}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

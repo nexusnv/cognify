@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogOut } from "lucide-react";
+import { Button, Separator } from "@cognify/ui";
 import { CommandPaletteHost } from "./command-palette-host";
 import { Breadcrumbs } from "./breadcrumbs";
 import { NotificationHost } from "./notification-host";
@@ -47,24 +48,27 @@ export function ShellHeader({
         <div className="flex shrink-0 items-center gap-2">
           <CommandPaletteHost />
           <NotificationHost />
-          <Link
-            href="/account"
-            className="hidden min-h-10 max-w-44 items-center truncate rounded-md border px-3 text-sm text-muted-foreground hover:text-foreground sm:inline-flex"
+          <Separator orientation="vertical" className="hidden h-6 sm:block" />
+          <Button
+            asChild
+            variant="outline"
+            className="hidden min-h-10 max-w-44 truncate text-muted-foreground sm:inline-flex"
           >
-            {displayedUserName}
-          </Link>
+            <Link href="/account">{displayedUserName}</Link>
+          </Button>
           {onLogout && (
-            <button
+            <Button
               type="button"
               aria-label="Sign out"
+              variant="outline"
+              className="min-h-10 text-muted-foreground"
               onClick={onLogout}
               disabled={logoutPending}
-              className="inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">{logoutPending ? "Signing out" : "Sign out"}</span>
               <span className="sm:hidden">Sign out</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

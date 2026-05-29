@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@cognify/ui";
+import { Badge, Button, Popover, PopoverContent, PopoverTrigger } from "@cognify/ui";
 import type { UserSummary } from "../types/requisition-view-model";
 
 export function RequisitionMentionInput({
@@ -16,37 +16,46 @@ export function RequisitionMentionInput({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium">
-        Mention
-        <NativeSelect
-          className="mt-1"
-          value=""
-          onChange={(event) => {
-            const value = event.target.value;
-            if (value && !selectedIds.includes(value)) {
-              onChange([...selectedIds, value]);
-            }
-          }}
-        >
-          <option value="">Select a visible collaborator</option>
-          {candidates.map((candidate) => (
-            <option key={candidate.id} value={candidate.id}>
-              {candidate.name}
-            </option>
-          ))}
-        </NativeSelect>
-      </label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline">Mention collaborator</Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-2" align="start">
+            <div className="space-y-1">
+              {candidates.map((candidate) => (
+                <Button
+                  key={candidate.id}
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start px-2 py-1.5 text-left text-sm"
+                  onClick={() => {
+                    if (!selectedIds.includes(candidate.id)) onChange([...selectedIds, candidate.id]);
+                  }}
+                >
+                  {candidate.name}
+                </Button>
+              ))}
+            </div>
+        </PopoverContent>
+      </Popover>
       {selectedCandidates.length > 0 ? (
         <ul className="flex flex-wrap gap-2 text-sm">
           {selectedCandidates.map((candidate) => (
             <li key={candidate.id}>
-              <button
-                type="button"
-                className="min-h-11 rounded-md border px-3"
+              <Badge
+                className="cursor-pointer"
+                role="button"
+                tabIndex={0}
                 onClick={() => onChange(selectedIds.filter((id) => id !== candidate.id))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onChange(selectedIds.filter((id) => id !== candidate.id));
+                  }
+                }}
               >
                 {candidate.name}
-              </button>
+              </Badge>
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
+import { Alert, AlertDescription, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { useQuotationComparison } from "../hooks/use-quotation-comparison";
 import {
@@ -24,9 +25,9 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
 
   if (comparisonQuery.isLoading) {
     return (
-      <div aria-label="Loading quotation comparison workspace" className="rounded-md border p-4 text-sm text-muted-foreground">
-        Loading quotation comparison workspace
-      </div>
+      <Card aria-label="Loading quotation comparison workspace">
+        <CardContent className="py-4 text-sm text-muted-foreground">Loading quotation comparison workspace</CardContent>
+      </Card>
     );
   }
 
@@ -39,9 +40,7 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
         : getApiErrorMessage(comparisonQuery.error);
 
     return (
-      <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        {message}
-      </div>
+      <Alert variant="destructive"><AlertDescription>{message}</AlertDescription></Alert>
     );
   }
 
@@ -53,7 +52,7 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
       backLabel="Back to quotations"
       eyebrow={comparison.rfq.number ?? comparison.rfq.id}
       title={comparison.rfq.title ?? "Quotation comparison"}
-      status={<span className="rounded-full border px-2 py-1 text-xs font-medium">Comparison workspace</span>}
+      status={<Badge variant="outline">Comparison workspace</Badge>}
       metadata={[
         { id: "responses", label: "Responses", value: String(comparison.readiness.responseCount) },
         { id: "approved", label: "Approved normalization", value: String(comparison.readiness.approvedNormalizationCount) },
@@ -67,12 +66,16 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
       ]}
       sidebar={
         <>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Risk scoring not configured</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Risk scoring not configured</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <p className="text-sm text-muted-foreground">
               This workspace surfaces risk context from normalized evidence only. It does not rank vendors or create award recommendations.
             </p>
-          </section>
+            </CardContent>
+          </Card>
           <QuotationComparisonNotesPanel
             notes={comparison.notes}
             noteGroups={comparison.noteGroups}
@@ -92,19 +95,13 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
       }
     >
       <div className="flex flex-wrap gap-2">
-        <Link
-          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
-          href={`/quotations/scoring/${comparison.rfq.id}`}
-        >
-          Open scoring
-        </Link>
+        <Button asChild variant="outline">
+          <Link href={`/quotations/scoring/${comparison.rfq.id}`}>Open scoring</Link>
+        </Button>
         {comparison.permissions.canManageQuotationComparisonNotes ? (
-          <Link
-            className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
-            href={`/quotations/awards/${comparison.rfq.id}`}
-          >
-            Award recommendation
-          </Link>
+          <Button asChild variant="outline">
+            <Link href={`/quotations/awards/${comparison.rfq.id}`}>Award recommendation</Link>
+          </Button>
         ) : null}
       </div>
       <QuotationComparisonReadinessBanner readiness={comparison.readiness} />

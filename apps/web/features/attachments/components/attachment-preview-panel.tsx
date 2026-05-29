@@ -4,6 +4,7 @@
 
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent } from "@cognify/ui";
 import type { AttachmentViewModel } from "../types/attachment-view-model";
 import { PREVIEWABLE_IMAGE_MIME_TYPES } from "../types/attachment-view-model";
 import { previewAttachmentBlob } from "../api/attachments-api";
@@ -76,19 +77,23 @@ export function AttachmentPreviewPanel({ attachment }: AttachmentPreviewPanelPro
 
   if (isLoading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center rounded-md border bg-background text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-        Loading preview
-      </div>
+      <Card>
+        <CardContent className="flex h-[60vh] items-center justify-center text-sm text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+          Loading preview
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-[60vh] items-center justify-center rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground">
-        <TriangleAlert className="mr-2 h-4 w-4" aria-hidden="true" />
-        {error}
-      </div>
+      <Card className="bg-muted/20">
+        <CardContent className="flex h-[60vh] items-center justify-center p-4 text-sm text-muted-foreground">
+          <TriangleAlert className="mr-2 h-4 w-4" aria-hidden="true" />
+          {error}
+        </CardContent>
+      </Card>
     );
   }
 
@@ -98,24 +103,28 @@ export function AttachmentPreviewPanel({ attachment }: AttachmentPreviewPanelPro
 
   if (previewMode === "pdf") {
     return (
-      <div className="h-[60vh] overflow-hidden rounded-md border bg-background">
-        <iframe
-          src={previewUrl}
-          title={`Preview of ${attachment.filename}`}
-          className="h-full w-full"
-          sandbox="allow-scripts allow-same-origin"
-        />
-      </div>
+      <Card>
+        <CardContent className="h-[60vh] overflow-hidden p-0">
+          <iframe
+            src={previewUrl}
+            title={`Preview of ${attachment.filename}`}
+            className="h-full w-full"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="flex h-[60vh] items-center justify-center overflow-hidden rounded-md border bg-muted/20 p-4">
-      <img
-        src={previewUrl}
-        alt={`Preview of ${attachment.filename}`}
-        className="max-h-full max-w-full object-contain"
-      />
-    </div>
+    <Card className="bg-muted/20">
+      <CardContent className="flex h-[60vh] items-center justify-center overflow-hidden p-4">
+        <img
+          src={previewUrl}
+          alt={`Preview of ${attachment.filename}`}
+          className="max-h-full max-w-full object-contain"
+        />
+      </CardContent>
+    </Card>
   );
 }

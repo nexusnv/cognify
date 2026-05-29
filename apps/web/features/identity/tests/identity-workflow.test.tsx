@@ -13,6 +13,31 @@ import { defaultNotificationPreferences } from "../schemas/profile-schema";
 import type { CurrentUserContext } from "../types/identity-view-model";
 import { getStoredActiveTenantId, logout, setCurrentTenant } from "../api/identity-api";
 
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver = ResizeObserver as unknown as typeof window.ResizeObserver;
+  globalThis.ResizeObserver = ResizeObserver as unknown as typeof globalThis.ResizeObserver;
+}
+
+if (typeof Element !== "undefined") {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+  }
+
+  if (!Element.prototype.setPointerCapture) {
+    Element.prototype.setPointerCapture = vi.fn();
+  }
+
+  if (!Element.prototype.releasePointerCapture) {
+    Element.prototype.releasePointerCapture = vi.fn();
+  }
+}
+
 const router = {
   push: vi.fn(),
   replace: vi.fn(),
@@ -133,7 +158,8 @@ describe("identity workflow", () => {
 
     expect(await screen.findByRole("heading", { name: "Choose workspace" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Northwind Sourcing" }));
+    await user.click(screen.getByRole("radio", { name: "Northwind Sourcing" }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(await screen.findByText("Workspace ready")).toBeInTheDocument();
   });
@@ -166,7 +192,8 @@ describe("identity workflow", () => {
     const nameInput = await screen.findByLabelText("Name");
     await user.clear(nameInput);
     await user.type(nameInput, "Taylor Buyer");
-    await user.selectOptions(screen.getByLabelText("Theme"), "dark");
+    await user.click(screen.getByLabelText("Theme"));
+    await user.click(await screen.findByRole("option", { name: "Dark" }));
     await user.click(screen.getByRole("switch", { name: "Evidence uploaded" }));
     await user.click(screen.getByRole("button", { name: "Save profile" }));
 

@@ -1,4 +1,4 @@
-import { Badge } from "@cognify/ui";
+import { Badge, Card, CardContent } from "@cognify/ui";
 import type { RfqScorecard } from "@cognify/api-client/schemas";
 
 export function RfqScorecardCompletionBanner({ scorecard }: { scorecard: RfqScorecard }) {
@@ -7,7 +7,8 @@ export function RfqScorecardCompletionBanner({ scorecard }: { scorecard: RfqScor
   const ready = missing === 0;
 
   return (
-    <section className="rounded-md border p-4" aria-label="Scoring completion">
+    <Card aria-label="Scoring completion">
+      <CardContent className="pt-6">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={completed ? "default" : ready ? "secondary" : "outline"}>
           {completed ? "Completed" : ready ? "Ready to complete" : "Incomplete"}
@@ -21,6 +22,7 @@ export function RfqScorecardCompletionBanner({ scorecard }: { scorecard: RfqScor
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">Required scoring is complete for scoreable vendors.</p>
       )}
-    </section>
+      </CardContent>
+    </Card>
   );
 }

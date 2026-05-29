@@ -11,11 +11,16 @@ test.describe("approval orchestration critical path", () => {
     await page.goto("/approval-policies/new");
     await expect(page.getByRole("heading", { name: "New approval policy" })).toBeVisible();
 
-    await page.getByLabel("Policy name").fill(`P1 approval policy ${Date.now()}`);
+    const policyName = `P1 approval policy ${Date.now()}`;
+    await page.getByLabel("Policy name").fill(policyName);
+    await page.getByRole("button", { name: "Add rule" }).click();
+    await page.getByRole("combobox", { name: "Rule 1 operator" }).selectOption("gte");
+    await page.getByRole("textbox", { name: "Rule 1 value" }).fill("0");
     await page.getByRole("button", { name: "Create policy" }).click();
-    await expect(page.getByText("Approval policy draft created")).toBeVisible();
+    await expect(page).toHaveURL(/\/approval-policies\/\d+$/);
+    await expect(page.getByRole("heading", { name: policyName })).toBeVisible();
     await page.getByRole("button", { name: "Publish version" }).click();
-    await expect(page.getByText("Approval policy version published")).toBeVisible();
+    await expect(page.getByText("published").first()).toBeVisible();
 
     await resetSession(page);
     await signIn(page, "finance@example.com");
@@ -66,7 +71,7 @@ test.describe("approval orchestration critical path", () => {
     expect(taskUrl).toBeTruthy();
     await resetSession(page);
 
-    await signIn(page, "test@example.com");
+    await signIn(page, "finance@example.com");
     await page.goto(taskUrl!);
 
     await expect(page.getByText("Approval task could not be loaded.")).toBeVisible();

@@ -1,11 +1,21 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, AlertDescription, Button, Checkbox, Input, Label } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Checkbox,
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@cognify/ui";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import { FormField } from "@/components/forms/form-field";
 import { requestPasswordReset } from "../api/identity-api";
 import { useLogin } from "../hooks/use-login";
 import { loginSchema, type LoginFormValues } from "../schemas/login-schema";
@@ -26,6 +36,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
@@ -66,28 +77,17 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
   if (resetMode) {
     return (
       <form onSubmit={handleResetSubmit(onResetSubmit)} className="grid gap-5">
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            {...registerReset("email")}
-            autoComplete="email"
-            aria-invalid={Boolean(resetErrors.email)}
-            aria-describedby={resetErrors.email ? "reset-email-error" : undefined}
-          />
-          {resetErrors.email && (
-            <p id="reset-email-error" className="text-sm text-destructive">
-              {resetErrors.email.message}
-            </p>
-          )}
-        </div>
+        <FormField
+          htmlFor="email"
+          label="Email"
+          error={resetErrors.email?.message}
+          required
+        >
+          <Input {...registerReset("email")} type="email" autoComplete="email" />
+        </FormField>
 
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <Button
-            type="submit"
-            disabled={resetPending}
-          >
+          <Button type="submit" disabled={resetPending}>
             {resetPending ? "Sending..." : "Send reset instructions"}
           </Button>
           <Button
@@ -104,7 +104,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
         </div>
 
         {resetSent && (
-          <Alert variant="success">
+          <Alert>
             <AlertDescription>Password reset instructions sent.</AlertDescription>
           </Alert>
         )}
@@ -119,26 +119,13 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          autoComplete="email"
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "login-email-error" : undefined}
-        />
-        {errors.email && (
-          <p id="login-email-error" className="text-sm text-destructive">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
+      <FormField htmlFor="email" label="Email" error={errors.email?.message} required>
+        <Input {...register("email")} type="email" autoComplete="email" />
+      </FormField>
 
-      <div className="grid gap-2">
+      <Field className="grid gap-2">
         <div className="flex items-center">
-          <Label htmlFor="password">Password</Label>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
           <Button
             type="button"
             variant="ghost"
@@ -174,19 +161,25 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
             {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </Button>
         </div>
-        {errors.password && (
-          <p id="login-password-error" className="text-sm text-destructive">
-            {errors.password.message}
-          </p>
-        )}
-      </div>
+        <FieldError id="login-password-error">{errors.password?.message}</FieldError>
+      </Field>
 
-      <div className="flex items-center gap-2">
-        <Checkbox id="remember" {...register("remember")} />
-        <Label htmlFor="remember" className="text-sm font-normal">
-          Remember me
-        </Label>
-      </div>
+      <Controller
+        control={control}
+        name="remember"
+        render={({ field }) => (
+          <Field orientation="horizontal" className="items-center gap-2">
+            <Checkbox
+              id="remember"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+            />
+            <FieldLabel htmlFor="remember" className="text-sm font-normal">
+              Remember me
+            </FieldLabel>
+          </Field>
+        )}
+      />
 
       <div className="grid gap-3">
         <Button type="submit" disabled={loginMutation.isPending} className="w-full">

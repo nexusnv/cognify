@@ -178,4 +178,22 @@ describe("DataTable", () => {
     expect(nextPage).toHaveBeenCalledTimes(1);
     expect(previousPage).not.toHaveBeenCalled();
   });
+
+  it("keeps the requisitions table captioned and pagination buttons inline", () => {
+    render(
+      <DataTable
+        caption="Requisitions"
+        rows={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+        pagination={{ currentPage: 1, perPage: 10, total: 20, lastPage: 2 }}
+        onPreviousPage={() => {}}
+        onNextPage={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("table", { name: /requisitions/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /previous page/i })).toHaveClass("inline-flex");
+    expect(screen.getByRole("button", { name: /next page/i })).toHaveClass("inline-flex");
+  });
 });
