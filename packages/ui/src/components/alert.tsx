@@ -7,7 +7,7 @@ const alertVariants: Record<AlertVariant, string> = {
   default: "bg-card text-card-foreground",
   destructive:
     "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
-  success: "border-emerald-500/40 text-emerald-700 dark:text-emerald-300",
+  success: "border-success/50 text-success dark:text-success-foreground [&>svg]:text-success",
 };
 
 function Alert({
@@ -18,7 +18,7 @@ function Alert({
   return React.createElement("div", {
     role: "alert",
     "data-slot": "alert",
-    className: cn("relative w-full rounded-lg border px-4 py-3 text-sm", alertVariants[variant], className),
+    className: cn("relative w-full rounded-lg border border-border px-4 py-3 text-sm", alertVariants[variant], className),
     ...props,
   });
 }

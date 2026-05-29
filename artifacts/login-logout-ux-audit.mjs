@@ -24,6 +24,63 @@ function slugify(label) {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function parseBooleanFlag(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
+function summarizeLogEntries(entries) {
+  const shownEntries = entries.slice(0, 3).map((entry) => `\`${entry}\``);
+  const extraCount = entries.length - shownEntries.length;
+
+  return `${shownEntries.join("; ")}${extraCount > 0 ? `; plus ${extraCount} more recorded in logs` : ""}`;
+}
+
+function runtimeObservationSummaries() {
+  const summaries = [];
+  const httpFailures = networkFailures.filter((entry) => entry.includes("HTTP_"));
+  const serverErrors = httpFailures.filter((entry) => /HTTP_5\d\d/.test(entry));
+  const clientErrors = httpFailures.filter((entry) => /HTTP_4\d\d/.test(entry));
+  const requestFailures = networkFailures.filter((entry) => entry.includes("REQUEST_FAILED"));
+  const abortedRequests = requestFailures.filter((entry) => entry.includes("net::ERR_ABORTED"));
+  const nonAbortedRequests = requestFailures.filter((entry) => !entry.includes("net::ERR_ABORTED"));
+
+  if (serverErrors.length > 0) {
+    summaries.push(`Server error responses recorded (${serverErrors.length}): ${summarizeLogEntries(serverErrors)}`);
+  }
+
+  if (clientErrors.length > 0) {
+    summaries.push(`Client error responses recorded (${clientErrors.length}): ${summarizeLogEntries(clientErrors)}`);
+  }
+
+  if (nonAbortedRequests.length > 0) {
+    summaries.push(`Failed requests recorded (${nonAbortedRequests.length}): ${summarizeLogEntries(nonAbortedRequests)}`);
+  }
+
+  if (abortedRequests.length > 0) {
+    summaries.push(`Navigation-aborted requests recorded (${abortedRequests.length}): ${summarizeLogEntries(abortedRequests)}`);
+  }
+
+  if (consoleErrors.length > 0) {
+    summaries.push(`Console errors recorded (${consoleErrors.length}): ${summarizeLogEntries(consoleErrors)}`);
+  }
+
+  return summaries;
+}
+
+async function waitForRoute(page, matcher, description) {
+  try {
+    await page.waitForURL(matcher, { timeout: 15000 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    consoleErrors.push(`[audit] Failed waiting for route (${description}): ${message}`);
+    throw error;
+  }
+}
+
 function bindPageLogging(page, scope) {
   page.on("console", (message) => {
     if (message.type() === "error") {
@@ -127,6 +184,7 @@ async function discoverLogout(page) {
 }
 
 async function writeReport() {
+  const runtimeSummaries = runtimeObservationSummaries();
   const lines = [
     "# Cognify Login/Logout UX Audit",
     "",
@@ -157,7 +215,7 @@ async function writeReport() {
     "1. Critical: the natural first-time path is broken. The public landing page has one clear action, `Open workspace`, but it sends a signed-out user to `/dashboard` and shows `Workspace unavailable.` with no sign-in button, retry action, explanation, or recovery route. A non-technical user would likely stop here.",
     "2. Login itself is simple and visually calm once `/login` is reached directly. Labels are visible, the primary `Sign in` button is clear, and the form does not overwhelm the user.",
     "3. Failed login feedback appears below the action row as `Invalid credentials`. The message is understandable, but it is low-emphasis and not associated with either field, so a rushed user may miss it or not know whether email, password, or account access is the problem.",
-    "4. Successful login redirects to `/dashboard` and the landing state is understandable: user name, workspace, role, dashboard metrics, and primary actions are visible. The desktop layout is dense but appropriate for an enterprise work queue.",
+    "4. Successful login redirects to `/dashboard` and the landing state is understandable: username, workspace, role, dashboard metrics, and primary actions are visible. The desktop layout is dense but appropriate for an enterprise work queue.",
     "5. Logout is discoverable on desktop because `Sign out` is directly visible in the top bar. This is better than hiding it in an account menu, although the top utility cluster has many adjacent controls: Search, notifications, user profile, and Sign out.",
     "6. After logout, the app returns to `/login`, which clearly indicates the session ended. There is no confirmation toast, but the state transition is unambiguous.",
     "7. Mobile login is usable: fields and actions fit the viewport, labels remain visible, and target sizes look large enough. The password field lacks a show/hide affordance, which is common and helpful on mobile.",
@@ -177,15 +235,12 @@ async function writeReport() {
     "",
     `Console errors captured: ${consoleErrors.length}`,
     `Network failures / HTTP error statuses captured: ${networkFailures.length}`,
-    "",
-    "Notable network/runtime observations:",
-    "",
-    "- `GET /api/me` returned 500 when the signed-out user clicked `Open workspace`; this matches the dead-end workspace-unavailable UI.",
-    "- The failed login produced `POST /api/auth/login` 422, which is expected for invalid credentials but should still be presented clearly.",
-    "- After desktop sign-out, `GET /api/notifications?status=unread&limit=20` and `GET /api/me` returned 500 during teardown/transition; the user-facing flow still returned to login.",
-    "- Several `net::ERR_ABORTED` entries occurred around CSRF/login/logout navigations; these may be navigation-aborted requests rather than persistent backend failures, but they are recorded in `network-failures.log` for follow-up.",
     ""
   );
+
+  if (runtimeSummaries.length > 0) {
+    lines.push("Notable network/runtime observations:", "", ...runtimeSummaries.map((summary) => `- ${summary}`), "");
+  }
 
   await fs.writeFile(path.join(artifactsDir, "report.md"), `${lines.join("\n")}\n`, "utf8");
   await fs.writeFile(
@@ -209,7 +264,7 @@ async function runDesktopFlow(browser) {
   await capture(page, "Desktop public landing", "Opening the app naturally from `/` shows a sparse product landing page. A first-time office user has one clear next action, but no hint about expected credentials, workspace access, or whether this is a marketing page versus the actual product.");
 
   await page.getByRole("link", { name: /open workspace/i }).click();
-  await page.waitForURL(/login|dashboard/, { timeout: 15000 }).catch(() => {});
+  await waitForRoute(page, /login|dashboard/, "desktop open workspace");
   await capture(page, "Desktop open workspace result", "Clicking `Open workspace` should make the sign-in requirement obvious and preserve the sense that the user is entering the procurement workspace.");
 
   await page.goto(`${baseURL}/login`);
@@ -222,13 +277,13 @@ async function runDesktopFlow(browser) {
 
   await fillLogin(page, "test@example.com", "password");
   await submitLogin(page);
-  await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 15000 }).catch(() => {});
+  await waitForRoute(page, (url) => !url.pathname.includes("/login"), "desktop successful login");
   await capture(page, "Desktop authenticated landing", "After valid credentials, the app should clearly show that login succeeded and provide an obvious first task or dashboard orientation.");
 
   const logout = await discoverLogout(page);
-  await capture(page, "Desktop logout discovered", "The signed-in top bar exposes a direct `Sign out` button, so logout is easier to discover than a hidden account-menu-only pattern. The user name and sign-out action compete slightly in the same utility cluster.");
+  await capture(page, "Desktop logout discovered", "The signed-in top bar exposes a direct `Sign out` button, so logout is easier to discover than a hidden account-menu-only pattern. The username and sign-out action compete slightly in the same utility cluster.");
   await logout.click();
-  await page.waitForURL(/login/, { timeout: 15000 }).catch(() => {});
+  await waitForRoute(page, /login/, "desktop logout");
   await capture(page, "Desktop after logout", "After logout, the user should be back in a signed-out state with no ambiguity about whether the session ended.");
 
   await context.close();
@@ -243,7 +298,7 @@ async function runMobileSpotCheck(browser) {
   await capture(page, "Mobile login screen", "Mobile sign-in should keep labels, fields, password recovery, and the primary action visible without horizontal scrolling or cramped taps.");
   await fillLogin(page, "test@example.com", "password");
   await submitLogin(page);
-  await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 15000 }).catch(() => {});
+  await waitForRoute(page, (url) => !url.pathname.includes("/login"), "mobile successful login");
   await capture(page, "Mobile authenticated landing", "Mobile authenticated landing should prioritize navigation clarity and the next useful action instead of simply shrinking the desktop dashboard.");
 
   await context.close();
@@ -254,8 +309,10 @@ async function main() {
   await fs.writeFile(path.join(artifactsDir, "console-errors.log"), "", "utf8");
   await fs.writeFile(path.join(artifactsDir, "network-failures.log"), "", "utf8");
 
+  const headlessOverride = parseBooleanFlag(process.env.HEADLESS);
+  const isHeadless = headlessOverride ?? Boolean(process.env.CI);
   const browser = await chromium.launch({
-    headless: false,
+    headless: isHeadless,
     slowMo: 120,
   });
 

@@ -12,6 +12,11 @@ coverage/
 .turbo/
 .vercel/
 *.tsbuildinfo
+artifacts/
+!artifacts/
+artifacts/*
+!artifacts/login-logout-ux-audit.mjs
+!artifacts/report.md
 
 # Laravel / PHP
 vendor/

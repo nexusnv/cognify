@@ -60,7 +60,7 @@ Persona: non-technical first-time office worker with moderate computer literacy 
 - Viewport: 1440 x 950
 - Screenshot: artifacts/screenshots/07-desktop-logout-discovered.png
 - HTML: artifacts/html/07-desktop-logout-discovered.html
-- Observation: The signed-in top bar exposes a direct `Sign out` button, so logout is easier to discover than a hidden account-menu-only pattern. The user name and sign-out action compete slightly in the same utility cluster.
+- Observation: The signed-in top bar exposes a direct `Sign out` button, so logout is easier to discover than a hidden account-menu-only pattern. The username and sign-out action compete slightly in the same utility cluster.
 
 ### 08. Desktop after logout
 
@@ -91,7 +91,7 @@ Persona: non-technical first-time office worker with moderate computer literacy 
 1. Critical: the natural first-time path is broken. The public landing page has one clear action, `Open workspace`, but it sends a signed-out user to `/dashboard` and shows `Workspace unavailable.` with no sign-in button, retry action, explanation, or recovery route. A non-technical user would likely stop here.
 2. Login itself is simple and visually calm once `/login` is reached directly. Labels are visible, the primary `Sign in` button is clear, and the form does not overwhelm the user.
 3. Failed login feedback appears below the action row as `Invalid credentials`. The message is understandable, but it is low-emphasis and not associated with either field, so a rushed user may miss it or not know whether email, password, or account access is the problem.
-4. Successful login redirects to `/dashboard` and the landing state is understandable: user name, workspace, role, dashboard metrics, and primary actions are visible. The desktop layout is dense but appropriate for an enterprise work queue.
+4. Successful login redirects to `/dashboard` and the landing state is understandable: username, workspace, role, dashboard metrics, and primary actions are visible. The desktop layout is dense but appropriate for an enterprise work queue.
 5. Logout is discoverable on desktop because `Sign out` is directly visible in the top bar. This is better than hiding it in an account menu, although the top utility cluster has many adjacent controls: Search, notifications, user profile, and Sign out.
 6. After logout, the app returns to `/login`, which clearly indicates the session ended. There is no confirmation toast, but the state transition is unambiguous.
 7. Mobile login is usable: fields and actions fit the viewport, labels remain visible, and target sizes look large enough. The password field lacks a show/hide affordance, which is common and helpful on mobile.
@@ -118,4 +118,3 @@ Notable network/runtime observations:
 - The failed login produced `POST /api/auth/login` 422, which is expected for invalid credentials but should still be presented clearly.
 - After desktop sign-out, `GET /api/notifications?status=unread&limit=20` and `GET /api/me` returned 500 during teardown/transition; the user-facing flow still returned to login.
 - Several `net::ERR_ABORTED` entries occurred around CSRF/login/logout navigations; these may be navigation-aborted requests rather than persistent backend failures, but they are recorded in `network-failures.log` for follow-up.
-

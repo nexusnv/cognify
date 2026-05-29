@@ -5,7 +5,7 @@ import { Alert, AlertDescription, Button, Checkbox, Input, Label } from "@cognif
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requestPasswordReset } from "../api/identity-api";
 import { useLogin } from "../hooks/use-login";
 import { loginSchema, type LoginFormValues } from "../schemas/login-schema";
