@@ -1,3 +1,9 @@
+import type * as React from "react";
+import type { Badge as BadgeComponent } from "./components/badge";
+import type { Button as ButtonComponent } from "./components/button";
+import type { NativeSelect as NativeSelectComponent } from "./components/native-select";
+import type { Textarea as TextareaComponent } from "./components/textarea";
+
 export { cn } from "./lib/utils";
 export { Alert, AlertDescription, AlertTitle } from "./components/alert";
 export {
@@ -14,7 +20,7 @@ export {
   AlertDialogTrigger,
 } from "./components/alert-dialog";
 export { Badge, badgeVariants } from "./components/badge";
-export type { BadgeProps } from "./components/badge";
+export type BadgeProps = React.ComponentProps<typeof BadgeComponent>;
 export {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -25,7 +31,7 @@ export {
   BreadcrumbSeparator,
 } from "./components/breadcrumb";
 export { Button, buttonVariants } from "./components/button";
-export type { ButtonProps } from "./components/button";
+export type ButtonProps = React.ComponentProps<typeof ButtonComponent>;
 export {
   ButtonGroup,
   ButtonGroupSeparator,
@@ -124,7 +130,7 @@ export {
 } from "./components/input-group";
 export { Label } from "./components/label";
 export { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from "./components/native-select";
-export type { NativeSelectProps } from "./components/native-select";
+export type NativeSelectProps = React.ComponentProps<typeof NativeSelectComponent>;
 export {
   Pagination,
   PaginationContent,
@@ -211,5 +217,5 @@ export {
 } from "./components/table";
 export { Tabs, TabsContent, TabsList, TabsTrigger, tabsListVariants } from "./components/tabs";
 export { Textarea } from "./components/textarea";
-export type { TextareaProps } from "./components/textarea";
+export type TextareaProps = React.ComponentProps<typeof TextareaComponent>;
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/tooltip";

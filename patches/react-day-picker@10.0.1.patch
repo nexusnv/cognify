@@ -1,0 +1,26 @@
+diff --git a/dist/cjs/types/shared.d.ts b/dist/cjs/types/shared.d.ts
+index 1358d807ea5ee9e0aec1eb6f5ec1527697dc13e2..d477302748fd50a25ab9f504bb857a068f70cc3c 100644
+--- a/dist/cjs/types/shared.d.ts
++++ b/dist/cjs/types/shared.d.ts
+@@ -218,6 +218,8 @@ export type MonthChangeEventHandler = (month: Date) => void;
+  */
+ export type ClassNames = {
+     [key in UI | SelectionState | DayFlag | Animation]: string;
++} & {
++    table?: string;
+ };
+ /**
+  * The CSS styles to use for the {@link UI} elements, the {@link SelectionState}
+diff --git a/dist/esm/types/shared.d.ts b/dist/esm/types/shared.d.ts
+index 1358d807ea5ee9e0aec1eb6f5ec1527697dc13e2..d477302748fd50a25ab9f504bb857a068f70cc3c 100644
+--- a/dist/esm/types/shared.d.ts
++++ b/dist/esm/types/shared.d.ts
+@@ -218,6 +218,8 @@ export type MonthChangeEventHandler = (month: Date) => void;
+  */
+ export type ClassNames = {
+     [key in UI | SelectionState | DayFlag | Animation]: string;
++} & {
++    table?: string;
+ };
+ /**
+  * The CSS styles to use for the {@link UI} elements, the {@link SelectionState}

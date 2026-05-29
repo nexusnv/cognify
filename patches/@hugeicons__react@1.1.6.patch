@@ -1,0 +1,13 @@
+diff --git a/dist/types/HugeiconsIcon.d.ts b/dist/types/HugeiconsIcon.d.ts
+index e6ee1056a8f676394e332b1f6aa05be1f38cd999..aa294806f0b29f0c48a4aca12232e924d361b7e3 100644
+--- a/dist/types/HugeiconsIcon.d.ts
++++ b/dist/types/HugeiconsIcon.d.ts
+@@ -7,7 +7,7 @@ type SVGAttributes = Partial<SVGProps<SVGSVGElement>>;
+ type ComponentAttributes = RefAttributes<SVGSVGElement> & SVGAttributes;
+ interface HugeiconsProps extends ComponentAttributes {
+     size?: string | number;
+-    strokeWidth?: number;
++    strokeWidth?: string | number;
+     absoluteStrokeWidth?: boolean;
+     altIcon?: IconSvgElement;
+     showAlt?: boolean;

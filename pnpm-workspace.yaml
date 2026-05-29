@@ -1,3 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
+patchedDependencies:
+  '@hugeicons/react@1.1.6': patches/@hugeicons__react@1.1.6.patch
+  react-day-picker@10.0.1: patches/react-day-picker@10.0.1.patch
