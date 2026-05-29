@@ -88,14 +88,7 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
           </div>
         </dl>
 
-        {successMessage ? (
-          <div
-            role="status"
-            className="rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950"
-          >
-            {successMessage}
-          </div>
-        ) : null}
+        {successMessage ? <Alert><AlertDescription>{successMessage}</AlertDescription></Alert> : null}
 
         {quotationQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">Loading quotation details.</p>
@@ -117,7 +110,7 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
         )}
 
         {quotation?.permissions.canUploadAttachment === false ? (
-          <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+          <p className="rounded-lg bg-muted/30 p-3 text-sm text-muted-foreground">
             Quotation uploads are not available for this link.
           </p>
         ) : (

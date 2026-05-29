@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from "@cognify/ui";
 import { FormErrorSummary, type FormSummaryError } from "@/components/forms/form-error-summary";
 import { FormField } from "@/components/forms/form-field";
 import { RfqStatusBadge } from "./rfq-status-badge";
@@ -166,14 +166,15 @@ export function RfqDraftForm({
   return (
     <form className="space-y-5" onSubmit={handleSave} noValidate>
       {saveError ? (
-        <div role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-          {saveError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{saveError}</AlertDescription>
+        </Alert>
       ) : null}
 
       <FormErrorSummary title="Resolve the highlighted RFQ fields before saving." errors={saveSummaryErrors} />
 
-      <section id="overview" className="rounded-md border p-4">
+      <Card id="overview">
+        <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <h2 className="text-base font-semibold">Draft details</h2>
@@ -183,155 +184,153 @@ export function RfqDraftForm({
           </div>
           <RfqStatusBadge status={rfq.status} size="compact" />
         </div>
+        </CardHeader>
+        <CardContent>
+          {rfq.status === "cancelled" ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                <p className="font-medium">This RFQ draft is cancelled.</p>
+                <p className="mt-1">{rfq.cancelReason ?? "No cancellation reason was recorded."}</p>
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
-        {rfq.status === "cancelled" ? (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-            <p className="font-medium">This RFQ draft is cancelled.</p>
-            <p className="mt-1">
-              {rfq.cancelReason ?? "No cancellation reason was recorded."}
-            </p>
-          </div>
-        ) : null}
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <FormField htmlFor="title" label="Title" error={fieldErrors.title?.[0]} required>
-            <input
-              id="title"
-              className="min-h-11 w-full rounded-md border px-3 text-base"
-              value={values.title}
-              disabled={readOnly}
-              onChange={(event) => updateValue("title", event.target.value)}
-            />
-          </FormField>
-
-          <FormField
-            htmlFor="responseDueAt"
-            label="Response due at"
-            description="Leave blank if the due date is not yet set."
-            error={fieldErrors.responseDueAt?.[0]}
-          >
-            <input
-              id="responseDueAt"
-              type="datetime-local"
-              className="min-h-11 w-full rounded-md border px-3 text-base"
-              value={values.responseDueAt}
-              disabled={readOnly}
-              onChange={(event) => updateValue("responseDueAt", event.target.value)}
-            />
-          </FormField>
-
-          <div className="lg:col-span-2">
-            <FormField
-              htmlFor="scopeSummary"
-              label="Scope summary"
-              error={fieldErrors.scopeSummary?.[0]}
-            >
-              <Textarea
-                id="scopeSummary"
-                value={values.scopeSummary}
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <FormField htmlFor="title" label="Title" error={fieldErrors.title?.[0]} required>
+              <Input
+                id="title"
+                value={values.title}
                 disabled={readOnly}
-                className="min-h-32 text-sm"
-                onChange={(event) => updateValue("scopeSummary", event.target.value)}
+                onChange={(event) => updateValue("title", event.target.value)}
               />
             </FormField>
-          </div>
 
-          <div className="lg:col-span-2">
             <FormField
-              htmlFor="responseInstructions"
-              label="Response instructions"
-              error={fieldErrors.responseInstructions?.[0]}
+              htmlFor="responseDueAt"
+              label="Response due at"
+              description="Leave blank if the due date is not yet set."
+              error={fieldErrors.responseDueAt?.[0]}
             >
-              <Textarea
-                id="responseInstructions"
-                value={values.responseInstructions}
+              <Input
+                id="responseDueAt"
+                type="datetime-local"
+                value={values.responseDueAt}
                 disabled={readOnly}
-                className="min-h-32 text-sm"
-                onChange={(event) => updateValue("responseInstructions", event.target.value)}
+                onChange={(event) => updateValue("responseDueAt", event.target.value)}
               />
             </FormField>
-          </div>
-        </div>
-      </section>
 
-      <section id="line-items" className="rounded-md border p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold">Line items</h2>
-            <p className="text-sm text-muted-foreground">
-              Copy the source requisition lines and refine them for the RFQ package.
-            </p>
+            <div className="lg:col-span-2">
+              <FormField
+                htmlFor="scopeSummary"
+                label="Scope summary"
+                error={fieldErrors.scopeSummary?.[0]}
+              >
+                <Textarea
+                  id="scopeSummary"
+                  value={values.scopeSummary}
+                  disabled={readOnly}
+                  className="min-h-32 text-sm"
+                  onChange={(event) => updateValue("scopeSummary", event.target.value)}
+                />
+              </FormField>
+            </div>
+
+            <div className="lg:col-span-2">
+              <FormField
+                htmlFor="responseInstructions"
+                label="Response instructions"
+                error={fieldErrors.responseInstructions?.[0]}
+              >
+                <Textarea
+                  id="responseInstructions"
+                  value={values.responseInstructions}
+                  disabled={readOnly}
+                  className="min-h-32 text-sm"
+                  onChange={(event) => updateValue("responseInstructions", event.target.value)}
+                />
+              </FormField>
+            </div>
           </div>
-        </div>
-        <div className="mt-4">
+        </CardContent>
+      </Card>
+
+      <Card id="line-items">
+        <CardHeader>
+          <CardTitle className="text-base">Line items</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Copy the source requisition lines and refine them for the RFQ package.
+          </p>
+        </CardHeader>
+        <CardContent>
           <RfqLineItemsTable
             items={values.lineItems}
             errors={fieldErrors}
             disabled={readOnly}
             onChange={(lineItems) => updateValue("lineItems", lineItems)}
           />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section id="documents" className="rounded-md border p-4">
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold">Required documents</h2>
+      <Card id="documents">
+        <CardHeader>
+          <CardTitle className="text-base">Required documents</CardTitle>
           <p className="text-sm text-muted-foreground">
             Define the declarations and files vendors must include with their response.
           </p>
-        </div>
-        <div className="mt-4">
+        </CardHeader>
+        <CardContent>
           <RfqRequiredDocumentsEditor
             items={values.requiredDocuments}
             errors={fieldErrors}
             disabled={readOnly}
-            onChange={(requiredDocuments) =>
-              updateValue("requiredDocuments", requiredDocuments)
-            }
+            onChange={(requiredDocuments) => updateValue("requiredDocuments", requiredDocuments)}
           />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section id="notes" className="rounded-md border p-4">
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold">Notes</h2>
+      <Card id="notes">
+        <CardHeader>
+          <CardTitle className="text-base">Notes</CardTitle>
           <p className="text-sm text-muted-foreground">
             Keep evaluation and internal buyer notes in the draft workspace.
           </p>
-        </div>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <FormField
-            htmlFor="evaluationNotes"
-            label="Evaluation notes"
-            error={fieldErrors.evaluationNotes?.[0]}
-          >
-            <Textarea
-              id="evaluationNotes"
-              value={values.evaluationNotes}
-              disabled={readOnly}
-              className="min-h-36 text-sm"
-              onChange={(event) => updateValue("evaluationNotes", event.target.value)}
-            />
-          </FormField>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <FormField
+              htmlFor="evaluationNotes"
+              label="Evaluation notes"
+              error={fieldErrors.evaluationNotes?.[0]}
+            >
+              <Textarea
+                id="evaluationNotes"
+                value={values.evaluationNotes}
+                disabled={readOnly}
+                className="min-h-36 text-sm"
+                onChange={(event) => updateValue("evaluationNotes", event.target.value)}
+              />
+            </FormField>
 
-          <FormField
-            htmlFor="internalNotes"
-            label="Internal notes"
-            error={fieldErrors.internalNotes?.[0]}
-          >
-            <Textarea
-              id="internalNotes"
-              value={values.internalNotes}
-              disabled={readOnly}
-              className="min-h-36 text-sm"
-              onChange={(event) => updateValue("internalNotes", event.target.value)}
-            />
-          </FormField>
-        </div>
-      </section>
+            <FormField
+              htmlFor="internalNotes"
+              label="Internal notes"
+              error={fieldErrors.internalNotes?.[0]}
+            >
+              <Textarea
+                id="internalNotes"
+                value={values.internalNotes}
+                disabled={readOnly}
+                className="min-h-36 text-sm"
+                onChange={(event) => updateValue("internalNotes", event.target.value)}
+              />
+            </FormField>
+          </div>
+        </CardContent>
+      </Card>
 
       {canSubmit ? (
-        <div className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-lg bg-muted/30 p-4 sm:flex-row sm:items-start sm:justify-between">
           <p className="text-sm text-muted-foreground">
             Save the current RFQ draft after you finish editing the sourcing package.
           </p>
@@ -340,54 +339,50 @@ export function RfqDraftForm({
           </Button>
         </div>
       ) : (
-        <div className="rounded-md border p-4 text-sm text-muted-foreground">
-          This RFQ draft is read-only.
-        </div>
+        <p className="rounded-lg bg-muted/30 p-4 text-sm text-muted-foreground">This RFQ draft is read-only.</p>
       )}
 
       {canCancel ? (
-        <section className="rounded-md border border-red-200 p-4">
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold text-red-950">Cancel draft</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base text-red-950">Cancel draft</CardTitle>
             <p className="text-sm text-red-900">
               Cancellation is terminal and prevents further editing.
             </p>
-          </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {cancelError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{cancelError}</AlertDescription>
+              </Alert>
+            ) : null}
 
-          {cancelError ? (
-            <div
-              role="alert"
-              className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900"
-            >
-              {cancelError}
-            </div>
-          ) : null}
-
-          <div className="mt-4 max-w-2xl space-y-4">
-            <FormField
-              htmlFor="cancelReason"
-              label="Cancel reason"
-              error={activeCancelError[0]}
-              required
-            >
-              <Textarea
-                id="cancelReason"
-                value={values.cancelReason}
+            <div className="max-w-2xl space-y-4">
+              <FormField
+                htmlFor="cancelReason"
+                label="Cancel reason"
+                error={activeCancelError[0]}
+                required
+              >
+                <Textarea
+                  id="cancelReason"
+                  value={values.cancelReason}
+                  disabled={isCancelling || readOnly}
+                  className="min-h-28 text-sm"
+                  onChange={(event) => updateValue("cancelReason", event.target.value)}
+                />
+              </FormField>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => void handleCancel()}
                 disabled={isCancelling || readOnly}
-                className="min-h-28 text-sm"
-                onChange={(event) => updateValue("cancelReason", event.target.value)}
-              />
-            </FormField>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => void handleCancel()}
-              disabled={isCancelling || readOnly}
-            >
-              {isCancelling ? "Cancelling" : "Cancel draft"}
-            </Button>
-          </div>
-        </section>
+              >
+                {isCancelling ? "Cancelling" : "Cancel draft"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : null}
     </form>
   );

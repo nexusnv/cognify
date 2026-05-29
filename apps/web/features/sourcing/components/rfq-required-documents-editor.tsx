@@ -51,7 +51,7 @@ export function RfqRequiredDocumentsEditor({
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
+      <div className="overflow-x-auto">
         <Table className="min-w-[52rem]">
           <TableHeader>
             <TableRow>
@@ -118,11 +118,12 @@ export function RfqRequiredDocumentsEditor({
                       className="inline-flex min-h-11 items-center gap-2 text-sm"
                       aria-label={`Required document ${index + 1} required`}
                     >
-                      <input
-                        type="checkbox"
+                      <Input
+                        aria-label={`Required document ${index + 1} required`}
                         checked={item.required}
                         disabled={disabled}
-                        aria-label={`Required document ${index + 1} required`}
+                        type="checkbox"
+                        className="size-4 shrink-0 p-0"
                         onChange={(event) =>
                           updateItem(item.id, { required: event.target.checked })
                         }

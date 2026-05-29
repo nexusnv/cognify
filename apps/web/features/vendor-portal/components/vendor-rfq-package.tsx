@@ -2,7 +2,7 @@ import type {
   VendorPortalRfqLineItem,
   VendorPortalRfqRequiredDocument,
 } from "@cognify/api-client/schemas";
-import { Badge, Card, CardContent, CardHeader, CardTitle, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
+import { Alert, AlertDescription, Badge, Card, CardContent, CardHeader, CardTitle, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 import type { VendorRfqPortalViewModel } from "../types/vendor-rfq-portal-view-model";
 import { formatDateTime } from "../types/vendor-rfq-portal-view-model";
 import { VendorQuotationUploadPanel } from "./vendor-quotation-upload-panel";
@@ -26,9 +26,9 @@ export function VendorRfqPackage({
         <p className="mt-2 font-mono text-sm text-muted-foreground">{invitation.rfq.number}</p>
         </CardHeader>
         <CardContent>
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-          {invitation.deadlineSummary}
-        </div>
+        <Alert>
+          <AlertDescription>{invitation.deadlineSummary}</AlertDescription>
+        </Alert>
         </CardContent>
       </Card>
 
@@ -89,11 +89,11 @@ export function VendorRfqPackage({
 
       <Card><CardHeader><CardTitle className="text-lg">Required documents</CardTitle></CardHeader><CardContent>
         {requiredDocuments.length > 0 ? (
-          <ul className="mt-4 space-y-2 text-sm">
+            <ul className="mt-4 space-y-2 text-sm">
             {requiredDocuments.map((document) => (
               <li
                 key={document.key ?? document.label}
-                className="flex items-center justify-between rounded-md border p-3"
+                className="flex items-center justify-between rounded-md bg-muted/30 px-3 py-2"
               >
                 <span>{document.label ?? document.key ?? "Required document"}</span>
                 <Badge variant={document.required ? "secondary" : "outline"}>{document.required ? "Required" : "Optional"}</Badge>

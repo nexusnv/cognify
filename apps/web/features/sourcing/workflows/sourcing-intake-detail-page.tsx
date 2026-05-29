@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
 import { SourcingIntakeDecisionDialog } from "../components/sourcing-intake-decision-dialog";
 import { SourcingIntakeReviewForm } from "../components/sourcing-intake-review-form";
@@ -32,11 +32,15 @@ export function SourcingIntakeDetailPage({ reviewId }: { reviewId: string }) {
   }
 
   if (reviewQuery.isLoading) {
-    return <div aria-label="Loading sourcing intake" className="rounded-md border p-4 text-sm text-muted-foreground">Loading sourcing intake</div>;
+    return <div aria-label="Loading sourcing intake" className="p-4 text-sm text-muted-foreground">Loading sourcing intake</div>;
   }
 
   if (reviewQuery.isError || !review) {
-    return <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Unable to load sourcing intake review.</div>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>Unable to load sourcing intake review.</AlertDescription>
+      </Alert>
+    );
   }
 
   return (
@@ -69,47 +73,55 @@ export function SourcingIntakeDetailPage({ reviewId }: { reviewId: string }) {
             </Button>
           ) : null}
           {createRfqError ? (
-            <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-              {createRfqError}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{createRfqError}</AlertDescription>
+            </Alert>
           ) : null}
         </div>
       }
       sidebar={<SourcingIntakeReviewForm review={review} />}
     >
-      <section id="summary" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Requisition summary</h2>
-        <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div>
-            <dt className="text-sm text-muted-foreground">Department</dt>
-            <dd>{review.requisition.department ?? "Not set"}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-muted-foreground">Estimated total</dt>
-            <dd>{formatMoney(review.requisition.estimatedTotal, review.requisition.currency ?? "MYR")}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-muted-foreground">Project</dt>
-            <dd>{review.project ? <Link className="underline" href={`/projects/${review.project.id}`}>{review.project.name}</Link> : "No project"}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-muted-foreground">Sourcing path</dt>
-            <dd>{review.sourcingPath ? review.sourcingPath.replaceAll("_", " ") : "Not decided"}</dd>
-          </div>
-        </dl>
-      </section>
+      <Card id="summary">
+        <CardHeader>
+          <CardTitle className="text-base">Requisition summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <dt className="text-sm text-muted-foreground">Department</dt>
+              <dd>{review.requisition.department ?? "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Estimated total</dt>
+              <dd>{formatMoney(review.requisition.estimatedTotal, review.requisition.currency ?? "MYR")}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Project</dt>
+              <dd>{review.project ? <Link className="underline" href={`/projects/${review.project.id}`}>{review.project.name}</Link> : "No project"}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Sourcing path</dt>
+              <dd>{review.sourcingPath ? review.sourcingPath.replaceAll("_", " ") : "Not decided"}</dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
 
-      <section id="handoff" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Sourcing handoff</h2>
-        {review.status === "ready_for_rfq" ? (
-          <p className="mt-2 text-sm text-muted-foreground">This review is ready for RFQ drafting. Create or reveal the draft RFQ to shape the sourcing package before vendor invitations.</p>
-        ) : review.status === "clarification_requested" ? (
-          <p className="mt-2 text-sm text-muted-foreground">Clarification has been requested through the requisition correction flow.</p>
-        ) : (
-          <p className="mt-2 text-sm text-muted-foreground">Record the buyer intake decision before RFQ or closeout work starts.</p>
-        )}
-        {review.decisionReason ? <p className="mt-3 text-sm">{review.decisionReason}</p> : null}
-      </section>
+      <Card id="handoff">
+        <CardHeader>
+          <CardTitle className="text-base">Sourcing handoff</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {review.status === "ready_for_rfq" ? (
+            <p className="text-sm text-muted-foreground">This review is ready for RFQ drafting. Create or reveal the draft RFQ to shape the sourcing package before vendor invitations.</p>
+          ) : review.status === "clarification_requested" ? (
+            <p className="text-sm text-muted-foreground">Clarification has been requested through the requisition correction flow.</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Record the buyer intake decision before RFQ or closeout work starts.</p>
+          )}
+          {review.decisionReason ? <p className="mt-3 text-sm">{review.decisionReason}</p> : null}
+        </CardContent>
+      </Card>
     </RecordWorkspaceLayout>
   );
 }
