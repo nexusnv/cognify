@@ -1,7 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  NativeSelect,
+  Textarea,
+} from "@cognify/ui";
 import {
   useApprovalDelegationCandidates,
   useCreateApprovalDelegation,
@@ -70,74 +83,84 @@ export function ApprovalDelegationDialog({
       <Button variant="outline" onClick={() => setOpen(true)}>
         Delegate
       </Button>
-      {!open ? null : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Delegate approval task"
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-          >
-            <h2 className="text-lg font-semibold">Delegate approval task</h2>
-            <div className="mt-4 space-y-4">
-              <label className="block text-sm font-medium">
-                Delegate
-                <NativeSelect
-                  aria-label="Delegate"
-                  className="mt-1"
-                  value={delegateId}
-                  onChange={(event) => setDelegateId(event.target.value)}
-                >
-                  <option value="">Select delegate</option>
-                  {delegateOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </label>
-              <label className="block text-sm font-medium">
-                Starts
-                <input
-                  aria-label="Starts"
-                  className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
-                  type="date"
-                  value={startsAt}
-                  onChange={(event) => setStartsAt(event.target.value)}
-                />
-              </label>
-              <label className="block text-sm font-medium">
-                Ends
-                <input
-                  aria-label="Ends"
-                  className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
-                  type="date"
-                  value={endsAt}
-                  onChange={(event) => setEndsAt(event.target.value)}
-                />
-              </label>
-              <label className="block text-sm font-medium">
-                Reason
-                <Textarea
-                  aria-label="Delegation reason"
-                  className="mt-1"
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </label>
-            </div>
-            {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button disabled={pending} onClick={handleSubmit}>
-                {pending ? "Delegating" : "Confirm delegation"}
-              </Button>
-            </div>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) {
+            setError(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delegate approval task</DialogTitle>
+            <DialogDescription>
+              Assign this task to another approver for a fixed window.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <label className="block text-sm font-medium">
+              Delegate
+              <NativeSelect
+                aria-label="Delegate"
+                className="mt-1"
+                value={delegateId}
+                onChange={(event) => setDelegateId(event.target.value)}
+              >
+                <option value="">Select delegate</option>
+                {delegateOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </label>
+            <label className="block text-sm font-medium">
+              Starts
+              <Input
+                aria-label="Starts"
+                className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
+                type="date"
+                value={startsAt}
+                onChange={(event) => setStartsAt(event.target.value)}
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Ends
+              <Input
+                aria-label="Ends"
+                className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
+                type="date"
+                value={endsAt}
+                onChange={(event) => setEndsAt(event.target.value)}
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Reason
+              <Textarea
+                aria-label="Delegation reason"
+                className="mt-1"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </label>
           </div>
-        </div>
-      )}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button disabled={pending} onClick={handleSubmit}>
+              {pending ? "Delegating" : "Confirm delegation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

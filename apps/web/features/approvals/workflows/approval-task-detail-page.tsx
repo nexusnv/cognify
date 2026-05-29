@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { toast } from "sonner";
+import { Alert, AlertDescription, Button, Card, CardContent } from "@cognify/ui";
+import { PageHeader } from "@/components/ui/page-header";
 import type {
   ApprovalAwardRecommendationSubjectMetadata,
   ApprovalRequisitionSubjectMetadata,
@@ -19,11 +21,19 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
   const task = taskQuery.data;
 
   if (taskQuery.isLoading) {
-    return <p className="rounded-md border p-4 text-sm text-muted-foreground">Loading approval task</p>;
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">Loading approval task</CardContent>
+      </Card>
+    );
   }
 
   if (taskQuery.isError || !task) {
-    return <p className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Approval task could not be loaded.</p>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>Approval task could not be loaded.</AlertDescription>
+      </Alert>
+    );
   }
 
   const isAwardRecommendation = task.subject.type === "rfq_award_recommendation";
@@ -36,45 +46,48 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-3">
-        <Link href="/approvals" className="text-sm font-medium underline-offset-4 hover:underline">
-          Back to approvals
-        </Link>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-mono text-xs text-muted-foreground">{task.subject.number}</p>
-            <h1 className="text-2xl font-semibold tracking-normal">{task.subject.title}</h1>
-          </div>
-          <ApprovalStatusBadge status={task.status} />
-        </div>
-      </header>
-
-      <section className="grid gap-3 rounded-md border p-4 text-sm md:grid-cols-3">
-        <Metric label="Stage" value={task.stage.name ?? "Current stage"} />
-        <Metric label="Assignee" value={task.assignee?.name ?? "Unassigned"} />
-        <Metric label="Due" value={formatDate(task.dueAt)} />
-        {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
-          <Metric label="Delegated from" value={task.originalAssignee.name} />
-        ) : null}
-        {isAwardRecommendation ? (
+      <PageHeader
+        eyebrow={task.subject.number}
+        title={task.subject.title}
+        actions={
           <>
-            <Metric label="Recommended vendor" value={awardMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
-            <Metric label="RFQ" value={awardMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
-            <Metric label="Weighted score" value={formatNumber(awardMetadata.scorecardWeightedTotal)} />
+            <ApprovalStatusBadge status={task.status} />
+            <Button asChild variant="outline">
+              <Link href="/approvals">Back to approvals</Link>
+            </Button>
           </>
-        ) : (
-          <>
-            <Metric label="Requester" value={requisitionMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
-            <Metric label="Department" value={requisitionMetadata.department ?? "Unassigned"} />
-            <Metric label="Cost center" value={requisitionMetadata.costCenter ?? "Unassigned"} />
-          </>
-        )}
-      </section>
+        }
+      />
 
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Decision</h2>
-        {task.status === "active" && hasDecisionAction ? (
-          <div className="mt-4 flex flex-wrap gap-2">
+      <Card>
+        <CardContent className="grid gap-3 p-4 text-sm md:grid-cols-3">
+          <Metric label="Stage" value={task.stage.name ?? "Current stage"} />
+          <Metric label="Assignee" value={task.assignee?.name ?? "Unassigned"} />
+          <Metric label="Due" value={formatDate(task.dueAt)} />
+          {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
+            <Metric label="Delegated from" value={task.originalAssignee.name} />
+          ) : null}
+          {isAwardRecommendation ? (
+            <>
+              <Metric label="Recommended vendor" value={awardMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
+              <Metric label="RFQ" value={awardMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
+              <Metric label="Weighted score" value={formatNumber(awardMetadata.scorecardWeightedTotal)} />
+            </>
+          ) : (
+            <>
+              <Metric label="Requester" value={requisitionMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
+              <Metric label="Department" value={requisitionMetadata.department ?? "Unassigned"} />
+              <Metric label="Cost center" value={requisitionMetadata.costCenter ?? "Unassigned"} />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="text-base font-semibold">Decision</h2>
+          {task.status === "active" && hasDecisionAction ? (
+            <div className="mt-4 flex flex-wrap gap-2">
             {canApprove ? (
               <ApprovalActionDialog
                 action="approve"
@@ -125,40 +138,46 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
             ) : null}
             <ApprovalDelegationDialog taskId={task.id} lockVersion={task.lockVersion} />
           </div>
-        ) : (
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {task.decision ? `Decision recorded: ${task.decision.replaceAll("_", " ")}` : "No decision recorded."}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="text-base font-semibold">{isAwardRecommendation ? "Award recommendation" : "Requisition"}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {task.decision ? `Decision recorded: ${task.decision.replaceAll("_", " ")}` : "No decision recorded."}
+            {task.subject.title} is currently {task.subject.status?.replaceAll("_", " ")}.
           </p>
-        )}
-      </section>
+          {isAwardRecommendation ? (
+            <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+              <Metric label="Rationale" value={awardMetadata.rationale ?? "No rationale provided"} />
+              <Metric label="Tradeoff summary" value={awardMetadata.tradeoffSummary ?? "Not provided"} />
+              <Metric label="Risk summary" value={awardMetadata.riskSummary ?? "Not provided"} />
+              <Metric label="Exception summary" value={awardMetadata.exceptionSummary ?? "Not provided"} />
+            </div>
+          ) : null}
+          <Button asChild variant="outline" className="mt-3">
+            <Link
+              href={isAwardRecommendation ? awardRecommendationHref(task, awardMetadata) : `/requisitions/${task.subject.id}`}
+            >
+              {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">{isAwardRecommendation ? "Award recommendation" : "Requisition"}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {task.subject.title} is currently {task.subject.status?.replaceAll("_", " ")}.
-        </p>
-        {isAwardRecommendation ? (
-          <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-            <Metric label="Rationale" value={awardMetadata.rationale ?? "No rationale provided"} />
-            <Metric label="Tradeoff summary" value={awardMetadata.tradeoffSummary ?? "Not provided"} />
-            <Metric label="Risk summary" value={awardMetadata.riskSummary ?? "Not provided"} />
-            <Metric label="Exception summary" value={awardMetadata.exceptionSummary ?? "Not provided"} />
-          </div>
-        ) : null}
-        <Link
-          href={isAwardRecommendation ? awardRecommendationHref(task, awardMetadata) : `/requisitions/${task.subject.id}`}
-          className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
-        >
-          {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
-        </Link>
-      </section>
-
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Comments</h2>
-        <div className="mt-4">
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="text-base font-semibold">Comments</h2>
+          <div className="mt-4">
           <ApprovalTaskComments taskId={task.id} />
-        </div>
-      </section>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

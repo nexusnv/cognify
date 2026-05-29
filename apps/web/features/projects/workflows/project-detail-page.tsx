@@ -3,7 +3,9 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Alert, AlertDescription, Card, CardContent } from "@cognify/ui";
 import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { SurfaceSection } from "@/components/ui/surface-section";
 import { rememberRecentRecord } from "@/features/search/hooks/use-recent-records";
 import { ProjectActionDialog } from "../components/project-action-dialog";
 import { ProjectActivityTimeline } from "../components/project-activity-timeline";
@@ -37,14 +39,18 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
   }, [project]);
 
   if (projectQuery.isLoading) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading project workspace</div>;
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">Loading project workspace</CardContent>
+      </Card>
+    );
   }
 
   if (projectQuery.isError || !project) {
     return (
-      <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        Project could not be loaded.
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>Project could not be loaded.</AlertDescription>
+      </Alert>
     );
   }
 
@@ -133,7 +139,7 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
   );
 
   return (
-    <RecordWorkspaceLayout
+      <RecordWorkspaceLayout
       backHref="/projects"
       backLabel="Back to projects"
       eyebrow={project.number}
@@ -161,33 +167,38 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
       primaryActions={actions}
       sidebar={
         <>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Approvals placeholder</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Approval routing is not active for projects yet.
-            </p>
-          </section>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Risk placeholder</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Project risks are reserved for a later governance slice.
-            </p>
-          </section>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Award placeholder</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Award records will appear here after award workflows are implemented.
-            </p>
-          </section>
+          <Card>
+            <CardContent className="space-y-2 p-4">
+              <h2 className="text-base font-semibold">Approvals placeholder</h2>
+              <p className="text-sm text-muted-foreground">
+                Approval routing is not active for projects yet.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-2 p-4">
+              <h2 className="text-base font-semibold">Risk placeholder</h2>
+              <p className="text-sm text-muted-foreground">
+                Project risks are reserved for a later governance slice.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-2 p-4">
+              <h2 className="text-base font-semibold">Award placeholder</h2>
+              <p className="text-sm text-muted-foreground">
+                Award records will appear here after award workflows are implemented.
+              </p>
+            </CardContent>
+          </Card>
         </>
       }
     >
-      <section id="overview" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Overview</h2>
-        <p className="mt-2 text-sm leading-6">
+      <SurfaceSection title="Overview">
+        <p className="text-sm leading-6">
           {project.charter || "No charter has been captured for this project yet."}
         </p>
-      </section>
+      </SurfaceSection>
 
       <ProjectBudgetSummary
         budgetAmount={project.budgetAmount}
@@ -201,12 +212,9 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
         permissions={project.permissions}
       />
 
-      <section id="activity" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Activity</h2>
-        <div className="mt-3">
-          <ProjectActivityTimeline events={activityQuery.data?.data ?? []} />
-        </div>
-      </section>
+      <SurfaceSection title="Activity">
+        <ProjectActivityTimeline events={activityQuery.data?.data ?? []} />
+      </SurfaceSection>
     </RecordWorkspaceLayout>
   );
 }

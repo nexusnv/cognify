@@ -1,3 +1,4 @@
+import { Badge, Card, CardContent, CardHeader, CardTitle, Separator } from "@cognify/ui";
 import type { ApprovalPreviewStage } from "../types/approval-view-model";
 
 export function ApprovalStageMap({
@@ -20,37 +21,44 @@ export function ApprovalStageMap({
           .map((approver) => approver.label ?? approver.role ?? approver.userId ?? approver.type)
           .join(", ");
         return (
-          <li key={`${stage.name}-${index}`} className="rounded-md border p-3">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold">{stage.name}</h3>
-              <span className="text-xs uppercase text-muted-foreground">
-                <span>{stage.completionRule}</span>
-                {!isActionable ? <span> · blocked</span> : null}
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              <span className="block">{approverLabels || "No approvers"}</span>
-              <span className="block">
-                Fallback: {fallbackLabels || "No fallback approver configured"}
-              </span>
-            </p>
-            {!isActionable ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Blocked until the prior stage completes.
-              </p>
-            ) : null}
-            {stage.dueAt ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Due at {stage.dueAt}
-              </p>
-            ) : null}
-            {stage.warnings.length > 0 ? (
-              <ul className="mt-2 space-y-1 text-xs text-amber-700">
-                {stage.warnings.map((warning) => (
-                  <li key={`${stage.name}-${warning.code}`}>{warning.message}</li>
-                ))}
-              </ul>
-            ) : null}
+          <li key={`${stage.name}-${index}`}>
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-sm">{stage.name}</CardTitle>
+                  <Badge variant={isActionable ? "secondary" : "outline"}>
+                    <span>{stage.completionRule}</span>
+                    {!isActionable ? <span> blocked</span> : null}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="text-muted-foreground">
+                  <span className="block">{approverLabels || "No approvers"}</span>
+                  <span className="block">
+                    Fallback: {fallbackLabels || "No fallback approver configured"}
+                  </span>
+                </p>
+                {!isActionable ? (
+                  <p className="text-xs text-muted-foreground">
+                    Blocked until the prior stage completes.
+                  </p>
+                ) : null}
+                {stage.dueAt ? (
+                  <p className="text-xs text-muted-foreground">Due at {stage.dueAt}</p>
+                ) : null}
+                {stage.warnings.length > 0 ? (
+                  <>
+                    <Separator />
+                    <ul className="space-y-1 text-xs text-amber-700">
+                      {stage.warnings.map((warning) => (
+                        <li key={`${stage.name}-${warning.code}`}>{warning.message}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </CardContent>
+            </Card>
           </li>
         );
       })}

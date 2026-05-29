@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Button, NativeSelect } from "@cognify/ui";
+import { Button, Card, CardContent, Input, NativeSelect } from "@cognify/ui";
+import { PageHeader } from "@/components/ui/page-header";
+import { Toolbar } from "@/components/ui/toolbar";
 import { useDataTableState } from "@/components/data-table/use-data-table-state";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useProjects } from "../hooks/use-projects";
@@ -49,60 +51,54 @@ export function ProjectListPage() {
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Projects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Track procurement workspaces, ownership, and linked requisition flow.
-          </p>
-        </div>
-        <Button
-          type="button"
-          disabled={!canCreateProject}
-          onClick={() => {
-            if (canCreateProject) {
-              router.push("/projects/new");
-            }
-          }}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          New project
-        </Button>
-      </div>
-
-      <div className="grid gap-3 rounded-md border p-3 md:grid-cols-3">
-        <label className="space-y-1.5 text-sm font-medium">
-          Search
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-        <label className="space-y-1.5 text-sm font-medium">
-          Status
-          <NativeSelect
-            value={status}
-            onChange={(event) => setStatus(event.target.value as ProjectStatus | "")}
+      <PageHeader
+        title="Projects"
+        description="Track procurement workspaces, ownership, and linked requisition flow."
+        actions={
+          <Button
+            type="button"
+            disabled={!canCreateProject}
+            onClick={() => {
+              if (canCreateProject) {
+                router.push("/projects/new");
+              }
+            }}
+            className="gap-2"
           >
-            <option value="">All</option>
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="on_hold">On hold</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </NativeSelect>
-        </label>
-        <label className="space-y-1.5 text-sm font-medium">
-          Department
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
-            value={department}
-            onChange={(event) => setDepartment(event.target.value)}
-          />
-        </label>
-      </div>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            New project
+          </Button>
+        }
+      />
+
+      <Card>
+        <CardContent className="p-4">
+          <Toolbar label="Project filters" className="md:items-end">
+            <label className="space-y-1.5 text-sm font-medium">
+              Search
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium">
+              Status
+              <NativeSelect
+                value={status}
+                onChange={(event) => setStatus(event.target.value as ProjectStatus | "")}
+              >
+                <option value="">All</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="on_hold">On hold</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </NativeSelect>
+            </label>
+            <label className="space-y-1.5 text-sm font-medium">
+              Department
+              <Input value={department} onChange={(event) => setDepartment(event.target.value)} />
+            </label>
+          </Toolbar>
+        </CardContent>
+      </Card>
 
       <ProjectsTable
         projects={projects}
