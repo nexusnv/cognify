@@ -141,14 +141,14 @@ export function ApprovalPolicyForm({
             {rules.fields.map((rule, index) => (
               <div
                 key={rule.id}
+                data-rule-row="true"
                 className="grid gap-2 rounded-md border p-2 md:grid-cols-[minmax(9rem,1fr)_9rem_minmax(8rem,1fr)_2.75rem]"
               >
                 <label className="space-y-1 text-xs font-medium">
                   Field
-                  <select
+                  <NativeSelect
                     {...register(`rules.${index}.field`)}
                     aria-label={`Rule ${index + 1} field`}
-                    className="h-9 w-full min-w-0 appearance-none rounded-md border border-input bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed data-[size=sm]:h-8 data-[size=sm]:py-1 dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
                     onChange={(event) => {
                       setValue(`rules.${index}.field`, event.target.value, {
                         shouldDirty: true,
@@ -165,22 +165,21 @@ export function ApprovalPolicyForm({
                         {ruleFieldLabels[field]}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </label>
 
                 <label className="space-y-1 text-xs font-medium">
                   Operator
-                  <select
+                  <NativeSelect
                     {...register(`rules.${index}.operator`)}
                     aria-label={`Rule ${index + 1} operator`}
-                    className="h-9 w-full min-w-0 appearance-none rounded-md border border-input bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed data-[size=sm]:h-8 data-[size=sm]:py-1 dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
                   >
                     <option value="equals">Equals</option>
                     <option value="in">In</option>
                     <option value="gte">Greater or equal</option>
                     <option value="lte">Less or equal</option>
                     <option value="between">Between</option>
-                  </select>
+                  </NativeSelect>
                 </label>
 
                 <label className="space-y-1 text-xs font-medium">
