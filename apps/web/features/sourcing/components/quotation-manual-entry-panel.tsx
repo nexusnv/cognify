@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { Quotation } from "@cognify/api-client/schemas";
 import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from "@cognify/ui";
@@ -29,7 +29,6 @@ export function QuotationManualEntryPanel({
 
   return (
     <QuotationManualEntryForm
-      key={quotationFormKey(quotation)}
       invitationId={invitationId}
       invitationStatus={invitationStatus}
       quotation={quotation}
@@ -60,6 +59,10 @@ function QuotationManualEntryForm({
 }) {
   const saveMutation = useSaveQuotationManualEntry(invitationId, quotation?.id);
   const [values, setValues] = useState<QuotationManualEntryFormValues>(() => formValuesFromQuotation(quotation));
+
+  useEffect(() => {
+    setValues(formValuesFromQuotation(quotation));
+  }, [quotation]);
 
   const canSave = editableInvitationStatuses.has(invitationStatus);
   const completeness = quotation?.completeness?.isComplete ?? false;
@@ -192,14 +195,4 @@ function QuotationManualEntryForm({
       </CardContent>
     </Card>
   );
-}
-
-function quotationFormKey(quotation: Quotation | null): string {
-  if (!quotation) return "empty";
-
-  return JSON.stringify({
-    id: quotation.id,
-    manualEntry: quotation.manualEntry,
-    lineItems: quotation.lineItems,
-  });
 }

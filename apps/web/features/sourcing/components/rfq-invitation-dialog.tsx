@@ -44,32 +44,34 @@ export function RfqInvitationDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl" onEscapeKeyDown={(event) => isPending && event.preventDefault()} onInteractOutside={(event) => isPending && event.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+        <div className="space-y-4">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
 
-        <div className="mt-4 space-y-4">{children}</div>
+          <div className="space-y-4">{children}</div>
 
-        {error ? (
-          <Alert variant="destructive" className="mt-3">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {footerNote ? <div className="mt-3 text-xs text-muted-foreground">{footerNote}</div> : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          {footerNote ? <div className="text-xs text-muted-foreground">{footerNote}</div> : null}
 
-        <DialogFooter className="mt-5">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Close
-          </Button>
-          <Button
-            variant={confirmVariant}
-            onClick={() => void onConfirm()}
-            disabled={confirmDisabled || isPending}
-          >
-            {isPending ? "Working" : confirmLabel}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="pt-1">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+              Close
+            </Button>
+            <Button
+              variant={confirmVariant}
+              onClick={() => void onConfirm()}
+              disabled={confirmDisabled || isPending}
+            >
+              {isPending ? "Working" : confirmLabel}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
