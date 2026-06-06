@@ -56,3 +56,8 @@ Each custom component file must include a top-level comment:
 - Mobile screens do not horizontally overflow.
 - Form labels and errors are associated with controls.
 - Data-heavy procurement screens remain scannable.
+
+## Generated Compatibility Notes
+
+- Preset `b5deKXWz4` generated `Calendar` with the legacy `table` day-picker class key, but `react-day-picker@10` no longer exposes that key in `ClassNames`; keep the generated component otherwise unchanged.
+- Preset `b5deKXWz4` generated `Spinner` with Remix icon props. Remix icons do not accept `children`, so the component must not forward React SVG children to the icon.

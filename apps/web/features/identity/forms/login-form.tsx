@@ -104,7 +104,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
         </div>
 
         {resetSent && (
-          <Alert variant="success">
+          <Alert className="border-success/30 text-success">
             <AlertDescription>Password reset instructions sent.</AlertDescription>
           </Alert>
         )}

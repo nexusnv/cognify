@@ -5,21 +5,20 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "app/globals.css",
+    "css": "../../apps/web/app/globals.css",
     "baseColor": "stone",
     "cssVariables": true,
     "prefix": ""
   },
   "aliases": {
-    "components": "@/components",
-    "utils": "@cognify/ui/lib/utils",
-    "ui": "@cognify/ui/components",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "#components",
+    "utils": "#lib/utils",
+    "ui": "#components",
+    "lib": "#lib",
+    "hooks": "#hooks"
   },
   "iconLibrary": "remixicon",
-  "rtl": false,
   "menuColor": "default-translucent",
   "menuAccent": "subtle",
-  "registries": {}
+  "rtl": false
 }
