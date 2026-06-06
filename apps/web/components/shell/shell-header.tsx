@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, UserCircle } from "lucide-react";
+import { Button } from "@cognify/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@cognify/ui/components/dropdown-menu";
 import { CommandPaletteHost } from "./command-palette-host";
 import { Breadcrumbs } from "./breadcrumbs";
 import { NotificationHost } from "./notification-host";
@@ -49,25 +58,45 @@ export function ShellHeader({
           <CommandPaletteHost />
           <NotificationHost />
           <ThemeToggle />
-          <Link
-            href="/account"
-            className="hidden min-h-10 max-w-44 items-center truncate rounded-md border px-3 text-sm text-muted-foreground hover:text-foreground sm:inline-flex"
-          >
-            {displayedUserName}
-          </Link>
-          {onLogout && (
-            <button
-              type="button"
-              aria-label="Sign out"
-              onClick={onLogout}
-              disabled={logoutPending}
-              className="inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">{logoutPending ? "Signing out" : "Sign out"}</span>
-              <span className="sm:hidden">Sign out</span>
-            </button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="max-w-44"
+                aria-label="Account menu"
+              >
+                <UserCircle className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden truncate sm:inline">{displayedUserName}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <span className="block truncate text-foreground">{displayedUserName}</span>
+                <span className="block truncate">{displayedRoleLabel}</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/account">Account settings</Link>
+              </DropdownMenuItem>
+              {onLogout && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={logoutPending}
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      onLogout();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    {logoutPending ? "Signing out" : "Sign out"}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
