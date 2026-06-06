@@ -2,12 +2,9 @@
 
 import { ExternalLink, PanelRightOpen } from "lucide-react";
 import Link from "next/link";
-import { DataTable } from "@/components/data-table/data-table";
-import type {
-  DataTableColumn,
-  DataTablePagination,
-  DataTableSort,
-} from "@/components/data-table/data-table-types";
+import { Button } from "@cognify/ui";
+import { DataTable } from "@/components/ui/procurement-table";
+import type { DataTableColumn, DataTablePagination, DataTableSort } from "@/components/ui/procurement-table";
 import { useRightPanel } from "@/components/right-panel/right-panel-provider";
 import { RequisitionStatusBadge } from "../components/requisition-status-badge";
 import type { Requisition } from "../types/requisition-view-model";
@@ -131,14 +128,15 @@ export function RequisitionsTable({
       pagination={pagination}
       renderRowActions={(requisition) => (
         <div className="flex items-center gap-2">
-          <button
+          <Button
             type="button"
-            className="inline-flex min-h-11 items-center justify-center rounded-md border px-3"
+            variant="outline"
+            className="min-h-11"
             onClick={() => rightPanel.openPanel(requisitionPanel(requisition))}
             aria-label={`Open details panel for ${requisition.number}`}
           >
             <PanelRightOpen className="h-4 w-4" aria-hidden="true" />
-          </button>
+          </Button>
           <Link
             href={`/requisitions/${requisition.id}`}
             className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3"

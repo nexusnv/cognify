@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { useQuotationScoringTemplates } from "../hooks/use-quotation-scoring-templates";
 import { useRfqScorecard } from "../hooks/use-rfq-scorecard";
 import {
@@ -69,7 +69,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
     || scorecard.permissions.canManageScoringTemplates;
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref={scorecard.comparisonContext.comparisonPath}
       backLabel="Back to comparison"
       eyebrow={scorecard.rfq.number}
@@ -122,7 +122,7 @@ export function RfqScoringWorkspace({ rfqId }: { rfqId: string }) {
         onDraftChange={(key, draft) => setDrafts((current) => ({ ...current, [key]: draft }))}
         onSave={(entries) => updateScores.mutate(entries)}
       />
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }
 

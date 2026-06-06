@@ -2,12 +2,8 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { DataTable } from "@/components/data-table/data-table";
-import type {
-  DataTableColumn,
-  DataTablePagination,
-  DataTableSort,
-} from "@/components/data-table/data-table-types";
+import { DataTable } from "@/components/ui/procurement-table";
+import type { DataTableColumn, DataTablePagination, DataTableSort } from "@/components/ui/procurement-table";
 import { ProjectStatusBadge } from "../components/project-status-badge";
 import type { ProcurementProject } from "../types/project-view-model";
 

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { rememberRecentRecord } from "@/features/search/hooks/use-recent-records";
 import { ProjectActionDialog } from "../components/project-action-dialog";
 import { ProjectActivityTimeline } from "../components/project-activity-timeline";
@@ -133,7 +133,7 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
   );
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/projects"
       backLabel="Back to projects"
       eyebrow={project.number}
@@ -207,7 +207,7 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
           <ProjectActivityTimeline events={activityQuery.data?.data ?? []} />
         </div>
       </section>
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }
 

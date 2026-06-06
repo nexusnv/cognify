@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button, Textarea } from "@cognify/ui";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import type { RfqAwardRecommendation, RfqAwardRecommendationEvidenceReferenceInput } from "@cognify/api-client/schemas";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { RfqAwardApprovalPanel } from "../components/rfq-award-approval-panel";
 import { RfqAwardDecisionSummary } from "../components/rfq-award-decision-summary";
 import { RfqAwardEvidenceSelector } from "../components/rfq-award-evidence-selector";
@@ -92,7 +92,7 @@ function RfqAwardRecommendationWorkspaceContent({
         : null;
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref={context.links.comparison}
       backLabel="Back to comparison"
       eyebrow={context.rfq.number ?? context.rfq.id}
@@ -292,7 +292,7 @@ function RfqAwardRecommendationWorkspaceContent({
       {selectedOption?.scorecard?.missingRequiredCount && selectedOption.scorecard.missingRequiredCount > 0 ? (
         <p className="text-sm text-amber-700">Selected vendor has missing required scores.</p>
       ) : null}
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }
 

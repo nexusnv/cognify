@@ -1,8 +1,29 @@
 "use client";
 
+// shadcn-factory-exception: TanStack Table state and procurement table density require shared glue beyond shadcn Table primitives; primitives=Table,Button,DropdownMenu,Checkbox,Alert,Empty,Skeleton,Spinner; routes=requisitions,projects,approvals,quotations,sourcing
+
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { ReactNode } from "react";
-import { DataTableEmpty, DataTableError, DataTableLoading } from "./data-table-empty-state";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+  Skeleton,
+  Spinner,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@cognify/ui";
 import type {
   DataTableColumn,
   DataTablePagination,
@@ -48,9 +69,11 @@ export function DataTable<TRow>({
   renderMobileRow?: (row: TRow) => ReactNode;
 }) {
   if (state === "loading") return <DataTableLoading label={loadingLabel} />;
+
   if (state === "error") {
     return <DataTableError title={errorTitle ?? "Rows could not be loaded."} onRetry={onRetry} />;
   }
+
   if (state === "empty") {
     return <DataTableEmpty title={emptyTitle ?? "No rows found"} description={emptyDescription} />;
   }
@@ -58,10 +81,10 @@ export function DataTable<TRow>({
   return (
     <div className="space-y-3">
       <div className="hidden overflow-hidden rounded-md border md:block">
-        <table className="w-full table-fixed text-left text-sm">
-          <caption className="sr-only">{caption}</caption>
-          <thead className="border-b bg-card text-xs uppercase text-muted-foreground">
-            <tr>
+        <Table className="table-fixed text-left text-sm">
+          <TableCaption className="sr-only">{caption}</TableCaption>
+          <TableHeader className="bg-card text-xs uppercase text-muted-foreground">
+            <TableRow>
               {columns.map((column) => {
                 const activeSort = sort?.columnId === column.id ? sort.direction : undefined;
                 const ariaSort =
@@ -72,7 +95,7 @@ export function DataTable<TRow>({
                       : "none";
 
                 return (
-                  <th
+                  <TableHead
                     key={column.id}
                     scope="col"
                     aria-sort={column.sortable ? ariaSort : undefined}
@@ -81,9 +104,11 @@ export function DataTable<TRow>({
                     )}`}
                   >
                     {column.sortable && onSortChange ? (
-                      <button
+                      <Button
                         type="button"
-                        className="inline-flex items-center gap-1 font-medium uppercase"
+                        variant="ghost"
+                        size="xs"
+                        className="h-auto justify-start gap-1 px-0 font-medium uppercase tracking-wide"
                         onClick={() => onSortChange(nextSort(column.id, sort))}
                         aria-label={`Sort by ${column.header} ${
                           activeSort === "asc" ? "descending" : "ascending"
@@ -91,39 +116,39 @@ export function DataTable<TRow>({
                       >
                         {column.header}
                         {activeSort === "asc" ? (
-                          <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                          <ArrowUp className="size-3.5" aria-hidden="true" />
                         ) : activeSort === "desc" ? (
-                          <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                          <ArrowDown className="size-3.5" aria-hidden="true" />
                         ) : (
-                          <ChevronsUpDown className="h-3.5 w-3.5" aria-hidden="true" />
+                          <ChevronsUpDown className="size-3.5" aria-hidden="true" />
                         )}
-                      </button>
+                      </Button>
                     ) : (
                       column.header
                     )}
-                  </th>
+                  </TableHead>
                 );
               })}
               {renderRowActions ? (
-                <th scope="col" className="w-32 px-3 py-3">
+                <TableHead scope="col" className="w-32 px-3 py-3">
                   Actions
-                </th>
+                </TableHead>
               ) : null}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={getRowId(row)} className="border-b last:border-b-0">
+              <TableRow key={getRowId(row)}>
                 {columns.map((column) => (
-                  <td key={column.id} className={`px-3 py-4 ${alignClassName(column.align)}`}>
+                  <TableCell key={column.id} className={`px-3 py-4 ${alignClassName(column.align)}`}>
                     {column.cell(row)}
-                  </td>
+                  </TableCell>
                 ))}
-                {renderRowActions ? <td className="px-3 py-4">{renderRowActions(row)}</td> : null}
-              </tr>
+                {renderRowActions ? <TableCell className="px-3 py-4">{renderRowActions(row)}</TableCell> : null}
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {renderMobileRow ? (
@@ -172,27 +197,77 @@ export function DataTable<TRow>({
           </p>
           {onPreviousPage || onNextPage ? (
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
-                className="rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                variant="outline"
+                size="sm"
+                className="min-h-11"
                 onClick={onPreviousPage}
                 disabled={!onPreviousPage || pagination.currentPage <= 1}
               >
                 Previous page
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                variant="outline"
+                size="sm"
+                className="min-h-11"
                 onClick={onNextPage}
                 disabled={!onNextPage || pagination.currentPage >= pagination.lastPage}
               >
                 Next page
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+function DataTableLoading({ label = "Loading rows" }: { label?: string }) {
+  return (
+    <div className="space-y-4 rounded-md border p-4" aria-label={label} aria-live="polite">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Spinner className="size-4" />
+        <span>{label}</span>
+      </div>
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Skeleton key={index} className="h-10 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DataTableError({ title, onRetry }: { title: string; onRetry?: () => void }) {
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>
+        {onRetry ? (
+          <div className="mt-3 flex">
+            <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={onRetry}>
+              Retry
+            </Button>
+          </div>
+        ) : null}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function DataTableEmpty({ title, description }: { title: string; description?: string }) {
+  return (
+    <Empty className="border-dashed">
+      <EmptyHeader>
+        <EmptyContent>
+          <EmptyTitle>{title}</EmptyTitle>
+          {description ? <EmptyDescription>{description}</EmptyDescription> : null}
+        </EmptyContent>
+      </EmptyHeader>
+    </Empty>
   );
 }
 

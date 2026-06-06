@@ -1,3 +1,5 @@
+// shadcn-factory-exception: Workflow activity timelines require dense event metadata rendering beyond shadcn primitives; primitives=Card,Badge; routes=requisitions
+
 import { FileClock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 

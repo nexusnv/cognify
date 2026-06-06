@@ -1,3 +1,5 @@
+// shadcn-factory-exception: Workflow status tones require shared procurement state mapping beyond shadcn Badge variants; primitives=Badge; routes=requisitions,sourcing
+
 import type { LucideIcon } from "lucide-react";
 
 export type WorkflowTone =

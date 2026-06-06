@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@cognify/ui";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { SourcingIntakeDecisionDialog } from "../components/sourcing-intake-decision-dialog";
 import { SourcingIntakeReviewForm } from "../components/sourcing-intake-review-form";
 import { SourcingIntakeStatusBadge } from "../components/sourcing-intake-status-badge";
@@ -40,7 +40,7 @@ export function SourcingIntakeDetailPage({ reviewId }: { reviewId: string }) {
   }
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/sourcing/intake"
       backLabel="Back to sourcing intake"
       eyebrow={review.requisition.number}
@@ -110,7 +110,7 @@ export function SourcingIntakeDetailPage({ reviewId }: { reviewId: string }) {
         )}
         {review.decisionReason ? <p className="mt-3 text-sm">{review.decisionReason}</p> : null}
       </section>
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }
 

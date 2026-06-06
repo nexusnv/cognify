@@ -1,3 +1,5 @@
+// shadcn-factory-exception: Workflow status and activity primitives need route-independent coverage for the documented workflow-state exception; primitives=Badge,Card; routes=requisitions,sourcing
+
 import { CheckCircle2, CircleDot, FileClock, Send } from "lucide-react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";

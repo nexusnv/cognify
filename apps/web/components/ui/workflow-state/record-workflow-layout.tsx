@@ -1,18 +1,20 @@
+// shadcn-factory-exception: Workflow detail records need shared metadata, section navigation, action, and sidebar structure beyond shadcn Card primitives; primitives=Button,Card; routes=requisitions,projects,sourcing,quotations
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export type RecordWorkspaceMetadataItem = {
+export type WorkflowRecordMetadataItem = {
   id: string;
   label: string;
   value: React.ReactNode;
 };
 
-export type RecordWorkspaceSection = {
+export type WorkflowRecordSection = {
   id: string;
   label: string;
 };
 
-export function RecordWorkspaceLayout({
+export function WorkflowStateLayout({
   backHref,
   backLabel,
   eyebrow,
@@ -30,8 +32,8 @@ export function RecordWorkspaceLayout({
   eyebrow?: React.ReactNode;
   title: string;
   status?: React.ReactNode;
-  metadata: RecordWorkspaceMetadataItem[];
-  sections: RecordWorkspaceSection[];
+  metadata: WorkflowRecordMetadataItem[];
+  sections: WorkflowRecordSection[];
   primaryActions?: React.ReactNode;
   secondaryActions?: React.ReactNode;
   sidebar?: React.ReactNode;

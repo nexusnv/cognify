@@ -7,7 +7,7 @@ import { RfqInvitationPanel } from "../components/rfq-invitation-panel";
 import { RfqStatusBadge } from "../components/rfq-status-badge";
 import { useCancelRfqDraft, useSaveRfqDraft } from "../hooks/use-rfq-draft-actions";
 import { useRfqDraft } from "../hooks/use-rfq-draft";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 
 export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
   const rfqQuery = useRfqDraft(rfqId);
@@ -39,7 +39,7 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
   );
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/sourcing/intake"
       backLabel="Back to sourcing intake"
       eyebrow={rfq.number}
@@ -204,7 +204,7 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
                 : "You do not have permission to invite vendors."
         }
       />
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }
 

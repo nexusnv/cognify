@@ -1,11 +1,13 @@
+// shadcn-factory-exception: Workflow detail records need route-independent coverage for the documented workflow-state exception; primitives=Button,Card; routes=requisitions,projects,sourcing,quotations
+
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { RecordWorkspaceLayout } from "./record-workspace-layout";
+import { WorkflowStateLayout } from "./record-workflow-layout";
 
 describe("record workspace layout", () => {
   it("renders title, status, metadata, actions, sections, main content, and sidebar", () => {
     render(
-      <RecordWorkspaceLayout
+      <WorkflowStateLayout
         backHref="/requisitions"
         backLabel="Back to requisitions"
         eyebrow="REQ-2026-000001"
@@ -28,7 +30,7 @@ describe("record workspace layout", () => {
         <section id="overview">
           <h2>Overview</h2>
         </section>
-      </RecordWorkspaceLayout>,
+      </WorkflowStateLayout>,
     );
 
     expect(screen.getByRole("link", { name: "Back to requisitions" })).toHaveAttribute(

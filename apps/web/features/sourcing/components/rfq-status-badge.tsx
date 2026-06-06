@@ -1,6 +1,6 @@
 import { CircleCheck, CircleDot, CircleX } from "lucide-react";
-import { StatusBadge } from "@/components/workflow/status-badge";
-import type { WorkflowStateConfig } from "@/components/workflow/workflow-state";
+import { StatusBadge } from "@/components/ui/workflow-state/status-badge";
+import type { WorkflowStateConfig } from "@/components/ui/workflow-state/workflow-state";
 import type { RfqStatus } from "../types/rfq-view-model";
 
 const rfqStatusConfig = {

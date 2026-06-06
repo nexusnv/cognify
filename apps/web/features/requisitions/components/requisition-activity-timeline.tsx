@@ -9,7 +9,7 @@ import {
   Send,
 } from "lucide-react";
 import type { AuditEvent } from "@cognify/api-client/schemas";
-import { ActivityTimeline } from "@/components/workflow/activity-timeline";
+import { ActivityTimeline } from "@/components/ui/workflow-state/activity-timeline";
 
 export function RequisitionActivityTimeline({ events }: { events: AuditEvent[] }) {
   return (

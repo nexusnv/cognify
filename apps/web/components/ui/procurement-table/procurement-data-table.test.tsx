@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { DataTable } from "./data-table";
-import { useDataTableState } from "./use-data-table-state";
+import { DataTable } from "./procurement-data-table";
+import { useDataTableState } from "./use-procurement-table-state";
 import type { DataTableColumn } from "./data-table-types";
 
 type Row = {
