@@ -1,6 +1,7 @@
 "use client";
 
-import { Toaster } from "sonner";
+import { Toaster } from "@cognify/ui/components/sonner";
+import { TooltipProvider } from "@cognify/ui/components/tooltip";
 import type { ReactNode } from "react";
 import { RightPanelProvider } from "@/components/right-panel/right-panel-provider";
 import { AccessibilityProvider } from "./accessibility-provider";
@@ -16,7 +17,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <AccessibilityProvider>
           <AnalyticsProvider>
             <QueryProvider>
-              <RightPanelProvider>{children}</RightPanelProvider>
+              <TooltipProvider>
+                <RightPanelProvider>{children}</RightPanelProvider>
+              </TooltipProvider>
             </QueryProvider>
             <Toaster richColors />
           </AnalyticsProvider>

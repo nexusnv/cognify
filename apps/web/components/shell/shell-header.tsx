@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { CommandPaletteHost } from "./command-palette-host";
 import { Breadcrumbs } from "./breadcrumbs";
 import { NotificationHost } from "./notification-host";
+import { ThemeToggle } from "./theme-toggle";
 import type { BreadcrumbItem } from "./shell-types";
 
 export interface ShellHeaderProps {
@@ -47,6 +48,7 @@ export function ShellHeader({
         <div className="flex shrink-0 items-center gap-2">
           <CommandPaletteHost />
           <NotificationHost />
+          <ThemeToggle />
           <Link
             href="/account"
             className="hidden min-h-10 max-w-44 items-center truncate rounded-md border px-3 text-sm text-muted-foreground hover:text-foreground sm:inline-flex"

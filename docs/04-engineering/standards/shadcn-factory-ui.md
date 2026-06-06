@@ -44,9 +44,8 @@ Each custom component file must include a top-level comment:
 ## Dark Mode
 
 - Provide a visible app-shell theme toggle.
-- Provide a plain `d` keyboard shortcut.
-- The shortcut must not fire while typing in editable controls.
-- The shortcut must not update the server-side profile theme setting.
+- Do not add global single-key theme shortcuts.
+- The app-shell theme toggle must not update the server-side profile theme setting.
 
 ## Review Checklist
 
