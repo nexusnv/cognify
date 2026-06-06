@@ -4,7 +4,7 @@
 
 - Status: Active root architecture reference
 - Product: Cognify
-- Last updated: 2026-05-15
+- Last updated: 2026-05-29
 - Audience: engineers and agents adding or reviewing Cognify product behavior
 
 This document explains how Cognify is architected as a software system. It is not only a repository map. A new developer should be able to read it and understand how authenticated screens, tenant-scoped API calls, backend workflow actions, generated contracts, attachments, sessions, state, audit, notifications, and verification fit together.
@@ -66,7 +66,7 @@ The browser never talks directly to PostgreSQL, Redis, object storage, queues, o
 | `apps/web`                           | Next.js App Router, React, TanStack Query, MSW, shadcn/Radix via `packages/ui` | Browser product experience, route groups, app shell, authenticated workflows, feature hooks, client-side state, mock-first UI tests    | Laravel business rules, direct persistence, direct mock imports in production components |
 | `apps/api`                           | Laravel 12, Sanctum, Eloquent, queues, storage disks                           | HTTP API, authentication/session endpoints, tenant resolution, policies, domain actions, audit, notifications, storage, OpenAPI export | Screen composition, generated TypeScript contracts, frontend state                       |
 | `packages/api-client`                | Orval-generated TypeScript, shared fetch/form-data helpers                     | Generated endpoints/schemas, credentials/CSRF/tenant-aware fetch helper, multipart helper, error normalization                         | Product workflow state or hand-written replacement response types                        |
-| `packages/ui`                        | shadcn/Radix primitives                                                        | Business-neutral reusable UI primitives                                                                                                | Cognify-specific shell, procurement cards, workflow copy, domain badges                  |
+| `packages/ui`                        | shadcn/Radix primitives installed through the shadcn CLI                       | Business-neutral reusable UI primitives, shadcn-managed hooks, and UI utilities                                                        | Cognify-specific shell, procurement cards, workflow copy, domain badges                  |
 | `packages/config`                    | Shared tooling config                                                          | TypeScript, Tailwind, lint/test/build config                                                                                           | Business behavior                                                                        |
 | `packages/schemas`, `packages/types` | Stable shared schemas/types                                                    | Cross-app stable contracts not generated from OpenAPI                                                                                  | Feature-local or API-generated shapes                                                    |
 
@@ -101,6 +101,32 @@ cognify/
 ```
 
 Architecture rule of thumb: shared packages are for reuse and contracts, not for hiding uncertainty. When behavior has Cognify business meaning, put it in the owning app or backend domain first.
+
+## 4.1 Shadcn CLI Architecture
+
+The shadcn CLI is the source of truth for default UI primitives, theme tokens, generated UI hooks, and generated UI utilities. The supported project-root command is:
+
+```bash
+pnpm dlx shadcn@latest apply --preset b2CipdfvO -c apps/web
+```
+
+This command must remain runnable from the repository root. Engineers may use it to apply the current preset, switch themes, or refresh default shadcn components. The command is intentionally pointed at `apps/web` because the web app owns the shadcn entrypoint, Tailwind CSS file, and product runtime, while shared primitives are routed into `packages/ui`.
+
+The monorepo shadcn configuration has two required files:
+
+- `apps/web/components.json` is the app entrypoint. It keeps app composites under `apps/web/components` and routes `ui`, `utils`, `lib`, and `hooks` aliases to `@cognify/ui`.
+- `packages/ui/components.json` is the shared UI workspace config. It uses package-local `#components`, `#lib`, and `#hooks` aliases backed by `packages/ui/package.json#imports`.
+
+`packages/ui/package.json#exports` must expose the same shared targets consumed by `apps/web/components.json`: `./components/*`, `./lib/*`, `./lib/utils`, and `./hooks/*`.
+
+Shadcn-managed files are treated as generated defaults:
+
+- `packages/ui/src/components/**`
+- `packages/ui/src/hooks/**`
+- `packages/ui/src/lib/**`
+- `apps/web/app/globals.css`
+
+Do not put Cognify-specific behavior, procurement copy, workflow state, custom variants, or one-off accessibility fixes directly into those generated files. Put product behavior in app-level composites under `apps/web/components` or feature-owned components under `apps/web/features`. If a generated primitive has a compatibility issue with the current dependency graph, prefer fixing the shadcn config, package imports/exports, dependency version, or `pnpm` dependency patch first. Any unavoidable compatibility patch must be documented in `docs/04-engineering/standards/shadcn-first-ui.md` with the reason and the verification command that protects it.
 
 ## 5. Authentication Architecture
 
@@ -778,6 +804,7 @@ Do:
 - Read `AGENTS.md`, this file, and `docs/05-runbooks/feature-development.md` before feature work.
 - Build vertical workflow slices.
 - Keep Cognify-specific product UI in `apps/web`.
+- Keep shadcn default primitives, hooks, utilities, and theme tokens refreshable through `pnpm dlx shadcn@latest apply --preset b2CipdfvO -c apps/web`.
 - Keep business behavior in `apps/api/Domains/*`.
 - Use generated API contracts.
 - Include tenant, permission, audit, notification, attachment, and async behavior in the design when relevant.
@@ -786,6 +813,7 @@ Do:
 Do not:
 
 - Put procurement-specific UI in `packages/ui`.
+- Hand-edit shadcn-generated primitives for Cognify product behavior or styling that belongs in app composites.
 - Put feature-local business types in `packages/types`.
 - Import mocks into production components.
 - Duplicate generated API response/request types.

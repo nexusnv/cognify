@@ -24,6 +24,17 @@ if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = vi.fn();
 }
 
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver = ResizeObserver as unknown as typeof window.ResizeObserver;
+  globalThis.ResizeObserver = ResizeObserver as unknown as typeof globalThis.ResizeObserver;
+}
+
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
   server.resetHandlers();

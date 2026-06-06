@@ -92,6 +92,7 @@ describe("procurement calendar workflow", () => {
     expect(await screen.findByRole("button", { name: /RFQ response due/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Approval due/i })).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Source 0" }));
     await user.click(screen.getByRole("checkbox", { name: "Approval due" }));
 
     await waitFor(() => {
@@ -118,7 +119,7 @@ describe("procurement calendar workflow", () => {
 
     await user.click(await screen.findByRole("button", { name: /RFQ response due/i }));
 
-    const detail = screen.getByLabelText("Event detail");
+    const detail = await screen.findByRole("dialog", { name: "RFQ response due" });
 
     expect(await within(detail).findByRole("heading", { name: "RFQ response due" })).toBeInTheDocument();
     expect(within(detail).getByText("rfq-ready")).toBeInTheDocument();

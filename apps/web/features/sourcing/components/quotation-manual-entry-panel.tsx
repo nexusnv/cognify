@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { Quotation } from "@cognify/api-client/schemas";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from "@cognify/ui";
 import { useSaveQuotationManualEntry } from "../hooks/use-quotation-manual-entry";
 import {
   formValuesFromQuotation,
@@ -29,7 +29,7 @@ export function QuotationManualEntryPanel({
 
   return (
     <QuotationManualEntryForm
-      key={quotationFormKey(quotation)}
+      key={quotation?.id ?? invitationId}
       invitationId={invitationId}
       invitationStatus={invitationStatus}
       quotation={quotation}
@@ -94,11 +94,14 @@ function QuotationManualEntryForm({
   }
 
   return (
-    <section className="mt-3 rounded-md border p-3">
+    <Card className="mt-3">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm">Structured quotation entry</CardTitle>
+      </CardHeader>
+      <CardContent>
       <div className="space-y-3">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h4 className="text-sm font-semibold">Structured quotation entry</h4>
             <p className={completeness ? "text-sm text-emerald-700" : "text-sm text-muted-foreground"}>{statusLabel}</p>
           </div>
         </div>
@@ -106,9 +109,9 @@ function QuotationManualEntryForm({
         <div className="grid gap-3 lg:grid-cols-3">
           <label className="block text-sm font-medium">
             Quotation reference
-            <input
+            <Input
               aria-label="Quotation reference"
-              className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-1 min-h-11 w-full text-base font-normal"
               value={values.quotationReference ?? ""}
               disabled={saveMutation.isPending}
               onChange={(event) => updateValue("quotationReference", event.target.value)}
@@ -116,9 +119,9 @@ function QuotationManualEntryForm({
           </label>
           <label className="block text-sm font-medium">
             Currency
-            <input
+            <Input
               aria-label="Currency"
-              className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal uppercase outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-1 min-h-11 w-full text-base font-normal uppercase"
               value={values.currency ?? ""}
               disabled={saveMutation.isPending}
               maxLength={3}
@@ -127,9 +130,9 @@ function QuotationManualEntryForm({
           </label>
           <label className="block text-sm font-medium">
             Total amount
-            <input
+            <Input
               aria-label="Total amount"
-              className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-1 min-h-11 w-full text-base font-normal"
               value={values.totalAmount ?? ""}
               disabled={saveMutation.isPending}
               onChange={(event) => updateValue("totalAmount", event.target.value)}
@@ -181,21 +184,12 @@ function QuotationManualEntryForm({
         </div>
 
         {errorMessage ? (
-          <p role="alert" className="text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
-}
-
-function quotationFormKey(quotation: Quotation | null): string {
-  if (!quotation) return "empty";
-
-  return JSON.stringify({
-    id: quotation.id,
-    manualEntry: quotation.manualEntry,
-    lineItems: quotation.lineItems,
-  });
 }

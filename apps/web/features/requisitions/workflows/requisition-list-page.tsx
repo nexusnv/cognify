@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Button, Card, CardContent, Input, NativeSelect } from "@cognify/ui";
 import { useDataTableState } from "@/components/data-table/use-data-table-state";
 import { useRequisitions } from "../hooks/use-requisitions";
 import type { RequisitionQueuePreset, RequisitionStatus } from "../types/requisition-view-model";
@@ -102,35 +103,29 @@ export function RequisitionListPage() {
 
       <div className="flex flex-wrap gap-2">
         {queuePresets.map((preset) => (
-          <button
-            type="button"
+          <Button
             key={preset.value}
-            className={`min-h-11 rounded-md px-4 text-sm font-medium ${
-              queuePreset === preset.value
-                ? "bg-foreground text-background"
-                : "border bg-background"
-            }`}
+            variant={queuePreset === preset.value ? "default" : "outline"}
             aria-pressed={queuePreset === preset.value}
             onClick={() => setQueuePreset(preset.value)}
           >
             {preset.label}
-          </button>
+          </Button>
         ))}
       </div>
 
-      <div className="grid gap-3 rounded-md border p-3 md:grid-cols-2 xl:grid-cols-4">
+      <Card>
+        <CardContent className="grid gap-3 pt-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="space-y-1.5 text-sm font-medium">
           Search
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Status
-          <select
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <NativeSelect
             value={status}
             onChange={(event) => setStatus(event.target.value as RequisitionStatus | "")}
           >
@@ -140,20 +135,18 @@ export function RequisitionListPage() {
             <option value="changes_requested">Changes requested</option>
             <option value="withdrawn">Withdrawn</option>
             <option value="cancelled">Cancelled</option>
-          </select>
+          </NativeSelect>
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Department
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             value={department}
             onChange={(event) => setDepartment(event.target.value)}
           />
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Amount min
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             inputMode="decimal"
             value={amountMin}
             onChange={(event) => setAmountMin(event.target.value)}
@@ -161,8 +154,7 @@ export function RequisitionListPage() {
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Amount max
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             inputMode="decimal"
             value={amountMax}
             onChange={(event) => setAmountMax(event.target.value)}
@@ -170,8 +162,7 @@ export function RequisitionListPage() {
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Updated from
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             type="date"
             value={updatedFrom}
             onChange={(event) => setUpdatedFrom(event.target.value)}
@@ -179,16 +170,15 @@ export function RequisitionListPage() {
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Updated to
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             type="date"
             value={updatedTo}
             onChange={(event) => setUpdatedTo(event.target.value)}
           />
         </label>
-        <button
+        <Button
           type="button"
-          className="min-h-11 rounded-md border px-4 text-sm font-medium"
+          variant="outline"
           onClick={() => {
             setSearch("");
             setStatus("");
@@ -201,8 +191,9 @@ export function RequisitionListPage() {
           }}
         >
           Clear
-        </button>
-      </div>
+        </Button>
+        </CardContent>
+      </Card>
 
       <RequisitionsTable
         requisitions={sortedRequisitions}

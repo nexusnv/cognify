@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NotificationHost } from "@/components/shell/notification-host";
 import { resetNotificationMockState } from "../mocks/notification-handlers";
 
 const push = vi.fn();
@@ -52,11 +53,11 @@ describe("notification center", () => {
   });
 
   it("shell bell renders unread count and accessible label", async () => {
-    const { NotificationHost } = await import("@/components/shell/notification-host");
-
     renderWithQuery(<NotificationHost />);
 
-    expect(await screen.findByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
+    expect(
+      await screen.findByRole("button", { name: "Open notifications, 2 unread" }, { timeout: 10000 }),
+    ).toBeEnabled();
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 

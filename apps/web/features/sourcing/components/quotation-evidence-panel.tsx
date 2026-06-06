@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
-import { Button } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input } from "@cognify/ui";
 import { useSaveQuotationManualEntry } from "../hooks/use-quotation-manual-entry";
 import {
   useQuotationAttachments,
@@ -117,19 +117,18 @@ export function QuotationEvidencePanel({
   }
 
   return (
-    <section className="rounded-md border border-dashed p-3">
-      <div className="space-y-3">
-        <div className="space-y-1">
-          <h4 className="text-sm font-semibold">{hasQuotation ? "Quotation received" : "Quotation evidence"}</h4>
-          {hasQuotation ? (
-            <p className="text-sm text-muted-foreground">
-              {fileCount} file{fileCount === 1 ? "" : "s"} received
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground">No quotation files received yet.</p>
-          )}
-        </div>
-
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">{hasQuotation ? "Quotation received" : "Quotation evidence"}</CardTitle>
+        {hasQuotation ? (
+          <p className="text-sm text-muted-foreground">
+            {fileCount} file{fileCount === 1 ? "" : "s"} received
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">No quotation files received yet.</p>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
         {attachments.length > 0 ? (
           <ul className="space-y-1 text-sm">
             {attachments.map((attachment) => (
@@ -143,10 +142,10 @@ export function QuotationEvidencePanel({
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <label className="block text-sm font-medium">
             Buyer-received quotation file
-            <input
+            <Input
               ref={fileInputRef}
               type="file"
-              className="mt-1 block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer disabled:opacity-50"
+              className="mt-1 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer"
               onChange={handleFileSelect}
               disabled={!canUpload || uploadMutation.isPending}
             />
@@ -161,9 +160,9 @@ export function QuotationEvidencePanel({
         {selectedFile ? <p className="text-xs text-muted-foreground">Selected file: {selectedFile.name}</p> : null}
 
         {errorMessage ? (
-          <p role="alert" className="text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
 
         {quotation ? (
@@ -184,7 +183,7 @@ export function QuotationEvidencePanel({
             </div>
           </div>
         ) : (
-          <div className="space-y-3 rounded-md border border-dashed p-3">
+          <div className="space-y-3 rounded-lg bg-muted/30 p-3">
             <p className="text-sm text-muted-foreground">
               Upload a quotation file or create structured quotation data to start the response record.
             </p>
@@ -198,8 +197,8 @@ export function QuotationEvidencePanel({
             </Button>
           </div>
         )}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 

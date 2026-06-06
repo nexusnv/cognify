@@ -1,10 +1,47 @@
+import type * as React from "react";
+import type { Badge as BadgeComponent } from "./components/badge";
+import type { Button as ButtonComponent } from "./components/button";
+import type { NativeSelect as NativeSelectComponent } from "./components/native-select";
+import type { Textarea as TextareaComponent } from "./components/textarea";
+
 export { cn } from "./lib/utils";
-export { Badge } from "./components/badge";
-export type { BadgeProps } from "./components/badge";
+export { Alert, AlertDescription, AlertTitle } from "./components/alert";
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./components/alert-dialog";
+export { Badge, badgeVariants } from "./components/badge";
+export type BadgeProps = React.ComponentProps<typeof BadgeComponent>;
+export {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "./components/breadcrumb";
 export { Button, buttonVariants } from "./components/button";
-export type { ButtonProps } from "./components/button";
+export type ButtonProps = React.ComponentProps<typeof ButtonComponent>;
+export {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+  buttonGroupVariants,
+} from "./components/button-group";
+export { Calendar, CalendarDayButton } from "./components/calendar";
 export {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -12,12 +49,173 @@ export {
   CardTitle,
 } from "./components/card";
 export { Checkbox } from "./components/checkbox";
-export type { CheckboxProps } from "./components/checkbox";
+export {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "./components/command";
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/dialog";
+export {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "./components/dropdown-menu";
+export {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "./components/empty";
+export {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldTitle,
+  FieldLabel,
+} from "./components/field";
+export {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useFormField,
+} from "./components/form";
 export { Input } from "./components/input";
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "./components/input-group";
 export { Label } from "./components/label";
-export { Alert, AlertDescription, AlertTitle } from "./components/alert";
-export { NativeSelect } from "./components/native-select";
-export type { NativeSelectProps } from "./components/native-select";
+export { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from "./components/native-select";
+export type NativeSelectProps = React.ComponentProps<typeof NativeSelectComponent>;
+export {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./components/pagination";
+export {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "./components/popover";
+export { Progress } from "./components/progress";
+export { RadioGroup, RadioGroupItem } from "./components/radio-group";
+export { ScrollArea, ScrollBar } from "./components/scroll-area";
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "./components/select";
 export { Separator } from "./components/separator";
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./components/sheet";
+export {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar,
+} from "./components/sidebar";
+export { Skeleton } from "./components/skeleton";
+export { Toaster } from "./components/sonner";
+export { Spinner } from "./components/spinner";
+export { Switch } from "./components/switch";
+export {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/table";
+export { Tabs, TabsContent, TabsList, TabsTrigger, tabsListVariants } from "./components/tabs";
 export { Textarea } from "./components/textarea";
-export type { TextareaProps } from "./components/textarea";
+export type TextareaProps = React.ComponentProps<typeof TextareaComponent>;
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/tooltip";

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QuotationNormalizationSummary } from "@cognify/api-client/schemas";
+import { Alert, AlertDescription, Card, CardContent } from "@cognify/ui";
 import { retryQuotationVersionNormalization } from "../api/quotation-normalization-api";
 import { useQuotationNormalizations } from "../hooks/use-quotation-normalization-queue";
 import { quotationNormalizationKeys } from "../hooks/use-quotation-normalization-queue";
@@ -34,17 +35,15 @@ export function QuotationNormalizationQueuePage() {
 
   if (queueQuery.isLoading) {
     return (
-      <div aria-label="Loading quotation normalization queue" className="rounded-md border p-4 text-sm text-muted-foreground">
-        Loading quotation normalization queue
-      </div>
+      <Card aria-label="Loading quotation normalization queue">
+        <CardContent className="py-4 text-sm text-muted-foreground">Loading quotation normalization queue</CardContent>
+      </Card>
     );
   }
 
   if (queueQuery.isError) {
     return (
-      <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        {getQuotationNormalizationQueueErrorMessage(queueQuery.error)}
-      </div>
+      <Alert variant="destructive"><AlertDescription>{getQuotationNormalizationQueueErrorMessage(queueQuery.error)}</AlertDescription></Alert>
     );
   }
 
@@ -58,9 +57,7 @@ export function QuotationNormalizationQueuePage() {
       </div>
 
       {retryError ? (
-        <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-          Retry failed: {retryError}
-        </div>
+        <Alert variant="destructive"><AlertDescription>Retry failed: {retryError}</AlertDescription></Alert>
       ) : null}
 
       {rows.length > 0 ? (
@@ -70,9 +67,7 @@ export function QuotationNormalizationQueuePage() {
           onRetry={handleRetry}
         />
       ) : (
-        <div className="rounded-md border p-4 text-sm text-muted-foreground">
-          No quotation normalizations need review right now.
-        </div>
+        <Card><CardContent className="py-4 text-sm text-muted-foreground">No quotation normalizations need review right now.</CardContent></Card>
       )}
     </section>
   );

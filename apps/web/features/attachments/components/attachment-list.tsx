@@ -1,13 +1,39 @@
 "use client";
 
-import { AlertCircle, Download, Eye, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, Download, Eye, FileText, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useRightPanel } from "@/components/right-panel/right-panel-provider";
 import { AttachmentPreviewPanel } from "./attachment-preview-panel";
 import { downloadAttachmentBlob } from "../api/attachments-api";
 import { useAttachments, useAttachmentDelete } from "../hooks/use-attachments";
 import type { AttachmentViewModel } from "../types/attachment-view-model";
 import { isPreviewableAttachment } from "../types/attachment-view-model";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  ScrollArea,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@cognify/ui";
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -15,74 +41,11 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function AttachmentRow({
-  attachment,
-  onPreview,
-  onDownload,
-  onDelete,
-  isDeleting,
-}: {
-  attachment: AttachmentViewModel;
-  onPreview: () => void;
-  onDownload: () => void;
-  onDelete: () => void;
-  isDeleting: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm">
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{attachment.filename}</p>
-        <p className="text-xs text-muted-foreground">
-          {formatFileSize(attachment.sizeBytes)}
-          {attachment.uploadedBy ? ` · by ${attachment.uploadedBy.name}` : null}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-1">
-        {attachment.permissions.canPreview && isPreviewableAttachment(attachment) ? (
-          <button
-            type="button"
-            onClick={onPreview}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"
-            aria-label={`Preview ${attachment.filename}`}
-          >
-            <Eye className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : null}
-        {attachment.permissions.canDownload ? (
-          <button
-            type="button"
-            onClick={onDownload}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"
-            aria-label={`Download ${attachment.filename}`}
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : null}
-        {attachment.permissions.canDelete ? (
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={isDeleting}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-            aria-label={`Delete ${attachment.filename}`}
-          >
-            {isDeleting ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-            )}
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 export function AttachmentList({ requisitionId }: { requisitionId: string }) {
   const { data: attachments, isLoading, isError } = useAttachments(requisitionId);
   const deleteMutation = useAttachmentDelete(requisitionId);
-  const rightPanel = useRightPanel();
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentViewModel | null>(null);
 
   async function handleDownload(attachment: AttachmentViewModel) {
     setDownloadError(null);
@@ -107,68 +70,140 @@ export function AttachmentList({ requisitionId }: { requisitionId: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-        Loading attachments
-      </div>
+      <Card>
+        <CardContent className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+          Loading attachments
+        </CardContent>
+      </Card>
     );
   }
 
   if (isError) {
     return (
-      <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-        Could not load attachments.
-      </div>
+      <Alert role="alert">
+        <AlertCircle className="h-4 w-4" aria-hidden="true" />
+        <AlertTitle>Could not load attachments</AlertTitle>
+        <AlertDescription>Could not load attachments.</AlertDescription>
+      </Alert>
     );
   }
 
   if (!attachments || attachments.length === 0) {
     return (
-      <p className="py-3 text-sm text-muted-foreground">
-        No evidence files have been uploaded yet.
-      </p>
+      <Card>
+        <CardContent className="py-4 text-sm text-muted-foreground">
+          No evidence files have been uploaded yet.
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {downloadError ? (
-        <div
-          role="alert"
-          className="flex items-center gap-2 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-900"
-        >
+        <Alert role="alert">
           <AlertCircle className="h-4 w-4" aria-hidden="true" />
-          <span>{downloadError}</span>
-        </div>
+          <AlertTitle>Download failed</AlertTitle>
+          <AlertDescription>{downloadError}</AlertDescription>
+        </Alert>
       ) : null}
-      {attachments.map((attachment) => (
-        <AttachmentRow
-          key={attachment.id}
-          attachment={attachment}
-          onPreview={() =>
-            rightPanel.openPanel({
-              id: `attachment-preview-${attachment.id}`,
-              title: attachment.filename,
-              description: buildAttachmentDescription(attachment),
-              size: "lg",
-              content: <AttachmentPreviewPanel attachment={attachment} />,
-            })
-          }
-          onDownload={() => void handleDownload(attachment)}
-          onDelete={() => deleteMutation.mutate(attachment.id)}
-          isDeleting={deleteMutation.isPending && deleteMutation.variables === attachment.id}
-        />
-      ))}
+
+      <Card>
+        <CardContent className="p-0">
+          <ScrollArea className="max-h-[32rem]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>File</TableHead>
+                  <TableHead>Details</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-16 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {attachments.map((attachment) => (
+                  <TableRow key={attachment.id}>
+                    <TableCell className="max-w-0">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{attachment.filename}</p>
+                          <p className="text-xs text-muted-foreground">{attachment.mimeType}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatFileSize(attachment.sizeBytes)}
+                      {attachment.uploadedBy ? ` · by ${attachment.uploadedBy.name}` : null}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={attachment.permissions.canDelete ? "secondary" : "outline"}>
+                        {attachment.permissions.canDelete ? "Editable" : "Read only"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button type="button" variant="ghost" size="icon" aria-label={`Open actions for ${attachment.filename}`}>
+                            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>{attachment.filename}</DropdownMenuLabel>
+                          {attachment.permissions.canPreview && isPreviewableAttachment(attachment) ? (
+                            <DropdownMenuItem onSelect={() => setPreviewAttachment(attachment)}>
+                              <Eye className="h-4 w-4" aria-hidden="true" />
+                              Preview
+                            </DropdownMenuItem>
+                          ) : null}
+                          {attachment.permissions.canDownload ? (
+                            <DropdownMenuItem onSelect={() => void handleDownload(attachment)}>
+                              <Download className="h-4 w-4" aria-hidden="true" />
+                              Download
+                            </DropdownMenuItem>
+                          ) : null}
+                          {attachment.permissions.canPreview || attachment.permissions.canDownload ? (
+                            <DropdownMenuSeparator />
+                          ) : null}
+                          {attachment.permissions.canDelete ? (
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onSelect={() => deleteMutation.mutate(attachment.id)}
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              Delete
+                            </DropdownMenuItem>
+                          ) : null}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <Dialog open={previewAttachment !== null} onOpenChange={(open) => !open && setPreviewAttachment(null)}>
+        <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-4xl">
+          {previewAttachment ? (
+            <>
+              <DialogHeader className="text-left">
+                <DialogTitle>{previewAttachment.filename}</DialogTitle>
+                <DialogDescription>
+                  {formatFileSize(previewAttachment.sizeBytes)}
+                  {previewAttachment.uploadedBy ? ` · Uploaded by ${previewAttachment.uploadedBy.name}` : null}
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="max-h-[75vh] pr-3">
+                <AttachmentPreviewPanel attachment={previewAttachment} />
+              </ScrollArea>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
-
-function buildAttachmentDescription(attachment: AttachmentViewModel) {
-  const details = [formatFileSize(attachment.sizeBytes)];
-
-  if (attachment.uploadedBy) {
-    details.push(`Uploaded by ${attachment.uploadedBy.name}`);
-  }
-
-  return details.join(" · ");
 }

@@ -1,8 +1,20 @@
 "use client";
 
-import type { KeyboardEvent, MouseEvent } from "react";
-import { useEffect, useId, useRef, useState } from "react";
-import { Button, Textarea } from "@cognify/ui";
+import { useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Input,
+  Label,
+  Textarea,
+} from "@cognify/ui";
 
 type RequisitionActionDialogProps = {
   action: "request-changes" | "withdraw" | "cancel";
@@ -31,31 +43,6 @@ export function RequisitionActionDialog({
   const [reason, setReason] = useState("");
   const [requestedFields, setRequestedFields] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-  const titleId = useId();
-
-  useEffect(() => {
-    if (!open) {
-      previousFocusRef.current?.focus();
-      previousFocusRef.current = null;
-      return;
-    }
-
-    const focusableElements = getFocusableElements(modalRef.current);
-    (focusableElements[0] ?? modalRef.current)?.focus();
-  }, [open]);
-
-  function openDialog() {
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
-    setOpen(true);
-  }
-
-  function closeDialog() {
-    setOpen(false);
-  }
 
   async function handleSubmit() {
     if (!reason.trim()) {
@@ -64,6 +51,7 @@ export function RequisitionActionDialog({
     }
 
     setError(null);
+
     try {
       await onSubmit({
         reason: reason.trim(),
@@ -74,134 +62,63 @@ export function RequisitionActionDialog({
               .filter(Boolean)
           : [],
       });
-      closeDialog();
+      setOpen(false);
       setReason("");
       setRequestedFields("");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Unable to complete this action.");
-    }
-  }
-
-  function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
-    if (event.target === event.currentTarget) {
-      closeDialog();
-    }
-  }
-
-  function handleDialogKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeDialog();
-      return;
-    }
-
-    if (event.key !== "Tab") return;
-
-    const focusableElements = getFocusableElements(modalRef.current);
-    if (focusableElements.length === 0) {
-      event.preventDefault();
-      modalRef.current?.focus();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (event.shiftKey && document.activeElement === firstElement) {
-      event.preventDefault();
-      lastElement.focus();
-      return;
-    }
-
-    if (!event.shiftKey && document.activeElement === lastElement) {
-      event.preventDefault();
-      firstElement.focus();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to complete this action.");
     }
   }
 
   return (
-    <>
-      <Button
-        ref={triggerRef}
-        variant={buttonVariant(triggerVariant)}
-        onClick={openDialog}
-      >
-        {triggerLabel}
-      </Button>
-      {!open ? null : (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={handleBackdropClick}
-        >
-          <div
-            ref={modalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            tabIndex={-1}
-            onKeyDown={handleDialogKeyDown}
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-            data-action={action}
-          >
-            <div className="space-y-2">
-              <h2 id={titleId} className="text-lg font-semibold">
-                {title}
-              </h2>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-            <div className="mt-4 space-y-4">
-              <label className="block text-sm font-medium">
-                Reason
-                <Textarea
-                  aria-label="Reason"
-                  className="mt-1"
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </label>
-              {requireRequestedFields ? (
-                <label className="block text-sm font-medium">
-                  Requested fields
-                  <input
-                    aria-label="Requested fields"
-                    className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
-                    value={requestedFields}
-                    onChange={(event) => setRequestedFields(event.target.value)}
-                    placeholder="lineItems, deliveryLocation"
-                  />
-                </label>
-              ) : null}
-              {error ? <p className="text-sm text-red-700">{error}</p> : null}
-            </div>
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={closeDialog}>
-                Keep editing
-              </Button>
-              <Button
-                variant={triggerVariant === "destructive" ? "destructive" : "default"}
-                onClick={handleSubmit}
-                disabled={isPending}
-              >
-                {isPending ? "Working" : confirmLabel}
-              </Button>
-            </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant={triggerVariant}>{triggerLabel}</Button>
+      </DialogTrigger>
+      <DialogContent showCloseButton={false} className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor={`reason-${action}`}>Reason</Label>
+            <Textarea
+              id={`reason-${action}`}
+              aria-label="Reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            />
           </div>
+          {requireRequestedFields ? (
+            <div className="space-y-2">
+              <Label htmlFor={`requested-fields-${action}`}>Requested fields</Label>
+              <Input
+                id={`requested-fields-${action}`}
+                aria-label="Requested fields"
+                value={requestedFields}
+                onChange={(event) => setRequestedFields(event.target.value)}
+                placeholder="lineItems, deliveryLocation"
+              />
+            </div>
+          ) : null}
+          {error ? <p className="text-sm text-red-700">{error}</p> : null}
         </div>
-      )}
-    </>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button">
+              Keep editing
+            </Button>
+          </DialogClose>
+          <Button
+            variant={triggerVariant === "destructive" ? "destructive" : "default"}
+            onClick={handleSubmit}
+            disabled={isPending}
+          >
+            {isPending ? "Working" : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
-}
-
-function buttonVariant(variant: "default" | "outline" | "destructive") {
-  return variant;
-}
-
-function getFocusableElements(container: HTMLElement | null) {
-  if (!container) return [];
-
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((element) => !element.hasAttribute("disabled") && !element.getAttribute("aria-hidden"));
 }

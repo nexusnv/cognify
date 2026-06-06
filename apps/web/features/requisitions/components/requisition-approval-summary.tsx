@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle, Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { ApprovalPolicyPreview } from "@/features/approvals/components/approval-policy-preview";
 import { ApprovalStatusBadge } from "@/features/approvals/components/approval-status-badge";
 import { fetchRequisitionApprovalSummary } from "@/features/approvals/api/approvals-api";
@@ -20,31 +21,29 @@ export function RequisitionApprovalSummary({ requisitionId }: { requisitionId: s
 
   if (summaryQuery.isLoading) {
     return (
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Approval summary</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Loading approval summary.</p>
-      </section>
+      <Card>
+        <CardHeader><CardTitle>Approval summary</CardTitle></CardHeader>
+        <CardContent><p className="text-sm text-muted-foreground">Loading approval summary.</p></CardContent>
+      </Card>
     );
   }
 
   if (summaryQuery.isError) {
-    return (
-      <section className="rounded-md border border-red-300 bg-red-50 p-4">
-        <h2 className="text-base font-semibold text-red-900">Approval summary</h2>
-        <p className="mt-2 text-sm text-red-900">Approval summary could not be loaded.</p>
-      </section>
-    );
+    return <Alert variant="destructive"><AlertTitle>Approval summary</AlertTitle><AlertDescription>Approval summary could not be loaded.</AlertDescription></Alert>;
   }
 
   if (summaryQuery.data) {
     const summary = summaryQuery.data;
 
     return (
-      <section className="rounded-md border p-4">
+      <Card>
+        <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-base font-semibold">Approval summary</h2>
+          <CardTitle>Approval summary</CardTitle>
           <ApprovalStatusBadge status={summary.status} />
         </div>
+        </CardHeader>
+        <CardContent>
         <dl className="mt-3 space-y-3 text-sm">
           <div>
             <dt className="text-xs uppercase text-muted-foreground">Current stage</dt>
@@ -76,42 +75,25 @@ export function RequisitionApprovalSummary({ requisitionId }: { requisitionId: s
           </ul>
         ) : null}
         {summary.currentUserTaskId ? (
-          <Link
-            href={`/approvals/tasks/${summary.currentUserTaskId}`}
-            className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
-          >
-            Open my approval task
-          </Link>
+          <Button asChild variant="outline" className="mt-3">
+            <Link href={`/approvals/tasks/${summary.currentUserTaskId}`}>Open my approval task</Link>
+          </Button>
         ) : null}
-      </section>
+        </CardContent>
+      </Card>
     );
   }
 
   if (previewQuery.isError) {
-    return (
-      <section className="rounded-md border border-red-300 bg-red-50 p-4">
-        <h2 className="text-base font-semibold text-red-900">Approval summary</h2>
-        <p className="mt-2 text-sm text-red-900">Approval route preview could not be loaded.</p>
-      </section>
-    );
+    return <Alert variant="destructive"><AlertTitle>Approval summary</AlertTitle><AlertDescription>Approval route preview could not be loaded.</AlertDescription></Alert>;
   }
 
   if (previewQuery.isLoading) {
-    return (
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Approval summary</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Loading approval route preview.</p>
-      </section>
-    );
+    return <Card><CardHeader><CardTitle>Approval summary</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Loading approval route preview.</p></CardContent></Card>;
   }
 
   if (!previewQuery.data) {
-    return (
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Approval summary</h2>
-        <p className="mt-2 text-sm text-muted-foreground">No approval route preview is available.</p>
-      </section>
-    );
+    return <Card><CardHeader><CardTitle>Approval summary</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">No approval route preview is available.</p></CardContent></Card>;
   }
 
   return (

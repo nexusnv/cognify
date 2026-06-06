@@ -1,4 +1,4 @@
-import { NativeSelect } from "@cognify/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle, NativeSelect, RadioGroup, RadioGroupItem } from "@cognify/ui";
 import type { RfqAwardRecommendationVendorOption } from "@cognify/api-client/schemas";
 
 type Props = {
@@ -10,12 +10,15 @@ type Props = {
 
 export function RfqAwardVendorOptionList({ options, selectedVendorId, readOnly = false, onSelect }: Props) {
   return (
-    <section className="rounded-md border p-4" aria-label="Vendor options">
-      <h2 className="text-base font-semibold">Recommended vendor</h2>
+    <Card aria-label="Vendor options">
+      <CardHeader>
+        <CardTitle className="text-base">Recommended vendor</CardTitle>
+      </CardHeader>
+      <CardContent>
       {options.length === 0 ? (
-        <p className="mt-2 text-sm text-muted-foreground">No vendor quotations are available for recommendation.</p>
+        <p className="text-sm text-muted-foreground">No vendor quotations are available for recommendation.</p>
       ) : (
-        <ul className="mt-3 space-y-3">
+        <RadioGroup className="space-y-3" value={selectedVendorId ?? ""} onValueChange={onSelect}>
           {options.map((option) => {
             const rowKey = option.vendorId;
             const selected = selectedVendorId === option.vendorId;
@@ -23,28 +26,24 @@ export function RfqAwardVendorOptionList({ options, selectedVendorId, readOnly =
             const missingScores = option.scorecard?.missingRequiredCount ?? 0;
 
             return (
-              <li key={rowKey} className="rounded-md border p-3">
-                <label className="flex cursor-pointer flex-col gap-2 text-sm">
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="font-medium">{option.vendorName}</span>
-                    <input
-                      type="radio"
-                      name="recommended-vendor"
-                      checked={selected}
-                      disabled={readOnly}
-                      onChange={() => onSelect(option.vendorId)}
-                    />
-                  </span>
-                  <span>{option.currency} {option.totalAmount}</span>
-                  <span>Lead time: {option.leadTimeDays} days</span>
-                  <span>Readiness: {option.readiness}</span>
-                  <span>Weighted score: {score}</span>
-                  <span>Missing scores: {missingScores}</span>
-                </label>
-              </li>
+              <Card key={rowKey}>
+                <CardHeader className="pb-2">
+                  <label className="flex items-center justify-between gap-3">
+                    <CardTitle className="text-base">{option.vendorName}</CardTitle>
+                    <RadioGroupItem value={option.vendorId} disabled={readOnly} aria-label={option.vendorName} />
+                  </label>
+                </CardHeader>
+                <CardContent className="space-y-1 text-sm">
+                  <p>{option.currency} {option.totalAmount}</p>
+                  <p>Lead time: {option.leadTimeDays} days</p>
+                  <p>Readiness: <Badge variant={option.readiness === "ready" ? "default" : "secondary"}>{option.readiness}</Badge></p>
+                  <p>Weighted score: {score}</p>
+                  <p>Missing scores: {missingScores}</p>
+                </CardContent>
+              </Card>
             );
           })}
-        </ul>
+        </RadioGroup>
       )}
       <NativeSelect
         className="mt-3"
@@ -62,6 +61,7 @@ export function RfqAwardVendorOptionList({ options, selectedVendorId, readOnly =
           </option>
         ))}
       </NativeSelect>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@cognify/ui";
 import { SubmissionChecklist } from "./submission-checklist";
 import type { RequisitionFormValues } from "../types/requisition-view-model";
 
@@ -17,51 +17,29 @@ export function SubmitRequisitionDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="submit-requisition-title"
-        className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 id="submit-requisition-title" className="text-lg font-semibold">
-              Submit requisition?
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Submitted requisitions are locked for requester edits in this first workflow slice.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md border"
-            aria-label="Keep editing"
-            onClick={onCancel}
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-        <div className="mt-4">
+    <Dialog open={open} onOpenChange={(nextOpen) => (!nextOpen ? onCancel() : undefined)}>
+      <DialogContent showCloseButton={false} className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Submit requisition?</DialogTitle>
+          <DialogDescription>
+            Submitted requisitions are locked for requester edits in this first workflow slice.
+          </DialogDescription>
+        </DialogHeader>
+        <div>
           <SubmissionChecklist values={values} />
         </div>
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button type="button" className="min-h-11 rounded-md border px-4 text-sm font-medium" onClick={onCancel}>
-            Keep editing
-          </button>
-          <button
-            type="button"
-            className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
-            onClick={onConfirm}
-            disabled={isSubmitting}
-          >
+        <DialogFooter className="flex-col-reverse sm:flex-row">
+          <DialogClose asChild>
+            <Button variant="outline" type="button">
+              Keep editing
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={onConfirm} disabled={isSubmitting}>
             {isSubmitting ? "Submitting" : "Submit requisition"}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

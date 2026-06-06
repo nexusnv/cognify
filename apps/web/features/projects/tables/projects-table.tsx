@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { DataTable } from "@/components/data-table/data-table";
+import { Button, Card, CardContent } from "@cognify/ui";
 import type {
   DataTableColumn,
   DataTablePagination,
@@ -99,30 +100,33 @@ export function ProjectsTable({
       sort={sort}
       onSortChange={onSortChange}
       renderRowActions={(project) => (
-        <Link
-          href={`/projects/${project.id}`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3"
-        >
-          Open
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-        </Link>
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/projects/${project.id}`}>
+            Open
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
       )}
       renderMobileRow={(project) => (
-        <Link href={`/projects/${project.id}`} className="block rounded-md border p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium">{project.name}</p>
-              <p className="mt-1 font-mono text-xs text-muted-foreground">{project.number}</p>
-            </div>
-            <ProjectStatusBadge status={project.status} size="compact" />
-          </div>
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span>{project.owner.name}</span>
-            <span className="font-mono tabular-nums">
-              {formatMoney(project.budgetAmount ?? 0, project.currency)}
-            </span>
-          </div>
-        </Link>
+        <Card className="gap-0 py-0">
+          <CardContent className="p-3">
+            <Link href={`/projects/${project.id}`} className="block">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{project.name}</p>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{project.number}</p>
+                </div>
+                <ProjectStatusBadge status={project.status} size="compact" />
+              </div>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span>{project.owner.name}</span>
+                <span className="font-mono tabular-nums">
+                  {formatMoney(project.budgetAmount ?? 0, project.currency)}
+                </span>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
       )}
     />
   );

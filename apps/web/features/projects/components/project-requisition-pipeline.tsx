@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Button, NativeSelect } from "@cognify/ui";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, NativeSelect, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 import { useRequisitions } from "@/features/requisitions/hooks/use-requisitions";
 import type { ProjectPermissions, ProjectRequisition } from "../types/project-view-model";
 import { useLinkProjectRequisition, useUnlinkProjectRequisition } from "../hooks/use-project-requisitions";
@@ -62,14 +62,17 @@ export function ProjectRequisitionPipeline({
   }
 
   return (
-    <section id="pipeline" className="rounded-md border p-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <Card id="pipeline">
+      <CardHeader>
         <div>
-          <h2 className="text-base font-semibold">Requisition pipeline</h2>
+          <CardTitle>Requisition pipeline</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Track linked requisitions and move work in and out of this project.
           </p>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         {permissions.canLinkRequisitions ? (
           <form className="flex flex-col gap-2 sm:w-[24rem]" onSubmit={handleLinkRequisition}>
             <label className="space-y-1.5 text-sm font-medium">
@@ -93,56 +96,81 @@ export function ProjectRequisitionPipeline({
             </div>
           </form>
         ) : null}
-      </div>
+        </div>
 
-      {permissions.canLinkRequisitions && requisitionsQuery.isSuccess && availableRequisitions.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No unlinked requisitions are available.</p>
-      ) : null}
+        {permissions.canLinkRequisitions && requisitionsQuery.isSuccess && availableRequisitions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No unlinked requisitions are available.</p>
+        ) : null}
 
-      <div className="mt-3 space-y-4">
-        {groups.map((group) => {
-          const rows = requisitions.filter((item) => groupForStatus(item.status) === group.id);
-          return (
-            <div key={group.id} className="space-y-2">
-              <h3 className="text-sm font-medium text-muted-foreground">{group.label}</h3>
-              {rows.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No requisitions in this stage.</p>
-              ) : (
-                rows.map((row) => (
-                  <div
-                    key={row.id}
-                    className="grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-[8.5rem_minmax(0,1fr)_10rem_8rem_7rem_auto] sm:items-center"
-                  >
-                    <Link href={`/requisitions/${row.id}`} className="font-mono text-xs tabular-nums hover:underline">
-                      {row.number}
-                    </Link>
-                    <Link href={`/requisitions/${row.id}`} className="font-medium hover:underline">
-                      {row.title}
-                    </Link>
-                    <span className="text-muted-foreground">{row.requester?.name ?? "Unknown"}</span>
-                    <span className="font-mono tabular-nums">{formatMoney(row.estimatedTotal, "MYR")}</span>
-                    <span className="text-muted-foreground">{formatStatus(row.status)}</span>
-                    {permissions.canUnlinkRequisitions ? (
-                      <div className="flex justify-start sm:justify-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={unlinkMutation.isPending}
-                          onClick={() => void handleUnlinkRequisition(row.id)}
-                        >
-                          Unlink
-                        </Button>
-                      </div>
-                    ) : null}
+        <div className="space-y-4">
+          {groups.map((group) => {
+            const rows = requisitions.filter((item) => groupForStatus(item.status) === group.id);
+            return (
+              <section key={group.id} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">{group.label}</h3>
+                  <Badge variant="secondary">{rows.length}</Badge>
+                </div>
+                {rows.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No requisitions in this stage.</p>
+                ) : (
+                  <div className="overflow-hidden rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Number</TableHead>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Requester</TableHead>
+                          <TableHead className="text-right">Estimated total</TableHead>
+                          <TableHead>Status</TableHead>
+                          {permissions.canUnlinkRequisitions ? <TableHead className="text-right">Action</TableHead> : null}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {rows.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell className="font-mono text-xs tabular-nums">
+                              <Link href={`/requisitions/${row.id}`} className="hover:underline">
+                                {row.number}
+                              </Link>
+                            </TableCell>
+                            <TableCell>
+                              <Link href={`/requisitions/${row.id}`} className="font-medium hover:underline">
+                                {row.title}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {row.requester?.name ?? "Unknown"}
+                            </TableCell>
+                            <TableCell className="font-mono tabular-nums text-right">
+                              {formatMoney(row.estimatedTotal, "MYR")}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{formatStatus(row.status)}</TableCell>
+                            {permissions.canUnlinkRequisitions ? (
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={unlinkMutation.isPending}
+                                  onClick={() => void handleUnlinkRequisition(row.id)}
+                                >
+                                  Unlink
+                                </Button>
+                              </TableCell>
+                            ) : null}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                ))
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

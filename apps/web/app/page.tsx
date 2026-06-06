@@ -1,6 +1,6 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle, buttonVariants } from "@cognify/ui";
 import { ArrowRight, ClipboardCheck, FileSearch, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Separator } from "@cognify/ui";
 
 const workspaceHref = "/login?next=%2Fdashboard";
 
@@ -31,12 +31,9 @@ export default function Home() {
             <p className="text-sm font-medium text-muted-foreground">Procurement governance</p>
             <h1 className="text-2xl font-semibold">Cognify</h1>
           </div>
-          <Link
-            href={workspaceHref}
-            className={buttonVariants({ variant: "outline", className: "min-h-10" })}
-          >
-            Sign in
-          </Link>
+          <Button asChild variant="outline" className="min-h-10">
+            <Link href={workspaceHref}>Sign in</Link>
+          </Button>
         </header>
 
         <section className="grid flex-1 gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center lg:py-12">
@@ -54,22 +51,15 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={workspaceHref}
-                  className={buttonVariants({ className: "min-h-11 px-5" })}
-                >
-                  Open workspace
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-                <Link
-                  href="/login"
-                  className={buttonVariants({
-                    variant: "ghost",
-                    className: "min-h-11 px-5",
-                  })}
-                >
-                  Sign in
-                </Link>
+                <Button asChild className="min-h-11 px-5">
+                  <Link href={workspaceHref}>
+                    Open workspace
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="min-h-11 px-5">
+                  <Link href="/login">Sign in</Link>
+                </Button>
               </div>
             </div>
 
@@ -95,23 +85,26 @@ export default function Home() {
           </div>
 
           <Card className="overflow-hidden py-0">
-            <CardHeader className="border-b bg-card px-5 py-5">
+            <CardHeader className="gap-3 border-b bg-card px-5 py-5">
               <Badge variant="outline" className="w-fit">
                 Workspace entry
               </Badge>
               <CardTitle className="text-xl">Sign in before dashboard access</CardTitle>
+              <CardDescription>
+                Dashboard, requisitions, sourcing, and approvals are available after authentication.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 px-5 py-5">
               <div className="rounded-lg border bg-background p-4">
                 <p className="text-sm font-medium">Acme Procurement</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Dashboard, requisitions, sourcing, and approvals are available
-                  after authentication.
+                  Controlled access keeps the procurement record, work queue, and supporting evidence in one place.
                 </p>
               </div>
-              <Link href={workspaceHref} className={buttonVariants({ className: "w-full" })}>
-                Open workspace
-              </Link>
+              <Separator />
+              <Button asChild className="w-full">
+                <Link href={workspaceHref}>Open workspace</Link>
+              </Button>
             </CardContent>
           </Card>
         </section>

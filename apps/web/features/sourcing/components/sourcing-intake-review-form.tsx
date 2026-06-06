@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { useSaveSourcingIntakeReview } from "../hooks/use-sourcing-intake-actions";
 import { sourcingIntakeReviewFormSchema } from "../schemas/sourcing-intake-schema";
 import type { SourcingIntakeChecklistItem, SourcingIntakeReview } from "../types/sourcing-view-model";
@@ -54,68 +54,107 @@ export function SourcingIntakeReviewForm({ review }: { review: SourcingIntakeRev
   }
 
   return (
-    <form className="space-y-4 rounded-md border p-4" onSubmit={handleSubmit}>
-      <div>
-        <h2 className="text-base font-semibold">Buyer review</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Classify the request and complete intake checks.</p>
-      </div>
-      {error ? <div role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{error}</div> : null}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1.5 text-sm font-medium">
-          Category
-          <input className="min-h-11 w-full rounded-md border px-3 text-base font-normal" value={values.category} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, category: event.target.value }))} />
-        </label>
-        <label className="space-y-1.5 text-sm font-medium">
-          Subcategory
-          <input className="min-h-11 w-full rounded-md border px-3 text-base font-normal" value={values.subcategory} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, subcategory: event.target.value }))} />
-        </label>
-        <label className="space-y-1.5 text-sm font-medium">
-          Urgency
-          <NativeSelect value={values.urgency} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, urgency: event.target.value }))}>
-            <option value="">Not set</option>
-            <option value="low">Low</option>
-            <option value="standard">Standard</option>
-            <option value="urgent">Urgent</option>
-          </NativeSelect>
-        </label>
-        <label className="space-y-1.5 text-sm font-medium">
-          Complexity
-          <NativeSelect value={values.complexity} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, complexity: event.target.value }))}>
-            <option value="">Not set</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </NativeSelect>
-        </label>
-      </div>
-      <label className="block space-y-1.5 text-sm font-medium">
-        Target decision date
-        <input type="date" className="min-h-11 w-full rounded-md border px-3 text-base font-normal" value={values.targetDecisionDate} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, targetDecisionDate: event.target.value }))} />
-      </label>
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Checklist</legend>
-        {values.checklist.map((item) => (
-          <label key={item.key} className="flex min-h-10 items-center gap-3 rounded-md border px-3 text-sm">
-            <input
-              type="checkbox"
-              checked={item.complete}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Buyer review</CardTitle>
+        <p className="text-sm text-muted-foreground">Classify the request and complete intake checks.</p>
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1.5 text-sm font-medium">
+              Category
+              <Input
+                value={values.category}
+                disabled={disabled}
+                onChange={(event) => setValues((current) => ({ ...current, category: event.target.value }))}
+              />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium">
+              Subcategory
+              <Input
+                value={values.subcategory}
+                disabled={disabled}
+                onChange={(event) => setValues((current) => ({ ...current, subcategory: event.target.value }))}
+              />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium">
+              Urgency
+              <NativeSelect
+                value={values.urgency}
+                disabled={disabled}
+                onChange={(event) => setValues((current) => ({ ...current, urgency: event.target.value }))}
+              >
+                <option value="">Not set</option>
+                <option value="low">Low</option>
+                <option value="standard">Standard</option>
+                <option value="urgent">Urgent</option>
+              </NativeSelect>
+            </label>
+            <label className="space-y-1.5 text-sm font-medium">
+              Complexity
+              <NativeSelect
+                value={values.complexity}
+                disabled={disabled}
+                onChange={(event) => setValues((current) => ({ ...current, complexity: event.target.value }))}
+              >
+                <option value="">Not set</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </NativeSelect>
+            </label>
+          </div>
+          <label className="block space-y-1.5 text-sm font-medium">
+            Target decision date
+            <Input
+              type="date"
+              value={values.targetDecisionDate}
               disabled={disabled}
-              onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  checklist: current.checklist.map((entry) => entry.key === item.key ? { ...entry, complete: event.target.checked } : entry),
-                }))
-              }
+              onChange={(event) => setValues((current) => ({ ...current, targetDecisionDate: event.target.value }))}
             />
-            {item.label}
           </label>
-        ))}
-      </fieldset>
-      <label className="block space-y-1.5 text-sm font-medium">
-        Internal notes
-        <Textarea value={values.internalNotes} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, internalNotes: event.target.value }))} />
-      </label>
-      <Button type="submit" disabled={disabled}>{mutation.isPending ? "Saving" : "Save review"}</Button>
-    </form>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Checklist</legend>
+            {values.checklist.map((item) => (
+              <label key={item.key} className="flex min-h-10 items-center gap-3 rounded-md border px-3 text-sm">
+                <Input
+                  checked={item.complete}
+                  disabled={disabled}
+                  type="checkbox"
+                  className="size-4 shrink-0 p-0"
+                  onChange={(event) =>
+                    setValues((current) => ({
+                      ...current,
+                      checklist: current.checklist.map((entry) =>
+                        entry.key === item.key ? { ...entry, complete: event.target.checked } : entry,
+                      ),
+                    }))
+                  }
+                />
+                {item.label}
+              </label>
+            ))}
+          </fieldset>
+          <label className="block space-y-1.5 text-sm font-medium">
+            Internal notes
+            <Textarea
+              value={values.internalNotes}
+              disabled={disabled}
+              onChange={(event) => setValues((current) => ({ ...current, internalNotes: event.target.value }))}
+            />
+          </label>
+          <Button type="submit" disabled={disabled}>
+            {mutation.isPending ? "Saving" : "Save review"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

@@ -2,6 +2,7 @@ import type {
   QuotationComparisonLineRow,
   QuotationComparisonVendor,
 } from "@cognify/api-client/schemas";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 
 export function QuotationComparisonTable({
   rows,
@@ -17,31 +18,31 @@ export function QuotationComparisonTable({
         <p className="text-sm text-muted-foreground">RFQ lines are compared side by side without allocating bundle pricing.</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y text-sm">
-          <thead className="bg-muted/40 text-left">
-            <tr>
-              <th scope="col" className="min-w-56 px-4 py-3 font-medium">RFQ line</th>
+        <Table className="min-w-full text-sm">
+          <TableHeader className="bg-muted/40 text-left">
+            <TableRow>
+              <TableHead className="min-w-56 px-4 py-3 font-medium">RFQ line</TableHead>
               {vendors.map((vendor) => (
-                <th key={vendor.vendorId} scope="col" className="min-w-64 px-4 py-3 font-medium">
+                <TableHead key={vendor.vendorId} className="min-w-64 px-4 py-3 font-medium">
                   {vendor.vendorName}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y">
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={row.rfqLineItemId} className="align-top">
-                <th scope="row" className="px-4 py-4 text-left font-medium">
+              <TableRow key={row.rfqLineItemId} className="align-top">
+                <TableCell className="px-4 py-4 text-left font-medium">
                   <span>{row.name ?? row.description ?? row.rfqLineItemId}</span>
                   <span className="mt-1 block text-xs font-normal text-muted-foreground">
                     {row.quantity ?? "?"} {row.unit ?? "unit"}
                   </span>
-                </th>
+                </TableCell>
                 {vendors.map((vendor) => {
                   const cell = row.vendorCells.find((entry) => entry.vendorId === vendor.vendorId);
 
                   return (
-                    <td key={vendor.vendorId} className="px-4 py-4">
+                    <TableCell key={vendor.vendorId} className="px-4 py-4">
                       {cell ? (
                         <div className="space-y-1">
                           <p className="font-medium">{cell.description ?? "No mapped quotation line"}</p>
@@ -55,13 +56,13 @@ export function QuotationComparisonTable({
                       ) : (
                         <span className="text-muted-foreground">No response</span>
                       )}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );

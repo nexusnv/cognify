@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Alert, AlertDescription, Button, Card, CardContent } from "@cognify/ui";
+import { PageHeader } from "@/components/ui/page-header";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useProject } from "../hooks/use-project";
 import { ProjectForm } from "../forms/project-form";
@@ -11,44 +13,48 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   const project = projectQuery.data;
 
   if (currentUserQuery.isLoading || projectQuery.isLoading) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">Loading project</div>;
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">Loading project</CardContent>
+      </Card>
+    );
   }
 
   if (currentUserQuery.isError || projectQuery.isError || !project) {
     return (
-      <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-        Project could not be loaded.
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>Project could not be loaded.</AlertDescription>
+      </Alert>
     );
   }
 
   if (!project.permissions.canUpdate) {
     return (
       <section className="space-y-5">
-        <Link href={`/projects/${project.id}`} className="inline-flex min-h-11 items-center rounded-md border px-3 text-sm">
-          Back to project
-        </Link>
-        <div className="rounded-md border p-4 text-sm text-muted-foreground">
-          You do not have permission to edit this project.
-        </div>
+        <Button asChild variant="outline" className="w-fit">
+          <Link href={`/projects/${project.id}`}>Back to project</Link>
+        </Button>
+        <PageHeader title="Edit project" description="Update ownership, charter, budget, and target dates." />
+        <Card>
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            You do not have permission to edit this project.
+          </CardContent>
+        </Card>
       </section>
     );
   }
 
   return (
     <section className="space-y-5">
-      <Link href={`/projects/${project.id}`} className="inline-flex min-h-11 items-center rounded-md border px-3 text-sm">
-        Back to project
-      </Link>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">Edit project</h1>
-        <p className="text-sm text-muted-foreground">
-          Update ownership, charter, budget, and target dates.
-        </p>
-      </div>
-      <div className="rounded-md border p-4">
-        <ProjectForm mode="edit" project={project} />
-      </div>
+      <Button asChild variant="outline" className="w-fit">
+        <Link href={`/projects/${project.id}`}>Back to project</Link>
+      </Button>
+      <PageHeader title="Edit project" description="Update ownership, charter, budget, and target dates." />
+      <Card>
+        <CardContent className="p-4">
+          <ProjectForm mode="edit" project={project} />
+        </CardContent>
+      </Card>
     </section>
   );
 }

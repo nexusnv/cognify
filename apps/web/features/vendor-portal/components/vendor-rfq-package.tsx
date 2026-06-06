@@ -2,6 +2,7 @@ import type {
   VendorPortalRfqLineItem,
   VendorPortalRfqRequiredDocument,
 } from "@cognify/api-client/schemas";
+import { Alert, AlertDescription, Badge, Card, CardContent, CardHeader, CardTitle, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 import type { VendorRfqPortalViewModel } from "../types/vendor-rfq-portal-view-model";
 import { formatDateTime } from "../types/vendor-rfq-portal-view-model";
 import { VendorQuotationUploadPanel } from "./vendor-quotation-upload-panel";
@@ -18,16 +19,20 @@ export function VendorRfqPackage({
 
   return (
     <article className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <header className="rounded-lg border bg-background p-6 shadow-sm">
+      <Card>
+        <CardHeader>
         <p className="text-sm font-medium text-muted-foreground">{invitation.tenant.name ?? "Cognify"}</p>
         <h1 className="mt-2 text-3xl font-semibold">{invitation.rfq.title}</h1>
         <p className="mt-2 font-mono text-sm text-muted-foreground">{invitation.rfq.number}</p>
-        <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-          {invitation.deadlineSummary}
-        </div>
-      </header>
+        </CardHeader>
+        <CardContent>
+        <Alert>
+          <AlertDescription>{invitation.deadlineSummary}</AlertDescription>
+        </Alert>
+        </CardContent>
+      </Card>
 
-      <section className="rounded-lg border p-6">
+      <Card><CardHeader><CardTitle className="text-lg">Invitation</CardTitle></CardHeader><CardContent>
         <h2 className="text-lg font-semibold">Invitation</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -47,67 +52,58 @@ export function VendorRfqPackage({
             <dd>{invitation.rfq.responseDueAt ? formatDateTime(invitation.rfq.responseDueAt) : "Not set"}</dd>
           </div>
         </dl>
-      </section>
+      </CardContent></Card>
 
-      <section className="rounded-lg border p-6">
-        <h2 className="text-lg font-semibold">Scope</h2>
+      <Card><CardHeader><CardTitle className="text-lg">Scope</CardTitle></CardHeader><CardContent>
         <p className="mt-3 text-sm text-muted-foreground">
           {invitation.rfq.scopeSummary ?? "No scope summary was provided."}
         </p>
+        <Separator className="my-4" />
         <h3 className="mt-6 text-base font-semibold">Response instructions</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           {invitation.rfq.responseInstructions ?? "No response instructions were provided."}
         </p>
-      </section>
+      </CardContent></Card>
 
-      <section className="rounded-lg border p-6">
-        <h2 className="text-lg font-semibold">Line items</h2>
+      <Card><CardHeader><CardTitle className="text-lg">Line items</CardTitle></CardHeader><CardContent>
         {lineItems.length > 0 ? (
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b text-muted-foreground">
-                <tr>
-                  <th className="py-2 pr-3 font-medium">Description</th>
-                  <th className="py-2 pr-3 font-medium">Quantity</th>
-                  <th className="py-2 pr-3 font-medium">Unit</th>
-                  <th className="py-2 font-medium">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader><TableRow><TableHead>Description</TableHead><TableHead>Quantity</TableHead><TableHead>Unit</TableHead><TableHead>Notes</TableHead></TableRow></TableHeader>
+              <TableBody>
                 {lineItems.map((item, index) => (
-                  <tr key={`${item.description ?? "item"}-${index}`} className="border-b last:border-b-0">
-                    <td className="py-3 pr-3 font-medium">{item.description ?? "Untitled item"}</td>
-                    <td className="py-3 pr-3">{item.quantity ?? "-"}</td>
-                    <td className="py-3 pr-3">{item.unit ?? "-"}</td>
-                    <td className="py-3">{item.notes ?? "-"}</td>
-                  </tr>
+                  <TableRow key={`${item.description ?? "item"}-${index}`}>
+                    <TableCell className="font-medium">{item.description ?? "Untitled item"}</TableCell>
+                    <TableCell>{item.quantity ?? "-"}</TableCell>
+                    <TableCell>{item.unit ?? "-"}</TableCell>
+                    <TableCell>{item.notes ?? "-"}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <p className="mt-3 text-sm text-muted-foreground">No line items were provided.</p>
         )}
-      </section>
+      </CardContent></Card>
 
-      <section className="rounded-lg border p-6">
-        <h2 className="text-lg font-semibold">Required documents</h2>
+      <Card><CardHeader><CardTitle className="text-lg">Required documents</CardTitle></CardHeader><CardContent>
         {requiredDocuments.length > 0 ? (
-          <ul className="mt-4 space-y-2 text-sm">
+            <ul className="mt-4 space-y-2 text-sm">
             {requiredDocuments.map((document) => (
               <li
                 key={document.key ?? document.label}
-                className="flex items-center justify-between rounded-md border p-3"
+                className="flex items-center justify-between rounded-md bg-muted/30 px-3 py-2"
               >
                 <span>{document.label ?? document.key ?? "Required document"}</span>
-                <span className="text-muted-foreground">{document.required ? "Required" : "Optional"}</span>
+                <Badge variant={document.required ? "secondary" : "outline"}>{document.required ? "Required" : "Optional"}</Badge>
               </li>
             ))}
           </ul>
         ) : (
           <p className="mt-3 text-sm text-muted-foreground">No required documents were listed.</p>
         )}
-      </section>
+      </CardContent></Card>
 
       <VendorQuotationUploadPanel token={token} />
     </article>

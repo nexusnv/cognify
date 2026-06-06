@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, NativeSelect, Textarea } from "@cognify/ui";
 import type {
   QuotationComparisonNote,
   QuotationComparisonNoteGroup,
@@ -66,13 +66,16 @@ export function QuotationComparisonNotesPanel({
   }
 
   return (
-    <section className="rounded-md border p-4">
-      <h2 className="text-base font-semibold">Comparison notes</h2>
-      <p className="mt-2 text-xs text-muted-foreground">
+    <Card>
+      <CardHeader>
+      <CardTitle className="text-base">Comparison notes</CardTitle>
+      <p className="text-xs text-muted-foreground">
         Comparison notes are annotations only. They do not score vendors, recommend awards, or change RFQ status.
       </p>
+      </CardHeader>
+      <CardContent>
       {!canManage ? (
-        <p className="mt-3 rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+        <p className="mt-3 rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
           Note controls are unavailable for this RFQ.
         </p>
       ) : (
@@ -117,7 +120,11 @@ export function QuotationComparisonNotesPanel({
               </Button>
             ) : null}
           </div>
-          {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
         </div>
       )}
 
@@ -126,7 +133,7 @@ export function QuotationComparisonNotesPanel({
           <p className="text-sm text-muted-foreground">No comparison notes yet.</p>
         ) : null}
         {(noteGroups.length > 0 ? noteGroups.flatMap((group) => group.notes) : notes).map((note) => (
-          <article key={note.id} data-testid="comparison-note" className="rounded-md border bg-background p-3 text-sm">
+          <article key={note.id} data-testid="comparison-note" className="rounded-md bg-muted/30 p-3 text-sm">
             <div className="flex items-center justify-between gap-3">
               <p className="font-medium">{labelSection(note.section)}</p>
               {canManage ? (
@@ -153,7 +160,8 @@ export function QuotationComparisonNotesPanel({
           </article>
         ))}
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 

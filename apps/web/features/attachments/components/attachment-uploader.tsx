@@ -2,16 +2,18 @@
 
 import { AlertCircle, Upload } from "lucide-react";
 import { useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import type { ApiClientError } from "@cognify/api-client";
 import type { ValidationFailedResponse } from "@cognify/api-client/schemas";
 import { useAttachmentUpload } from "../hooks/use-attachments";
+import { Alert, AlertDescription, AlertTitle, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Progress } from "@cognify/ui";
 
 export function AttachmentUploader({ requisitionId }: { requisitionId: string }) {
   const uploadMutation = useAttachmentUpload(requisitionId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     setSelectedFile(file);
     uploadMutation.reset();
@@ -33,46 +35,51 @@ export function AttachmentUploader({ requisitionId }: { requisitionId: string })
   const errorMessage = getUploadErrorMessage(uploadMutation.error);
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium" htmlFor="attachment-upload">
-        Upload evidence
-      </label>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <input
-          ref={fileInputRef}
-          id="attachment-upload"
-          type="file"
-          className="block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer"
-          onChange={handleFileSelect}
-          aria-label="Upload evidence"
-          disabled={uploadMutation.isPending}
-        />
-        {selectedFile ? (
-          <button
+    <Card>
+      <CardHeader className="gap-2">
+        <CardTitle className="text-base">Upload evidence</CardTitle>
+        <CardDescription>Attach procurement files and supporting records to the requisition.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <label className="grid gap-1.5 text-sm font-medium" htmlFor="attachment-upload">
+            File
+            <Input
+              ref={fileInputRef}
+              id="attachment-upload"
+              type="file"
+              onChange={handleFileSelect}
+              aria-label="Upload evidence"
+              disabled={uploadMutation.isPending}
+            />
+          </label>
+          <Button
             type="button"
             onClick={handleUpload}
-            disabled={uploadMutation.isPending}
-            className="inline-flex min-h-9 items-center gap-2 rounded-md bg-foreground px-3 text-sm font-medium text-background disabled:opacity-50"
+            disabled={!selectedFile || uploadMutation.isPending}
+            className="min-h-11"
             aria-label="Upload selected file"
           >
             <Upload className="h-4 w-4" aria-hidden="true" />
             {uploadMutation.isPending ? "Uploading..." : "Upload"}
-          </button>
-        ) : null}
-      </div>
-      {selectedFile ? (
-        <p className="text-xs text-muted-foreground">Selected file: {selectedFile.name}</p>
-      ) : null}
-      {uploadMutation.isError ? (
-        <div
-          role="alert"
-          className="flex items-center gap-2 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-900"
-        >
-          <AlertCircle className="h-4 w-4" aria-hidden="true" />
-          <span>{errorMessage}</span>
+          </Button>
         </div>
-      ) : null}
-    </div>
+
+        {selectedFile ? (
+          <p className="text-xs text-muted-foreground">Selected file: {selectedFile.name}</p>
+        ) : null}
+
+        {uploadMutation.isPending ? <Progress value={65} /> : null}
+
+        {uploadMutation.isError ? (
+          <Alert role="alert">
+            <AlertCircle className="h-4 w-4" aria-hidden="true" />
+            <AlertTitle>Upload failed</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 

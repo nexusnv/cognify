@@ -1,17 +1,24 @@
 import { CheckCircle2, CircleAlert } from "lucide-react";
+import { Badge, Card, CardContent, CardHeader, CardTitle, Progress } from "@cognify/ui";
 import type { RequisitionFormValues } from "../types/requisition-view-model";
 import { buildSubmissionChecklist, calculateEstimatedTotal, formatMoney } from "../utils/requisition-totals";
 
 export function SubmissionChecklist({ values }: { values: RequisitionFormValues }) {
   const checklist = buildSubmissionChecklist(values);
   const totals = calculateEstimatedTotal(values.lineItems);
+  const completed = checklist.filter((item) => item.complete).length;
+  const progress = checklist.length > 0 ? Math.round((completed / checklist.length) * 100) : 0;
 
   return (
-    <aside className="space-y-4 rounded-md border bg-card p-4">
-      <div>
-        <h2 className="text-sm font-semibold">Submission checklist</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Complete these items before sending for review.</p>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center justify-between">
+          Submission checklist
+          <Badge variant="outline">{completed}/{checklist.length}</Badge>
+        </CardTitle>
+        <Progress value={progress} />
+      </CardHeader>
+      <CardContent className="space-y-4">
       <ul className="space-y-2">
         {checklist.map((item) => {
           const Icon = item.complete ? CheckCircle2 : CircleAlert;
@@ -30,6 +37,7 @@ export function SubmissionChecklist({ values }: { values: RequisitionFormValues 
           {formatMoney(totals.estimatedTotal, totals.currency)}
         </p>
       </div>
-    </aside>
+      </CardContent>
+    </Card>
   );
 }

@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { Button, Card, CardContent, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { ApprovalPolicyPreview } from "../components/approval-policy-preview";
 import {
   awardRuleFields,
@@ -88,15 +88,15 @@ export function ApprovalPolicyForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div className="space-y-4">
-        <div className="grid gap-3 rounded-md border p-3 md:grid-cols-[minmax(0,1fr)_14rem]">
+        <Card>
+          <CardContent className="grid gap-3 p-3 md:grid-cols-[minmax(0,1fr)_14rem]">
           <div>
             <label htmlFor="approval-policy-name" className="block text-sm font-medium">
               Policy name
             </label>
-            <input
+            <Input
               id="approval-policy-name"
               {...register("name")}
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-base"
               aria-invalid={Boolean(errors.name)}
             />
             {errors.name ? <p className="mt-1 text-sm text-red-600">{errors.name.message}</p> : null}
@@ -109,10 +109,11 @@ export function ApprovalPolicyForm({
                 <option key={value} value={value}>
                   {label}
                 </option>
-              ))}
-            </NativeSelect>
-          </label>
-        </div>
+            ))}
+          </NativeSelect>
+        </label>
+          </CardContent>
+        </Card>
 
         <div>
           <label htmlFor="approval-policy-description" className="block text-sm font-medium">
@@ -121,24 +122,26 @@ export function ApprovalPolicyForm({
           <Textarea id="approval-policy-description" {...register("description")} className="mt-1" />
         </div>
 
-        <section className="rounded-md border p-3" aria-labelledby="approval-policy-rules-title">
-          <div className="flex items-center justify-between gap-3">
-            <h2 id="approval-policy-rules-title" className="text-sm font-semibold">
-              Rules
-            </h2>
-            <Button type="button" variant="outline" size="sm" onClick={addRule}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Add rule
-            </Button>
-          </div>
+        <Card aria-labelledby="approval-policy-rules-title">
+          <CardContent className="space-y-3 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="approval-policy-rules-title" className="text-sm font-semibold">
+                Rules
+              </h2>
+              <Button type="button" variant="outline" size="sm" onClick={addRule}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add rule
+              </Button>
+            </div>
 
-          <div className="mt-3 space-y-2">
+            <div className="space-y-2">
             {rules.fields.length === 0 ? (
               <p className="text-sm text-muted-foreground">No rules. The policy can act as a fallback route.</p>
             ) : null}
             {rules.fields.map((rule, index) => (
               <div
                 key={rule.id}
+                data-rule-row="true"
                 className="grid gap-2 rounded-md border p-2 md:grid-cols-[minmax(9rem,1fr)_9rem_minmax(8rem,1fr)_2.75rem]"
               >
                 <label className="space-y-1 text-xs font-medium">
@@ -167,7 +170,10 @@ export function ApprovalPolicyForm({
 
                 <label className="space-y-1 text-xs font-medium">
                   Operator
-                  <NativeSelect {...register(`rules.${index}.operator`)} aria-label={`Rule ${index + 1} operator`}>
+                  <NativeSelect
+                    {...register(`rules.${index}.operator`)}
+                    aria-label={`Rule ${index + 1} operator`}
+                  >
                     <option value="equals">Equals</option>
                     <option value="in">In</option>
                     <option value="gte">Greater or equal</option>
@@ -178,10 +184,9 @@ export function ApprovalPolicyForm({
 
                 <label className="space-y-1 text-xs font-medium">
                   Value
-                  <input
+                  <Input
                     {...register(`rules.${index}.value`, { setValueAs: coerceRuleValue })}
                     aria-label={`Rule ${index + 1} value`}
-                    className="min-h-11 w-full rounded-md border px-3 text-base"
                   />
                 </label>
 
@@ -203,15 +208,16 @@ export function ApprovalPolicyForm({
               </div>
             ))}
           </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        <div className="grid gap-3 rounded-md border p-3 md:grid-cols-3">
+        <Card>
+          <CardContent className="grid gap-3 p-3 md:grid-cols-3">
           <label className="space-y-1.5 text-sm font-medium">
             Stage name
-            <input
+            <Input
               {...register("routeTemplate.stages.0.name")}
               aria-label="Stage name"
-              className="min-h-11 w-full rounded-md border px-3 text-base"
             />
           </label>
           <label className="space-y-1.5 text-sm font-medium">
@@ -223,23 +229,22 @@ export function ApprovalPolicyForm({
           </label>
           <label className="space-y-1.5 text-sm font-medium">
             Due hours
-            <input
+            <Input
               type="number"
               min={1}
               {...register("slaRules.0.dueInHours", { valueAsNumber: true })}
-              className="min-h-11 w-full rounded-md border px-3 text-base"
             />
           </label>
           <label className="space-y-1.5 text-sm font-medium">
             Escalation hours
-            <input
+            <Input
               type="number"
               min={1}
               {...register("slaRules.0.escalateAfterHours", { valueAsNumber: true })}
-              className="min-h-11 w-full rounded-md border px-3 text-base"
             />
           </label>
-        </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-3 md:grid-cols-2">
           <ApproverEditor
@@ -286,45 +291,44 @@ function ApproverEditor({
   const userIdError = nestedErrorMessage(errors, `${prefix}.userId`);
 
   return (
-    <fieldset className="grid gap-2 rounded-md border p-3">
-      <legend className="px-1 text-sm font-semibold">{title}</legend>
-      <label className="space-y-1 text-xs font-medium">
-        Type
-        <NativeSelect {...register(`${prefix}.type`)} aria-label={`${title} type`} aria-invalid={Boolean(typeError)}>
-          <option value="role">Role</option>
-          <option value="user">User</option>
-        </NativeSelect>
-        {typeError ? <span className="block text-xs text-red-600">{typeError}</span> : null}
-      </label>
-      <label className="space-y-1 text-xs font-medium">
-        Role
-        <input
-          {...register(`${prefix}.role`)}
-          aria-label={`${title} role`}
-          aria-invalid={Boolean(roleError)}
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-        />
-        {roleError ? <span className="block text-xs text-red-600">{roleError}</span> : null}
-      </label>
-      <label className="space-y-1 text-xs font-medium">
-        User ID
-        <input
-          {...register(`${prefix}.userId`)}
-          aria-label={`${title} user ID`}
-          aria-invalid={Boolean(userIdError)}
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-        />
-        {userIdError ? <span className="block text-xs text-red-600">{userIdError}</span> : null}
-      </label>
-      <label className="space-y-1 text-xs font-medium">
-        Label
-        <input
-          {...register(`${prefix}.label`)}
-          aria-label={`${title} label`}
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-        />
-      </label>
-    </fieldset>
+    <Card>
+      <CardContent className="grid gap-2 p-3">
+        <h3 className="px-1 text-sm font-semibold">{title}</h3>
+        <label className="space-y-1 text-xs font-medium">
+          Type
+          <NativeSelect {...register(`${prefix}.type`)} aria-label={`${title} type`} aria-invalid={Boolean(typeError)}>
+            <option value="role">Role</option>
+            <option value="user">User</option>
+          </NativeSelect>
+          {typeError ? <span className="block text-xs text-red-600">{typeError}</span> : null}
+        </label>
+        <label className="space-y-1 text-xs font-medium">
+          Role
+          <Input
+            {...register(`${prefix}.role`)}
+            aria-label={`${title} role`}
+            aria-invalid={Boolean(roleError)}
+          />
+          {roleError ? <span className="block text-xs text-red-600">{roleError}</span> : null}
+        </label>
+        <label className="space-y-1 text-xs font-medium">
+          User ID
+          <Input
+            {...register(`${prefix}.userId`)}
+            aria-label={`${title} user ID`}
+            aria-invalid={Boolean(userIdError)}
+          />
+          {userIdError ? <span className="block text-xs text-red-600">{userIdError}</span> : null}
+        </label>
+        <label className="space-y-1 text-xs font-medium">
+          Label
+          <Input
+            {...register(`${prefix}.label`)}
+            aria-label={`${title} label`}
+          />
+        </label>
+      </CardContent>
+    </Card>
   );
 }
 

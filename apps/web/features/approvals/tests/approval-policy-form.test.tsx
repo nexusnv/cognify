@@ -32,7 +32,7 @@ describe("ApprovalPolicyForm", () => {
     await user.selectOptions(screen.getByLabelText("Subject type"), "rfq_award_recommendation");
     await user.click(screen.getByRole("button", { name: /Add rule/ }));
 
-    const ruleRow = screen.getByLabelText("Rule 1 field").closest("div");
+    const ruleRow = screen.getByLabelText("Rule 1 field").closest('[data-rule-row="true"]');
     expect(ruleRow).not.toBeNull();
     await user.selectOptions(within(ruleRow as HTMLElement).getByLabelText("Rule 1 field"), "recommendedAmount");
     await user.selectOptions(within(ruleRow as HTMLElement).getByLabelText("Rule 1 operator"), "gte");

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { Alert, AlertDescription, AlertTitle, Badge, Card, CardContent, CardHeader, CardTitle, Progress } from "@cognify/ui";
 import type { ProjectSummary } from "../types/project-view-model";
 
 export function ProjectBudgetSummary({
@@ -13,30 +15,57 @@ export function ProjectBudgetSummary({
   const linked = summary.estimatedRequisitionTotal;
   const remaining = budget - linked;
 
+  const linkedPercent = budget > 0 ? Math.min((linked / budget) * 100, 100) : 0;
+
   return (
-    <section id="budget" className="rounded-md border p-4">
-      <h2 className="text-base font-semibold">Budget summary</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
-        <Metric label="Budget amount" value={formatMoney(budget, currency)} />
-        <Metric label="Linked requisition total" value={formatMoney(linked, currency)} />
-        <Metric label="Remaining budget" value={formatMoney(remaining, currency)} />
-      </div>
-      {remaining < 0 ? (
-        <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Linked requisitions currently exceed the budget. This workspace does not enforce budget
-          limits yet.
-        </p>
-      ) : null}
-    </section>
+    <Card id="budget">
+      <CardHeader>
+        <CardTitle>Budget summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Metric label="Budget amount" value={formatMoney(budget, currency)} />
+          <Metric label="Linked requisition total" value={formatMoney(linked, currency)} />
+          <Metric
+            label="Remaining budget"
+            value={
+              <span className={remaining < 0 ? "text-destructive" : undefined}>
+                {formatMoney(remaining, currency)}
+              </span>
+            }
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>Linked spend</span>
+            <Badge variant={remaining < 0 ? "destructive" : "secondary"}>
+              {Math.round(linkedPercent)}%
+            </Badge>
+          </div>
+          <Progress value={linkedPercent} />
+        </div>
+        {remaining < 0 ? (
+          <Alert variant="destructive">
+            <AlertTitle>Budget exceeded</AlertTitle>
+            <AlertDescription>
+              Linked requisitions currently exceed the budget. This workspace does not enforce
+              budget limits yet.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value }: { label: string; value: string | ReactNode }) {
   return (
-    <div className="rounded-md border p-3">
-      <p className="text-xs uppercase text-muted-foreground">{label}</p>
-      <p className="mt-1 font-mono text-sm font-medium tabular-nums">{value}</p>
-    </div>
+    <Card>
+      <CardContent className="space-y-1 p-3">
+        <p className="text-xs uppercase text-muted-foreground">{label}</p>
+        <p className="font-mono text-sm font-medium tabular-nums">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 

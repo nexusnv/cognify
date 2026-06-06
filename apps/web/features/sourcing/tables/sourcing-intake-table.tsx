@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { DataTable } from "@/components/data-table/data-table";
+import { Button, Card, CardContent } from "@cognify/ui";
 import type { DataTableColumn } from "@/components/data-table/data-table-types";
 import { SourcingIntakeStatusBadge } from "../components/sourcing-intake-status-badge";
 import type { SourcingIntakeReview } from "../types/sourcing-view-model";
@@ -95,31 +96,34 @@ export function SourcingIntakeTable({
       emptyDescription="Try another queue preset or create intake from an eligible requisition."
       onRetry={onRetry}
       renderRowActions={(review) => (
-        <Link
-          href={`/sourcing/intake/${review.id}`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3"
-        >
-          Open
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-        </Link>
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/sourcing/intake/${review.id}`}>
+            Open
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
       )}
       renderMobileRow={(review) => (
-        <Link href={`/sourcing/intake/${review.id}`} className="block rounded-md border p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium">{review.requisition.title}</p>
-              <p className="mt-1 font-mono text-xs text-muted-foreground">{review.requisition.number}</p>
-            </div>
-            <SourcingIntakeStatusBadge status={review.status} size="compact" />
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-            <span>{review.assignedBuyer?.name ?? "Unassigned"}</span>
-            <span className="font-mono tabular-nums">
-              {formatMoney(review.requisition.estimatedTotal, review.requisition.currency ?? "MYR")}
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">Target {formatDate(review.targetDecisionDate)}</p>
-        </Link>
+        <Card className="gap-0 py-0">
+          <CardContent className="p-3">
+            <Link href={`/sourcing/intake/${review.id}`} className="block">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{review.requisition.title}</p>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{review.requisition.number}</p>
+                </div>
+                <SourcingIntakeStatusBadge status={review.status} size="compact" />
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                <span>{review.assignedBuyer?.name ?? "Unassigned"}</span>
+                <span className="font-mono tabular-nums">
+                  {formatMoney(review.requisition.estimatedTotal, review.requisition.currency ?? "MYR")}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">Target {formatDate(review.targetDecisionDate)}</p>
+            </Link>
+          </CardContent>
+        </Card>
       )}
     />
   );

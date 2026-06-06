@@ -2,6 +2,7 @@ import type {
   RfqAwardRecommendationEvidenceReference,
   RfqAwardRecommendationEvidenceReferenceInput,
 } from "@cognify/api-client/schemas";
+import { Badge, Card, CardContent, CardHeader, CardTitle, Checkbox } from "@cognify/ui";
 
 type Props = {
   references: RfqAwardRecommendationEvidenceReference[];
@@ -14,21 +15,23 @@ export function RfqAwardEvidenceSelector({ references, selected, readOnly = fals
   const selectedKeys = new Set(selected.map((item) => `${item.type}:${item.id}`));
 
   return (
-    <section className="rounded-md border p-4" aria-label="Evidence selector">
-      <h2 className="text-base font-semibold">Supporting evidence</h2>
-      <ul className="mt-3 space-y-2">
+    <Card aria-label="Evidence selector">
+      <CardHeader>
+        <CardTitle className="text-base">Supporting evidence</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="mt-3 space-y-2">
         {references.map((reference) => {
           const key = `${reference.type}:${reference.id}`;
           const checked = selectedKeys.has(key);
           return (
             <li key={key}>
               <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={checked}
                   disabled={readOnly}
-                  onChange={(event) => {
-                    if (event.target.checked) {
+                  onCheckedChange={(checkedState) => {
+                    if (checkedState) {
                       onChange([...selected, { type: reference.type, id: reference.id, label: reference.label }]);
                       return;
                     }
@@ -37,10 +40,12 @@ export function RfqAwardEvidenceSelector({ references, selected, readOnly = fals
                 />
                 <span>{reference.label}</span>
               </label>
+              <Badge variant="outline" className="ml-6">{reference.type}</Badge>
             </li>
           );
         })}
-      </ul>
-    </section>
+        </ul>
+      </CardContent>
+    </Card>
   );
 }

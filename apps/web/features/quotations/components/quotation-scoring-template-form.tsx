@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, Checkbox, Input, NativeSelect, Textarea } from "@cognify/ui";
 import type { QuotationScoringTemplate, SaveQuotationScoringTemplateRequest } from "@cognify/api-client/schemas";
 import { useMemo, useState } from "react";
 
@@ -80,16 +80,13 @@ export function QuotationScoringTemplateForm({
       }}
     >
       {error ? (
-        <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-          {error}
-        </div>
+        <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
       ) : null}
 
       <section className="grid gap-4">
         <label className="grid gap-2 text-sm font-medium">
           Template name
-          <input
-            className="min-h-11 rounded-md border px-3 text-sm"
+          <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
@@ -117,7 +114,8 @@ export function QuotationScoringTemplateForm({
 
         <div className="grid gap-3">
           {criteria.map((criterion, index) => (
-            <div key={criterion.clientId} className="rounded-md border p-4" data-testid="criterion-row">
+            <Card key={criterion.clientId} data-testid="criterion-row">
+              <CardContent className="pt-4">
               <div className="grid gap-3 md:grid-cols-[minmax(120px,160px)_1fr_minmax(90px,120px)_minmax(90px,120px)]">
                 <label className="grid gap-2 text-sm font-medium">
                   Category
@@ -134,16 +132,14 @@ export function QuotationScoringTemplateForm({
                 </label>
                 <label className="grid gap-2 text-sm font-medium">
                   Label
-                  <input
-                    className="min-h-11 rounded-md border px-3 text-sm"
+                  <Input
                     value={criterion.label}
                     onChange={(event) => updateCriterion(index, { label: event.target.value })}
                   />
                 </label>
                 <label className="grid gap-2 text-sm font-medium">
                   Weight
-                  <input
-                    className="min-h-11 rounded-md border px-3 text-sm"
+                  <Input
                     inputMode="decimal"
                     value={String(criterion.weight)}
                     onChange={(event) => updateCriterion(index, { weight: event.target.value })}
@@ -151,8 +147,7 @@ export function QuotationScoringTemplateForm({
                 </label>
                 <label className="grid gap-2 text-sm font-medium">
                   Max score
-                  <input
-                    className="min-h-11 rounded-md border px-3 text-sm"
+                  <Input
                     inputMode="numeric"
                     value={String(criterion.maxScore)}
                     onChange={(event) => updateCriterion(index, { maxScore: event.target.value })}
@@ -165,10 +160,9 @@ export function QuotationScoringTemplateForm({
               </label>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <label className="inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={criterion.required}
-                    onChange={(event) => updateCriterion(index, { required: event.target.checked })}
+                    onCheckedChange={(checked) => updateCriterion(index, { required: Boolean(checked) })}
                   />
                   Required
                 </label>
@@ -188,7 +182,8 @@ export function QuotationScoringTemplateForm({
                   Remove criterion
                 </Button>
               </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>

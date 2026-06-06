@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import type { RfqScorecard } from "@cognify/api-client/schemas";
 
 export function RfqScorecardComparisonContext({ scorecard }: { scorecard: RfqScorecard }) {
   return (
-    <section className="rounded-md border p-4" aria-label="Comparison context">
-      <h2 className="text-base font-semibold">Comparison context</h2>
-      <dl className="mt-3 grid gap-3 text-sm">
+    <Card aria-label="Comparison context">
+      <CardHeader>
+        <CardTitle className="text-base">Comparison context</CardTitle>
+      </CardHeader>
+      <CardContent>
+      <dl className="grid gap-3 text-sm">
         <div>
           <dt className="text-muted-foreground">Responses</dt>
           <dd>{scorecard.comparisonContext.readiness?.responseCount ?? 0}</dd>
@@ -15,9 +19,10 @@ export function RfqScorecardComparisonContext({ scorecard }: { scorecard: RfqSco
           <dd>{scorecard.comparisonContext.readiness?.approvedNormalizationCount ?? 0}</dd>
         </div>
       </dl>
-      <Link className="mt-4 inline-flex text-sm font-medium underline-offset-4 hover:underline" href={scorecard.comparisonContext.comparisonPath}>
-        View comparison context
-      </Link>
-    </section>
+      <Button asChild variant="outline" className="mt-4">
+        <Link href={scorecard.comparisonContext.comparisonPath}>View comparison context</Link>
+      </Button>
+      </CardContent>
+    </Card>
   );
 }

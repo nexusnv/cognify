@@ -1,5 +1,16 @@
-import type { WorkflowStateConfig } from "./workflow-state";
-import { workflowToneClassNames } from "./workflow-state";
+import { Badge } from "@cognify/ui";
+import type { BadgeProps } from "@cognify/ui";
+import type { WorkflowStateConfig, WorkflowTone } from "./workflow-state";
+
+const workflowToneToBadgeVariant: Record<WorkflowTone, NonNullable<BadgeProps["variant"]>> = {
+  neutral: "secondary",
+  draft: "outline",
+  info: "outline",
+  success: "default",
+  warning: "outline",
+  danger: "destructive",
+  locked: "secondary",
+};
 
 export function StatusBadge<TStatus extends string>({
   status,
@@ -12,18 +23,15 @@ export function StatusBadge<TStatus extends string>({
 }) {
   const state = config[status];
   const Icon = state.icon;
-  const sizeClassName =
-    size === "compact" ? "min-h-6 gap-1 px-2 text-[0.75rem]" : "min-h-7 gap-1.5 px-2.5 text-xs";
 
   return (
-    <span
-      className={`inline-flex items-center rounded-md border font-medium ${sizeClassName} ${
-        workflowToneClassNames[state.tone]
-      }`}
+    <Badge
+      variant={workflowToneToBadgeVariant[state.tone]}
+      className={size === "compact" ? "min-h-6 gap-1 px-2 py-0.5 text-[0.75rem]" : "min-h-7 gap-1.5 px-2.5 py-1 text-xs"}
     >
       <Icon className={size === "compact" ? "h-3 w-3" : "h-3.5 w-3.5"} aria-hidden="true" />
       <span>{state.label}</span>
       <span className="sr-only">{state.description}</span>
-    </span>
+    </Badge>
   );
 }

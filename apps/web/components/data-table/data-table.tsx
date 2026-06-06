@@ -2,6 +2,18 @@
 
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+  Button,
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@cognify/ui";
 import { DataTableEmpty, DataTableError, DataTableLoading } from "./data-table-empty-state";
 import type {
   DataTableColumn,
@@ -57,11 +69,11 @@ export function DataTable<TRow>({
 
   return (
     <div className="space-y-3">
-      <div className="hidden overflow-hidden rounded-md border md:block">
-        <table className="w-full table-fixed text-left text-sm">
-          <caption className="sr-only">{caption}</caption>
-          <thead className="border-b bg-card text-xs uppercase text-muted-foreground">
-            <tr>
+      <div className="hidden rounded-md border md:block">
+        <Table className="table-fixed text-left text-sm">
+          <TableCaption className="sr-only">{caption}</TableCaption>
+          <TableHeader className="bg-card text-xs uppercase text-muted-foreground">
+            <TableRow>
               {columns.map((column) => {
                 const activeSort = sort?.columnId === column.id ? sort.direction : undefined;
                 const ariaSort =
@@ -72,7 +84,7 @@ export function DataTable<TRow>({
                       : "none";
 
                 return (
-                  <th
+                  <TableHead
                     key={column.id}
                     scope="col"
                     aria-sort={column.sortable ? ariaSort : undefined}
@@ -81,9 +93,11 @@ export function DataTable<TRow>({
                     )}`}
                   >
                     {column.sortable && onSortChange ? (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         type="button"
-                        className="inline-flex items-center gap-1 font-medium uppercase"
+                        className="h-8 justify-start px-2 font-medium uppercase tracking-wide"
                         onClick={() => onSortChange(nextSort(column.id, sort))}
                         aria-label={`Sort by ${column.header} ${
                           activeSort === "asc" ? "descending" : "ascending"
@@ -97,33 +111,33 @@ export function DataTable<TRow>({
                         ) : (
                           <ChevronsUpDown className="h-3.5 w-3.5" aria-hidden="true" />
                         )}
-                      </button>
+                      </Button>
                     ) : (
                       column.header
                     )}
-                  </th>
+                  </TableHead>
                 );
               })}
               {renderRowActions ? (
-                <th scope="col" className="w-32 px-3 py-3">
+                <TableHead scope="col" className="w-32 px-3 py-3">
                   Actions
-                </th>
+                </TableHead>
               ) : null}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={getRowId(row)} className="border-b last:border-b-0">
+              <TableRow key={getRowId(row)}>
                 {columns.map((column) => (
-                  <td key={column.id} className={`px-3 py-4 ${alignClassName(column.align)}`}>
+                  <TableCell key={column.id} className={`px-3 py-4 ${alignClassName(column.align)}`}>
                     {column.cell(row)}
-                  </td>
+                  </TableCell>
                 ))}
-                {renderRowActions ? <td className="px-3 py-4">{renderRowActions(row)}</td> : null}
-              </tr>
+                {renderRowActions ? <TableCell className="px-3 py-4">{renderRowActions(row)}</TableCell> : null}
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {renderMobileRow ? (
@@ -139,26 +153,28 @@ export function DataTable<TRow>({
 
             return (
               <li key={getRowId(row)}>
-                <article className="rounded-md border p-3">
-                  <dl className="grid gap-3">
-                    {mobileColumns.map((column) => (
-                      <div
-                        key={column.id}
-                        className="grid gap-1 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3"
-                      >
-                        <dt className="text-xs font-medium uppercase text-muted-foreground">
-                          {column.header}
-                        </dt>
-                        <dd className={`min-w-0 break-words text-sm ${alignClassName(column.align)}`}>
-                          {column.cell(row)}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {renderRowActions ? (
-                    <div className="mt-3 flex justify-end">{renderRowActions(row)}</div>
-                  ) : null}
-                </article>
+                <Card className="gap-0 py-0">
+                  <CardContent className="space-y-3 p-3">
+                    <dl className="grid gap-3">
+                      {mobileColumns.map((column) => (
+                        <div
+                          key={column.id}
+                          className="grid gap-1 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3"
+                        >
+                          <dt className="text-xs font-medium uppercase text-muted-foreground">
+                            {column.header}
+                          </dt>
+                          <dd className={`min-w-0 break-words text-sm ${alignClassName(column.align)}`}>
+                            {column.cell(row)}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {renderRowActions ? (
+                      <div className="flex justify-end">{renderRowActions(row)}</div>
+                    ) : null}
+                  </CardContent>
+                </Card>
               </li>
             );
           })}
@@ -172,22 +188,24 @@ export function DataTable<TRow>({
           </p>
           {onPreviousPage || onNextPage ? (
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
-                className="rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                variant="outline"
+                size="sm"
                 onClick={onPreviousPage}
                 disabled={!onPreviousPage || pagination.currentPage <= 1}
               >
                 Previous page
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                variant="outline"
+                size="sm"
                 onClick={onNextPage}
                 disabled={!onNextPage || pagination.currentPage >= pagination.lastPage}
               >
                 Next page
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>

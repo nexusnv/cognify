@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Textarea } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Textarea,
+  Input,
+} from "@cognify/ui";
 
 type ApprovalActionDialogProps = {
   action: "approve" | "reject" | "request-changes";
@@ -63,60 +75,54 @@ export function ApprovalActionDialog({
       >
         {triggerLabel}
       </Button>
-      {!open ? null : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={title}
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-          >
-            <h2 className="text-lg font-semibold">{title}</h2>
-            {needsReason ? (
-              <div className="mt-4 space-y-4">
-                <label className="block text-sm font-medium">
-                  Reason
-                  <Textarea
-                    aria-label="Reason"
-                    className="mt-1"
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>
+              {needsReason
+                ? "Add the context needed for this decision."
+                : "This records your approval decision for the assigned task."}
+            </DialogDescription>
+          </DialogHeader>
+          {needsReason ? (
+            <div className="space-y-4">
+              <label className="space-y-1.5 text-sm font-medium">
+                Reason
+                <Textarea aria-label="Reason" value={reason} onChange={(event) => setReason(event.target.value)} />
+              </label>
+              {action === "request-changes" ? (
+                <label className="space-y-1.5 text-sm font-medium">
+                  Requested fields
+                  <Input
+                    aria-label="Requested fields"
+                    value={requestedFields}
+                    onChange={(event) => setRequestedFields(event.target.value)}
+                    placeholder="attachments, businessJustification"
                   />
                 </label>
-                {action === "request-changes" ? (
-                  <label className="block text-sm font-medium">
-                    Requested fields
-                    <input
-                      aria-label="Requested fields"
-                      className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
-                      value={requestedFields}
-                      onChange={(event) => setRequestedFields(event.target.value)}
-                      placeholder="attachments, businessJustification"
-                    />
-                  </label>
-                ) : null}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                This records your approval decision for the assigned task.
-              </p>
-            )}
-            {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant={action === "reject" ? "destructive" : "default"}
-                disabled={isPending}
-                onClick={handleSubmit}
-              >
-                {isPending ? "Working" : confirmLabel}
-              </Button>
+              ) : null}
             </div>
-          </div>
-        </div>
-      )}
+          ) : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant={action === "reject" ? "destructive" : "default"}
+              disabled={isPending}
+              onClick={handleSubmit}
+            >
+              {isPending ? "Working" : confirmLabel}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
