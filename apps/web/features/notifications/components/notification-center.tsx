@@ -1,25 +1,22 @@
 "use client";
 
 import * as Popover from "@radix-ui/react-popover";
-import type { ReactNode } from "react";
+import { Button } from "@cognify/ui";
 import { NotificationItem } from "./notification-item";
 import { useMarkAllNotificationsRead, useUnreadNotifications } from "../hooks/use-notifications";
 
 export function NotificationCenter({
   open,
   onOpenChange,
-  children,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  children?: ReactNode;
 }) {
   const notifications = useUnreadNotifications();
   const markAllRead = useMarkAllNotificationsRead();
 
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
-      {children && <Popover.Trigger asChild>{children}</Popover.Trigger>}
       <Popover.Portal>
         <Popover.Content
           align="end"
@@ -28,14 +25,16 @@ export function NotificationCenter({
         >
           <div className="flex items-center justify-between border-b px-4 py-3">
             <h2 className="text-sm font-semibold">Notifications</h2>
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => markAllRead.mutate()}
               disabled={!notifications.data?.meta.unreadCount || markAllRead.isPending}
-              className="text-xs font-medium text-primary disabled:text-muted-foreground"
+              className="h-auto px-0 text-xs font-medium disabled:text-muted-foreground"
             >
               Mark all read
-            </button>
+            </Button>
           </div>
 
           {notifications.isLoading && (
@@ -45,13 +44,14 @@ export function NotificationCenter({
           {notifications.isError && (
             <div className="grid gap-3 px-4 py-6">
               <p className="text-sm text-destructive">Failed to load notifications.</p>
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => void notifications.refetch()}
-                className="justify-self-start rounded-md border px-3 py-1.5 text-sm"
+                className="justify-self-start"
               >
                 Retry
-              </button>
+              </Button>
             </div>
           )}
 

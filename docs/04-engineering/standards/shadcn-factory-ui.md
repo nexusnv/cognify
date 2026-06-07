@@ -11,6 +11,7 @@
 - `packages/ui/src/components`, `packages/ui/src/hooks`, and `packages/ui/src/lib` are shadcn-managed.
 - `packages/ui` must not contain Cognify copy, route behavior, procurement workflow state, or app shell decisions.
 - `apps/web/components/ui` is the only reusable custom UI exception layer.
+- `apps/web/components/shell`, `apps/web/components/right-panel`, and `apps/web/components/providers` are app infrastructure, not reusable UI primitive packages. They may stay outside `apps/web/components/ui`, but still must use shadcn/Radix primitives for buttons, dialogs, menus, sheets, and controls.
 - Feature hooks, API wrappers, schemas, fixtures, and view-model mappers remain in `apps/web/features/*`.
 
 ## Allowed Custom UI Exception Groups

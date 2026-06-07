@@ -1,6 +1,7 @@
 "use client";
 
 import type { UseFormSetValue } from "react-hook-form";
+import { Checkbox } from "@cognify/ui";
 import type { ProfileFormValues } from "@/features/identity/schemas/profile-schema";
 
 const preferenceFields = [
@@ -83,18 +84,17 @@ export function NotificationPreferencesFields({
                   {field.description}
                 </span>
               </span>
-              <input
-                type="checkbox"
+              <Checkbox
                 role="switch"
                 aria-label={field.label}
                 checked={preferences[field.key].inApp}
                 className="mt-1 h-4 w-4"
-                onChange={(event) => {
+                onCheckedChange={(checked) => {
                   setValue(
                     "notificationPreferences",
                     {
                       ...preferences,
-                      [field.key]: { inApp: event.target.checked },
+                      [field.key]: { inApp: checked === true },
                     },
                     { shouldDirty: true, shouldValidate: true },
                   );

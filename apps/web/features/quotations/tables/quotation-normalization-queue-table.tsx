@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { RotateCw } from "lucide-react";
-import { Button } from "@cognify/ui";
+import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 import type { QuotationNormalizationSummary } from "@cognify/api-client/schemas";
 import { formatDistanceToNowLabel, getUpdatedAt } from "../utils/quotation-normalization-ui";
 import {
@@ -20,42 +20,42 @@ export function QuotationNormalizationQueueTable({
   retryingVersionId: string | null;
 }) {
   return (
-    <div className="overflow-x-auto rounded-md border">
-      <table className="min-w-full text-sm">
-        <thead className="bg-muted/40 text-left">
-          <tr>
-            <th className="px-3 py-2 font-medium">Status</th>
-            <th className="px-3 py-2 font-medium">Vendor</th>
-            <th className="px-3 py-2 font-medium">RFQ</th>
-            <th className="px-3 py-2 font-medium">Version</th>
-            <th className="px-3 py-2 font-medium">Issues</th>
-            <th className="px-3 py-2 font-medium">Updated</th>
-            <th className="px-3 py-2 font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="overflow-hidden rounded-md border">
+      <Table className="min-w-full text-sm">
+        <TableHeader className="bg-muted/40 text-left">
+          <TableRow>
+            <TableHead className="px-3 py-2 font-medium">Status</TableHead>
+            <TableHead className="px-3 py-2 font-medium">Vendor</TableHead>
+            <TableHead className="px-3 py-2 font-medium">RFQ</TableHead>
+            <TableHead className="px-3 py-2 font-medium">Version</TableHead>
+            <TableHead className="px-3 py-2 font-medium">Issues</TableHead>
+            <TableHead className="px-3 py-2 font-medium">Updated</TableHead>
+            <TableHead className="px-3 py-2 font-medium">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row) => {
             const updatedAt = getUpdatedAt(row);
             const versionId = row.source.quotationVersionId ?? null;
             const lastJobError = row.status === "failed" ? row.lastJobError : null;
 
             return (
-              <tr key={row.id} className="border-t align-top">
-                <td className="px-3 py-3">
+              <TableRow key={row.id} className="align-top">
+                <TableCell className="px-3 py-3">
                   <QuotationNormalizationStatusBadge status={row.status} />
-                </td>
-                <td className="px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">
                   <div className="font-medium">{row.source.vendorName ?? "Unknown vendor"}</div>
                   <div className="text-muted-foreground">{row.source.quotationNumber ?? row.source.quotationId}</div>
-                </td>
-                <td className="px-3 py-3">{row.source.rfqNumber ?? row.source.rfqId ?? "No RFQ"}</td>
-                <td className="px-3 py-3">Version {row.source.versionNumber ?? "?"}</td>
-                <td className="px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">{row.source.rfqNumber ?? row.source.rfqId ?? "No RFQ"}</TableCell>
+                <TableCell className="px-3 py-3">Version {row.source.versionNumber ?? "?"}</TableCell>
+                <TableCell className="px-3 py-3">
                   <div>{row.summary.blockingIssueCount} blocking</div>
                   <div className="text-muted-foreground">{row.summary.warningIssueCount} warning</div>
-                </td>
-                <td className="px-3 py-3">{updatedAt ? formatDistanceToNowLabel(updatedAt) : "Unknown"}</td>
-                <td className="px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">{updatedAt ? formatDistanceToNowLabel(updatedAt) : "Unknown"}</TableCell>
+                <TableCell className="px-3 py-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={`/quotations/normalizations/${row.id}`}
@@ -79,12 +79,12 @@ export function QuotationNormalizationQueueTable({
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{formatQuotationNormalizationStatus(row.status)}</p>
                   {lastJobError ? <p className="mt-1 text-xs text-red-700">{lastJobError}</p> : null}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -27,7 +27,7 @@ export function CommandPaletteHost() {
         type="button"
         variant="outline"
         size="lg"
-        aria-label="Search"
+        aria-label="Open command palette"
         onClick={() => setOpen((current) => !current)}
       >
         <Search className="h-4 w-4" aria-hidden="true" />

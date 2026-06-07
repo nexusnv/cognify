@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
@@ -53,6 +54,7 @@ if (typeof window !== "undefined" && !window.matchMedia) {
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
+  cleanup();
   server.resetHandlers();
   resetApprovalMockState();
   resetAttachmentMockState();

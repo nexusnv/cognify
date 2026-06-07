@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { Notification } from "@cognify/api-client/schemas";
+import { Button } from "@cognify/ui";
 import { useMarkNotificationRead } from "../hooks/use-notifications";
 
 function formatCreatedAt(value: string) {
@@ -30,10 +31,11 @@ export function NotificationItem({ notification }: { notification: Notification 
 
   return (
     <li className="border-b last:border-b-0">
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={openNotification}
-        className="grid w-full gap-1 px-4 py-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="grid h-auto w-full justify-start gap-1 rounded-none px-4 py-3 text-left whitespace-normal hover:bg-muted/60"
       >
         <span className="flex items-center gap-2">
           {unread && <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />}
@@ -45,7 +47,7 @@ export function NotificationItem({ notification }: { notification: Notification 
           {notification.subject?.label ? `${notification.subject.label} · ` : ""}
           {formatCreatedAt(notification.createdAt)}
         </span>
-      </button>
+      </Button>
     </li>
   );
 }

@@ -88,7 +88,7 @@ describe("app shell", () => {
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Dashboard");
     expect(screen.getByRole("button", { name: /switch to .* mode/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /open navigation/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /search/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Account menu" })).toBeEnabled();
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
@@ -122,7 +122,7 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    await user.click(screen.getByRole("button", { name: /search/i }));
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
 
     expect(await screen.findByRole("dialog", { name: "Command menu" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Search or jump to...")).toHaveFocus();

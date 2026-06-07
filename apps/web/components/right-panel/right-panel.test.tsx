@@ -11,6 +11,11 @@ vi.mock("next/navigation", () => ({
 
 function PanelHarness() {
   const rightPanel = useRightPanel();
+  const replacementPanel = {
+    id: "replacement",
+    title: "Replacement panel",
+    content: <p>Second panel content</p>,
+  };
 
   return (
     <>
@@ -22,7 +27,14 @@ function PanelHarness() {
             title: "Field laptop refresh",
             description: "REQ-2026-000001",
             size: "md",
-            content: <p>Requester: Test User</p>,
+            content: (
+              <>
+                <p>Requester: Test User</p>
+                <button type="button" onClick={() => rightPanel.openPanel(replacementPanel)}>
+                  Replace panel from content
+                </button>
+              </>
+            ),
             footer: <Link href="/requisitions/req-1">Open workspace</Link>,
           })
         }
@@ -31,13 +43,7 @@ function PanelHarness() {
       </button>
       <button
         type="button"
-        onClick={() =>
-          rightPanel.openPanel({
-            id: "replacement",
-            title: "Replacement panel",
-            content: <p>Second panel content</p>,
-          })
-        }
+        onClick={() => rightPanel.openPanel(replacementPanel)}
       >
         Replace panel
       </button>
@@ -61,10 +67,7 @@ describe("right panel", () => {
 
     await user.click(screen.getByRole("button", { name: "Open panel" }));
 
-    expect(screen.getByRole("dialog", { name: "Field laptop refresh" })).toHaveAttribute(
-      "aria-modal",
-      "true",
-    );
+    expect(screen.getByRole("dialog", { name: "Field laptop refresh" })).toBeInTheDocument();
     expect(screen.getByText("REQ-2026-000001")).toBeInTheDocument();
     expect(screen.getByText("Requester: Test User")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open workspace" })).toHaveAttribute(
@@ -78,7 +81,7 @@ describe("right panel", () => {
     renderPanel();
 
     await user.click(screen.getByRole("button", { name: "Open panel" }));
-    await user.click(screen.getByRole("button", { name: "Replace panel" }));
+    await user.click(screen.getByRole("button", { name: "Replace panel from content" }));
 
     expect(screen.getByRole("dialog", { name: "Replacement panel" })).toBeInTheDocument();
     expect(screen.getByText("Second panel content")).toBeInTheDocument();
@@ -98,7 +101,9 @@ describe("right panel", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open panel" }));
-    await user.click(screen.getByTestId("right-panel-overlay"));
+    const overlay = document.querySelector('[data-slot="sheet-overlay"]');
+    expect(overlay).toBeInTheDocument();
+    await user.click(overlay as Element);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

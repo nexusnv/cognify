@@ -184,6 +184,10 @@ describe("requisitions workflow", () => {
     await user.click(evidence.getByLabelText("Preview supplier-quote.pdf"));
     const panel = await screen.findByRole("dialog", { name: "supplier-quote.pdf" });
     expect(within(panel).getByTitle("Preview of supplier-quote.pdf")).toBeInTheDocument();
+    await user.click(within(panel).getByRole("button", { name: "Close panel" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "supplier-quote.pdf" })).not.toBeInTheDocument();
+    });
 
     expect(screen.getByRole("complementary", { name: "Record sidebar" })).toHaveTextContent(
       "Approval summary",

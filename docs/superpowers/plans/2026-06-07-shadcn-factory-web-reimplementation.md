@@ -1272,7 +1272,7 @@ git commit -m "refactor: convert sourcing and vendor portal routes to shadcn"
 - Create as needed: `apps/web/components/ui/procurement-table/*`
 - Test: `apps/web/features/quotations/tests/*.test.tsx`
 
-- [ ] **Step 1: Run quotation tests before edits**
+- [x] **Step 1: Run quotation tests before edits**
 
 Run:
 
@@ -1282,7 +1282,7 @@ pnpm --filter @cognify/web test -- quotation
 
 Expected: PASS before conversion.
 
-- [ ] **Step 2: Convert normalization queue/detail**
+- [x] **Step 2: Convert normalization queue/detail**
 
 Use shadcn `Table`, `Card`, `Tabs`, `Alert`, `Button`, `Badge`, `Textarea`, `Select`, `Dialog`, and `Empty`.
 
@@ -1295,7 +1295,7 @@ Preserve:
 - approval and warning flows;
 - retry/create revision actions.
 
-- [ ] **Step 3: Convert quotation comparison**
+- [x] **Step 3: Convert quotation comparison**
 
 Use shadcn `Table`, `Card`, `Tabs`, `Alert`, `Badge`, `Textarea`, `Button`, and `Popover`.
 
@@ -1320,7 +1320,7 @@ Preserve:
 - comparison notes create/update/delete;
 - links to scoring and award recommendation.
 
-- [ ] **Step 4: Convert scoring**
+- [x] **Step 4: Convert scoring**
 
 Use shadcn `Card`, `Table`, `Badge`, `Button`, `Select`, `Alert`, `Progress`, and `Tabs`.
 
@@ -1345,7 +1345,7 @@ Preserve:
 - reopen scoring;
 - award recommendation link gating.
 
-- [ ] **Step 5: Convert award recommendation and PO handoff**
+- [x] **Step 5: Convert award recommendation and PO handoff**
 
 Use shadcn `Card`, `RadioGroup`, `Checkbox`, `Textarea`, `Alert`, `AlertDialog`, `Button`, `Badge`, `Table`, and `Tabs`.
 
@@ -1360,7 +1360,7 @@ Preserve:
 - withdraw pending recommendation;
 - PO handoff create/review/ready/export/cancel behavior.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 

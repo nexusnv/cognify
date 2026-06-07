@@ -8,7 +8,8 @@ const allowedCustomUiGroups = new Set(["headers", "graph", "scorecard", "procure
 const rawInteractivePattern = /<(button|input|select|textarea)\b(?![^>]*data-allow-raw-control)/g;
 const rawTablePattern = /<(table|thead|tbody|tr|th|td)\b(?![^>]*data-allow-raw-table)/g;
 const roleDialogPattern = /role=["']dialog["']/g;
-const customUiPattern = /^apps\/web\/components\/(?!ui\/|providers\/|shell\/shell-route-config|shell\/shell-types|shell\/shell-utils)/;
+const appInfrastructurePattern = /^apps\/web\/components\/(providers|shell|right-panel)\//;
+const customUiPattern = /^apps\/web\/components\/(?!ui\/)/;
 const packageUiForbiddenPattern = /Cognify|procurement|requisition|approval|rfq|quotation|tenant|vendor/i;
 const packageUiRoots = ["packages/ui/src/components", "packages/ui/src/hooks", "packages/ui/src/lib"];
 const packageUiAllowedFiles = new Set([
@@ -92,7 +93,7 @@ for (const file of scanRoots.flatMap(walk)) {
   assertNoMatches(file, rawTablePattern, "raw table markup; use shadcn Table primitives");
   assertNoMatches(file, roleDialogPattern, "hand-rolled dialog role; use shadcn Dialog/AlertDialog/Sheet");
 
-  if (customUiPattern.test(file) && !file.includes("/providers/")) {
+  if (customUiPattern.test(file) && !appInfrastructurePattern.test(file)) {
     failures.push(`${file}: custom reusable UI outside ${allowedCustomUiRoot}`);
   }
 

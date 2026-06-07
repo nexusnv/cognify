@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@cognify/ui";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { setCurrentTenant } from "../api/identity-api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,15 +39,18 @@ export function TenantSelection() {
       </p>
       <div className="mt-6 flex flex-col gap-3">
         {tenants.map((tenant) => (
-          <button
+          <Button
             key={tenant.id}
+            type="button"
+            variant="outline"
+            size="lg"
             onClick={() => handleSelect(tenant.id)}
             disabled={selectingTenantId !== null}
             aria-busy={selectingTenantId === tenant.id}
-            className="rounded-md border bg-card px-4 py-3 text-left text-sm font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-auto justify-start whitespace-normal bg-card px-4 py-3 text-left text-sm font-medium"
           >
             {selectingTenantId === tenant.id ? "Selecting..." : tenant.name}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

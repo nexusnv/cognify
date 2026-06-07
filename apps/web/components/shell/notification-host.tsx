@@ -14,13 +14,16 @@ export function NotificationHost() {
     unreadCount > 0 ? `Open notifications, ${unreadCount} unread` : "Open notifications";
 
   return (
-    <NotificationCenter open={open} onOpenChange={setOpen}>
+    <>
       <Button
         type="button"
         variant="outline"
         size="icon-lg"
         className="relative"
         aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((current) => !current)}
       >
         <Bell className="h-4 w-4" aria-hidden="true" />
         {unreadCount > 0 && (
@@ -29,6 +32,7 @@ export function NotificationHost() {
           </span>
         )}
       </Button>
-    </NotificationCenter>
+      <NotificationCenter open={open} onOpenChange={setOpen} />
+    </>
   );
 }

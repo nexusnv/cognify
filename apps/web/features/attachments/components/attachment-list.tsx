@@ -2,6 +2,7 @@
 
 import { AlertCircle, Download, Eye, Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@cognify/ui";
 import { useRightPanel } from "@/components/right-panel/right-panel-provider";
 import { AttachmentPreviewPanel } from "./attachment-preview-panel";
 import { downloadAttachmentBlob } from "../api/attachments-api";
@@ -39,31 +40,34 @@ function AttachmentRow({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {attachment.permissions.canPreview && isPreviewableAttachment(attachment) ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-lg"
             onClick={onPreview}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"
             aria-label={`Preview ${attachment.filename}`}
           >
             <Eye className="h-4 w-4" aria-hidden="true" />
-          </button>
+          </Button>
         ) : null}
         {attachment.permissions.canDownload ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-lg"
             onClick={onDownload}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"
             aria-label={`Download ${attachment.filename}`}
           >
             <Download className="h-4 w-4" aria-hidden="true" />
-          </button>
+          </Button>
         ) : null}
         {attachment.permissions.canDelete ? (
-          <button
+          <Button
             type="button"
+            variant="destructive"
+            size="icon-lg"
             onClick={onDelete}
             disabled={isDeleting}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
             aria-label={`Delete ${attachment.filename}`}
           >
             {isDeleting ? (
@@ -71,7 +75,7 @@ function AttachmentRow({
             ) : (
               <Trash2 className="h-4 w-4" aria-hidden="true" />
             )}
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@cognify/ui";
 import { PanelRightOpen } from "lucide-react";
 import type { ReactNode } from "react";
 import { useRightPanel } from "./right-panel-provider";
@@ -19,11 +20,13 @@ export function RightPanelTrigger({
   const rightPanel = useRightPanel();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="lg"
       className={
         className ??
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium"
+        "min-h-11 gap-2 px-3 text-sm font-medium"
       }
       onClick={() => rightPanel.openPanel(panel)}
       aria-label={ariaLabel}
@@ -34,6 +37,6 @@ export function RightPanelTrigger({
           Open panel
         </>
       )}
-    </button>
+    </Button>
   );
 }
