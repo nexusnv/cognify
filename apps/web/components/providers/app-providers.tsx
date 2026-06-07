@@ -8,12 +8,14 @@ import { AccessibilityProvider } from "./accessibility-provider";
 import { AnalyticsProvider } from "./analytics-provider";
 import { ErrorReportingProvider } from "./error-reporting-provider";
 import { QueryProvider } from "./query-provider";
+import { ThemeKeyboardShortcut } from "./theme-keyboard-shortcut";
 import { ThemeProvider } from "./theme-provider";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ErrorReportingProvider>
       <ThemeProvider>
+        <ThemeKeyboardShortcut />
         <AccessibilityProvider>
           <AnalyticsProvider>
             <QueryProvider>
