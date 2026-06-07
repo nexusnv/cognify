@@ -5,7 +5,7 @@ export async function signIn(page: Page, email = "test@example.com") {
 
   await expect(page.getByRole("heading", { name: "Sign in to your procurement workspace" })).toBeVisible();
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("textbox", { name: "Password" }).fill("password");
+  await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page.getByText("Signed in")).toBeVisible();
