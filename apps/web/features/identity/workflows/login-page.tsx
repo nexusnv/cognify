@@ -47,7 +47,7 @@ export function LoginPage() {
                   <p className="text-sm font-medium text-muted-foreground">
                     Enterprise procurement
                   </p>
-                  <h1 className="text-2xl font-semibold">Cognify</h1>
+                  <p className="text-2xl font-semibold text-foreground">Cognify</p>
                 </div>
                 <Badge variant="secondary">Secure workspace</Badge>
               </div>
@@ -88,11 +88,8 @@ export function LoginPage() {
               <div className="mx-auto flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
                 <CheckCircle2 className="size-5" aria-hidden="true" />
               </div>
-              <CardTitle>
-                <h2 className="text-2xl font-semibold">
-                  Sign in to your procurement workspace
-                </h2>
-              </CardTitle>
+              <h1 className="text-2xl font-semibold">Sign in to your procurement workspace</h1>
+              <CardTitle className="sr-only">Sign in to your procurement workspace</CardTitle>
               <CardDescription>
                 Use your Cognify account to continue{next !== "/dashboard" ? " where you left off" : ""}.
               </CardDescription>

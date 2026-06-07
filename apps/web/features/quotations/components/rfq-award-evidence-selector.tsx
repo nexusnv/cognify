@@ -2,6 +2,7 @@ import type {
   RfqAwardRecommendationEvidenceReference,
   RfqAwardRecommendationEvidenceReferenceInput,
 } from "@cognify/api-client/schemas";
+import { Checkbox } from "@cognify/ui";
 
 type Props = {
   references: RfqAwardRecommendationEvidenceReference[];
@@ -23,12 +24,11 @@ export function RfqAwardEvidenceSelector({ references, selected, readOnly = fals
           return (
             <li key={key}>
               <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={checked}
                   disabled={readOnly}
-                  onChange={(event) => {
-                    if (event.target.checked) {
+                  onCheckedChange={(isChecked) => {
+                    if (isChecked === true) {
                       onChange([...selected, { type: reference.type, id: reference.id, label: reference.label }]);
                       return;
                     }

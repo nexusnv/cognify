@@ -1182,7 +1182,7 @@ git commit -m "refactor: convert approval routes to shadcn"
 - Test: `apps/web/features/sourcing/tests/*.test.tsx`
 - Test: `apps/web/features/vendor-portal/tests/*.test.tsx`
 
-- [ ] **Step 1: Run sourcing and vendor portal tests before edits**
+- [x] **Step 1: Run sourcing and vendor portal tests before edits**
 
 Run:
 
@@ -1192,7 +1192,7 @@ pnpm --filter @cognify/web test -- sourcing vendor-portal
 
 Expected: PASS before conversion.
 
-- [ ] **Step 2: Convert sourcing intake list/detail**
+- [x] **Step 2: Convert sourcing intake list/detail**
 
 Use shadcn `Table`, `Card`, `Badge`, `Dialog`, `Alert`, `Button`, `Select`, and `Textarea`.
 
@@ -1203,7 +1203,7 @@ Preserve:
 - create RFQ route push;
 - ready-for-RFQ status messaging.
 
-- [ ] **Step 3: Convert RFQ draft workspace**
+- [x] **Step 3: Convert RFQ draft workspace**
 
 Use shadcn `Card`, `Tabs`, `Form`, `Field`, `Input`, `Textarea`, `Table`, `AlertDialog`, `Dialog`, `Badge`, and `Button`.
 
@@ -1216,7 +1216,7 @@ Preserve:
 - invitation panel behavior;
 - open comparison link.
 
-- [ ] **Step 4: Convert RFQ invitation and quotation evidence surfaces**
+- [x] **Step 4: Convert RFQ invitation and quotation evidence surfaces**
 
 Use shadcn `Dialog`, `Popover` or `Command` for vendor picker, `Card`, `Table`, `Input`, `Textarea`, `Button`, `Badge`, `Alert`, and `Tabs` for versions.
 
@@ -1230,7 +1230,7 @@ Preserve:
 - buyer quotation upload;
 - structured quotation creation and manual entry.
 
-- [ ] **Step 5: Convert vendor portal**
+- [x] **Step 5: Convert vendor portal**
 
 Use shadcn `Card`, `Alert`, `Table`, `Badge`, `Input`, `Button`, `Tabs`, and `Form`.
 
@@ -1241,7 +1241,7 @@ Preserve:
 - line items and required documents;
 - vendor upload/manual entry/version history.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -1272,7 +1272,7 @@ git commit -m "refactor: convert sourcing and vendor portal routes to shadcn"
 - Create as needed: `apps/web/components/ui/procurement-table/*`
 - Test: `apps/web/features/quotations/tests/*.test.tsx`
 
-- [ ] **Step 1: Run quotation tests before edits**
+- [x] **Step 1: Run quotation tests before edits**
 
 Run:
 
@@ -1282,7 +1282,7 @@ pnpm --filter @cognify/web test -- quotation
 
 Expected: PASS before conversion.
 
-- [ ] **Step 2: Convert normalization queue/detail**
+- [x] **Step 2: Convert normalization queue/detail**
 
 Use shadcn `Table`, `Card`, `Tabs`, `Alert`, `Button`, `Badge`, `Textarea`, `Select`, `Dialog`, and `Empty`.
 
@@ -1295,7 +1295,7 @@ Preserve:
 - approval and warning flows;
 - retry/create revision actions.
 
-- [ ] **Step 3: Convert quotation comparison**
+- [x] **Step 3: Convert quotation comparison**
 
 Use shadcn `Table`, `Card`, `Tabs`, `Alert`, `Badge`, `Textarea`, `Button`, and `Popover`.
 
@@ -1320,7 +1320,7 @@ Preserve:
 - comparison notes create/update/delete;
 - links to scoring and award recommendation.
 
-- [ ] **Step 4: Convert scoring**
+- [x] **Step 4: Convert scoring**
 
 Use shadcn `Card`, `Table`, `Badge`, `Button`, `Select`, `Alert`, `Progress`, and `Tabs`.
 
@@ -1345,7 +1345,7 @@ Preserve:
 - reopen scoring;
 - award recommendation link gating.
 
-- [ ] **Step 5: Convert award recommendation and PO handoff**
+- [x] **Step 5: Convert award recommendation and PO handoff**
 
 Use shadcn `Card`, `RadioGroup`, `Checkbox`, `Textarea`, `Alert`, `AlertDialog`, `Button`, `Badge`, `Table`, and `Tabs`.
 
@@ -1360,7 +1360,7 @@ Preserve:
 - withdraw pending recommendation;
 - PO handoff create/review/ready/export/cancel behavior.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -1529,7 +1529,7 @@ git commit -m "chore: enforce shadcn factory ui audit"
 - Create: `apps/web/tests/e2e/shadcn-factory-ui.spec.ts`
 - Modify as needed: `apps/web/tests/e2e/*`
 
-- [ ] **Step 1: Create the e2e smoke spec**
+- [x] **Step 1: Create the e2e smoke spec**
 
 Create `apps/web/tests/e2e/shadcn-factory-ui.spec.ts`:
 
@@ -1579,7 +1579,7 @@ test.describe("shadcn factory UI smoke", () => {
 
 If the test environment requires authenticated setup, reuse the existing auth helper pattern from current e2e tests instead of adding new login logic.
 
-- [ ] **Step 2: Run e2e smoke tests**
+- [x] **Step 2: Run e2e smoke tests**
 
 Run:
 
@@ -1590,6 +1590,8 @@ pnpm --filter @cognify/web test:e2e -- shadcn-factory-ui
 Expected: PASS.
 
 - [ ] **Step 3: Capture manual screenshots**
+
+Skipped in this execution: no manual browser screenshot inspection was captured in the Codex environment. Automated Playwright smoke coverage was added and passed for the representative route overflow and theme shortcut checks.
 
 Run the web app:
 
@@ -1614,7 +1616,7 @@ Checklist:
 - primary action hierarchy is clear;
 - dense tables remain scannable.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/tests/e2e
@@ -1629,7 +1631,7 @@ git commit -m "test: add shadcn factory ui smoke coverage"
 - Modify: `docs/04-engineering/standards/shadcn-factory-ui.md`
 - Modify: `docs/superpowers/plans/2026-06-07-shadcn-factory-web-reimplementation.md`
 
-- [ ] **Step 1: Run final checks**
+- [x] **Step 1: Run final checks**
 
 Run:
 
@@ -1643,7 +1645,15 @@ pnpm --filter @cognify/web test:e2e -- shadcn-factory-ui
 
 Expected: PASS.
 
-- [ ] **Step 2: Check for raw UI regressions**
+Status from this execution:
+
+- `pnpm audit:shadcn-factory-ui`: PASS.
+- `pnpm --filter @cognify/ui typecheck`: PASS.
+- `pnpm --filter @cognify/web typecheck`: PASS.
+- `pnpm --filter @cognify/web test`: PASS, 62 files and 321 tests.
+- `pnpm --filter @cognify/web test:e2e -- shadcn-factory-ui`: PASS.
+
+- [x] **Step 2: Check for raw UI regressions**
 
 Run:
 
@@ -1653,7 +1663,12 @@ rg -n "<(button|input|select|textarea|table|thead|tbody|tr|th|td)\\b|role=[\"']d
 
 Expected: no matches except documented `data-allow-raw-*` cases or semantic route markup that the audit script explicitly allows.
 
-- [ ] **Step 3: Check custom exception comments**
+Status from this execution: only test fixture raw buttons matched:
+
+- `apps/web/components/right-panel/right-panel.test.tsx`
+- `apps/web/components/ui/workflow-state/record-workflow-layout.test.tsx`
+
+- [x] **Step 3: Check custom exception comments**
 
 Run:
 
@@ -1664,7 +1679,7 @@ rg -n "shadcn-factory-exception:" apps/web/components/ui
 
 Expected: every custom exception component has a matching exception comment.
 
-- [ ] **Step 4: Update standard with approved exceptions**
+- [x] **Step 4: Update standard with approved exceptions**
 
 Append an "Approved Exceptions" section to `docs/04-engineering/standards/shadcn-factory-ui.md` in this format:
 
@@ -1678,11 +1693,13 @@ Append an "Approved Exceptions" section to `docs/04-engineering/standards/shadcn
 
 Only include files that actually exist.
 
-- [ ] **Step 5: Mark this plan complete**
+- [x] **Step 5: Mark this plan complete**
 
 In this file, update any remaining unchecked tasks that were completed during execution. Do not mark skipped tasks as complete; add a short note explaining why they were skipped.
 
-- [ ] **Step 6: Commit final docs**
+Status from this execution: completed and skipped Task 13/14 steps were updated. Manual screenshot capture remains unchecked because it was not performed in this environment.
+
+- [x] **Step 6: Commit final docs**
 
 ```bash
 git add docs/04-engineering/standards/shadcn-factory-ui.md docs/superpowers/plans/2026-06-07-shadcn-factory-web-reimplementation.md

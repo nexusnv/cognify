@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Pencil, Send } from "lucide-react";
 import { toast } from "sonner";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { Button } from "@cognify/ui";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { AttachmentList } from "@/features/attachments/components/attachment-list";
 import { AttachmentUploader } from "@/features/attachments/components/attachment-uploader";
 import { rememberRecentRecord } from "@/features/search/hooks/use-recent-records";
@@ -91,9 +92,9 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
         </Link>
       ) : null}
       {requisition.permissions.canResubmit ? (
-        <button
+        <Button
           type="button"
-          className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
+          className="min-h-11"
           onClick={() =>
             resubmitMutation.mutate(undefined, {
               onSuccess: () => toast.success("Requisition resubmitted"),
@@ -103,7 +104,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           disabled={resubmitMutation.isPending}
         >
           {resubmitMutation.isPending ? "Resubmitting" : "Resubmit"}
-        </button>
+        </Button>
       ) : null}
       {requisition.permissions.canRequestChanges ? (
         <RequisitionActionDialog
@@ -175,7 +176,7 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
   );
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/requisitions"
       backLabel="Back to requisitions"
       eyebrow={requisition.number}
@@ -309,6 +310,6 @@ export function RequisitionDetailPage({ requisitionId }: { requisitionId: string
           <RequisitionActivityTimeline events={activityQuery.data?.data ?? []} />
         </div>
       </section>
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }

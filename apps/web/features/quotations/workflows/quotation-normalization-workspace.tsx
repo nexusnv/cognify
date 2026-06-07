@@ -2,7 +2,7 @@
 
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
 import { useQuotationVersion } from "@/features/sourcing/hooks/use-quotation-versions";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import {
   useApproveQuotationNormalization,
   useApproveQuotationNormalizationWithWarnings,
@@ -62,7 +62,7 @@ export function QuotationNormalizationWorkspace({
   const lastJobError = getLastJobError(normalization);
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/quotations/normalizations"
       backLabel="Back to quotations"
       eyebrow={normalization.source.rfqNumber ?? normalization.source.rfqId ?? "Quotation normalization"}
@@ -185,6 +185,6 @@ export function QuotationNormalizationWorkspace({
 
       <QuotationNormalizationAttachmentPanel attachments={normalization.attachments} />
       <QuotationNormalizationIssueList issues={normalization.issues} />
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }

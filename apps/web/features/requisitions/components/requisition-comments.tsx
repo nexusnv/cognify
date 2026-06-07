@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Button, Form, Textarea } from "@cognify/ui";
 import {
   useCreateRequisitionComment,
   useRequisitionComments,
@@ -61,7 +62,7 @@ export function RequisitionComments({
         ))}
       </div>
       {canComment ? (
-        <form
+        <Form
           className="space-y-3 rounded-md border p-4"
           onSubmit={(event) => {
             event.preventDefault();
@@ -86,9 +87,9 @@ export function RequisitionComments({
         >
           <label className="block text-sm font-medium">
             Comment
-            <textarea
+            <Textarea
               aria-label="Comment"
-              className="mt-1 min-h-24 w-full rounded-md border px-3 py-2 text-base font-normal"
+              className="mt-1 min-h-24"
               value={body}
               onChange={(event) => setBody(event.target.value)}
             />
@@ -100,14 +101,13 @@ export function RequisitionComments({
               onChange={setSelectedMentionIds}
             />
           ) : null}
-          <button
+          <Button
             type="submit"
-            className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
             disabled={createComment.isPending}
           >
             {createComment.isPending ? "Posting" : "Post comment"}
-          </button>
-        </form>
+          </Button>
+        </Form>
       ) : (
         <p className="text-sm text-muted-foreground">
           Comments are locked for this requisition state.

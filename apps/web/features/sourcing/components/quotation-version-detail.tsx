@@ -1,7 +1,7 @@
 "use client";
 
 import type { QuotationVersion } from "@cognify/api-client/schemas";
-import { Badge } from "@cognify/ui";
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 
 export function QuotationVersionDetail({ version }: { version: QuotationVersion | null }) {
   if (!version) {
@@ -60,35 +60,33 @@ export function QuotationVersionDetail({ version }: { version: QuotationVersion 
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="border-b px-3 py-2 text-left font-medium">Description</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Quantity</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Unit price</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {version.lineItems.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-4 text-muted-foreground">
-                  No line items captured for this version.
-                </td>
-              </tr>
-            ) : null}
-            {version.lineItems.map((lineItem) => (
-              <tr key={lineItem.id}>
-                <td className="border-b px-3 py-2">{lineItem.description}</td>
-                <td className="border-b px-3 py-2">{lineItem.quantity}</td>
-                <td className="border-b px-3 py-2">{lineItem.unitPrice ?? "-"}</td>
-                <td className="border-b px-3 py-2">{lineItem.totalAmount ?? "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table className="min-w-full text-sm">
+        <TableHeader className="bg-muted/40">
+          <TableRow>
+            <TableHead className="border-b px-3 py-2">Description</TableHead>
+            <TableHead className="border-b px-3 py-2">Quantity</TableHead>
+            <TableHead className="border-b px-3 py-2">Unit price</TableHead>
+            <TableHead className="border-b px-3 py-2">Total</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {version.lineItems.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="px-3 py-4 text-muted-foreground">
+                No line items captured for this version.
+              </TableCell>
+            </TableRow>
+          ) : null}
+          {version.lineItems.map((lineItem) => (
+            <TableRow key={lineItem.id}>
+              <TableCell className="border-b px-3 py-2">{lineItem.description}</TableCell>
+              <TableCell className="border-b px-3 py-2">{lineItem.quantity}</TableCell>
+              <TableCell className="border-b px-3 py-2">{lineItem.unitPrice ?? "-"}</TableCell>
+              <TableCell className="border-b px-3 py-2">{lineItem.totalAmount ?? "-"}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </section>
   );
 }

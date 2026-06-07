@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Card,
+  CardContent,
+  Skeleton,
+} from "@cognify/ui";
 import { DemoDatasetSummary } from "../components/demo-dataset-summary";
 import { SystemCheckList } from "../components/system-check-list";
 import { SystemStatusSummary } from "../components/system-status-summary";
@@ -13,15 +23,38 @@ export function SystemStatusPage() {
   const status = query.data?.data;
 
   if (currentUserQuery.isLoading || query.isLoading) {
-    return <div role="status">Loading system status...</div>;
+    return (
+      <Card role="status" className="mx-auto w-full max-w-5xl">
+        <CardContent className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </CardContent>
+      </Card>
+    );
   }
 
   if (tenantId === null) {
-    return <div role="alert">No active workspace selected.</div>;
+    return (
+      <Alert>
+        <AlertTitle>No active workspace selected.</AlertTitle>
+        <AlertDescription>Select a workspace before checking system readiness.</AlertDescription>
+      </Alert>
+    );
   }
 
   if (query.isError || !status) {
-    return <div role="alert">System status could not be loaded.</div>;
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>System status could not be loaded.</AlertTitle>
+        <AlertDescription>Retry after the readiness endpoint is available.</AlertDescription>
+        <AlertAction>
+          <Button variant="outline" onClick={() => query.refetch()}>
+            Retry
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
   }
 
   return (

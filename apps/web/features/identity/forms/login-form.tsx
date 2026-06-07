@@ -1,10 +1,22 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, AlertDescription, Button, Checkbox, Input, Label } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Checkbox,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Form,
+  Input,
+} from "@cognify/ui";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { requestPasswordReset } from "../api/identity-api";
 import { useLogin } from "../hooks/use-login";
@@ -26,6 +38,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
@@ -65,23 +78,24 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
   if (resetMode) {
     return (
-      <form onSubmit={handleResetSubmit(onResetSubmit)} className="grid gap-5">
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            {...registerReset("email")}
-            autoComplete="email"
-            aria-invalid={Boolean(resetErrors.email)}
-            aria-describedby={resetErrors.email ? "reset-email-error" : undefined}
-          />
-          {resetErrors.email && (
-            <p id="reset-email-error" className="text-sm text-destructive">
-              {resetErrors.email.message}
-            </p>
-          )}
-        </div>
+      <Form onSubmit={handleResetSubmit(onResetSubmit)} className="grid gap-5">
+        <Field data-invalid={Boolean(resetErrors.email)}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <FieldContent>
+            <Input
+              id="email"
+              type="email"
+              {...registerReset("email")}
+              autoComplete="email"
+              aria-invalid={Boolean(resetErrors.email)}
+              aria-describedby={resetErrors.email ? "reset-email-error" : undefined}
+            />
+            <FieldDescription>
+              We will send instructions to the address linked to your Cognify account.
+            </FieldDescription>
+            <FieldError id="reset-email-error" errors={[resetErrors.email]} />
+          </FieldContent>
+        </Field>
 
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <Button
@@ -104,7 +118,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
         </div>
 
         {resetSent && (
-          <Alert variant="success">
+          <Alert className="border-success/30 text-success">
             <AlertDescription>Password reset instructions sent.</AlertDescription>
           </Alert>
         )}
@@ -113,37 +127,38 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
             <AlertDescription>{resetError}</AlertDescription>
           </Alert>
         )}
-      </form>
+      </Form>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          autoComplete="email"
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "login-email-error" : undefined}
-        />
-        {errors.email && (
-          <p id="login-email-error" className="text-sm text-destructive">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
+    <Form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
+      <Field data-invalid={Boolean(errors.email)}>
+        <FieldLabel htmlFor="login-email">Email</FieldLabel>
+        <FieldContent>
+          <Input
+            id="login-email"
+            type="email"
+            {...register("email")}
+            autoComplete="email"
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "login-email-error" : "login-email-description"}
+          />
+          <FieldDescription id="login-email-description">
+            Enter the work email tied to your procurement workspace access.
+          </FieldDescription>
+          <FieldError id="login-email-error" errors={[errors.email]} />
+        </FieldContent>
+      </Field>
 
-      <div className="grid gap-2">
-        <div className="flex items-center">
-          <Label htmlFor="password">Password</Label>
+      <Field data-invalid={Boolean(errors.password)}>
+        <div className="flex items-center justify-between gap-3">
+          <FieldLabel htmlFor="password">Password</FieldLabel>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="ml-auto h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            className="h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
             onClick={() => {
               setResetSent(false);
               setResetMode(true);
@@ -153,40 +168,60 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
             Forgot password?
           </Button>
         </div>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            {...register("password")}
-            autoComplete="current-password"
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? "login-password-error" : undefined}
-            className="pr-10"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute right-0 top-0 h-10 w-10 text-muted-foreground hover:bg-transparent hover:text-foreground"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            onClick={() => setShowPassword((value) => !value)}
-          >
-            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </Button>
-        </div>
-        {errors.password && (
-          <p id="login-password-error" className="text-sm text-destructive">
-            {errors.password.message}
-          </p>
-        )}
-      </div>
+        <FieldContent>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              {...register("password")}
+              autoComplete="current-password"
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={
+                errors.password ? "login-password-error" : "login-password-description"
+              }
+              className="pr-10"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </Button>
+          </div>
+          <FieldDescription id="login-password-description">
+            Use the password from your invited Cognify account.
+          </FieldDescription>
+          <FieldError id="login-password-error" errors={[errors.password]} />
+        </FieldContent>
+      </Field>
 
-      <div className="flex items-center gap-2">
-        <Checkbox id="remember" {...register("remember")} />
-        <Label htmlFor="remember" className="text-sm font-normal">
-          Remember me
-        </Label>
-      </div>
+      <Controller
+        control={control}
+        name="remember"
+        render={({ field }) => (
+          <Field orientation="horizontal">
+            <Checkbox
+              id="remember"
+              checked={Boolean(field.value)}
+              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
+              aria-label="Remember me"
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="remember">Remember me</FieldLabel>
+              <FieldDescription>
+                Keep this browser signed in for your next procurement session.
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+        )}
+      />
 
       <div className="grid gap-3">
         <Button type="submit" disabled={loginMutation.isPending} className="w-full">
@@ -203,6 +238,6 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
           </AlertDescription>
         </Alert>
       )}
-    </form>
+    </Form>
   );
 }

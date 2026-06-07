@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { DataTable } from "@/components/data-table/data-table";
-import type { DataTableColumn } from "@/components/data-table/data-table-types";
+import { DataTable } from "@/components/ui/procurement-table";
+import type { DataTableColumn } from "@/components/ui/procurement-table";
 import { SourcingIntakeStatusBadge } from "../components/sourcing-intake-status-badge";
 import type { SourcingIntakeReview } from "../types/sourcing-view-model";
 

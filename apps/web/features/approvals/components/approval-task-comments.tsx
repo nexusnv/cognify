@@ -1,6 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+  Form,
+  Skeleton,
+  Textarea,
+} from "@cognify/ui";
 import { toast } from "sonner";
 import {
   useApprovalTaskComments,
@@ -18,21 +30,36 @@ export function ApprovalTaskComments({ taskId }: { taskId: string }) {
   const [body, setBody] = useState("");
 
   if (commentsQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading comments</p>;
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-28 w-full" />
+      </div>
+    );
   }
 
   if (commentsQuery.isError) {
-    return <p className="text-sm text-red-700">Comments could not be loaded.</p>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>Comments could not be loaded.</AlertDescription>
+      </Alert>
+    );
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-3">
         {(commentsQuery.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No comments yet.</p>
+          <Empty className="rounded-lg border">
+            <EmptyHeader>
+              <EmptyTitle>No comments yet.</EmptyTitle>
+              <EmptyDescription>Record the context or next action for this approval task.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : null}
         {(commentsQuery.data ?? []).map((comment) => (
-          <article key={comment.id} className="rounded-md border p-3 text-sm">
+          <article key={comment.id} className="rounded-lg border p-3 text-sm">
             <div>
               <p className="font-medium">{comment.author.name}</p>
               <p className="text-xs text-muted-foreground">
@@ -43,8 +70,8 @@ export function ApprovalTaskComments({ taskId }: { taskId: string }) {
           </article>
         ))}
       </div>
-      <form
-        className="space-y-3 rounded-md border p-4"
+      <Form
+        className="space-y-3 rounded-lg border p-4"
         onSubmit={(event) => {
           event.preventDefault();
           const trimmedBody = body.trim();
@@ -66,23 +93,24 @@ export function ApprovalTaskComments({ taskId }: { taskId: string }) {
           );
         }}
       >
-        <label className="block text-sm font-medium">
-          Comment
-          <textarea
+        <div className="space-y-2">
+          <label htmlFor="approval-comment" className="block text-sm font-medium">
+            Comment
+          </label>
+          <Textarea
+            id="approval-comment"
             aria-label="Comment"
-            className="mt-1 min-h-24 w-full rounded-md border px-3 py-2 text-base font-normal"
             value={body}
             onChange={(event) => setBody(event.target.value)}
           />
-        </label>
-        <button
+        </div>
+        <Button
           type="submit"
-          className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
           disabled={createComment.isPending || body.trim().length === 0}
         >
           {createComment.isPending ? "Posting" : "Post comment"}
-        </button>
-      </form>
+        </Button>
+      </Form>
     </div>
   );
 }

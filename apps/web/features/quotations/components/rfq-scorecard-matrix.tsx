@@ -1,4 +1,4 @@
-import { Button, Textarea } from "@cognify/ui";
+import { Button, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea } from "@cognify/ui";
 import type { RfqScorecard } from "@cognify/api-client/schemas";
 import type { UpdateScoreEntryInput } from "../api/quotation-scoring-api";
 
@@ -21,36 +21,36 @@ export function RfqScorecardMatrix({
 
   return (
     <section className="space-y-3" aria-label="Score matrix">
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full min-w-[900px] text-left text-sm">
-          <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3">Criterion</th>
+      <div className="overflow-hidden rounded-md border">
+        <Table className="w-full min-w-[900px] text-left text-sm">
+          <TableHeader className="bg-muted/40 text-xs uppercase text-muted-foreground">
+            <TableRow>
+              <TableHead className="px-4 py-3">Criterion</TableHead>
               {scorecard.vendors.map((vendor) => (
-                <th key={vendor.vendorId} className="px-4 py-3">{vendor.vendorName}</th>
+                <TableHead key={vendor.vendorId} className="px-4 py-3">{vendor.vendorName}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {scorecard.criteria.map((criterion) => (
-              <tr key={criterion.id} className="border-t align-top">
-                <td className="w-64 px-4 py-3">
+              <TableRow key={criterion.id} className="align-top">
+                <TableCell className="w-64 px-4 py-3">
                   <div className="font-medium">{criterion.label}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     Weight {criterion.weight} / max {criterion.maxScore}
                   </div>
                   {criterion.required ? <div className="mt-1 text-xs text-red-700">Required</div> : null}
-                </td>
+                </TableCell>
                 {scorecard.vendors.map((vendor) => {
                   const key = cellKey(criterion.id, vendor.vendorId);
                   const draft = drafts[key] ?? { score: "", note: "" };
                   const state = scoreState(draft.score);
 
                   return (
-                    <td key={key} className="w-72 px-4 py-3">
+                    <TableCell key={key} className="w-72 px-4 py-3">
                       <label className="grid gap-1 text-xs font-medium">
                         Score
-                        <input
+                        <Input
                           className="min-h-10 w-24 rounded-md border px-3 text-sm"
                           disabled={readOnly}
                           inputMode="decimal"
@@ -71,13 +71,13 @@ export function RfqScorecardMatrix({
                         <p className="mt-1 text-xs text-red-700">Missing required score</p>
                       ) : null}
                       {state === "invalid" ? <p className="mt-1 text-xs text-red-700">Invalid score</p> : null}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       <Button disabled={readOnly || isSaving || hasInvalidScores} onClick={() => onSave(toEntries(scorecard, drafts))}>
         Save scores

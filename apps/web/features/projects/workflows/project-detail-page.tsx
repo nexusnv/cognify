@@ -3,7 +3,17 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@cognify/ui";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { rememberRecentRecord } from "@/features/search/hooks/use-recent-records";
 import { ProjectActionDialog } from "../components/project-action-dialog";
 import { ProjectActivityTimeline } from "../components/project-activity-timeline";
@@ -133,7 +143,7 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
   );
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/projects"
       backLabel="Back to projects"
       eyebrow={project.number}
@@ -152,62 +162,81 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
           value: project.targetCompletionDate || "No target",
         },
       ]}
-      sections={[
-        { id: "overview", label: "Overview" },
-        { id: "budget", label: "Budget" },
-        { id: "pipeline", label: "Pipeline" },
-        { id: "activity", label: "Activity" },
-      ]}
+      sections={[]}
       primaryActions={actions}
       sidebar={
         <>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Approvals placeholder</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Approval routing is not active for projects yet.
-            </p>
-          </section>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Risk placeholder</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Project risks are reserved for a later governance slice.
-            </p>
-          </section>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Award placeholder</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Award records will appear here after award workflows are implemented.
-            </p>
-          </section>
+          <SidebarPlaceholder
+            title="Approvals placeholder"
+            body="Approval routing is not active for projects yet."
+          />
+          <SidebarPlaceholder
+            title="Risk placeholder"
+            body="Project risks are reserved for a later governance slice."
+          />
+          <SidebarPlaceholder
+            title="Award placeholder"
+            body="Award records will appear here after award workflows are implemented."
+          />
         </>
       }
     >
-      <section id="overview" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Overview</h2>
-        <p className="mt-2 text-sm leading-6">
-          {project.charter || "No charter has been captured for this project yet."}
-        </p>
-      </section>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList variant="line" aria-label="Project sections">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="budget">Budget</TabsTrigger>
+          <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" aria-label="Overview">
+          <Card className="py-0">
+            <CardHeader className="border-b bg-muted/30">
+              <CardTitle>Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="py-4">
+              <p className="text-sm leading-6">
+                {project.charter || "No charter has been captured for this project yet."}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="budget" aria-label="Budget">
+          <ProjectBudgetSummary
+            budgetAmount={project.budgetAmount}
+            currency={project.currency}
+            summary={project.summary}
+          />
+        </TabsContent>
+        <TabsContent value="pipeline" aria-label="Pipeline">
+          <ProjectRequisitionPipeline
+            projectId={project.id}
+            requisitions={requisitionsQuery.data?.data ?? []}
+            permissions={project.permissions}
+          />
+        </TabsContent>
+        <TabsContent value="activity" aria-label="Activity">
+          <Card className="py-0">
+            <CardHeader className="border-b bg-muted/30">
+              <CardTitle>Activity</CardTitle>
+            </CardHeader>
+            <CardContent className="py-4">
+              <ProjectActivityTimeline events={activityQuery.data?.data ?? []} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </WorkflowStateLayout>
+  );
+}
 
-      <ProjectBudgetSummary
-        budgetAmount={project.budgetAmount}
-        currency={project.currency}
-        summary={project.summary}
-      />
-
-      <ProjectRequisitionPipeline
-        projectId={project.id}
-        requisitions={requisitionsQuery.data?.data ?? []}
-        permissions={project.permissions}
-      />
-
-      <section id="activity" className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Activity</h2>
-        <div className="mt-3">
-          <ProjectActivityTimeline events={activityQuery.data?.data ?? []} />
-        </div>
-      </section>
-    </RecordWorkspaceLayout>
+function SidebarPlaceholder({ title, body }: { title: string; body: string }) {
+  return (
+    <Card className="py-0">
+      <CardHeader className="border-b bg-muted/30">
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="py-4 text-sm text-muted-foreground">{body}</CardContent>
+    </Card>
   );
 }
 

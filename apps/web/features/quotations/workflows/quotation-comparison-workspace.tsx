@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
-import { RecordWorkspaceLayout } from "@/components/workspace/record-workspace-layout";
+import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { useQuotationComparison } from "../hooks/use-quotation-comparison";
 import {
   useCreateQuotationComparisonNote,
@@ -48,7 +48,7 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
   const isNotePending = createNote.isPending || updateNote.isPending || deleteNote.isPending;
 
   return (
-    <RecordWorkspaceLayout
+    <WorkflowStateLayout
       backHref="/quotations/normalizations"
       backLabel="Back to quotations"
       eyebrow={comparison.rfq.number ?? comparison.rfq.id}
@@ -111,6 +111,6 @@ export function QuotationComparisonWorkspace({ rfqId }: { rfqId: string }) {
       <QuotationComparisonVendorSummary vendors={comparison.vendors} />
       <QuotationComparisonTable rows={comparison.lineRows} vendors={comparison.vendors} />
       <QuotationCommercialTermsTable terms={comparison.commercialTerms} vendors={comparison.vendors} />
-    </RecordWorkspaceLayout>
+    </WorkflowStateLayout>
   );
 }

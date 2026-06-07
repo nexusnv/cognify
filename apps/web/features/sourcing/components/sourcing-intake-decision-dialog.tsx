@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  NativeSelect,
+  Textarea,
+} from "@cognify/ui";
 import { useDecideSourcingIntakeReview } from "../hooks/use-sourcing-intake-actions";
 import { sourcingIntakeDecisionSchema } from "../schemas/sourcing-intake-schema";
 import type { SourcingIntakeReview, SourcingPath } from "../types/sourcing-view-model";
@@ -47,36 +59,58 @@ export function SourcingIntakeDecisionDialog({ review }: { review: SourcingIntak
   return (
     <>
       <Button onClick={() => setOpen(true)}>Record decision</Button>
-      {!open ? null : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div role="dialog" aria-modal="true" aria-label="Record sourcing decision" className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">Record sourcing decision</h2>
-            <div className="mt-4 space-y-4">
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (mutation.isPending && !nextOpen) return;
+          setOpen(nextOpen);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Record sourcing decision</DialogTitle>
+            <DialogDescription>Classify the intake and capture the decision rationale.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <label className="block space-y-1.5 text-sm font-medium">
+              Decision
+              <NativeSelect value={sourcingPath} onChange={(event) => setSourcingPath(event.target.value as SourcingPath)}>
+                {Object.entries(labels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </label>
+            <label className="block space-y-1.5 text-sm font-medium">
+              Decision reason
+              <Textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} />
+            </label>
+            {sourcingPath === "needs_clarification" ? (
               <label className="block space-y-1.5 text-sm font-medium">
-                Decision
-                <NativeSelect value={sourcingPath} onChange={(event) => setSourcingPath(event.target.value as SourcingPath)}>
-                  {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </NativeSelect>
+                Clarification message
+                <Textarea value={clarificationMessage} onChange={(event) => setClarificationMessage(event.target.value)} />
               </label>
-              <label className="block space-y-1.5 text-sm font-medium">
-                Decision reason
-                <Textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} />
-              </label>
-              {sourcingPath === "needs_clarification" ? (
-                <label className="block space-y-1.5 text-sm font-medium">
-                  Clarification message
-                  <Textarea value={clarificationMessage} onChange={(event) => setClarificationMessage(event.target.value)} />
-                </label>
-              ) : null}
-            </div>
-            {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button disabled={mutation.isPending} onClick={handleSubmit}>{mutation.isPending ? "Recording" : labels[sourcingPath]}</Button>
-            </div>
+            ) : null}
           </div>
-        </div>
-      )}
+
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={mutation.isPending}>
+              Cancel
+            </Button>
+            <Button disabled={mutation.isPending} onClick={handleSubmit}>
+              {mutation.isPending ? "Recording" : labels[sourcingPath]}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

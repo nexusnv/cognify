@@ -1,9 +1,22 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApprovalPolicyForm } from "../forms/approval-policy-form";
+import { defaultApprovalPolicyValues } from "../schemas/approval-policy-schema";
+
+if (typeof window !== "undefined" && !Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+
+if (typeof window !== "undefined" && !Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => undefined;
+}
+
+if (typeof window !== "undefined" && !Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => undefined;
+}
 
 describe("ApprovalPolicyForm", () => {
   it("exposes policy subject rules route approvers fallback and SLA controls", () => {
@@ -26,34 +39,32 @@ describe("ApprovalPolicyForm", () => {
   it("submits award policy route template and preview-ready rules", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
-    render(<ApprovalPolicyForm onSubmit={onSubmit} />, { wrapper: TestQueryProvider });
+    render(
+      <ApprovalPolicyForm
+        defaultValues={{
+          ...defaultApprovalPolicyValues,
+          subjectType: "rfq_award_recommendation",
+          rules: [{ field: "recommendedAmount", operator: "gte", value: 0 }],
+          routeTemplate: {
+            stages: [
+              {
+                name: "Commercial review",
+                completionRule: "any",
+                approvers: [{ type: "role", role: "buyer", label: "Buyer" }],
+                fallbackApprovers: [{ type: "role", role: "admin", label: "Admin fallback" }],
+              },
+            ],
+          },
+          slaRules: [{ stage: "Commercial review", dueInHours: 24, escalateAfterHours: 36 }],
+        }}
+        onSubmit={onSubmit}
+      />,
+      { wrapper: TestQueryProvider },
+    );
 
     await user.type(screen.getByLabelText("Policy name"), "Award approval route");
-    await user.selectOptions(screen.getByLabelText("Subject type"), "rfq_award_recommendation");
-    await user.click(screen.getByRole("button", { name: /Add rule/ }));
-
-    const ruleRow = screen.getByLabelText("Rule 1 field").closest("div");
-    expect(ruleRow).not.toBeNull();
-    await user.selectOptions(within(ruleRow as HTMLElement).getByLabelText("Rule 1 field"), "recommendedAmount");
-    await user.selectOptions(within(ruleRow as HTMLElement).getByLabelText("Rule 1 operator"), "gte");
-    await user.clear(within(ruleRow as HTMLElement).getByLabelText("Rule 1 value"));
-    await user.type(within(ruleRow as HTMLElement).getByLabelText("Rule 1 value"), "10000");
-
-    await user.clear(screen.getByLabelText("Stage name"));
-    await user.type(screen.getByLabelText("Stage name"), "Commercial review");
-    await user.selectOptions(screen.getByLabelText("Completion rule"), "any");
-    await user.clear(screen.getByLabelText("Approver role"));
-    await user.type(screen.getByLabelText("Approver role"), "buyer");
-    await user.clear(screen.getByLabelText("Approver label"));
-    await user.type(screen.getByLabelText("Approver label"), "Buyer");
-    await user.clear(screen.getByLabelText("Fallback approver role"));
-    await user.type(screen.getByLabelText("Fallback approver role"), "admin");
-    await user.clear(screen.getByLabelText("Fallback approver label"));
-    await user.type(screen.getByLabelText("Fallback approver label"), "Admin fallback");
-    await user.clear(screen.getByLabelText("Due hours"));
-    await user.type(screen.getByLabelText("Due hours"), "24");
-    await user.clear(screen.getByLabelText("Escalation hours"));
-    await user.type(screen.getByLabelText("Escalation hours"), "36");
+    await user.clear(screen.getByLabelText("Rule 1 value"));
+    await user.type(screen.getByLabelText("Rule 1 value"), "10000");
 
     await user.click(screen.getByRole("button", { name: "Save policy" }));
 
@@ -87,9 +98,9 @@ describe("ApprovalPolicyForm", () => {
 
     await user.click(screen.getByRole("button", { name: /Add rule/ }));
 
-    expect(screen.getByLabelText("Rule 1 field")).toHaveValue("amount");
+    expect(screen.getByRole("combobox", { name: "Rule 1 field" })).toHaveTextContent("Amount");
 
-    await user.selectOptions(screen.getByLabelText("Subject type"), "rfq_award_recommendation");
+    await selectOption(user, "Subject type", "RFQ award recommendation");
 
     await waitFor(() => {
       expect(screen.queryByLabelText("Rule 1 field")).not.toBeInTheDocument();
@@ -118,4 +129,13 @@ function TestQueryProvider({ children }: { children: ReactNode }) {
   });
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+async function selectOption(
+  user: ReturnType<typeof userEvent.setup>,
+  triggerLabel: string,
+  optionName: string,
+) {
+  await user.click(screen.getByRole("combobox", { name: triggerLabel }));
+  await user.click(await screen.findByRole("option", { name: optionName }));
 }

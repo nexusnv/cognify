@@ -1,6 +1,6 @@
 import { AlertTriangle, Ban, CheckCircle2, CircleDot, Clock3, CircleX } from "lucide-react";
-import { StatusBadge } from "@/components/workflow/status-badge";
-import type { WorkflowStateConfig } from "@/components/workflow/workflow-state";
+import { StatusBadge } from "@/components/ui/workflow-state/status-badge";
+import type { WorkflowStateConfig } from "@/components/ui/workflow-state/workflow-state";
 import type { RequisitionStatus } from "../types/requisition-view-model";
 
 const requisitionStatusConfig = {

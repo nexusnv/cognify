@@ -13,6 +13,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@cognify/ui";
 import { CommandPaletteItem } from "./command-palette-item";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { getSearchCommands } from "../search-commands";
@@ -106,13 +107,15 @@ export function CommandPalette({
                 placeholder="Search or jump to..."
                 className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
-              <button
+              <Button
                 type="button"
-                className="inline-flex h-9 items-center rounded-md border px-2 text-xs text-muted-foreground hover:text-foreground"
+                variant="outline"
+                size="lg"
+                className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => onOpenChange(false)}
               >
                 Esc
-              </button>
+              </Button>
             </div>
             <Command.List className="max-h-[min(70vh,34rem)] overflow-y-auto p-2">
               {searchState.errorMessage ? (

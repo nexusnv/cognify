@@ -83,11 +83,14 @@ describe("app shell", () => {
     await expectIdentityLoaded();
     expect(screen.getByText("Test User")).toBeInTheDocument();
     expect(screen.getByText("Requester")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Skip to main content" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Dashboard");
+    expect(screen.getByRole("button", { name: /switch to .* mode/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /open navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Account menu" })).toBeEnabled();
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");
@@ -103,7 +106,8 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    await user.click(screen.getByRole("button", { name: "Sign out" }));
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Sign out" }));
 
     expect(router.replace).toHaveBeenCalledWith("/login");
   });
@@ -213,11 +217,12 @@ describe("app shell", () => {
 
     await expectIdentityLoaded();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("System");
-    expect(await screen.findByRole("link", { name: "System" })).toHaveAttribute(
+    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
+    expect(within(primaryNav).getByRole("link", { name: "System" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("contentinfo")).toHaveTextContent("Local demo");
+    expect(await screen.findByText(/Local demo/)).toBeInTheDocument();
   });
 
   it("does not fetch system status for requester identities", async () => {
@@ -273,7 +278,7 @@ describe("app shell", () => {
 
     await user.click(openButton);
     const dialog = screen.getByRole("dialog", { name: "Navigation" });
-    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveAttribute("data-state", "open");
     expect(within(dialog).getByRole("button", { name: "Close navigation" })).toHaveFocus();
 
     await user.keyboard("{Escape}");
@@ -295,7 +300,7 @@ describe("app shell", () => {
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
 
     const dialog = screen.getByRole("dialog", { name: "Navigation" });
-    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body).toHaveAttribute("data-scroll-locked", "1");
 
     const closeButton = within(dialog).getByRole("button", { name: "Close navigation" });
     const links = within(dialog).getAllByRole("link");
@@ -306,5 +311,6 @@ describe("app shell", () => {
 
     await user.keyboard("{Escape}");
     expect(document.body.style.overflow).toBe(previousOverflow);
+    expect(document.body).not.toHaveAttribute("data-scroll-locked");
   });
 });

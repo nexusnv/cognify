@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { Button, Input, NativeSelect, Textarea } from "@cognify/ui";
 import type { QuotationLineItem, QuotationNormalization, QuotationNormalizationLineGroup } from "@cognify/api-client/schemas";
 
 type DraftState = {
@@ -247,8 +247,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Currency
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1 min-h-11 px-3 text-sm"
               value={draft.currency}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), currency: event.target.value }))
@@ -257,8 +257,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Bundle description
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1 min-h-11 px-3 text-sm"
               value={draft.description}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), description: event.target.value }))
@@ -267,8 +267,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Quantity
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1 min-h-11 px-3 text-sm"
               value={draft.quantity}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), quantity: event.target.value }))
@@ -277,8 +277,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Unit
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1 min-h-11 px-3 text-sm"
               value={draft.unit}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), unit: event.target.value }))
@@ -287,8 +287,8 @@ function QuotationNormalizationLineMappingDraftPanel({
           </label>
           <label className="text-sm font-medium">
             Bundle total
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1 min-h-11 px-3 text-sm"
               value={draft.bundleTotalAmount}
               onChange={(event) =>
                 setDraftOverride((current) => ({ ...(current ?? initialDraft), bundleTotalAmount: event.target.value }))

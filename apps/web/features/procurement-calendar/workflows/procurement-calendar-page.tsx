@@ -6,7 +6,21 @@ import type {
   ProcurementCalendarEventStatus,
   ProcurementCalendarSourceType,
 } from "@cognify/api-client/schemas";
-import { Button } from "@cognify/ui";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@cognify/ui";
 import { useProcurementCalendarEvents } from "../hooks/use-procurement-calendar-events";
 import { ProcurementCalendarAgendaView } from "../components/procurement-calendar-agenda-view";
 import { ProcurementCalendarEventDetail } from "../components/procurement-calendar-event-detail";
@@ -33,7 +47,9 @@ export function ProcurementCalendarPage() {
   const [from, setFrom] = useState(initialRange.from);
   const [to, setTo] = useState(initialRange.to);
   const [search, setSearch] = useState("");
-  const [selectedSourceTypes, setSelectedSourceTypes] = useState<ProcurementCalendarSourceType[]>([]);
+  const [selectedSourceTypes, setSelectedSourceTypes] = useState<ProcurementCalendarSourceType[]>(
+    [],
+  );
   const [selectedStatuses, setSelectedStatuses] = useState<ProcurementCalendarEventStatus[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
@@ -60,7 +76,10 @@ export function ProcurementCalendarPage() {
     return calendar.events.map((event) => ({
       ...event,
       dateKey: getEventDateKey(event),
-      sourceTypeLabel: getProcurementCalendarSourceLabel(event.sourceType, calendar.availableSources),
+      sourceTypeLabel: getProcurementCalendarSourceLabel(
+        event.sourceType,
+        calendar.availableSources,
+      ),
       statusLabel: getProcurementCalendarStatusLabel(event.status),
       timeLabel: formatEventTimeRange(event),
     }));
@@ -68,8 +87,18 @@ export function ProcurementCalendarPage() {
 
   const selectedEvent = events.find((event) => event.id === selectedEventId) ?? null;
   const visibleSelectedEventId = selectedEvent?.id ?? null;
-  const isFiltered = Boolean(search.trim() || selectedSourceTypes.length > 0 || selectedStatuses.length > 0);
+  const isFiltered = Boolean(
+    search.trim() || selectedSourceTypes.length > 0 || selectedStatuses.length > 0,
+  );
   const rangeLabel = formatDateRangeSummary(from, to);
+  const handleViewChange = (nextView: ProcurementCalendarView) => {
+    setView(nextView);
+    if (nextView === "week") {
+      const nextRange = getDefaultCalendarRange("week");
+      setFrom(nextRange.from);
+      setTo(nextRange.to);
+    }
+  };
 
   return (
     <section className="space-y-5">
@@ -94,18 +123,13 @@ export function ProcurementCalendarPage() {
           setTo(nextRange.to);
         }}
         view={view}
-        onViewChange={(nextView) => {
-          setView(nextView);
-          if (nextView === "week") {
-            const nextRange = getDefaultCalendarRange("week");
-            setFrom(nextRange.from);
-            setTo(nextRange.to);
-          }
-        }}
+        onViewChange={handleViewChange}
         search={search}
         onSearchChange={setSearch}
         selectedSourceTypes={selectedSourceTypes}
-        onSourceTypeToggle={(value) => setSelectedSourceTypes((current) => toggleItem(current, value))}
+        onSourceTypeToggle={(value) =>
+          setSelectedSourceTypes((current) => toggleItem(current, value))
+        }
         selectedStatuses={selectedStatuses}
         onStatusToggle={(value) => setSelectedStatuses((current) => toggleItem(current, value))}
         availableSources={availableSources}
@@ -116,7 +140,9 @@ export function ProcurementCalendarPage() {
         }}
       />
 
-      {calendarQuery.isLoading ? <StatePanel role="status" title="Loading calendar events." /> : null}
+      {calendarQuery.isLoading ? (
+        <StatePanel role="status" title="Loading calendar events." />
+      ) : null}
       {calendarQuery.isError ? (
         <StatePanel
           title="Unable to load calendar events."
@@ -134,7 +160,11 @@ export function ProcurementCalendarPage() {
 
           {events.length === 0 ? (
             <StatePanel
-              title={isFiltered ? "No events match the current filters." : "No calendar events in this range."}
+              title={
+                isFiltered
+                  ? "No events match the current filters."
+                  : "No calendar events in this range."
+              }
               message={
                 isFiltered
                   ? "Adjust source, status, or search terms to widen the result set."
@@ -143,39 +173,58 @@ export function ProcurementCalendarPage() {
             />
           ) : (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_22rem]">
-              <section aria-label={`Calendar ${view} view`} className="space-y-3">
-                <header className="flex items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold">
-                    {view === "month" ? "Month view" : view === "week" ? "Week view" : "Agenda view"}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">{events.length} visible events</p>
-                </header>
-
-                {view === "month" ? (
-                  <ProcurementCalendarMonthView
-                    events={events}
-                    selectedEventId={visibleSelectedEventId}
-                    onSelectEvent={setSelectedEventId}
-                  />
-                ) : null}
-
-                {view === "week" ? (
-                  <ProcurementCalendarWeekView
-                    from={from}
-                    events={events}
-                    selectedEventId={visibleSelectedEventId}
-                    onSelectEvent={setSelectedEventId}
-                  />
-                ) : null}
-
-                {view === "agenda" ? (
-                  <ProcurementCalendarAgendaView
-                    events={events}
-                    selectedEventId={visibleSelectedEventId}
-                    onSelectEvent={setSelectedEventId}
-                  />
-                ) : null}
-              </section>
+              <Tabs
+                value={view}
+                onValueChange={(value) => handleViewChange(value as ProcurementCalendarView)}
+              >
+                <Card>
+                  <CardHeader className="border-b">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <CardTitle>
+                        {view === "month"
+                          ? "Month view"
+                          : view === "week"
+                            ? "Week view"
+                            : "Agenda view"}
+                      </CardTitle>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-xs text-muted-foreground">
+                          {events.length} visible events
+                        </p>
+                        <TabsList aria-label="Calendar view tabs">
+                          <TabsTrigger value="month">Month</TabsTrigger>
+                          <TabsTrigger value="week">Week</TabsTrigger>
+                          <TabsTrigger value="agenda">Agenda</TabsTrigger>
+                        </TabsList>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <TabsContent value="month">
+                      <ProcurementCalendarMonthView
+                        events={events}
+                        selectedEventId={visibleSelectedEventId}
+                        onSelectEvent={setSelectedEventId}
+                      />
+                    </TabsContent>
+                    <TabsContent value="week">
+                      <ProcurementCalendarWeekView
+                        from={from}
+                        events={events}
+                        selectedEventId={visibleSelectedEventId}
+                        onSelectEvent={setSelectedEventId}
+                      />
+                    </TabsContent>
+                    <TabsContent value="agenda">
+                      <ProcurementCalendarAgendaView
+                        events={events}
+                        selectedEventId={visibleSelectedEventId}
+                        onSelectEvent={setSelectedEventId}
+                      />
+                    </TabsContent>
+                  </CardContent>
+                </Card>
+              </Tabs>
 
               <ProcurementCalendarEventDetail event={selectedEvent} />
             </div>
@@ -201,11 +250,27 @@ function StatePanel({
   action?: ReactNode;
   role?: "status";
 }) {
+  if (role === "status") {
+    return (
+      <Card role={role}>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        {message || action ? (
+          <CardContent className="space-y-3">
+            {message ? <p className="text-muted-foreground">{message}</p> : null}
+            {action ? <div>{action}</div> : null}
+          </CardContent>
+        ) : null}
+      </Card>
+    );
+  }
+
   return (
-    <div role={role} className="space-y-2 rounded-md border p-4 text-sm">
-      <p className="font-medium">{title}</p>
-      {message ? <p className="text-muted-foreground">{message}</p> : null}
-      {action ? <div>{action}</div> : null}
-    </div>
+    <Alert>
+      <AlertTitle>{title}</AlertTitle>
+      {message ? <AlertDescription>{message}</AlertDescription> : null}
+      {action ? <AlertAction>{action}</AlertAction> : null}
+    </Alert>
   );
 }

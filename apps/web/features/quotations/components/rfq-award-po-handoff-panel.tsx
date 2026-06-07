@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Badge, Button, Input, Textarea } from "@cognify/ui";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { PurchaseOrderRequestHandoff } from "@cognify/api-client/schemas";
 import {
@@ -63,15 +63,15 @@ export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: Rfq
           <p className="text-sm text-muted-foreground">Finance-ready purchase order request generated from the approved award.</p>
         </div>
         {handoff ? (
-          <span className="rounded-full border px-2 py-1 text-xs font-medium">{handoffStatusLabel(handoff.status)}</span>
+          <Badge variant="outline">{handoffStatusLabel(handoff.status)}</Badge>
         ) : null}
       </div>
 
       {isLoading ? <p className="mt-3 text-sm text-muted-foreground">Loading PO handoff</p> : null}
       {error ? (
-        <div role="alert" className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-          {getMutationErrorMessage(error)}
-        </div>
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription>{getMutationErrorMessage(error)}</AlertDescription>
+        </Alert>
       ) : null}
 
       {!handoff && !isLoading ? (
@@ -119,9 +119,9 @@ export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: Rfq
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1 text-sm">
               <span className="font-medium">Requested PO date</span>
-              <input
+              <Input
                 aria-label="Requested PO date"
-                className="flex min-h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="min-h-10 px-3 py-2 text-sm"
                 disabled={!canUpdate}
                 type="date"
                 value={draft.requestedPoDate}
@@ -130,9 +130,9 @@ export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: Rfq
             </label>
             <label className="space-y-1 text-sm">
               <span className="font-medium">Delivery attention</span>
-              <input
+              <Input
                 aria-label="Delivery attention"
-                className="flex min-h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="min-h-10 px-3 py-2 text-sm"
                 disabled={!canUpdate}
                 value={draft.deliveryAttention}
                 onChange={(event) => setDraft((current) => ({ ...current, deliveryAttention: event.target.value }))}
@@ -254,9 +254,9 @@ export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: Rfq
       ) : null}
 
       {actionError ? (
-        <div role="alert" className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-          {getMutationErrorMessage(actionError)}
-        </div>
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription>{getMutationErrorMessage(actionError)}</AlertDescription>
+        </Alert>
       ) : null}
     </section>
   );

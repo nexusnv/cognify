@@ -1,11 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { cloneElement, useMemo, useState } from "react";
+import type {
+  FormEvent,
+  InputHTMLAttributes,
+  ReactElement,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 import { useRouter } from "next/navigation";
 import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
-import { FormErrorSummary } from "@/components/forms/form-error-summary";
-import { FormField } from "@/components/forms/form-field";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Form,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+} from "@cognify/ui";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useCreateProject, useUpdateProject } from "../hooks/use-project-actions";
 import { projectFormSchema } from "../schemas/project-form-schema";
@@ -66,7 +88,7 @@ export function ProjectForm({
     return options;
   }, [currentUserQuery.data, mode, project]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
@@ -137,7 +159,7 @@ export function ProjectForm({
   );
 
   return (
-    <form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <Form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
       {formError ? (
         <div
           role="alert"
@@ -153,7 +175,7 @@ export function ProjectForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <FormField htmlFor="name" label="Project name" error={errors.name?.[0]} required>
-          <input
+          <Input
             id="name"
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.name}
@@ -161,25 +183,46 @@ export function ProjectForm({
           />
         </FormField>
 
-        <FormField htmlFor="ownerId" label="Owner" error={errors.ownerId?.[0]} required>
-          <NativeSelect
-            id="ownerId"
-            value={values.ownerId}
-            onChange={(event) =>
-              setValues((current) => ({ ...current, ownerId: event.target.value }))
+        <Field data-invalid={Boolean(errors.ownerId)}>
+          <div className="flex items-center gap-2">
+            <FieldLabel htmlFor="ownerId">Owner</FieldLabel>
+            <span className="text-xs text-muted-foreground">Required</span>
+          </div>
+          <Select
+            value={values.ownerId || EMPTY_SELECT_VALUE}
+            onValueChange={(value) =>
+              setValues((current) => ({
+                ...current,
+                ownerId: value === EMPTY_SELECT_VALUE ? "" : value,
+              }))
             }
           >
-            <option value="">Select owner</option>
-            {ownerOptions.map((owner) => (
-              <option key={owner.id} value={owner.id}>
-                {owner.name} ({owner.email})
-              </option>
-            ))}
-          </NativeSelect>
-        </FormField>
+            <SelectTrigger
+              id="ownerId"
+              aria-label="Owner"
+              aria-invalid={Boolean(errors.ownerId)}
+              aria-required="true"
+              aria-describedby={errors.ownerId ? "ownerId-error" : undefined}
+              className="min-h-11 w-full justify-between px-3 text-base"
+            >
+              <SelectValue placeholder="Select owner" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={EMPTY_SELECT_VALUE}>Select owner</SelectItem>
+              {ownerOptions.map((owner) => (
+                <SelectItem key={owner.id} value={owner.id}>
+                  {owner.name} ({owner.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError id="ownerId-error" role={undefined}>
+            {errors.ownerId?.[0]}
+          </FieldError>
+        </Field>
 
         <FormField htmlFor="budgetAmount" label="Budget" error={errors.budgetAmount?.[0]} required>
-          <input
+          <Input
             id="budgetAmount"
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.budgetAmount}
@@ -191,7 +234,7 @@ export function ProjectForm({
         </FormField>
 
         <FormField htmlFor="currency" label="Currency" error={errors.currency?.[0]} required>
-          <input
+          <Input
             id="currency"
             className="min-h-11 w-full rounded-md border px-3 text-base uppercase"
             value={values.currency}
@@ -203,7 +246,7 @@ export function ProjectForm({
         </FormField>
 
         <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-          <input
+          <Input
             id="department"
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.department}
@@ -214,7 +257,7 @@ export function ProjectForm({
         </FormField>
 
         <FormField htmlFor="costCenter" label="Cost center" error={errors.costCenter?.[0]}>
-          <input
+          <Input
             id="costCenter"
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.costCenter}
@@ -225,7 +268,7 @@ export function ProjectForm({
         </FormField>
 
         <FormField htmlFor="targetStartDate" label="Target start" error={errors.targetStartDate?.[0]}>
-          <input
+          <Input
             id="targetStartDate"
             type="date"
             className="min-h-11 w-full rounded-md border px-3 text-base"
@@ -241,7 +284,7 @@ export function ProjectForm({
           label="Target completion"
           error={errors.targetCompletionDate?.[0]}
         >
-          <input
+          <Input
             id="targetCompletionDate"
             type="date"
             className="min-h-11 w-full rounded-md border px-3 text-base"
@@ -270,7 +313,7 @@ export function ProjectForm({
               : "Save project"}
         </Button>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -286,4 +329,83 @@ function initialProjectFormValues(project?: ProcurementProject): ProjectFormValu
     targetStartDate: project?.targetStartDate ?? "",
     targetCompletionDate: project?.targetCompletionDate ?? "",
   };
+}
+
+type FormSummaryError = {
+  field?: string;
+  fieldId?: string;
+  message: string;
+};
+
+type FieldControlProps = InputHTMLAttributes<HTMLInputElement> &
+  TextareaHTMLAttributes<HTMLTextAreaElement> &
+  SelectHTMLAttributes<HTMLSelectElement>;
+
+const EMPTY_SELECT_VALUE = "__none__";
+
+function FormField({
+  htmlFor,
+  label,
+  description,
+  error,
+  required = false,
+  children,
+}: {
+  htmlFor: string;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  children: ReactElement<FieldControlProps>;
+}) {
+  const descriptionId = description ? `${htmlFor}-description` : undefined;
+  const errorId = error ? `${htmlFor}-error` : undefined;
+  const describedBy =
+    [children.props["aria-describedby"], descriptionId, errorId].filter(Boolean).join(" ") ||
+    undefined;
+
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <div className="flex items-center gap-2">
+        <FieldLabel htmlFor={htmlFor}>{label}</FieldLabel>
+        {required ? <span className="text-xs text-muted-foreground">Required</span> : null}
+      </div>
+      {description ? <FieldDescription id={descriptionId}>{description}</FieldDescription> : null}
+      {cloneElement(children, {
+        id: children.props.id ?? htmlFor,
+        "aria-describedby": describedBy,
+        "aria-invalid": Boolean(error) || children.props["aria-invalid"],
+        "aria-required": required || children.props["aria-required"],
+        required: required || children.props.required,
+      })}
+      <FieldError id={errorId} role={undefined}>
+        {error}
+      </FieldError>
+    </Field>
+  );
+}
+
+function FormErrorSummary({ title, errors }: { title: string; errors: FormSummaryError[] }) {
+  if (errors.length === 0) return null;
+
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          {errors.map((error, index) => (
+            <li key={`${error.field ?? "form"}-${index}`}>
+              {error.fieldId ? (
+                <a className="underline" href={`#${error.fieldId}`}>
+                  {error.message}
+                </a>
+              ) : (
+                error.message
+              )}
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
 }

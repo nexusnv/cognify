@@ -1,5 +1,6 @@
+import { useRef } from "react";
 import { FilePlus2, Trash2 } from "lucide-react";
-import { Button } from "@cognify/ui";
+import { Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Input } from "@cognify/ui";
 
 export type RfqRequiredDocumentEditorValue = {
   id: string;
@@ -19,6 +20,8 @@ export function RfqRequiredDocumentsEditor({
   disabled?: boolean;
   onChange: (items: RfqRequiredDocumentEditorValue[]) => void;
 }) {
+  const checkboxRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   function updateItem(id: string, patch: Partial<RfqRequiredDocumentEditorValue>) {
     onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   }
@@ -51,103 +54,103 @@ export function RfqRequiredDocumentsEditor({
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <table className="min-w-[52rem] w-full border-separate border-spacing-0 text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="border-b px-3 py-2 text-left font-medium">Key</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Label</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Required</th>
-              <th className="border-b px-3 py-2 text-left font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-5 text-sm text-muted-foreground">
-                  No required documents yet.
-                </td>
-              </tr>
-            ) : null}
-            {items.map((item, index) => {
-              const prefix = `requiredDocuments.${index}`;
-              const keyError = errors[`${prefix}.key`]?.[0];
-              const labelError = errors[`${prefix}.label`]?.[0];
+      <Table className="min-w-[52rem] text-sm">
+        <TableHeader className="bg-muted/40">
+          <TableRow>
+            <TableHead className="border-b px-3 py-2">Key</TableHead>
+            <TableHead className="border-b px-3 py-2">Label</TableHead>
+            <TableHead className="border-b px-3 py-2">Required</TableHead>
+            <TableHead className="border-b px-3 py-2">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="px-3 py-5 text-sm text-muted-foreground">
+                No required documents yet.
+              </TableCell>
+            </TableRow>
+          ) : null}
+          {items.map((item, index) => {
+            const prefix = `requiredDocuments.${index}`;
+            const keyError = errors[`${prefix}.key`]?.[0];
+            const labelError = errors[`${prefix}.label`]?.[0];
 
-              return (
-                <tr key={item.id} className="align-top">
-                  <td className="border-b px-3 py-3">
-                    <input
-                      id={`required-documents-${index}-key`}
-                      className="min-h-11 w-full rounded-md border px-3 text-base"
-                      value={item.key}
-                      disabled={disabled}
-                      aria-label={`Required document ${index + 1} key`}
-                      aria-describedby={keyError ? `required-documents-${index}-key-error` : undefined}
-                      aria-invalid={Boolean(keyError)}
-                      onChange={(event) => updateItem(item.id, { key: event.target.value })}
-                    />
-                    {keyError ? (
-                      <p id={`required-documents-${index}-key-error`} className="mt-1 text-xs text-red-700">
-                        {keyError}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <input
-                      id={`required-documents-${index}-label`}
-                      className="min-h-11 w-full rounded-md border px-3 text-base"
-                      value={item.label}
-                      disabled={disabled}
-                      aria-label={`Required document ${index + 1} label`}
-                      aria-describedby={labelError ? `required-documents-${index}-label-error` : undefined}
-                      aria-invalid={Boolean(labelError)}
-                      onChange={(event) => updateItem(item.id, { label: event.target.value })}
-                    />
-                    {labelError ? (
-                      <p
-                        id={`required-documents-${index}-label-error`}
-                        className="mt-1 text-xs text-red-700"
-                      >
-                        {labelError}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <label
-                      className="inline-flex min-h-11 items-center gap-2 text-sm"
-                      aria-label={`Required document ${index + 1} required`}
+            return (
+              <TableRow key={item.id} className="align-top">
+                <TableCell className="border-b px-3 py-3">
+                  <Input
+                    id={`required-documents-${index}-key`}
+                    className="h-11 w-full px-3 text-base"
+                    value={item.key}
+                    disabled={disabled}
+                    aria-label={`Required document ${index + 1} key`}
+                    aria-describedby={keyError ? `required-documents-${index}-key-error` : undefined}
+                    aria-invalid={Boolean(keyError)}
+                    onChange={(event) => updateItem(item.id, { key: event.target.value })}
+                  />
+                  {keyError ? (
+                    <p id={`required-documents-${index}-key-error`} className="mt-1 text-xs text-red-700">
+                      {keyError}
+                    </p>
+                  ) : null}
+                </TableCell>
+                <TableCell className="border-b px-3 py-3">
+                  <Input
+                    id={`required-documents-${index}-label`}
+                    className="h-11 w-full px-3 text-base"
+                    value={item.label}
+                    disabled={disabled}
+                    aria-label={`Required document ${index + 1} label`}
+                    aria-describedby={labelError ? `required-documents-${index}-label-error` : undefined}
+                    aria-invalid={Boolean(labelError)}
+                    onChange={(event) => updateItem(item.id, { label: event.target.value })}
+                  />
+                  {labelError ? (
+                    <p
+                      id={`required-documents-${index}-label-error`}
+                      className="mt-1 text-xs text-red-700"
                     >
-                      <input
-                        type="checkbox"
-                        checked={item.required}
-                        disabled={disabled}
-                        aria-label={`Required document ${index + 1} required`}
-                        onChange={(event) =>
-                          updateItem(item.id, { required: event.target.checked })
-                        }
-                      />
+                      {labelError}
+                    </p>
+                  ) : null}
+                </TableCell>
+                <TableCell className="border-b px-3 py-3">
+                  <div className="inline-flex min-h-11 items-center gap-2 text-sm">
+                    <Checkbox
+                      id={`required-document-${index}`}
+                      name={`requiredDocument-${index}`}
+                      ref={(element) => {
+                        checkboxRefs.current[`required-document-${index}`] = element;
+                      }}
+                      checked={item.required}
+                      disabled={disabled}
+                      onCheckedChange={(checked) =>
+                        updateItem(item.id, { required: checked === true })
+                      }
+                    />
+                    <label htmlFor={`required-document-${index}`} className="cursor-pointer">
                       Required
                     </label>
-                  </td>
-                  <td className="border-b px-3 py-3">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                      disabled={disabled}
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      Remove
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </TableCell>
+                <TableCell className="border-b px-3 py-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    disabled={disabled}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    Remove
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }

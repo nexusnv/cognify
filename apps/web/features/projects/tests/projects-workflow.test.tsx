@@ -157,6 +157,12 @@ describe("projects workflow", () => {
 
     expect(await screen.findByRole("heading", { name: "Office refresh" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute("href", "/projects/501/edit");
+    const tabs = screen.getByRole("tablist", { name: "Project sections" });
+    expect(tabs).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
+    await user.click(screen.getByRole("tab", { name: "Pipeline" }));
+    expect(screen.getByRole("tabpanel", { name: "Pipeline" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Draft requisitions" })).toBeInTheDocument();
 
     expect(
       await screen.findByRole("option", {
@@ -178,7 +184,12 @@ describe("projects workflow", () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: "Unlink" })).toHaveLength(2);
-      expect(screen.queryByText("Returned laptop request")).not.toBeInTheDocument();
     });
+
+    expect(
+      screen.getByRole("option", {
+        name: "REQ-2026-000010 - Returned laptop request",
+      }),
+    ).toBeInTheDocument();
   });
 });

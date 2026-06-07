@@ -2,6 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarProvider,
+} from "@cognify/ui/components/sidebar";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useLogout } from "@/features/identity/hooks/use-logout";
 import { useSystemStatus } from "@/features/system-readiness/hooks/use-system-status";
@@ -34,21 +40,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <SidebarProvider className="min-h-screen bg-background text-foreground">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-foreground focus:px-3 focus:py-2 focus:text-background"
       >
         Skip to main content
       </a>
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r bg-card px-4 py-5 md:block">
-        <div className="text-lg font-semibold">Cognify</div>
-        <div className="mt-1 truncate text-xs text-muted-foreground">{tenantName}</div>
-        <div className="mt-8">
+      <Sidebar collapsible="none" className="hidden border-r bg-card md:flex">
+        <SidebarHeader className="px-4 py-5">
+          <div className="text-lg font-semibold">Cognify</div>
+          <div className="truncate text-xs text-muted-foreground">{tenantName}</div>
+        </SidebarHeader>
+        <SidebarContent className="px-4 py-3">
           <ShellNav groups={groups} pathname={pathname} />
-        </div>
-      </aside>
-      <div className="flex min-h-screen flex-col md:pl-72">
+        </SidebarContent>
+      </Sidebar>
+      <div className="flex min-h-screen flex-1 flex-col">
         <ShellHeader
           tenantName={tenantName}
           userName={userName}
@@ -79,6 +87,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       </div>
       <RightPanelHost />
-    </div>
+    </SidebarProvider>
   );
 }

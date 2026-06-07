@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  Button,
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@cognify/ui";
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -18,74 +28,15 @@ export function RightPanelRoot() {
   const previousPathname = useRef(pathname);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const previousPanelRef = useRef<RightPanelDefinition | null>(null);
-  const panelRef = useRef<HTMLElement>(null);
   const panel = rightPanel?.panel ?? null;
   const closePanel = rightPanel?.closePanel;
 
   useEffect(() => {
-    if (!panel) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [panel]);
-
-  useEffect(() => {
-    if (!panel || !closePanel) return undefined;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closePanel?.();
-        return;
-      }
-
-      if (event.key !== "Tab") return;
-
-      const focusable = getFocusableElements(panelRef.current);
-      if (focusable.length === 0) {
-        event.preventDefault();
-        panelRef.current?.focus();
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-        return;
-      }
-
-      if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [closePanel, panel]);
-
-  useEffect(() => {
     const wasOpen = Boolean(previousPanelRef.current);
 
-    if (panel) {
-      if (!wasOpen) {
-        previousFocusRef.current =
-          document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      }
-
-      window.setTimeout(() => {
-        const firstFocusable = getFocusableElements(panelRef.current)[0];
-        (firstFocusable ?? panelRef.current)?.focus();
-      }, 0);
-    } else if (wasOpen) {
-      previousFocusRef.current?.focus();
-      previousFocusRef.current = null;
+    if (panel && !wasOpen) {
+      previousFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
     }
 
     previousPanelRef.current = panel;
@@ -100,65 +51,55 @@ export function RightPanelRoot() {
 
   if (!panel) return null;
 
-  const titleId = `${panel.id}-title`;
-  const descriptionId = panel.description ? `${panel.id}-description` : undefined;
   const Icon = panel.icon;
   const widthClassName = widthClassBySize[panel.size ?? "md"];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <button
-        type="button"
-        data-testid="right-panel-overlay"
-        aria-label="Close panel overlay"
-        className="absolute inset-0 cursor-default bg-black/30"
-        onClick={closePanel}
-      />
-      <section
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        tabIndex={-1}
-        className={`relative flex h-full w-full flex-col border-l bg-background shadow-xl ${widthClassName}`}
+    <Sheet
+      open={Boolean(panel)}
+      onOpenChange={(open) => {
+        if (!open) closePanel?.();
+      }}
+    >
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className={`w-full p-0 ${widthClassName}`}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          previousFocusRef.current?.focus();
+          previousFocusRef.current = null;
+        }}
       >
-        <header className="flex items-start justify-between gap-3 border-b p-4">
+        <SheetHeader className="flex-row items-start justify-between gap-3 border-b p-4 text-left">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
-              <h2 id={titleId} className="truncate text-base font-semibold">
+              <SheetTitle className="truncate text-base font-semibold">
                 {panel.title}
-              </h2>
+              </SheetTitle>
             </div>
             {panel.description ? (
-              <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
+              <SheetDescription className="mt-1 text-sm text-muted-foreground">
                 {panel.description}
-              </p>
+              </SheetDescription>
             ) : null}
           </div>
-          <button
-            type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border"
-            onClick={closePanel}
-            aria-label="Close panel"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </header>
+          <SheetClose asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="min-h-11 min-w-11"
+              aria-label="Close panel"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </SheetClose>
+        </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto p-4">{panel.content}</div>
-        {panel.footer ? <footer className="border-t p-4">{panel.footer}</footer> : null}
-      </section>
-    </div>
+        {panel.footer ? <SheetFooter className="border-t p-4">{panel.footer}</SheetFooter> : null}
+      </SheetContent>
+    </Sheet>
   );
-}
-
-function getFocusableElements(root: HTMLElement | null) {
-  if (!root) return [];
-
-  return Array.from(
-    root.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bell } from "lucide-react";
+import { Button } from "@cognify/ui/components/button";
 import { NotificationCenter } from "@/features/notifications/components/notification-center";
 import { useUnreadNotifications } from "@/features/notifications/hooks/use-notifications";
 
@@ -13,11 +14,16 @@ export function NotificationHost() {
     unreadCount > 0 ? `Open notifications, ${unreadCount} unread` : "Open notifications";
 
   return (
-    <NotificationCenter open={open} onOpenChange={setOpen}>
-      <button
+    <>
+      <Button
         type="button"
-        className="relative inline-flex min-h-10 w-10 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        variant="outline"
+        size="icon-lg"
+        className="relative"
         aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((current) => !current)}
       >
         <Bell className="h-4 w-4" aria-hidden="true" />
         {unreadCount > 0 && (
@@ -25,7 +31,8 @@ export function NotificationHost() {
             {unreadCount}
           </span>
         )}
-      </button>
-    </NotificationCenter>
+      </Button>
+      <NotificationCenter open={open} onOpenChange={setOpen} />
+    </>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { SaveQuotationManualEntryRequest } from "@cognify/api-client/schemas";
-import { Button } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Input } from "@cognify/ui";
 import { useSaveQuotationManualEntry } from "../hooks/use-quotation-manual-entry";
 import {
   useQuotationAttachments,
@@ -143,10 +143,10 @@ export function QuotationEvidencePanel({
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <label className="block text-sm font-medium">
             Buyer-received quotation file
-            <input
+            <Input
               ref={fileInputRef}
               type="file"
-              className="mt-1 block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer disabled:opacity-50"
+              className="mt-1 h-auto min-h-11 w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer disabled:opacity-50"
               onChange={handleFileSelect}
               disabled={!canUpload || uploadMutation.isPending}
             />
@@ -161,9 +161,9 @@ export function QuotationEvidencePanel({
         {selectedFile ? <p className="text-xs text-muted-foreground">Selected file: {selectedFile.name}</p> : null}
 
         {errorMessage ? (
-          <p role="alert" className="text-sm text-red-700">
-            {errorMessage}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
 
         {quotation ? (

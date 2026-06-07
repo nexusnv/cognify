@@ -1,6 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@cognify/ui";
 import { toast } from "sonner";
 import type {
   ApprovalAwardRecommendationSubjectMetadata,
@@ -19,11 +36,22 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
   const task = taskQuery.data;
 
   if (taskQuery.isLoading) {
-    return <p className="rounded-md border p-4 text-sm text-muted-foreground">Loading approval task</p>;
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
   }
 
   if (taskQuery.isError || !task) {
-    return <p className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Approval task could not be loaded.</p>;
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Approval task unavailable</AlertTitle>
+        <AlertDescription>Approval task could not be loaded.</AlertDescription>
+      </Alert>
+    );
   }
 
   const isAwardRecommendation = task.subject.type === "rfq_award_recommendation";
@@ -36,136 +64,192 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-3">
-        <Link href="/approvals" className="text-sm font-medium underline-offset-4 hover:underline">
-          Back to approvals
-        </Link>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-mono text-xs text-muted-foreground">{task.subject.number}</p>
-            <h1 className="text-2xl font-semibold tracking-normal">{task.subject.title}</h1>
+      <Card>
+        <CardHeader className="gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <Button variant="ghost" asChild className="px-0">
+              <Link href="/approvals">Back to approvals</Link>
+            </Button>
+            <ApprovalStatusBadge status={task.status} />
           </div>
-          <ApprovalStatusBadge status={task.status} />
-        </div>
-      </header>
-
-      <section className="grid gap-3 rounded-md border p-4 text-sm md:grid-cols-3">
-        <Metric label="Stage" value={task.stage.name ?? "Current stage"} />
-        <Metric label="Assignee" value={task.assignee?.name ?? "Unassigned"} />
-        <Metric label="Due" value={formatDate(task.dueAt)} />
-        {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
-          <Metric label="Delegated from" value={task.originalAssignee.name} />
-        ) : null}
-        {isAwardRecommendation ? (
-          <>
-            <Metric label="Recommended vendor" value={awardMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
-            <Metric label="RFQ" value={awardMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
-            <Metric label="Weighted score" value={formatNumber(awardMetadata.scorecardWeightedTotal)} />
-          </>
-        ) : (
-          <>
-            <Metric label="Requester" value={requisitionMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
-            <Metric label="Department" value={requisitionMetadata.department ?? "Unassigned"} />
-            <Metric label="Cost center" value={requisitionMetadata.costCenter ?? "Unassigned"} />
-          </>
-        )}
-      </section>
-
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Decision</h2>
-        {task.status === "active" && hasDecisionAction ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {canApprove ? (
-              <ApprovalActionDialog
-                action="approve"
-                triggerLabel="Approve"
-                title="Approve task?"
-                confirmLabel="Confirm approval"
-                lockVersion={task.lockVersion}
-                isPending={actions.approve.isPending}
-                onSubmit={async ({ lockVersion }) => {
-                  await actions.approve.mutateAsync(
-                    { lockVersion },
-                    { onSuccess: () => toast.success("Approval recorded") },
-                  );
-                }}
-              />
-            ) : null}
-            {canReject ? (
-              <ApprovalActionDialog
-                action="reject"
-                triggerLabel="Reject"
-                title="Reject task?"
-                confirmLabel="Confirm rejection"
-                lockVersion={task.lockVersion}
-                isPending={actions.reject.isPending}
-                onSubmit={async ({ lockVersion, reason }) => {
-                  await actions.reject.mutateAsync(
-                    { lockVersion, reason: reason ?? "" },
-                    { onSuccess: () => toast.success(rejectionSuccessMessage(task.subject.type)) },
-                  );
-                }}
-              />
-            ) : null}
-            {canRequestChanges ? (
-              <ApprovalActionDialog
-                action="request-changes"
-                triggerLabel="Request changes"
-                title="Request changes?"
-                confirmLabel="Confirm request changes"
-                lockVersion={task.lockVersion}
-                isPending={actions.requestChanges.isPending}
-                onSubmit={async ({ lockVersion, reason, requestedFields }) => {
-                  await actions.requestChanges.mutateAsync(
-                    { lockVersion, reason: reason ?? "", requestedFields },
-                    { onSuccess: () => toast.success("Changes requested") },
-                  );
-                }}
-              />
-            ) : null}
-            <ApprovalDelegationDialog taskId={task.id} lockVersion={task.lockVersion} />
+          <div className="space-y-2">
+            <Badge variant="outline" className="font-mono text-[11px]">
+              {task.subject.number}
+            </Badge>
+            <CardTitle>
+              <h1 className="text-2xl font-semibold tracking-normal">{task.subject.title}</h1>
+            </CardTitle>
+            <CardDescription>
+              {task.title} in {task.stage.name ?? "Current stage"}
+            </CardDescription>
           </div>
-        ) : (
-          <p className="mt-2 text-sm text-muted-foreground">
-            {task.decision ? `Decision recorded: ${task.decision.replaceAll("_", " ")}` : "No decision recorded."}
-          </p>
-        )}
-      </section>
+        </CardHeader>
+      </Card>
 
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">{isAwardRecommendation ? "Award recommendation" : "Requisition"}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {task.subject.title} is currently {task.subject.status?.replaceAll("_", " ")}.
-        </p>
-        {isAwardRecommendation ? (
-          <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-            <Metric label="Rationale" value={awardMetadata.rationale ?? "No rationale provided"} />
-            <Metric label="Tradeoff summary" value={awardMetadata.tradeoffSummary ?? "Not provided"} />
-            <Metric label="Risk summary" value={awardMetadata.riskSummary ?? "Not provided"} />
-            <Metric label="Exception summary" value={awardMetadata.exceptionSummary ?? "Not provided"} />
-          </div>
-        ) : null}
-        <Link
-          href={isAwardRecommendation ? awardRecommendationHref(task, awardMetadata) : `/requisitions/${task.subject.id}`}
-          className="mt-3 inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium"
-        >
-          {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
-        </Link>
-      </section>
+      <Tabs defaultValue="summary">
+        <TabsList aria-label="Approval task sections">
+          <TabsTrigger value="summary" className="min-h-11 px-3">Summary</TabsTrigger>
+          <TabsTrigger value="decision" className="min-h-11 px-3">Decision</TabsTrigger>
+          <TabsTrigger value="comments" className="min-h-11 px-3">Comments</TabsTrigger>
+        </TabsList>
 
-      <section className="rounded-md border p-4">
-        <h2 className="text-base font-semibold">Comments</h2>
-        <div className="mt-4">
-          <ApprovalTaskComments taskId={task.id} />
-        </div>
-      </section>
+        <TabsContent value="summary" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>Task context</h2>
+              </CardTitle>
+              <CardDescription>Current assignee, stage timing, and subject metadata.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm md:grid-cols-3">
+              <Metric label="Stage" value={task.stage.name ?? "Current stage"} />
+              <Metric label="Assignee" value={task.assignee?.name ?? "Unassigned"} />
+              <Metric label="Due" value={formatDate(task.dueAt)} />
+              {task.originalAssignee && task.originalAssignee.id !== task.assignee?.id ? (
+                <Metric label="Delegated from" value={task.originalAssignee.name} />
+              ) : null}
+              {isAwardRecommendation ? (
+                <>
+                  <Metric label="Recommended vendor" value={awardMetadata.recommendedVendorName ?? task.subject.primaryParty ?? "Unknown"} />
+                  <Metric label="RFQ" value={awardMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
+                  <Metric label="Weighted score" value={formatNumber(awardMetadata.scorecardWeightedTotal)} />
+                </>
+              ) : (
+                <>
+                  <Metric label="Requester" value={requisitionMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
+                  <Metric label="Department" value={requisitionMetadata.department ?? "Unassigned"} />
+                  <Metric label="Cost center" value={requisitionMetadata.costCenter ?? "Unassigned"} />
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>{isAwardRecommendation ? "Award recommendation" : "Requisition"}</h2>
+              </CardTitle>
+              <CardDescription>
+                {task.subject.title} is currently {task.subject.status?.replaceAll("_", " ")}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isAwardRecommendation ? (
+                <div className="grid gap-3 text-sm md:grid-cols-2">
+                  <Metric label="Rationale" value={awardMetadata.rationale ?? "No rationale provided"} />
+                  <Metric label="Tradeoff summary" value={awardMetadata.tradeoffSummary ?? "Not provided"} />
+                  <Metric label="Risk summary" value={awardMetadata.riskSummary ?? "Not provided"} />
+                  <Metric label="Exception summary" value={awardMetadata.exceptionSummary ?? "Not provided"} />
+                </div>
+              ) : null}
+              <Button asChild variant="outline">
+                <Link href={isAwardRecommendation ? awardRecommendationHref(task, awardMetadata) : `/requisitions/${task.subject.id}`}>
+                  {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="decision" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>Decision</h2>
+              </CardTitle>
+              <CardDescription>Approve, reject, request changes, or delegate the task.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {task.decision ? (
+                <Alert>
+                  <AlertTitle>Decision recorded</AlertTitle>
+                  <AlertDescription>{task.decision.replaceAll("_", " ")}</AlertDescription>
+                </Alert>
+              ) : null}
+              {task.status === "active" && hasDecisionAction ? (
+                <div className="flex flex-wrap gap-2">
+                  {canApprove ? (
+                    <ApprovalActionDialog
+                      action="approve"
+                      triggerLabel="Approve"
+                      title="Approve task?"
+                      confirmLabel="Confirm approval"
+                      lockVersion={task.lockVersion}
+                      isPending={actions.approve.isPending}
+                      onSubmit={async ({ lockVersion }) => {
+                        await actions.approve.mutateAsync(
+                          { lockVersion },
+                          { onSuccess: () => toast.success("Approval recorded") },
+                        );
+                      }}
+                    />
+                  ) : null}
+                  {canReject ? (
+                    <ApprovalActionDialog
+                      action="reject"
+                      triggerLabel="Reject"
+                      title="Reject task?"
+                      confirmLabel="Confirm rejection"
+                      lockVersion={task.lockVersion}
+                      isPending={actions.reject.isPending}
+                      onSubmit={async ({ lockVersion, reason }) => {
+                        await actions.reject.mutateAsync(
+                          { lockVersion, reason: reason ?? "" },
+                          { onSuccess: () => toast.success(rejectionSuccessMessage(task.subject.type)) },
+                        );
+                      }}
+                    />
+                  ) : null}
+                  {canRequestChanges ? (
+                    <ApprovalActionDialog
+                      action="request-changes"
+                      triggerLabel="Request changes"
+                      title="Request changes?"
+                      confirmLabel="Confirm request changes"
+                      lockVersion={task.lockVersion}
+                      isPending={actions.requestChanges.isPending}
+                      onSubmit={async ({ lockVersion, reason, requestedFields }) => {
+                        await actions.requestChanges.mutateAsync(
+                          { lockVersion, reason: reason ?? "", requestedFields },
+                          { onSuccess: () => toast.success("Changes requested") },
+                        );
+                      }}
+                    />
+                  ) : null}
+                  <ApprovalDelegationDialog taskId={task.id} lockVersion={task.lockVersion} />
+                </div>
+              ) : (
+                <Alert>
+                  <AlertDescription>
+                    {task.decision ? `Decision recorded: ${task.decision.replaceAll("_", " ")}` : "No decision recorded."}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="comments">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>Comments</h2>
+              </CardTitle>
+              <CardDescription>Capture decision context and follow-up requests.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ApprovalTaskComments taskId={task.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="rounded-lg border p-3">
       <dt className="text-xs uppercase text-muted-foreground">{label}</dt>
       <dd className="mt-1 font-medium">{value}</dd>
     </div>

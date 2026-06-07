@@ -20,6 +20,7 @@ describe("approval delegation", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Delegate" }));
     await user.click(screen.getByRole("button", { name: "Confirm delegation" }));
 
@@ -31,11 +32,13 @@ describe("approval delegation", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Delegate" }));
     await user.selectOptions(screen.getByLabelText("Delegate"), "3");
     await user.type(screen.getByLabelText("Delegation reason"), "Covering a meeting.");
     await user.click(screen.getByRole("button", { name: "Confirm delegation" }));
 
+    await user.click(screen.getByRole("tab", { name: "Summary" }));
     expect(await screen.findByText("Finance approver")).toBeInTheDocument();
   });
 
@@ -58,6 +61,7 @@ describe("approval delegation", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Delegate" }));
     await user.selectOptions(screen.getByLabelText("Delegate"), "3");
     await user.type(screen.getByLabelText("Delegation reason"), "Cross-tenant check.");
@@ -90,6 +94,7 @@ describe("approval delegation", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Delegate" }));
     await user.selectOptions(screen.getByLabelText("Delegate"), "3");
     await user.type(screen.getByLabelText("Delegation reason"), "Expired coverage.");
@@ -122,6 +127,7 @@ describe("approval delegation", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Delegate" }));
     await user.selectOptions(screen.getByLabelText("Delegate"), "3");
     await user.type(screen.getByLabelText("Delegation reason"), "Requester coverage.");

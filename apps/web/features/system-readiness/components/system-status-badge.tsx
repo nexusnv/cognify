@@ -1,4 +1,5 @@
 import type { SystemStatusState } from "@cognify/api-client/schemas";
+import { Badge } from "@cognify/ui";
 
 const badgeStyles: Record<SystemStatusState, string> = {
   ok: "border-emerald-300 bg-emerald-50 text-emerald-950",
@@ -13,11 +14,5 @@ const badgeLabels: Record<SystemStatusState, string> = {
 };
 
 export function SystemStatusBadge({ status }: { status: SystemStatusState }) {
-  return (
-    <span
-      className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-xs font-medium ${badgeStyles[status]}`}
-    >
-      {badgeLabels[status]}
-    </span>
-  );
+  return <Badge className={badgeStyles[status]}>{badgeLabels[status]}</Badge>;
 }

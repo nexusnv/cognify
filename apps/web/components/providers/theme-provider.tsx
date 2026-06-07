@@ -1,5 +1,18 @@
 "use client";
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  return children;
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import type { ReactNode } from "react";
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      storageKey="cognify-ui-theme"
+    >
+      {children}
+    </NextThemesProvider>
+  );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Textarea } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Input, Textarea } from "@cognify/ui";
 import type { QuotationNormalizationField, QuotationNormalizationIssue } from "@cognify/api-client/schemas";
 import { QuotationNormalizationIssueBadge } from "./quotation-normalization-issue-badge";
 
@@ -76,8 +76,8 @@ export function QuotationNormalizationFieldReview({
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
           <label className="text-sm font-medium">
             Corrected value
-            <input
-              className="mt-1 min-h-11 w-full rounded-md border px-3 text-sm"
+            <Input
+              className="mt-1 min-h-11 px-3 text-sm"
               value={correctedValue}
               onChange={(event) => {
                 setCorrectedValue(event.target.value);
@@ -106,9 +106,9 @@ export function QuotationNormalizationFieldReview({
             </Button>
           </div>
           {localError ? (
-            <p role="alert" className="text-sm text-red-700 lg:col-span-3">
-              {localError}
-            </p>
+            <Alert variant="destructive" className="lg:col-span-3">
+              <AlertDescription>{localError}</AlertDescription>
+            </Alert>
           ) : null}
         </div>
       ) : null}

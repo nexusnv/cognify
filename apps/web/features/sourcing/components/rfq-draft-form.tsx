@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { cloneElement, useState } from "react";
+import type {
+  FormEvent,
+  InputHTMLAttributes,
+  ReactElement,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 import { getApiErrorCode, getApiErrorMessage, getApiValidationErrors } from "@cognify/api-client";
-import { Button, Textarea } from "@cognify/ui";
-import { FormErrorSummary, type FormSummaryError } from "@/components/forms/form-error-summary";
-import { FormField } from "@/components/forms/form-field";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Input,
+  Textarea,
+} from "@cognify/ui";
 import { RfqStatusBadge } from "./rfq-status-badge";
 import {
   RfqLineItemsTable,
@@ -33,6 +48,12 @@ type FormState = {
 };
 
 type FieldErrors = Record<string, string[]>;
+
+type FormSummaryError = {
+  field?: string;
+  fieldId?: string;
+  message: string;
+};
 
 export function RfqDraftForm({
   rfq,
@@ -195,7 +216,7 @@ export function RfqDraftForm({
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <FormField htmlFor="title" label="Title" error={fieldErrors.title?.[0]} required>
-            <input
+            <Input
               id="title"
               className="min-h-11 w-full rounded-md border px-3 text-base"
               value={values.title}
@@ -210,7 +231,7 @@ export function RfqDraftForm({
             description="Leave blank if the due date is not yet set."
             error={fieldErrors.responseDueAt?.[0]}
           >
-            <input
+            <Input
               id="responseDueAt"
               type="datetime-local"
               className="min-h-11 w-full rounded-md border px-3 text-base"
@@ -513,4 +534,75 @@ function toFieldId(field: string) {
   }
 
   return field;
+}
+
+type FieldControlProps = InputHTMLAttributes<HTMLInputElement> &
+  TextareaHTMLAttributes<HTMLTextAreaElement> &
+  SelectHTMLAttributes<HTMLSelectElement>;
+
+function FormField({
+  htmlFor,
+  label,
+  description,
+  error,
+  required = false,
+  children,
+}: {
+  htmlFor: string;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  children: ReactElement<FieldControlProps>;
+}) {
+  const descriptionId = description ? `${htmlFor}-description` : undefined;
+  const errorId = error ? `${htmlFor}-error` : undefined;
+  const describedBy =
+    [children.props["aria-describedby"], descriptionId, errorId].filter(Boolean).join(" ") ||
+    undefined;
+
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <div className="flex items-center gap-2">
+        <FieldLabel htmlFor={htmlFor}>{label}</FieldLabel>
+        {required ? <span className="text-xs text-muted-foreground">Required</span> : null}
+      </div>
+      {description ? <FieldDescription id={descriptionId}>{description}</FieldDescription> : null}
+      {cloneElement(children, {
+        id: children.props.id ?? htmlFor,
+        "aria-describedby": describedBy,
+        "aria-invalid": Boolean(error) || children.props["aria-invalid"],
+        "aria-required": required || children.props["aria-required"],
+        required: required || children.props.required,
+      })}
+      <FieldError id={errorId} role={undefined}>
+        {error}
+      </FieldError>
+    </Field>
+  );
+}
+
+function FormErrorSummary({ title, errors }: { title: string; errors: FormSummaryError[] }) {
+  if (errors.length === 0) return null;
+
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          {errors.map((error, index) => (
+            <li key={`${error.field ?? "form"}-${index}`}>
+              {error.fieldId ? (
+                <a className="underline" href={`#${error.fieldId}`}>
+                  {error.message}
+                </a>
+              ) : (
+                error.message
+              )}
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
 }

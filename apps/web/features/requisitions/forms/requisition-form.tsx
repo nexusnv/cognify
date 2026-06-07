@@ -1,18 +1,42 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { cloneElement, useEffect, useMemo, useRef, useState } from "react";
+import type {
+  InputHTMLAttributes,
+  ReactElement,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 import { toast } from "sonner";
-import { NativeSelect } from "@cognify/ui";
-import { getApiValidationErrors } from "@cognify/api-client";
-import { FormErrorSummary } from "@/components/forms/form-error-summary";
-import { FormField } from "@/components/forms/form-field";
-import { useProjects } from "@/features/projects/hooks/use-projects";
 import {
-  flattenZodFieldErrors,
-  focusFirstInvalidField,
-  withFieldIds,
-} from "@/components/forms/validation-errors";
+  Alert,
+  AlertDescription,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertTitle,
+  Button,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Form,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+} from "@cognify/ui";
+import { getApiValidationErrors } from "@cognify/api-client";
+import { useProjects } from "@/features/projects/hooks/use-projects";
 import { SubmitRequisitionDialog } from "../components/submit-requisition-dialog";
 import { SubmissionChecklist } from "../components/submission-checklist";
 import { RequisitionLineItemSuggestionCombobox } from "../components/requisition-line-item-suggestion-combobox";
@@ -53,9 +77,17 @@ const requisitionFieldIds: Record<string, string> = {
   lineItems: "line-items",
 };
 
+const EMPTY_SELECT_VALUE = "__none__";
+
 type PendingTemplate = {
   template: RequisitionTemplate;
   mode: RequisitionTemplateMode;
+};
+
+type FormSummaryError = {
+  field?: string;
+  fieldId?: string;
+  message: string;
 };
 
 export function RequisitionForm({ initialRequisition }: { initialRequisition?: Requisition }) {
@@ -333,7 +365,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     if (departments.length === 0) {
       return (
         <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-          <input
+          <Input
             id="department"
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.department}
@@ -350,25 +382,18 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     const options = uniqueTextOptions(departments.map((department) => department.name), values.department);
 
     return (
-      <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-        <select
-          id="department"
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-          value={values.department}
-          aria-invalid={Boolean(errors.department)}
-          disabled={!canEdit}
-          onChange={(event) => {
-            if (canEdit) updateValue("department", event.target.value);
-          }}
-        >
-          <option value="">Select department</option>
-          {options.map((department) => (
-            <option key={department} value={department}>
-              {department}
-            </option>
-          ))}
-        </select>
-      </FormField>
+      <SelectField
+        htmlFor="department"
+        label="Department"
+        error={errors.department?.[0]}
+        value={values.department}
+        placeholder="Select department"
+        disabled={!canEdit}
+        options={options.map((department) => ({ label: department, value: department }))}
+        onValueChange={(nextValue) => {
+          if (canEdit) updateValue("department", nextValue);
+        }}
+      />
     );
   }
 
@@ -378,7 +403,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     if (costCenters.length === 0) {
       return (
         <FormField htmlFor="cost-center" label="Cost center" error={errors.costCenter?.[0]}>
-          <input
+          <Input
             id="cost-center"
             className="min-h-11 w-full rounded-md border px-3 text-base"
             value={values.costCenter}
@@ -402,39 +427,31 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     );
 
     return (
-      <FormField htmlFor="cost-center" label="Cost center" error={errors.costCenter?.[0]}>
-        <select
-          id="cost-center"
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-          value={
-            values.costCenter
-              ? costCenters.some((item) => item.code === values.costCenter)
-                ? `${values.costCenter} - ${costCenters.find((item) => item.code === values.costCenter)?.name ?? values.costCenter}`
-                : values.costCenter
-              : ""
-          }
-          aria-invalid={Boolean(errors.costCenter)}
-          disabled={!canEdit}
-          onChange={(event) => {
-            if (!canEdit) return;
-            const selected = event.target.value;
-            const match = costCenters.find((item) => `${item.code} - ${item.name}` === selected);
-            updateValue("costCenter", match?.code ?? selected);
-          }}
-        >
-          <option value="">Select cost center</option>
-          {options.map((costCenter) => (
-            <option key={costCenter} value={costCenter}>
-              {costCenter}
-            </option>
-          ))}
-        </select>
-      </FormField>
+      <SelectField
+        htmlFor="cost-center"
+        label="Cost center"
+        error={errors.costCenter?.[0]}
+        value={
+          values.costCenter
+            ? costCenters.some((item) => item.code === values.costCenter)
+              ? `${values.costCenter} - ${costCenters.find((item) => item.code === values.costCenter)?.name ?? values.costCenter}`
+              : values.costCenter
+            : ""
+        }
+        placeholder="Select cost center"
+        disabled={!canEdit}
+        options={options.map((costCenter) => ({ label: costCenter, value: costCenter }))}
+        onValueChange={(selected) => {
+          if (!canEdit) return;
+          const match = costCenters.find((item) => `${item.code} - ${item.name}` === selected);
+          updateValue("costCenter", match?.code ?? selected);
+        }}
+      />
     );
   }
 
   return (
-    <form ref={formRef} className="space-y-5" onSubmit={(event) => event.preventDefault()}>
+    <Form ref={formRef} className="space-y-5" onSubmit={(event) => event.preventDefault()}>
       <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">New requisition</h1>
@@ -449,23 +466,24 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button
+          <Button
             type="button"
-            className="min-h-11 rounded-md border px-4 text-sm font-medium disabled:opacity-50"
+            variant="outline"
+            className="min-h-11"
             onClick={handleSaveDraft}
             disabled={!canEdit || saveController.saveState === "saving"}
           >
             {saveLabel}
-          </button>
+          </Button>
           {canSubmit ? (
-            <button
+            <Button
               type="button"
-              className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
+              className="min-h-11"
               onClick={handleSubmitAttempt}
               disabled={submitDraft.isPending}
             >
               Submit
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
@@ -484,7 +502,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
           <section className="space-y-3 rounded-md border p-4">
             <h2 className="text-base font-semibold">Request summary</h2>
             <FormField htmlFor="title" label="Title" error={errors.title?.[0]} required>
-              <input
+              <Input
                 id="title"
                 className="min-h-11 w-full rounded-md border px-3 text-base"
                 value={values.title}
@@ -499,7 +517,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               error={errors.neededByDate?.[0]}
               required
             >
-              <input
+              <Input
                 id="needed-by"
                 type="date"
                 className="min-h-11 w-full rounded-md border px-3 text-base"
@@ -515,7 +533,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               error={errors.businessJustification?.[0]}
               required
             >
-              <textarea
+              <Textarea
                 id="business-justification"
                 className="min-h-28 w-full rounded-md border px-3 py-2 text-base"
                 value={values.businessJustification}
@@ -535,15 +553,16 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
           <section id="line-items" className="space-y-3 rounded-md border p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-semibold">Line items</h2>
-              <button
+              <Button
                 type="button"
-                className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium"
+                variant="outline"
+                className="min-h-11 gap-2"
                 onClick={addLineItem}
                 disabled={!canEdit}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add item
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
               {values.lineItems.map((item, index) => (
@@ -554,7 +573,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Item name ${index + 1}`}
                       error={errors[`lineItems.${index}.name`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`item-name-${index}`}
                         className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.name}
@@ -569,7 +588,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Quantity ${index + 1}`}
                       error={errors[`lineItems.${index}.quantity`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`quantity-${index}`}
                         type="number"
                         min="0"
@@ -586,7 +605,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Unit ${index + 1}`}
                       error={errors[`lineItems.${index}.unit`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`unit-${index}`}
                         className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.unit}
@@ -601,7 +620,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Estimated unit price ${index + 1}`}
                       error={errors[`lineItems.${index}.estimatedUnitPrice`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`unit-price-${index}`}
                         type="number"
                         min="0"
@@ -620,7 +639,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                       label={`Currency ${index + 1}`}
                       error={errors[`lineItems.${index}.currency`]?.[0]}
                     >
-                      <input
+                      <Input
                         id={`currency-${index}`}
                         className="min-h-11 w-full rounded-md border px-3 text-base"
                         value={item.currency ?? ""}
@@ -630,16 +649,17 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
                         disabled={!canEdit}
                       />
                     </FormField>
-                    <button
+                    <Button
                       type="button"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium md:self-end"
+                      variant="outline"
+                      className="min-h-11 gap-2 md:self-end"
                       onClick={() => removeLineItem(index)}
                       aria-label={`Remove line item ${index + 1}`}
                       disabled={!canEdit}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Remove
-                    </button>
+                    </Button>
                   </div>
                   <RequisitionLineItemSuggestionCombobox
                     search={item.name}
@@ -677,22 +697,19 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             <h2 className="text-base font-semibold">Optional context</h2>
             <div className="grid gap-3 md:grid-cols-2">
               {renderDepartmentField()}
-              <FormField htmlFor="project-id" label="Project" error={errors.projectId?.[0]}>
-                <NativeSelect
-                  id="project-id"
-                  value={values.projectId}
-                  aria-invalid={Boolean(errors.projectId)}
-                  onChange={(event) => updateValue("projectId", event.target.value)}
-                  disabled={!canEdit}
-                >
-                  <option value="">No project</option>
-                  {selectableProjects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.number} - {project.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </FormField>
+              <SelectField
+                htmlFor="project-id"
+                label="Project"
+                error={errors.projectId?.[0]}
+                value={values.projectId}
+                placeholder="No project"
+                disabled={!canEdit}
+                options={selectableProjects.map((project) => ({
+                  label: `${project.number} - ${project.name}`,
+                  value: project.id,
+                }))}
+                onValueChange={(nextValue) => updateValue("projectId", nextValue)}
+              />
               {projectsQuery.isError ? (
                 <p className="text-sm text-amber-700 md:col-span-2">
                   Projects could not be loaded right now. Requisition editing remains available.
@@ -701,7 +718,7 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
               {renderCostCenterField()}
               <div className="md:col-span-2">
                 <FormField htmlFor="delivery-location" label="Delivery location" error={errors.deliveryLocation?.[0]}>
-                  <textarea
+                  <Textarea
                     id="delivery-location"
                     className="min-h-20 w-full rounded-md border px-3 py-2 text-base"
                     value={values.deliveryLocation}
@@ -726,48 +743,41 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
         onConfirm={handleConfirmSubmit}
       />
 
-      {pendingTemplate ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="template-confirm-title"
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-          >
-            <h2 id="template-confirm-title" className="text-lg font-semibold">
-              Apply template?
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              This draft already has content. Confirm how you want the template to be applied.
-            </p>
-            <p className="mt-3 text-sm">
+      <AlertDialog open={Boolean(pendingTemplate)} onOpenChange={(open) => {
+        if (!open) setPendingTemplate(null);
+      }}>
+        {pendingTemplate ? (
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Apply template?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This draft already has content. Confirm how you want the template to be applied.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <p className="text-sm">
               <strong>{pendingTemplate.template.name}</strong> will be applied using the{" "}
               <code>{pendingTemplate.mode}</code> mode.
             </p>
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                className="min-h-11 rounded-md border px-4 text-sm font-medium"
+            <AlertDialogFooter>
+              <AlertDialogCancel
                 onClick={() => setPendingTemplate(null)}
                 disabled={applyTemplateMutation.isPending}
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                className="min-h-11 rounded-md bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
+              </AlertDialogCancel>
+              <AlertDialogAction
                 onClick={() =>
                   applyTemplateNow(pendingTemplate.template, pendingTemplate.mode)
                 }
                 disabled={applyTemplateMutation.isPending}
               >
                 {applyTemplateMutation.isPending ? "Applying" : "Apply template"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </form>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        ) : null}
+      </AlertDialog>
+    </Form>
   );
 }
 
@@ -928,4 +938,175 @@ function clearFieldErrors(
     delete next[key];
   }
   return next;
+}
+
+type FieldErrors = Record<string, string[] | undefined>;
+
+type FieldControlProps = InputHTMLAttributes<HTMLInputElement> &
+  TextareaHTMLAttributes<HTMLTextAreaElement> &
+  SelectHTMLAttributes<HTMLSelectElement>;
+
+function SelectField({
+  htmlFor,
+  label,
+  description,
+  error,
+  required = false,
+  value,
+  placeholder,
+  disabled = false,
+  options,
+  onValueChange,
+}: {
+  htmlFor: string;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  value: string;
+  placeholder: string;
+  disabled?: boolean;
+  options: Array<{ label: string; value: string }>;
+  onValueChange: (value: string) => void;
+}) {
+  const descriptionId = description ? `${htmlFor}-description` : undefined;
+  const errorId = error ? `${htmlFor}-error` : undefined;
+  const describedBy = [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
+
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <div className="flex items-center gap-2">
+        <FieldLabel htmlFor={htmlFor}>{label}</FieldLabel>
+        {required ? <span className="text-xs text-muted-foreground">Required</span> : null}
+      </div>
+      {description ? <FieldDescription id={descriptionId}>{description}</FieldDescription> : null}
+      <Select
+        value={value || EMPTY_SELECT_VALUE}
+        onValueChange={(nextValue) =>
+          onValueChange(nextValue === EMPTY_SELECT_VALUE ? "" : nextValue)
+        }
+        disabled={disabled}
+      >
+        <SelectTrigger
+          id={htmlFor}
+          aria-label={label}
+          aria-describedby={describedBy}
+          aria-invalid={Boolean(error)}
+          aria-required={required}
+          className="min-h-11 w-full justify-between px-3 text-base"
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={EMPTY_SELECT_VALUE}>{placeholder}</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FieldError id={errorId} role={undefined}>
+        {error}
+      </FieldError>
+    </Field>
+  );
+}
+
+function FormField({
+  htmlFor,
+  label,
+  description,
+  error,
+  required = false,
+  children,
+}: {
+  htmlFor: string;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  children: ReactElement<FieldControlProps>;
+}) {
+  const descriptionId = description ? `${htmlFor}-description` : undefined;
+  const errorId = error ? `${htmlFor}-error` : undefined;
+  const describedBy =
+    [children.props["aria-describedby"], descriptionId, errorId].filter(Boolean).join(" ") ||
+    undefined;
+
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <div className="flex items-center gap-2">
+        <FieldLabel htmlFor={htmlFor}>{label}</FieldLabel>
+        {required ? <span className="text-xs text-muted-foreground">Required</span> : null}
+      </div>
+      {description ? <FieldDescription id={descriptionId}>{description}</FieldDescription> : null}
+      {cloneElement(children, {
+        id: children.props.id ?? htmlFor,
+        "aria-describedby": describedBy,
+        "aria-invalid": Boolean(error) || children.props["aria-invalid"],
+        "aria-required": required || children.props["aria-required"],
+        required: required || children.props.required,
+      })}
+      <FieldError id={errorId} role={undefined}>
+        {error}
+      </FieldError>
+    </Field>
+  );
+}
+
+function FormErrorSummary({ title, errors }: { title: string; errors: FormSummaryError[] }) {
+  if (errors.length === 0) return null;
+
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          {errors.map((error, index) => (
+            <li key={`${error.field ?? "form"}-${index}`}>
+              {error.fieldId ? (
+                <a className="underline" href={`#${error.fieldId}`}>
+                  {error.message}
+                </a>
+              ) : (
+                error.message
+              )}
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function flattenZodFieldErrors(fieldErrors: FieldErrors): FormSummaryError[] {
+  return Object.entries(fieldErrors).flatMap(([field, messages]) =>
+    normalizeMessages(messages).map((message) => ({ field, message })),
+  );
+}
+
+function focusFirstInvalidField(root: ParentNode = document) {
+  const firstInvalid = root.querySelector<HTMLElement>("[aria-invalid='true']");
+  firstInvalid?.focus();
+}
+
+function normalizeMessages(messages: unknown): string[] {
+  if (Array.isArray(messages)) {
+    return messages.filter((message): message is string => typeof message === "string");
+  }
+
+  if (typeof messages === "string") return [messages];
+
+  return [];
+}
+
+function withFieldIds(
+  errors: FormSummaryError[],
+  fieldIds: Record<string, string>,
+): FormSummaryError[] {
+  return errors.map((error) => ({
+    ...error,
+    fieldId: error.field ? fieldIds[error.field] : undefined,
+  }));
 }

@@ -4,6 +4,7 @@ import { AlertCircle, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ApiClientError } from "@cognify/api-client";
 import type { ValidationFailedResponse } from "@cognify/api-client/schemas";
+import { Button, Input } from "@cognify/ui";
 import { useAttachmentUpload } from "../hooks/use-attachments";
 
 export function AttachmentUploader({ requisitionId }: { requisitionId: string }) {
@@ -38,7 +39,7 @@ export function AttachmentUploader({ requisitionId }: { requisitionId: string })
         Upload evidence
       </label>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <input
+        <Input
           ref={fileInputRef}
           id="attachment-upload"
           type="file"
@@ -48,16 +49,16 @@ export function AttachmentUploader({ requisitionId }: { requisitionId: string })
           disabled={uploadMutation.isPending}
         />
         {selectedFile ? (
-          <button
+          <Button
             type="button"
             onClick={handleUpload}
             disabled={uploadMutation.isPending}
-            className="inline-flex min-h-9 items-center gap-2 rounded-md bg-foreground px-3 text-sm font-medium text-background disabled:opacity-50"
+            className="min-h-9"
             aria-label="Upload selected file"
           >
             <Upload className="h-4 w-4" aria-hidden="true" />
             {uploadMutation.isPending ? "Uploading..." : "Upload"}
-          </button>
+          </Button>
         ) : null}
       </div>
       {selectedFile ? (

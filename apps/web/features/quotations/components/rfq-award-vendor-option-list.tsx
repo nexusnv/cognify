@@ -1,4 +1,4 @@
-import { NativeSelect } from "@cognify/ui";
+import { NativeSelect, RadioGroup, RadioGroupItem } from "@cognify/ui";
 import type { RfqAwardRecommendationVendorOption } from "@cognify/api-client/schemas";
 
 type Props = {
@@ -15,7 +15,12 @@ export function RfqAwardVendorOptionList({ options, selectedVendorId, readOnly =
       {options.length === 0 ? (
         <p className="mt-2 text-sm text-muted-foreground">No vendor quotations are available for recommendation.</p>
       ) : (
-        <ul className="mt-3 space-y-3">
+        <RadioGroup
+          className="mt-3 space-y-3"
+          value={selectedVendorId ?? ""}
+          disabled={readOnly}
+          onValueChange={onSelect}
+        >
           {options.map((option) => {
             const rowKey = option.vendorId;
             const selected = selectedVendorId === option.vendorId;
@@ -23,28 +28,21 @@ export function RfqAwardVendorOptionList({ options, selectedVendorId, readOnly =
             const missingScores = option.scorecard?.missingRequiredCount ?? 0;
 
             return (
-              <li key={rowKey} className="rounded-md border p-3">
-                <label className="flex cursor-pointer flex-col gap-2 text-sm">
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="font-medium">{option.vendorName}</span>
-                    <input
-                      type="radio"
-                      name="recommended-vendor"
-                      checked={selected}
-                      disabled={readOnly}
-                      onChange={() => onSelect(option.vendorId)}
-                    />
-                  </span>
-                  <span>{option.currency} {option.totalAmount}</span>
-                  <span>Lead time: {option.leadTimeDays} days</span>
-                  <span>Readiness: {option.readiness}</span>
-                  <span>Weighted score: {score}</span>
-                  <span>Missing scores: {missingScores}</span>
-                </label>
-              </li>
+              <label key={rowKey} className="flex cursor-pointer flex-col gap-2 rounded-md border p-3 text-sm">
+                <span className="flex items-center justify-between gap-3">
+                  <span className="font-medium">{option.vendorName}</span>
+                  <RadioGroupItem value={option.vendorId} aria-label={`Recommend ${option.vendorName}`} />
+                </span>
+                <span>{option.currency} {option.totalAmount}</span>
+                <span>Lead time: {option.leadTimeDays} days</span>
+                <span>Readiness: {option.readiness}</span>
+                <span>Weighted score: {score}</span>
+                <span>Missing scores: {missingScores}</span>
+                {selected ? <span className="sr-only">Selected</span> : null}
+              </label>
             );
           })}
-        </ul>
+        </RadioGroup>
       )}
       <NativeSelect
         className="mt-3"

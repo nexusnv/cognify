@@ -20,11 +20,11 @@ describe("approval queue workflow", () => {
     expect(await screen.findByRole("heading", { name: "Approvals" })).toBeInTheDocument();
     expect(await screen.findByRole("table", { name: "Approval tasks" })).toBeInTheDocument();
     expect(screen.getByText("Warehouse packing supplies")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Assigned to me" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Overdue" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Due soon" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Completed by me" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "All tenant approvals" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Assigned to me" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Overdue" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Due soon" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Completed by me" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "All tenant approvals" })).toBeInTheDocument();
     expect(screen.getByLabelText("Status")).toBeInTheDocument();
     expect(screen.getByLabelText("Due from")).toBeInTheDocument();
     expect(screen.getByLabelText("Due to")).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe("approval queue workflow", () => {
     expect(within(slaSummary).getByText("Escalated")).toBeInTheDocument();
     expect(within(slaSummary).getByText(/Oldest pending: Warehouse packing supplies/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Due soon" }));
+    await user.click(screen.getByRole("tab", { name: "Due soon" }));
     expect(await screen.findByText("Warehouse packing supplies")).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Subject type"), "rfq_award_recommendation");

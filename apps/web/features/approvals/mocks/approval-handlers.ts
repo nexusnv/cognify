@@ -206,11 +206,16 @@ export const approvalHandlers = [
   http.post("/api/approval-tasks/:taskId/delegate", async ({ params, request }) => {
     const task = tasks.find((item) => item.id === params.taskId);
     if (!task) return HttpResponse.json({ message: "Not found" }, { status: 404 });
-    const body = (await request.json()) as { approvalDelegationId?: number; lockVersion?: number };
+    const body = (await request.json()) as { approvalDelegationId?: number | string; lockVersion?: number };
     if (body.lockVersion !== task.lockVersion) {
       return HttpResponse.json({ error: { code: "conflict" } }, { status: 409 });
     }
-    const delegation = delegations.find((item) => item.id === String(body.approvalDelegationId));
+    const requestedDelegationId = body.approvalDelegationId;
+    const delegation = delegations.find((item) => {
+      if (requestedDelegationId == null) return false;
+      const value = String(requestedDelegationId);
+      return item.id === value || item.id.endsWith(`-${value}`);
+    });
     if (!delegation) {
       return HttpResponse.json(
         { error: { code: "validation_failed", message: "The selected delegation is not active." } },

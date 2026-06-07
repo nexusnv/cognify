@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Button, NativeSelect } from "@cognify/ui";
-import { useDataTableState } from "@/components/data-table/use-data-table-state";
+import { Button, Input, NativeSelect } from "@cognify/ui";
+import { useDataTableState } from "@/components/ui/procurement-table";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useProjects } from "../hooks/use-projects";
 import { ProjectsTable } from "../tables/projects-table";
@@ -74,8 +74,7 @@ export function ProjectListPage() {
       <div className="grid gap-3 rounded-md border p-3 md:grid-cols-3">
         <label className="space-y-1.5 text-sm font-medium">
           Search
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -96,8 +95,7 @@ export function ProjectListPage() {
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Department
-          <input
-            className="min-h-11 w-full rounded-md border px-3 text-base font-normal"
+          <Input
             value={department}
             onChange={(event) => setDepartment(event.target.value)}
           />
