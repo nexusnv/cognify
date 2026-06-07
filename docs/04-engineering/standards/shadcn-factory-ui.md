@@ -45,8 +45,9 @@ Each custom component file must include a top-level comment:
 ## Dark Mode
 
 - Provide a visible app-shell theme toggle.
-- Do not add global single-key theme shortcuts.
-- The app-shell theme toggle must not update the server-side profile theme setting.
+- Provide a plain `d` keyboard shortcut.
+- The shortcut must not fire while typing in editable controls.
+- The shortcut must not update the server-side profile theme setting.
 
 ## Review Checklist
 
@@ -61,3 +62,7 @@ Each custom component file must include a top-level comment:
 
 - Preset `b5deKXWz4` generated `Calendar` with the legacy `table` day-picker class key, but `react-day-picker@10` no longer exposes that key in `ClassNames`; keep the generated component otherwise unchanged.
 - Preset `b5deKXWz4` generated `Spinner` with Remix icon props. Remix icons do not accept `children`, so the component must not forward React SVG children to the icon.
+
+## Approved Exceptions
+
+- `apps/web/components/ui/graph/procurement-calendar-grid.tsx`: procurement calendar requires dense month/week event grid not provided by shadcn Calendar; composes `Card`, `Badge`, `Button`, `Dialog`, and `Popover`.
