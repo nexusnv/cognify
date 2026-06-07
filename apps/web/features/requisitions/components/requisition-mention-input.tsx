@@ -1,6 +1,16 @@
 "use client";
 
-import { NativeSelect } from "@cognify/ui";
+import {
+  Button,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@cognify/ui";
 import type { UserSummary } from "../types/requisition-view-model";
 
 export function RequisitionMentionInput({
@@ -13,40 +23,52 @@ export function RequisitionMentionInput({
   onChange: (selectedIds: string[]) => void;
 }) {
   const selectedCandidates = candidates.filter((candidate) => selectedIds.includes(candidate.id));
+  const availableCandidates = candidates.filter((candidate) => !selectedIds.includes(candidate.id));
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium">
-        Mention
-        <NativeSelect
-          className="mt-1"
-          value=""
-          onChange={(event) => {
-            const value = event.target.value;
-            if (value && !selectedIds.includes(value)) {
-              onChange([...selectedIds, value]);
-            }
-          }}
-        >
-          <option value="">Select a visible collaborator</option>
-          {candidates.map((candidate) => (
-            <option key={candidate.id} value={candidate.id}>
-              {candidate.name}
-            </option>
-          ))}
-        </NativeSelect>
-      </label>
+      <div className="space-y-1">
+        <p className="text-sm font-medium">Mention</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="outline" className="min-h-11 w-full justify-between">
+              Add a visible collaborator
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[22rem] max-w-full p-1" align="start">
+            <Command aria-label="Mention collaborators" shouldFilter={false}>
+              <CommandList>
+                <CommandEmpty>No collaborators available.</CommandEmpty>
+                <CommandGroup heading="Visible collaborators">
+                  {availableCandidates.map((candidate) => (
+                    <CommandItem
+                      key={candidate.id}
+                      value={`${candidate.name} ${candidate.email}`}
+                      onSelect={() => onChange([...selectedIds, candidate.id])}
+                    >
+                      <div className="flex flex-col">
+                        <span>{candidate.name}</span>
+                        <span className="text-muted-foreground">{candidate.email}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
       {selectedCandidates.length > 0 ? (
         <ul className="flex flex-wrap gap-2 text-sm">
           {selectedCandidates.map((candidate) => (
             <li key={candidate.id}>
-              <button
+              <Button
                 type="button"
-                className="min-h-11 rounded-md border px-3"
+                variant="outline"
                 onClick={() => onChange(selectedIds.filter((id) => id !== candidate.id))}
               >
                 {candidate.name}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, beforeEach, vi } from "vitest";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { server } from "../../../tests/msw/server";
 import { LoginPage } from "../workflows/login-page";
 import { SessionGate } from "../workflows/session-gate";
@@ -25,6 +27,71 @@ const router = {
 let searchParams = new URLSearchParams();
 let pathname = "/dashboard";
 
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver = ResizeObserver as unknown as typeof window.ResizeObserver;
+  globalThis.ResizeObserver = ResizeObserver as unknown as typeof globalThis.ResizeObserver;
+}
+
+if (typeof window !== "undefined" && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
+if (typeof window !== "undefined" && !Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+
+if (typeof window !== "undefined" && !Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => undefined;
+}
+
+if (typeof window !== "undefined" && !Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => undefined;
+}
+
+vi.mock("next-themes", async () => {
+  const React = await import("react");
+  const ThemeContext = React.createContext<{
+    resolvedTheme: string;
+    setTheme: (theme: string) => void;
+  }>({
+    resolvedTheme: "light",
+    setTheme: () => undefined,
+  });
+
+  function MockThemeProvider({ children }: { children: React.ReactNode }) {
+    const [theme, setThemeState] = React.useState("light");
+
+    React.useEffect(() => {
+      document.documentElement.classList.remove("light", "dark");
+      document.documentElement.classList.add(theme);
+      document.documentElement.style.colorScheme = theme;
+      window.localStorage.setItem("cognify-ui-theme", theme);
+    }, [theme]);
+
+    return (
+      <ThemeContext.Provider
+        value={{
+          resolvedTheme: theme,
+          setTheme: setThemeState,
+        }}
+      >
+        {children}
+      </ThemeContext.Provider>
+    );
+  }
+
+  return {
+    ThemeProvider: MockThemeProvider,
+    useTheme: () => React.useContext(ThemeContext),
+  };
+});
+
 vi.mock("next/navigation", () => ({
   usePathname: () => pathname,
   useRouter: () => router,
@@ -43,15 +110,17 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe("identity workflow", () => {
-  it("presents a shadcn card-based procurement login experience", () => {
+  it("renders login fields and primary actions for workspace sign-in", () => {
     renderWithQuery(<LoginPage />);
 
     expect(
       screen.getByRole("heading", { name: "Sign in to your procurement workspace" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Governed intake")).toBeInTheDocument();
-    expect(screen.getByText("Audit-ready workflow")).toBeInTheDocument();
-    expect(screen.getByText("Supplier decisions")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Email" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Remember me" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Forgot password?" })).toBeInTheDocument();
   });
 
   it("signs in and loads current identity context", async () => {
@@ -90,6 +159,28 @@ describe("identity workflow", () => {
       password: "password123",
       remember: true,
     });
+  });
+
+  it("shows failed login feedback without bypassing the login hook", async () => {
+    server.use(
+      http.get("/sanctum/csrf-cookie", () => {
+        document.cookie = "XSRF-TOKEN=dev-token";
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.post("/api/auth/login", () => {
+        return HttpResponse.json({ message: "Invalid credentials" }, { status: 422 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithQuery(<LoginPage />);
+
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "test@example.com");
+    await user.type(screen.getByLabelText("Password"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid credentials");
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   beforeEach(() => {
@@ -138,7 +229,7 @@ describe("identity workflow", () => {
     expect(await screen.findByText("Workspace ready")).toBeInTheDocument();
   });
 
-  it("updates profile and notification preferences through the account settings workflow", async () => {
+  it("updates profile theme and notification preferences without changing shortcut theme storage", async () => {
     let submittedBody: unknown;
     server.use(
       http.patch("/api/me/profile", async ({ request }) => {
@@ -161,27 +252,69 @@ describe("identity workflow", () => {
     );
     const user = userEvent.setup();
 
-    renderWithQuery(<AccountSettingsPage />);
+    renderWithQuery(
+      <ThemeProvider>
+        <div>
+          <ThemeToggle />
+          <AccountSettingsPage />
+        </div>
+      </ThemeProvider>,
+    );
 
+    window.localStorage.removeItem("cognify-ui-theme");
+    await user.click(screen.getByRole("button", { name: "Switch to dark mode" }));
+    await waitFor(() => {
+      expect(window.localStorage.getItem("cognify-ui-theme")).toBe("dark");
+    });
     const nameInput = await screen.findByLabelText("Name");
     await user.clear(nameInput);
     await user.type(nameInput, "Taylor Buyer");
-    await user.selectOptions(screen.getByLabelText("Theme"), "dark");
+    const themeSelect = screen.getByRole("combobox", { name: "Theme" });
+    expect(themeSelect).toHaveAttribute("aria-describedby", "profile-theme-description");
+    await user.click(themeSelect);
+    await user.click(await screen.findByRole("option", { name: "Dark" }));
     await user.click(screen.getByRole("switch", { name: "Evidence uploaded" }));
     await user.click(screen.getByRole("button", { name: "Save profile" }));
 
-    expect(await screen.findByText("Profile saved")).toBeInTheDocument();
-    expect(submittedBody).toEqual(
-      expect.objectContaining({
-        name: "Taylor Buyer",
-        theme: "dark",
-      }),
-    );
+    await waitFor(() => {
+      expect(submittedBody).toEqual(
+        expect.objectContaining({
+          name: "Taylor Buyer",
+          theme: "dark",
+        }),
+      );
+    });
     expect(
       (submittedBody as { notificationPreferences?: unknown }).notificationPreferences,
     ).toEqual({
       ...defaultNotificationPreferences,
       "attachment.uploaded": { inApp: false },
+    });
+    expect(window.localStorage.getItem("cognify-ui-theme")).toBe("dark");
+  });
+
+  it("clears stale profile save errors once the form becomes dirty again", async () => {
+    server.use(
+      http.patch("/api/me/profile", () => {
+        return HttpResponse.json({ message: "Save failed" }, { status: 500 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithQuery(<AccountSettingsPage />);
+
+    const nameInput = await screen.findByLabelText("Name");
+    await user.clear(nameInput);
+    await user.type(nameInput, "Taylor Buyer");
+    await user.click(screen.getByRole("button", { name: "Save profile" }));
+
+    expect(await screen.findByText("Failed to save profile")).toBeInTheDocument();
+
+    await user.clear(nameInput);
+    await user.type(nameInput, "Taylor Buyer II");
+
+    await waitFor(() => {
+      expect(screen.queryByText("Failed to save profile")).not.toBeInTheDocument();
     });
   });
 

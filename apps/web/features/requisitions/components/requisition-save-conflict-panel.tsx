@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@cognify/ui";
+
 export function RequisitionSaveConflictPanel({ onReload }: { onReload: () => void }) {
   return (
     <div
@@ -11,13 +13,9 @@ export function RequisitionSaveConflictPanel({ onReload }: { onReload: () => voi
         Your local edits are still on screen. Reload the latest server copy before deciding what to
         reapply.
       </p>
-      <button
-        type="button"
-        className="mt-3 min-h-10 rounded-md border border-amber-400 px-3 font-medium"
-        onClick={onReload}
-      >
+      <Button type="button" variant="outline" className="mt-3 border-amber-400" onClick={onReload}>
         Reload latest draft
-      </button>
+      </Button>
     </div>
   );
 }

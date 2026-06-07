@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert } from "lucide-react";
+import { Checkbox } from "@cognify/ui";
 import type { RequisitionFormValues } from "../types/requisition-view-model";
 import { buildSubmissionChecklist, calculateEstimatedTotal, formatMoney } from "../utils/requisition-totals";
 
@@ -14,11 +14,14 @@ export function SubmissionChecklist({ values }: { values: RequisitionFormValues 
       </div>
       <ul className="space-y-2">
         {checklist.map((item) => {
-          const Icon = item.complete ? CheckCircle2 : CircleAlert;
-
           return (
-            <li key={item.id} className="flex items-start gap-2 text-sm">
-              <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <li key={item.id} className="flex items-start gap-3 text-sm">
+              <Checkbox
+                defaultChecked={item.complete}
+                disabled
+                aria-hidden="true"
+                className="mt-0.5"
+              />
               <span>{item.label}</span>
             </li>
           );

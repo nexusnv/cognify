@@ -19,8 +19,13 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
+  Form,
   Input,
-  NativeSelect,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea,
 } from "@cognify/ui";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
@@ -154,7 +159,7 @@ export function ProjectForm({
   );
 
   return (
-    <form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <Form key={formKey} className="space-y-4" onSubmit={handleSubmit} noValidate>
       {formError ? (
         <div
           role="alert"
@@ -178,22 +183,43 @@ export function ProjectForm({
           />
         </FormField>
 
-        <FormField htmlFor="ownerId" label="Owner" error={errors.ownerId?.[0]} required>
-          <NativeSelect
-            id="ownerId"
-            value={values.ownerId}
-            onChange={(event) =>
-              setValues((current) => ({ ...current, ownerId: event.target.value }))
+        <Field data-invalid={Boolean(errors.ownerId)}>
+          <div className="flex items-center gap-2">
+            <FieldLabel htmlFor="ownerId">Owner</FieldLabel>
+            <span className="text-xs text-muted-foreground">Required</span>
+          </div>
+          <Select
+            value={values.ownerId || EMPTY_SELECT_VALUE}
+            onValueChange={(value) =>
+              setValues((current) => ({
+                ...current,
+                ownerId: value === EMPTY_SELECT_VALUE ? "" : value,
+              }))
             }
           >
-            <option value="">Select owner</option>
-            {ownerOptions.map((owner) => (
-              <option key={owner.id} value={owner.id}>
-                {owner.name} ({owner.email})
-              </option>
-            ))}
-          </NativeSelect>
-        </FormField>
+            <SelectTrigger
+              id="ownerId"
+              aria-label="Owner"
+              aria-invalid={Boolean(errors.ownerId)}
+              aria-required="true"
+              aria-describedby={errors.ownerId ? "ownerId-error" : undefined}
+              className="min-h-11 w-full justify-between px-3 text-base"
+            >
+              <SelectValue placeholder="Select owner" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={EMPTY_SELECT_VALUE}>Select owner</SelectItem>
+              {ownerOptions.map((owner) => (
+                <SelectItem key={owner.id} value={owner.id}>
+                  {owner.name} ({owner.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError id="ownerId-error" role={undefined}>
+            {errors.ownerId?.[0]}
+          </FieldError>
+        </Field>
 
         <FormField htmlFor="budgetAmount" label="Budget" error={errors.budgetAmount?.[0]} required>
           <Input
@@ -287,7 +313,7 @@ export function ProjectForm({
               : "Save project"}
         </Button>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -314,6 +340,8 @@ type FormSummaryError = {
 type FieldControlProps = InputHTMLAttributes<HTMLInputElement> &
   TextareaHTMLAttributes<HTMLTextAreaElement> &
   SelectHTMLAttributes<HTMLSelectElement>;
+
+const EMPTY_SELECT_VALUE = "__none__";
 
 function FormField({
   htmlFor,

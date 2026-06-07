@@ -1,7 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MoreHorizontal } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@cognify/ui";
 import type { ApprovalRequisitionSubjectMetadata } from "@cognify/api-client/schemas";
 import { ApprovalStatusBadge } from "../components/approval-status-badge";
 import type { ApprovalTask } from "../types/approval-view-model";
@@ -14,58 +35,104 @@ export function ApprovalTasksTable({
   state?: "idle" | "loading" | "error" | "empty";
 }) {
   if (state === "loading") {
-    return <p className="rounded-md border p-4 text-sm text-muted-foreground">Loading approvals</p>;
+    return (
+      <div className="space-y-2 rounded-lg border p-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="grid grid-cols-[2fr_repeat(5,minmax(0,1fr))_auto] gap-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-14 justify-self-end" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (state === "error") {
-    return <p className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">Approval tasks could not be loaded.</p>;
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Approval queue unavailable</AlertTitle>
+        <AlertDescription>Approval tasks could not be loaded.</AlertDescription>
+      </Alert>
+    );
   }
 
   if (state === "empty" || tasks.length === 0) {
-    return <p className="rounded-md border p-4 text-sm text-muted-foreground">No approval tasks match these filters.</p>;
+    return (
+      <Empty className="rounded-lg border">
+        <EmptyHeader>
+          <EmptyTitle>No approval tasks match these filters.</EmptyTitle>
+          <EmptyDescription>Adjust the queue filters or switch scope to review more work.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border">
-      <table className="w-full min-w-[900px] text-sm" aria-label="Approval tasks">
-        <thead className="bg-muted/50 text-left">
-          <tr>
-            <th className="px-3 py-2 font-medium">Subject</th>
-            <th className="px-3 py-2 font-medium">Stage</th>
-            <th className="px-3 py-2 font-medium">Assignee</th>
-            <th className="px-3 py-2 font-medium">Requester</th>
-            <th className="px-3 py-2 font-medium">Status</th>
-            <th className="px-3 py-2 font-medium">Due</th>
-            <th className="px-3 py-2 font-medium">Updated</th>
-            <th className="px-3 py-2 text-right font-medium">Action</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="overflow-hidden rounded-lg border">
+      <Table aria-label="Approval tasks" className="min-w-[900px]">
+        <TableHeader className="bg-muted/50">
+          <TableRow>
+            <TableHead>Subject</TableHead>
+            <TableHead>Stage</TableHead>
+            <TableHead>Assignee</TableHead>
+            <TableHead>Requester</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Due</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {tasks.map((task) => (
-            <tr key={task.id} className="border-t">
-              <td className="px-3 py-3">
+            <TableRow key={task.id}>
+              <TableCell>
                 <div className="font-medium">{task.subject.title ?? "Approval subject"}</div>
                 <div className="font-mono text-xs text-muted-foreground">{task.subject.number ?? task.subject.type}</div>
-              </td>
-              <td className="px-3 py-3">{task.stage.name}</td>
-              <td className="px-3 py-3 text-muted-foreground">{task.assignee?.name ?? "Unassigned"}</td>
-              <td className="px-3 py-3 text-muted-foreground">{subjectRequester(task) ?? task.subject.primaryParty ?? "Unknown"}</td>
-              <td className="px-3 py-3"><ApprovalStatusBadge status={task.status} /></td>
-              <td className="px-3 py-3 tabular-nums">{formatDate(task.dueAt)}</td>
-              <td className="px-3 py-3 tabular-nums text-muted-foreground">{formatDate(task.updatedAt)}</td>
-              <td className="px-3 py-3 text-right">
-                <Link
-                  href={`/approvals/tasks/${task.id}`}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium"
-                >
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  Open
-                </Link>
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell>{task.stage.name}</TableCell>
+              <TableCell className="text-muted-foreground">{task.assignee?.name ?? "Unassigned"}</TableCell>
+              <TableCell className="text-muted-foreground">{subjectRequester(task) ?? task.subject.primaryParty ?? "Unknown"}</TableCell>
+              <TableCell><ApprovalStatusBadge status={task.status} /></TableCell>
+              <TableCell className="tabular-nums">{formatDate(task.dueAt)}</TableCell>
+              <TableCell className="tabular-nums text-muted-foreground">{formatDate(task.updatedAt)}</TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" aria-label={`Open actions for ${task.subject.title ?? task.id}`}>
+                      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {task.permissions.canView ? (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/approvals/tasks/${task.id}`} className="min-h-11">
+                          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                          Open task
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : null}
+                    {task.subject.href ? (
+                      <DropdownMenuItem asChild>
+                        <Link href={task.subject.href} className="min-h-11">
+                          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                          {task.subject.type === "rfq_award_recommendation"
+                            ? "Open award recommendation"
+                            : "Open requisition"}
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

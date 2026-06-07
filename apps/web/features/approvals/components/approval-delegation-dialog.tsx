@@ -1,7 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import {
+  Alert,
+  AlertDescription,
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  Input,
+  NativeSelect,
+  Textarea,
+} from "@cognify/ui";
 import {
   useApprovalDelegationCandidates,
   useCreateApprovalDelegation,
@@ -53,92 +73,102 @@ export function ApprovalDelegationDialog({
       });
 
       await delegateTask.mutateAsync({
-        approvalDelegationId: Number(delegation.id),
+        approvalDelegationId: normalizeDelegationId(delegation.id),
         lockVersion,
       });
 
       setOpen(false);
       setDelegateId("");
       setReason("");
+      setError(null);
     } catch (caught) {
       setError(errorMessage(caught));
     }
   }
 
   return (
-    <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
-        Delegate
-      </Button>
-      {!open ? null : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Delegate approval task"
-            className="w-full max-w-lg rounded-md border bg-background p-5 shadow-lg"
-          >
-            <h2 className="text-lg font-semibold">Delegate approval task</h2>
-            <div className="mt-4 space-y-4">
-              <label className="block text-sm font-medium">
-                Delegate
-                <NativeSelect
-                  aria-label="Delegate"
-                  className="mt-1"
-                  value={delegateId}
-                  onChange={(event) => setDelegateId(event.target.value)}
-                >
-                  <option value="">Select delegate</option>
-                  {delegateOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </label>
-              <label className="block text-sm font-medium">
-                Starts
-                <input
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Delegate</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="max-w-lg">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delegate approval task</AlertDialogTitle>
+          <AlertDialogDescription>
+            Reassign this task temporarily while preserving the original assignee.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <FieldGroup className="space-y-4">
+          <Field>
+            <FieldLabel htmlFor="approval-delegate">Delegate</FieldLabel>
+            <FieldContent>
+              <NativeSelect
+                id="approval-delegate"
+                aria-label="Delegate"
+                value={delegateId}
+                onChange={(event) => setDelegateId(event.target.value)}
+              >
+                <option value="">Select delegate</option>
+                {delegateOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </FieldContent>
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="delegation-starts">Starts</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="delegation-starts"
                   aria-label="Starts"
-                  className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
                   type="date"
                   value={startsAt}
                   onChange={(event) => setStartsAt(event.target.value)}
                 />
-              </label>
-              <label className="block text-sm font-medium">
-                Ends
-                <input
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="delegation-ends">Ends</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="delegation-ends"
                   aria-label="Ends"
-                  className="mt-1 min-h-11 w-full rounded-md border px-3 text-base font-normal"
                   type="date"
                   value={endsAt}
                   onChange={(event) => setEndsAt(event.target.value)}
                 />
-              </label>
-              <label className="block text-sm font-medium">
-                Reason
-                <Textarea
-                  aria-label="Delegation reason"
-                  className="mt-1"
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </label>
-            </div>
-            {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button disabled={pending} onClick={handleSubmit}>
-                {pending ? "Delegating" : "Confirm delegation"}
-              </Button>
-            </div>
+              </FieldContent>
+            </Field>
           </div>
-        </div>
-      )}
-    </>
+          <Field>
+            <FieldLabel htmlFor="delegation-reason">Reason</FieldLabel>
+            <FieldContent>
+              <Textarea
+                id="delegation-reason"
+                aria-label="Delegation reason"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+              <FieldDescription>Explain why this task is being delegated.</FieldDescription>
+            </FieldContent>
+          </Field>
+        </FieldGroup>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <Button disabled={pending} onClick={handleSubmit}>
+            {pending ? "Delegating" : "Confirm delegation"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -155,6 +185,24 @@ function tomorrowDateInputValue(): string {
 
 function dateInputToIso(value: string): string {
   return new Date(`${value}T00:00:00.000Z`).toISOString();
+}
+
+function normalizeDelegationId(value: string | number): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue)) {
+    return numericValue;
+  }
+
+  const match = String(value).match(/(\d+)$/);
+  if (match) {
+    return Number(match[1]);
+  }
+
+  return Number.NaN;
 }
 
 function errorMessage(caught: unknown): string {

@@ -12,6 +12,26 @@ import { RequisitionCreatePage } from "../workflows/requisition-create-page";
 import { RequisitionDetailPage } from "../workflows/requisition-detail-page";
 import { RequisitionListPage } from "../workflows/requisition-list-page";
 
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as typeof ResizeObserver;
+}
+
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = () => false;
+}
+
+if (!HTMLElement.prototype.setPointerCapture) {
+  HTMLElement.prototype.setPointerCapture = () => undefined;
+}
+
+if (!HTMLElement.prototype.releasePointerCapture) {
+  HTMLElement.prototype.releasePointerCapture = () => undefined;
+}
+
 function renderWithQuery(ui: React.ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -49,11 +69,11 @@ describe("requisitions workflow", () => {
 
     renderWithQuery(<RequisitionCreatePage />);
 
-    const projectSelect = await screen.findByLabelText("Project");
-    await screen.findByRole("option", { name: "PRJ-2026-000501 - Office refresh" });
-    await user.selectOptions(projectSelect, "501");
+    await selectOption(user, "Project", "PRJ-2026-000501 - Office refresh");
 
-    expect(projectSelect).toHaveValue("501");
+    expect(screen.getByRole("combobox", { name: "Project" })).toHaveTextContent(
+      "PRJ-2026-000501 - Office refresh",
+    );
   });
 
   it("shows inline submit validation before opening the confirmation dialog", async () => {
@@ -74,7 +94,7 @@ describe("requisitions workflow", () => {
       screen.getByRole("link", { name: "Business justification is required before submission." }),
     ).toHaveAttribute("href", "#business-justification");
     expect(screen.getByText("Item name is required before submission.")).toBeVisible();
-    expect(screen.queryByRole("dialog", { name: "Submit requisition?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog", { name: "Submit requisition?" })).not.toBeInTheDocument();
   });
 
   it("opens a requisition details panel from the work queue", async () => {
@@ -341,7 +361,7 @@ describe("requisitions workflow", () => {
     expect(await screen.findByText("Saved")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
-    expect(await screen.findByRole("dialog", { name: "Submit requisition?" })).toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Submit requisition?" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Submit requisition" }));
 
     await waitFor(() => {
@@ -369,7 +389,7 @@ describe("requisitions workflow", () => {
       await screen.findByRole("button", { name: "Fill empty fields from IT equipment" }),
     );
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "Apply template?" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("alertdialog", { name: "Apply template?" })).not.toBeInTheDocument();
     });
 
     expect(
@@ -377,14 +397,14 @@ describe("requisitions workflow", () => {
         "Provision or replace equipment required for business operations.",
       ),
     ).toBeInTheDocument();
-    const projectSelect = await screen.findByLabelText("Project");
-    await screen.findByRole("option", { name: "PRJ-2026-000501 - Office refresh" });
-    await user.selectOptions(projectSelect, "501");
-    expect(projectSelect).toHaveValue("501");
+    await selectOption(user, "Project", "PRJ-2026-000501 - Office refresh");
+    expect(screen.getByRole("combobox", { name: "Project" })).toHaveTextContent(
+      "PRJ-2026-000501 - Office refresh",
+    );
 
     await user.clear(screen.getByLabelText("Item name 1"));
     await user.type(screen.getByLabelText("Item name 1"), "Lap");
-    await user.click(await screen.findByRole("button", { name: /Laptop/ }));
+    await user.click(await screen.findByRole("option", { name: /Laptop/ }));
 
     expect(screen.getByLabelText("Unit 1")).toHaveValue("each");
     expect(screen.getByLabelText("Estimated unit price 1")).toHaveValue(1800);
@@ -473,3 +493,12 @@ describe("requisitions workflow", () => {
     expect(screen.getByText("Computed preview only")).toBeInTheDocument();
   });
 });
+
+async function selectOption(
+  user: ReturnType<typeof userEvent.setup>,
+  triggerLabel: string,
+  optionName: string,
+) {
+  await user.click(screen.getByRole("combobox", { name: triggerLabel }));
+  await user.click(await screen.findByRole("option", { name: optionName }));
+}

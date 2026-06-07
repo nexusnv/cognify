@@ -12,20 +12,27 @@ import { toast } from "sonner";
 import {
   Alert,
   AlertDescription,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   AlertTitle,
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Field,
   FieldDescription,
   FieldError,
   FieldLabel,
+  Form,
   Input,
-  NativeSelect,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea,
 } from "@cognify/ui";
 import { getApiValidationErrors } from "@cognify/api-client";
@@ -69,6 +76,8 @@ const requisitionFieldIds: Record<string, string> = {
   deliveryLocation: "delivery-location",
   lineItems: "line-items",
 };
+
+const EMPTY_SELECT_VALUE = "__none__";
 
 type PendingTemplate = {
   template: RequisitionTemplate;
@@ -373,25 +382,18 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     const options = uniqueTextOptions(departments.map((department) => department.name), values.department);
 
     return (
-      <FormField htmlFor="department" label="Department" error={errors.department?.[0]}>
-        <NativeSelect
-          id="department"
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-          value={values.department}
-          aria-invalid={Boolean(errors.department)}
-          disabled={!canEdit}
-          onChange={(event) => {
-            if (canEdit) updateValue("department", event.target.value);
-          }}
-        >
-          <option value="">Select department</option>
-          {options.map((department) => (
-            <option key={department} value={department}>
-              {department}
-            </option>
-          ))}
-        </NativeSelect>
-      </FormField>
+      <SelectField
+        htmlFor="department"
+        label="Department"
+        error={errors.department?.[0]}
+        value={values.department}
+        placeholder="Select department"
+        disabled={!canEdit}
+        options={options.map((department) => ({ label: department, value: department }))}
+        onValueChange={(nextValue) => {
+          if (canEdit) updateValue("department", nextValue);
+        }}
+      />
     );
   }
 
@@ -425,39 +427,31 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
     );
 
     return (
-      <FormField htmlFor="cost-center" label="Cost center" error={errors.costCenter?.[0]}>
-        <NativeSelect
-          id="cost-center"
-          className="min-h-11 w-full rounded-md border px-3 text-base"
-          value={
-            values.costCenter
-              ? costCenters.some((item) => item.code === values.costCenter)
-                ? `${values.costCenter} - ${costCenters.find((item) => item.code === values.costCenter)?.name ?? values.costCenter}`
-                : values.costCenter
-              : ""
-          }
-          aria-invalid={Boolean(errors.costCenter)}
-          disabled={!canEdit}
-          onChange={(event) => {
-            if (!canEdit) return;
-            const selected = event.target.value;
-            const match = costCenters.find((item) => `${item.code} - ${item.name}` === selected);
-            updateValue("costCenter", match?.code ?? selected);
-          }}
-        >
-          <option value="">Select cost center</option>
-          {options.map((costCenter) => (
-            <option key={costCenter} value={costCenter}>
-              {costCenter}
-            </option>
-          ))}
-        </NativeSelect>
-      </FormField>
+      <SelectField
+        htmlFor="cost-center"
+        label="Cost center"
+        error={errors.costCenter?.[0]}
+        value={
+          values.costCenter
+            ? costCenters.some((item) => item.code === values.costCenter)
+              ? `${values.costCenter} - ${costCenters.find((item) => item.code === values.costCenter)?.name ?? values.costCenter}`
+              : values.costCenter
+            : ""
+        }
+        placeholder="Select cost center"
+        disabled={!canEdit}
+        options={options.map((costCenter) => ({ label: costCenter, value: costCenter }))}
+        onValueChange={(selected) => {
+          if (!canEdit) return;
+          const match = costCenters.find((item) => `${item.code} - ${item.name}` === selected);
+          updateValue("costCenter", match?.code ?? selected);
+        }}
+      />
     );
   }
 
   return (
-    <form ref={formRef} className="space-y-5" onSubmit={(event) => event.preventDefault()}>
+    <Form ref={formRef} className="space-y-5" onSubmit={(event) => event.preventDefault()}>
       <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">New requisition</h1>
@@ -703,22 +697,19 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
             <h2 className="text-base font-semibold">Optional context</h2>
             <div className="grid gap-3 md:grid-cols-2">
               {renderDepartmentField()}
-              <FormField htmlFor="project-id" label="Project" error={errors.projectId?.[0]}>
-                <NativeSelect
-                  id="project-id"
-                  value={values.projectId}
-                  aria-invalid={Boolean(errors.projectId)}
-                  onChange={(event) => updateValue("projectId", event.target.value)}
-                  disabled={!canEdit}
-                >
-                  <option value="">No project</option>
-                  {selectableProjects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.number} - {project.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </FormField>
+              <SelectField
+                htmlFor="project-id"
+                label="Project"
+                error={errors.projectId?.[0]}
+                value={values.projectId}
+                placeholder="No project"
+                disabled={!canEdit}
+                options={selectableProjects.map((project) => ({
+                  label: `${project.number} - ${project.name}`,
+                  value: project.id,
+                }))}
+                onValueChange={(nextValue) => updateValue("projectId", nextValue)}
+              />
               {projectsQuery.isError ? (
                 <p className="text-sm text-amber-700 md:col-span-2">
                   Projects could not be loaded right now. Requisition editing remains available.
@@ -752,46 +743,41 @@ export function RequisitionForm({ initialRequisition }: { initialRequisition?: R
         onConfirm={handleConfirmSubmit}
       />
 
-      <Dialog open={Boolean(pendingTemplate)} onOpenChange={(open) => {
+      <AlertDialog open={Boolean(pendingTemplate)} onOpenChange={(open) => {
         if (!open) setPendingTemplate(null);
       }}>
         {pendingTemplate ? (
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Apply template?</DialogTitle>
-              <DialogDescription>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Apply template?</AlertDialogTitle>
+              <AlertDialogDescription>
                 This draft already has content. Confirm how you want the template to be applied.
-              </DialogDescription>
-            </DialogHeader>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
             <p className="text-sm">
               <strong>{pendingTemplate.template.name}</strong> will be applied using the{" "}
               <code>{pendingTemplate.mode}</code> mode.
             </p>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11"
+            <AlertDialogFooter>
+              <AlertDialogCancel
                 onClick={() => setPendingTemplate(null)}
                 disabled={applyTemplateMutation.isPending}
               >
                 Cancel
-              </Button>
-              <Button
-                type="button"
-                className="min-h-11"
+              </AlertDialogCancel>
+              <AlertDialogAction
                 onClick={() =>
                   applyTemplateNow(pendingTemplate.template, pendingTemplate.mode)
                 }
                 disabled={applyTemplateMutation.isPending}
               >
                 {applyTemplateMutation.isPending ? "Applying" : "Apply template"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
         ) : null}
-      </Dialog>
-    </form>
+      </AlertDialog>
+    </Form>
   );
 }
 
@@ -959,6 +945,73 @@ type FieldErrors = Record<string, string[] | undefined>;
 type FieldControlProps = InputHTMLAttributes<HTMLInputElement> &
   TextareaHTMLAttributes<HTMLTextAreaElement> &
   SelectHTMLAttributes<HTMLSelectElement>;
+
+function SelectField({
+  htmlFor,
+  label,
+  description,
+  error,
+  required = false,
+  value,
+  placeholder,
+  disabled = false,
+  options,
+  onValueChange,
+}: {
+  htmlFor: string;
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  value: string;
+  placeholder: string;
+  disabled?: boolean;
+  options: Array<{ label: string; value: string }>;
+  onValueChange: (value: string) => void;
+}) {
+  const descriptionId = description ? `${htmlFor}-description` : undefined;
+  const errorId = error ? `${htmlFor}-error` : undefined;
+  const describedBy = [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
+
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <div className="flex items-center gap-2">
+        <FieldLabel htmlFor={htmlFor}>{label}</FieldLabel>
+        {required ? <span className="text-xs text-muted-foreground">Required</span> : null}
+      </div>
+      {description ? <FieldDescription id={descriptionId}>{description}</FieldDescription> : null}
+      <Select
+        value={value || EMPTY_SELECT_VALUE}
+        onValueChange={(nextValue) =>
+          onValueChange(nextValue === EMPTY_SELECT_VALUE ? "" : nextValue)
+        }
+        disabled={disabled}
+      >
+        <SelectTrigger
+          id={htmlFor}
+          aria-label={label}
+          aria-describedby={describedBy}
+          aria-invalid={Boolean(error)}
+          aria-required={required}
+          className="min-h-11 w-full justify-between px-3 text-base"
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={EMPTY_SELECT_VALUE}>{placeholder}</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FieldError id={errorId} role={undefined}>
+        {error}
+      </FieldError>
+    </Field>
+  );
+}
 
 function FormField({
   htmlFor,

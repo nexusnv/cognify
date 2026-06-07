@@ -21,10 +21,11 @@ describe("approval task actions", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Approve" }));
     await user.click(screen.getByRole("button", { name: "Confirm approval" }));
 
-    expect(await screen.findByText("approved")).toBeInTheDocument();
+    expect(await screen.findAllByText("approved")).not.toHaveLength(0);
   });
 
   it("requires a reason before requesting changes", async () => {
@@ -32,6 +33,7 @@ describe("approval task actions", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     await screen.findByRole("heading", { name: "Warehouse packing supplies" });
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Request changes" }));
     await user.click(screen.getByRole("button", { name: "Confirm request changes" }));
 
@@ -52,6 +54,7 @@ describe("approval task actions", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="task-1" />);
 
     await screen.findByRole("heading", { name: "Warehouse packing supplies" });
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     await user.click(screen.getByRole("button", { name: "Approve" }));
     await user.click(screen.getByRole("button", { name: "Confirm approval" }));
 
@@ -61,6 +64,7 @@ describe("approval task actions", () => {
   });
 
   it("hides decision actions when backend permissions deny them on an active task", async () => {
+    const user = userEvent.setup();
     const viewOnlyTask = {
       ...structuredClone(approvalTaskFixtures[0]!),
       id: "view-only-task",
@@ -80,6 +84,7 @@ describe("approval task actions", () => {
     renderWithQuery(<ApprovalTaskDetailPage taskId="view-only-task" />);
 
     expect(await screen.findByRole("heading", { name: "Warehouse packing supplies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Decision" }));
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Request changes" })).not.toBeInTheDocument();

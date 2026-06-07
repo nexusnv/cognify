@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import type { RequisitionTemplate, RequisitionTemplateMode } from "../types/requisition-view-model";
 
 export function RequisitionTemplatePicker({
@@ -14,8 +15,11 @@ export function RequisitionTemplatePicker({
   if (templates.length === 0) return null;
 
   return (
-    <section className="space-y-3 rounded-md border p-4">
-      <h2 className="text-base font-semibold">Start from a template</h2>
+    <Card className="py-0">
+      <CardHeader className="border-b bg-muted/30">
+        <CardTitle>Start from a template</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-3 py-4">
       <div className="grid gap-3">
         {templates.map((template) => (
           <div key={template.id} className="rounded-md border p-3">
@@ -24,28 +28,29 @@ export function RequisitionTemplatePicker({
               <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
-                className="min-h-10 rounded-md border px-3 text-sm font-medium"
+                variant="outline"
                 disabled={disabled}
                 aria-label={`Fill empty fields from ${template.name}`}
                 onClick={() => onApply(template, "fill-empty")}
               >
                 Fill empty fields
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="min-h-10 rounded-md border px-3 text-sm font-medium"
+                variant="outline"
                 disabled={disabled}
                 aria-label={`Replace draft fields with ${template.name}`}
                 onClick={() => onApply(template, "replace")}
               >
                 Replace draft fields
-              </button>
+              </Button>
             </div>
           </div>
         ))}
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

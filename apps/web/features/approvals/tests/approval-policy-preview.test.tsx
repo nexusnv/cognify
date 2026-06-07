@@ -7,6 +7,7 @@ import { ApprovalPolicyPreview } from "../components/approval-policy-preview";
 import { defaultApprovalPolicyValues } from "../schemas/approval-policy-schema";
 import { awardApprovalPreviewFixture } from "../mocks/approval-fixtures";
 import { ApprovalPolicyDetailPage } from "../workflows/approval-policy-detail-page";
+import { ApprovalPolicyListPage } from "../workflows/approval-policy-list-page";
 
 function TestQueryProvider({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -178,5 +179,15 @@ describe("ApprovalPolicyPreview", () => {
     await user.click(screen.getByRole("button", { name: "Retire version 2" }));
 
     expect(await screen.findByText("retired")).toBeInTheDocument();
+  });
+
+  it("renders approval policies in a semantic table", async () => {
+    render(<ApprovalPolicyListPage />, { wrapper: TestQueryProvider });
+
+    expect(await screen.findByRole("heading", { name: "Approval policies" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: "Standard requisition approval" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
   });
 });
