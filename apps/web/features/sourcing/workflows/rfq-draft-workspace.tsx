@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
+import {
+  Alert,
+  AlertDescription,
+  Card,
+  CardContent,
+  CardHeader,
+} from "@cognify/ui";
 import { RfqDraftForm } from "../components/rfq-draft-form";
 import { RfqInvitationPanel } from "../components/rfq-invitation-panel";
 import { RfqStatusBadge } from "../components/rfq-status-badge";
@@ -16,7 +23,11 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
   const rfq = rfqQuery.data;
 
   if (rfqQuery.isLoading) {
-    return <div aria-label="Loading RFQ workspace" className="rounded-md border p-4 text-sm text-muted-foreground">Loading RFQ workspace</div>;
+    return (
+      <Card aria-label="Loading RFQ workspace">
+        <CardContent className="py-4 text-sm text-muted-foreground">Loading RFQ workspace</CardContent>
+      </Card>
+    );
   }
 
   if (rfqQuery.isError || !rfq) {
@@ -28,7 +39,11 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
           ? "This RFQ could not be found."
           : getApiErrorMessage(rfqQuery.error);
 
-    return <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">{message}</div>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{message}</AlertDescription>
+      </Alert>
+    );
   }
 
   const requisition = rfq.requisition;
@@ -94,83 +109,95 @@ export function RfqDraftWorkspace({ rfqId }: { rfqId: string }) {
       }
       sidebar={
         <>
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Source requisition</h2>
-            {requisition ? (
-              <dl className="mt-3 grid gap-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Number</dt>
-                  <dd className="font-medium">
-                    <Link className="underline-offset-4 hover:underline" href={`/requisitions/${requisition.id}`}>
-                      {requisition.number}
-                    </Link>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Title</dt>
-                  <dd className="font-medium">{requisition.title}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Department</dt>
-                  <dd>{requisition.department ?? "Not set"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd>{requisition.status.replaceAll("_", " ")}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">This RFQ is not linked to a requisition.</p>
-            )}
-          </section>
-
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Source intake</h2>
-            {intakeReview ? (
-              <dl className="mt-3 grid gap-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Review</dt>
-                  <dd className="font-medium">
-                    <Link className="underline-offset-4 hover:underline" href={`/sourcing/intake/${intakeReview.id}`}>
-                      {intakeReview.id}
-                    </Link>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd>{intakeReview.status.replaceAll("_", " ")}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Buyer</dt>
-                  <dd>{intakeReview.assignedBuyer?.name ?? "Unassigned"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Decision</dt>
-                  <dd>{intakeReview.decisionReason ?? "No decision reason recorded"}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">This RFQ is not linked to an intake review.</p>
-            )}
-          </section>
-
-          <section className="rounded-md border p-4">
-            <h2 className="text-base font-semibold">Activity summary</h2>
-            {sortedAuditSummary.length > 0 ? (
-              <div className="mt-3 space-y-3 text-sm">
-                {sortedAuditSummary.slice(0, 4).map((entry) => (
-                  <div key={`${entry.eventType}-${entry.occurredAt}`} className="space-y-1 border-b pb-2 last:border-b-0 last:pb-0">
-                    <p className="font-medium">{entry.action}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.eventType} - {formatDateTime(entry.occurredAt)}
-                    </p>
+          <Card className="py-0">
+            <CardHeader className="border-b bg-muted/30">
+              <h2 className="text-base font-medium text-card-foreground">Source requisition</h2>
+            </CardHeader>
+            <CardContent className="py-4">
+              {requisition ? (
+                <dl className="grid gap-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Number</dt>
+                    <dd className="font-medium">
+                      <Link className="underline-offset-4 hover:underline" href={`/requisitions/${requisition.id}`}>
+                        {requisition.number}
+                      </Link>
+                    </dd>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">No audit events have been recorded yet.</p>
-            )}
-          </section>
+                  <div>
+                    <dt className="text-muted-foreground">Title</dt>
+                    <dd className="font-medium">{requisition.title}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Department</dt>
+                    <dd>{requisition.department ?? "Not set"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Status</dt>
+                    <dd>{requisition.status.replaceAll("_", " ")}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="text-sm text-muted-foreground">This RFQ is not linked to a requisition.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="py-0">
+            <CardHeader className="border-b bg-muted/30">
+              <h2 className="text-base font-medium text-card-foreground">Source intake</h2>
+            </CardHeader>
+            <CardContent className="py-4">
+              {intakeReview ? (
+                <dl className="grid gap-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Review</dt>
+                    <dd className="font-medium">
+                      <Link className="underline-offset-4 hover:underline" href={`/sourcing/intake/${intakeReview.id}`}>
+                        {intakeReview.id}
+                      </Link>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Status</dt>
+                    <dd>{intakeReview.status.replaceAll("_", " ")}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Buyer</dt>
+                    <dd>{intakeReview.assignedBuyer?.name ?? "Unassigned"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Decision</dt>
+                    <dd>{intakeReview.decisionReason ?? "No decision reason recorded"}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="text-sm text-muted-foreground">This RFQ is not linked to an intake review.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="py-0">
+            <CardHeader className="border-b bg-muted/30">
+              <h2 className="text-base font-medium text-card-foreground">Activity summary</h2>
+            </CardHeader>
+            <CardContent className="py-4">
+              {sortedAuditSummary.length > 0 ? (
+                <div className="space-y-3 text-sm">
+                  {sortedAuditSummary.slice(0, 4).map((entry) => (
+                    <div key={`${entry.eventType}-${entry.occurredAt}`} className="space-y-1 border-b pb-2 last:border-b-0 last:pb-0">
+                      <p className="font-medium">{entry.action}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.eventType} - {formatDateTime(entry.occurredAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No audit events have been recorded yet.</p>
+              )}
+            </CardContent>
+          </Card>
         </>
       }
     >

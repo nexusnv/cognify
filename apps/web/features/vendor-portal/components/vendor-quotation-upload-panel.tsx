@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useVendorQuotation, useVendorQuotationUpload, useVendorQuotationVersions } from "../hooks/use-vendor-quotation";
+import { Alert, AlertDescription, Button, Input } from "@cognify/ui";
 import { VendorQuotationManualEntryPanel } from "./vendor-quotation-manual-entry-panel";
 import { VendorQuotationVersionHistory } from "./vendor-quotation-version-history";
 
@@ -122,12 +123,12 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
               <label className="block text-sm font-medium" htmlFor="quotation-file">
                 Quotation file
               </label>
-              <input
+              <Input
                 ref={fileInputRef}
                 id="quotation-file"
                 type="file"
                 accept={acceptedFileTypes}
-                className="block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer"
+                className="h-auto min-h-11 w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:cursor-pointer"
                 onChange={handleFileSelect}
                 aria-label="Quotation file"
                 disabled={uploadMutation.isPending}
@@ -140,18 +141,17 @@ export function VendorQuotationUploadPanel({ token }: { token: string }) {
             ) : null}
 
             {errorMessage ? (
-              <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-                {errorMessage}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
             ) : null}
 
-            <button
+            <Button
               type="submit"
-              className="inline-flex min-h-9 items-center rounded-md bg-foreground px-3 text-sm font-medium text-background disabled:opacity-50"
               disabled={uploadDisabled}
             >
               {uploadMutation.isPending ? "Uploading quotation..." : "Upload quotation"}
-            </button>
+            </Button>
           </form>
         )}
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
-import { Button, Textarea } from "@cognify/ui";
+import { Button, Input, Textarea } from "@cognify/ui";
 import { RfqInvitationDialog } from "./rfq-invitation-dialog";
 import { QuotationEvidencePanel } from "./quotation-evidence-panel";
 import { RfqInvitationStatusBadge } from "./rfq-invitation-status-badge";
@@ -411,9 +411,9 @@ export function RfqInvitationPanel({
           </label>
           <label className="block text-sm font-medium">
             Response due date
-            <input
+            <Input
               aria-label="Response due date"
-              className="mt-1 min-h-11 w-full rounded-md border bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-1 h-11 w-full px-3 text-base font-normal"
               type="datetime-local"
               value={createResponseDueAt}
               onChange={(event) => {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@cognify/api-client";
 import type { Quotation } from "@cognify/api-client/schemas";
-import { Button, Textarea } from "@cognify/ui";
+import { Button, Input, Textarea } from "@cognify/ui";
 import { useSaveQuotationManualEntry } from "../hooks/use-quotation-manual-entry";
 import {
   formValuesFromQuotation,
@@ -103,39 +103,39 @@ function QuotationManualEntryForm({
           </div>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-3">
-          <label className="block text-sm font-medium">
-            Quotation reference
-            <input
-              aria-label="Quotation reference"
-              className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
-              value={values.quotationReference ?? ""}
-              disabled={saveMutation.isPending}
-              onChange={(event) => updateValue("quotationReference", event.target.value)}
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Currency
-            <input
-              aria-label="Currency"
-              className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal uppercase outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
-              value={values.currency ?? ""}
-              disabled={saveMutation.isPending}
-              maxLength={3}
-              onChange={(event) => updateValue("currency", event.target.value.toUpperCase())}
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Total amount
-            <input
-              aria-label="Total amount"
-              className="mt-1 min-h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
-              value={values.totalAmount ?? ""}
-              disabled={saveMutation.isPending}
-              onChange={(event) => updateValue("totalAmount", event.target.value)}
-            />
-          </label>
-        </div>
+          <div className="grid gap-3 lg:grid-cols-3">
+            <label className="block text-sm font-medium">
+              Quotation reference
+              <Input
+                aria-label="Quotation reference"
+                className="mt-1 h-11 w-full px-3 text-base font-normal"
+                value={values.quotationReference ?? ""}
+                disabled={saveMutation.isPending}
+                onChange={(event) => updateValue("quotationReference", event.target.value)}
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Currency
+              <Input
+                aria-label="Currency"
+                className="mt-1 h-11 w-full px-3 text-base font-normal uppercase"
+                value={values.currency ?? ""}
+                disabled={saveMutation.isPending}
+                maxLength={3}
+                onChange={(event) => updateValue("currency", event.target.value.toUpperCase())}
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Total amount
+              <Input
+                aria-label="Total amount"
+                className="mt-1 h-11 w-full px-3 text-base font-normal"
+                value={values.totalAmount ?? ""}
+                disabled={saveMutation.isPending}
+                onChange={(event) => updateValue("totalAmount", event.target.value)}
+              />
+            </label>
+          </div>
 
         <div className="grid gap-3 lg:grid-cols-2">
           <label className="block text-sm font-medium">

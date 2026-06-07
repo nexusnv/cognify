@@ -1182,7 +1182,7 @@ git commit -m "refactor: convert approval routes to shadcn"
 - Test: `apps/web/features/sourcing/tests/*.test.tsx`
 - Test: `apps/web/features/vendor-portal/tests/*.test.tsx`
 
-- [ ] **Step 1: Run sourcing and vendor portal tests before edits**
+- [x] **Step 1: Run sourcing and vendor portal tests before edits**
 
 Run:
 
@@ -1192,7 +1192,7 @@ pnpm --filter @cognify/web test -- sourcing vendor-portal
 
 Expected: PASS before conversion.
 
-- [ ] **Step 2: Convert sourcing intake list/detail**
+- [x] **Step 2: Convert sourcing intake list/detail**
 
 Use shadcn `Table`, `Card`, `Badge`, `Dialog`, `Alert`, `Button`, `Select`, and `Textarea`.
 
@@ -1203,7 +1203,7 @@ Preserve:
 - create RFQ route push;
 - ready-for-RFQ status messaging.
 
-- [ ] **Step 3: Convert RFQ draft workspace**
+- [x] **Step 3: Convert RFQ draft workspace**
 
 Use shadcn `Card`, `Tabs`, `Form`, `Field`, `Input`, `Textarea`, `Table`, `AlertDialog`, `Dialog`, `Badge`, and `Button`.
 
@@ -1216,7 +1216,7 @@ Preserve:
 - invitation panel behavior;
 - open comparison link.
 
-- [ ] **Step 4: Convert RFQ invitation and quotation evidence surfaces**
+- [x] **Step 4: Convert RFQ invitation and quotation evidence surfaces**
 
 Use shadcn `Dialog`, `Popover` or `Command` for vendor picker, `Card`, `Table`, `Input`, `Textarea`, `Button`, `Badge`, `Alert`, and `Tabs` for versions.
 
@@ -1230,7 +1230,7 @@ Preserve:
 - buyer quotation upload;
 - structured quotation creation and manual entry.
 
-- [ ] **Step 5: Convert vendor portal**
+- [x] **Step 5: Convert vendor portal**
 
 Use shadcn `Card`, `Alert`, `Table`, `Badge`, `Input`, `Button`, `Tabs`, and `Form`.
 
@@ -1241,7 +1241,7 @@ Preserve:
 - line items and required documents;
 - vendor upload/manual entry/version history.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 

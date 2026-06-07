@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Button, NativeSelect, Textarea } from "@cognify/ui";
+import { useRef, useState } from "react";
+import { Alert, AlertDescription, Button, Checkbox, Input, NativeSelect, Textarea } from "@cognify/ui";
 import { useSaveSourcingIntakeReview } from "../hooks/use-sourcing-intake-actions";
 import { sourcingIntakeReviewFormSchema } from "../schemas/sourcing-intake-schema";
 import type { SourcingIntakeChecklistItem, SourcingIntakeReview } from "../types/sourcing-view-model";
@@ -17,6 +17,7 @@ const defaultChecklist: SourcingIntakeChecklistItem[] = [
 export function SourcingIntakeReviewForm({ review }: { review: SourcingIntakeReview }) {
   const mutation = useSaveSourcingIntakeReview(review.id);
   const [error, setError] = useState<string | null>(null);
+  const checklistCheckboxRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [values, setValues] = useState(() => ({
     category: review.category ?? "",
     subcategory: review.subcategory ?? "",
@@ -59,15 +60,33 @@ export function SourcingIntakeReviewForm({ review }: { review: SourcingIntakeRev
         <h2 className="text-base font-semibold">Buyer review</h2>
         <p className="mt-1 text-sm text-muted-foreground">Classify the request and complete intake checks.</p>
       </div>
-      {error ? <div role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{error}</div> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1.5 text-sm font-medium">
           Category
-          <input className="min-h-11 w-full rounded-md border px-3 text-base font-normal" value={values.category} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, category: event.target.value }))} />
+          <Input
+            className="h-11 px-3 text-base font-normal"
+            value={values.category}
+            disabled={disabled}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, category: event.target.value }))
+            }
+          />
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Subcategory
-          <input className="min-h-11 w-full rounded-md border px-3 text-base font-normal" value={values.subcategory} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, subcategory: event.target.value }))} />
+          <Input
+            className="h-11 px-3 text-base font-normal"
+            value={values.subcategory}
+            disabled={disabled}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, subcategory: event.target.value }))
+            }
+          />
         </label>
         <label className="space-y-1.5 text-sm font-medium">
           Urgency
@@ -90,25 +109,41 @@ export function SourcingIntakeReviewForm({ review }: { review: SourcingIntakeRev
       </div>
       <label className="block space-y-1.5 text-sm font-medium">
         Target decision date
-        <input type="date" className="min-h-11 w-full rounded-md border px-3 text-base font-normal" value={values.targetDecisionDate} disabled={disabled} onChange={(event) => setValues((current) => ({ ...current, targetDecisionDate: event.target.value }))} />
+        <Input
+          type="date"
+          className="h-11 px-3 text-base font-normal"
+          value={values.targetDecisionDate}
+          disabled={disabled}
+          onChange={(event) =>
+            setValues((current) => ({ ...current, targetDecisionDate: event.target.value }))
+          }
+        />
       </label>
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Checklist</legend>
         {values.checklist.map((item) => (
-          <label key={item.key} className="flex min-h-10 items-center gap-3 rounded-md border px-3 text-sm">
-            <input
-              type="checkbox"
+          <div key={item.key} className="flex min-h-10 items-center gap-3 rounded-md border px-3 text-sm">
+            <Checkbox
+              id={item.key}
+              name={item.key}
+              ref={(element) => {
+                checklistCheckboxRefs.current[item.key] = element;
+              }}
               checked={item.complete}
               disabled={disabled}
-              onChange={(event) =>
+              onCheckedChange={(checked) =>
                 setValues((current) => ({
                   ...current,
-                  checklist: current.checklist.map((entry) => entry.key === item.key ? { ...entry, complete: event.target.checked } : entry),
+                  checklist: current.checklist.map((entry) =>
+                    entry.key === item.key ? { ...entry, complete: checked === true } : entry,
+                  ),
                 }))
               }
             />
-            {item.label}
-          </label>
+            <label htmlFor={item.key} className="cursor-pointer">
+              {item.label}
+            </label>
+          </div>
         ))}
       </fieldset>
       <label className="block space-y-1.5 text-sm font-medium">

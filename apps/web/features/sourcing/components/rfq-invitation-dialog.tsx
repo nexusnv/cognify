@@ -1,8 +1,7 @@
 "use client";
 
-import type { KeyboardEvent, MouseEvent, ReactNode, RefObject } from "react";
-import { useEffect, useId, useRef } from "react";
-import { Button } from "@cognify/ui";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@cognify/ui";
 
 export function RfqInvitationDialog({
   open,
@@ -33,10 +32,8 @@ export function RfqInvitationDialog({
   footerNote?: ReactNode;
   restoreFocusRef?: RefObject<HTMLElement | null>;
 }) {
-  const modalRef = useRef<HTMLDivElement | null>(null);
   const wasOpenRef = useRef(false);
   const restoreFocusTargetRef = useRef<HTMLElement | null>(null);
-  const titleId = useId();
 
   useEffect(() => {
     const wasOpen = wasOpenRef.current;
@@ -47,9 +44,6 @@ export function RfqInvitationDialog({
         activeElement instanceof HTMLElement && activeElement !== document.body && activeElement !== document.documentElement
           ? activeElement
           : null;
-
-      const focusableElements = getFocusableElements(modalRef.current);
-      (focusableElements[0] ?? modalRef.current)?.focus();
     }
 
     if (!open && wasOpen) {
@@ -62,72 +56,28 @@ export function RfqInvitationDialog({
     wasOpenRef.current = open;
   }, [open, restoreFocusRef]);
 
-  function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
-    if (isPending) return;
-
-    if (event.target === event.currentTarget) {
-      onOpenChange(false);
-    }
-  }
-
-  function handleDialogKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      if (isPending) return;
-      onOpenChange(false);
-      return;
-    }
-
-    if (event.key !== "Tab") return;
-
-    const focusableElements = getFocusableElements(modalRef.current);
-    if (focusableElements.length === 0) {
-      event.preventDefault();
-      modalRef.current?.focus();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (event.shiftKey && document.activeElement === firstElement) {
-      event.preventDefault();
-      lastElement.focus();
-      return;
-    }
-
-    if (!event.shiftKey && document.activeElement === lastElement) {
-      event.preventDefault();
-      firstElement.focus();
-    }
-  }
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleBackdropClick}>
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        onKeyDown={handleDialogKeyDown}
-        className="w-full max-w-2xl rounded-md border bg-background p-5 shadow-lg"
-      >
-        <div className="space-y-2">
-          <h2 id={titleId} className="text-lg font-semibold">
-            {title}
-          </h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (isPending && !nextOpen) return;
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-4 space-y-4">{children}</div>
+        <div className="space-y-4">{children}</div>
 
-        {error ? <p role="alert" className="mt-3 text-sm text-red-700">{error}</p> : null}
-        {footerNote ? <div className="mt-3 text-xs text-muted-foreground">{footerNote}</div> : null}
+        {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
+        {footerNote ? <div className="text-xs text-muted-foreground">{footerNote}</div> : null}
 
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Close
           </Button>
@@ -138,18 +88,8 @@ export function RfqInvitationDialog({
           >
             {isPending ? "Working" : confirmLabel}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
-}
-
-function getFocusableElements(container: HTMLElement | null) {
-  if (!container) return [];
-
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
 }

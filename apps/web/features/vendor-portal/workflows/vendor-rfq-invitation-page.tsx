@@ -1,6 +1,7 @@
 "use client";
 
 import { getApiErrorCode, getApiErrorMessage } from "@cognify/api-client";
+import { Alert, AlertDescription, Card, CardContent, CardHeader } from "@cognify/ui";
 import { VendorRfqPackage } from "../components/vendor-rfq-package";
 import { useVendorRfqInvitation } from "../hooks/use-vendor-rfq-invitation";
 
@@ -36,13 +37,31 @@ function StatusPanel({
   message: string;
   role?: "alert";
 }) {
+  if (role === "alert") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
+        <Alert variant="destructive" className="w-full max-w-xl px-6 py-5 text-center">
+          <AlertDescription className="space-y-3">
+            <p className="text-sm font-medium text-muted-foreground">Cognify vendor portal</p>
+            <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+            <p className="text-sm text-muted-foreground">{message}</p>
+          </AlertDescription>
+        </Alert>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
-      <section role={role} className="w-full max-w-xl rounded-lg border bg-background p-6 text-center shadow-sm">
-        <p className="text-sm font-medium text-muted-foreground">Cognify vendor portal</p>
-        <h1 className="mt-2 text-2xl font-semibold">{title}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">{message}</p>
-      </section>
+      <Card className="w-full max-w-xl py-0 text-center">
+        <CardHeader className="border-b bg-muted/30">
+          <p className="text-sm font-medium text-muted-foreground">Cognify vendor portal</p>
+          <h1 className="text-2xl font-semibold">{title}</h1>
+        </CardHeader>
+        <CardContent className="py-4">
+          <p className="text-sm text-muted-foreground">{message}</p>
+        </CardContent>
+      </Card>
     </main>
   );
 }
