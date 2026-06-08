@@ -14,6 +14,17 @@
 - `apps/web/components/shell`, `apps/web/components/right-panel`, and `apps/web/components/providers` are app infrastructure, not reusable UI primitive packages. They may stay outside `apps/web/components/ui`, but still must use shadcn/Radix primitives for buttons, dialogs, menus, sheets, and controls.
 - Feature hooks, API wrappers, schemas, fixtures, and view-model mappers remain in `apps/web/features/*`.
 
+## Cognify Desktop Composition
+
+Follow the approved Cognify desktop design system spec in `docs/superpowers/specs/2026-06-08-cognify-desktop-design-system-design.md`.
+
+Shell composition, navigation context, route-aware page templates, and primary-plus-secondary layout behavior belong in `apps/web` shell/composition code. Those surfaces may compose factory shadcn primitives, but they must not edit generated shadcn files or move Cognify product behavior into `packages/ui`.
+
+- Primary-only routes render one expanded primary sidebar by default.
+- Routes with secondary navigation force the primary sidebar to icon mode.
+- On secondary routes, the visible collapse toggle controls only the secondary sidebar.
+- Mobile web navigation is outside the authenticated Cognify web shell scope.
+
 ## Allowed Custom UI Exception Groups
 
 - `headers`: page headers, decorated titles, route mastheads.

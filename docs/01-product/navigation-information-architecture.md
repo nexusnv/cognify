@@ -40,7 +40,8 @@ Cognify should have a small number of shells. Do not create a new shell for ever
 
 1. **Workspace Shell**
    - Main authenticated Cognify application for internal procurement users.
-   - Owns tenant context, header, primary sidebar, breadcrumbs, command palette, notification host, right-panel host, footer, and mobile navigation.
+   - Desktop operational console for procure-to-pay work.
+   - Owns tenant context, header, primary sidebar, optional secondary sidebar, breadcrumbs, command palette, notification host, right-panel host, and footer.
    - This is the primary product shell and should remain the default for authenticated internal routes.
 2. **Auth Shell**
    - Login, password reset, account recovery, and tenant selection.
@@ -59,27 +60,27 @@ Cognify should have a small number of shells. Do not create a new shell for ever
 | Header                                                       |
 | Tenant / role | Breadcrumbs        Search  Create  AI  User  |
 +---------------+----------------------------------------------+
-| Primary Nav   | Page Content                                 |
+| Primary Nav   | Secondary Nav? | Page Content                |
 |               |                                              |
-| Home          | Page header / command bar                    |
-| My Work       | Main table, dashboard, workflow, or record    |
-| Procurement   |                                              |
-| Vendors       | Optional local tabs / section nav             |
-| Finance       |                                              |
-| Evidence      |                                              |
-| Analytics     | Optional right panel                          |
-| Governance    |                                              |
-| AI Assistant  |                                              |
-| Admin         |                                              |
-| Integrations  |                                              |
-+---------------+----------------------------------------------+
+| Home          | Contextual work area | Page header / cmd bar |
+| My Work       | nav                 | Main table, dashboard  |
+| Procurement   |                     | workflow, or record    |
+| Vendors       |                     |                        |
+| Finance       |                     | Optional right panel   |
+| Evidence      |                     |                        |
+| Analytics     |                     |                        |
+| Governance    |                     |                        |
+| AI Assistant  |                     |                        |
+| Admin         |                     |                        |
+| Integrations  |                     |                        |
++---------------+---------------------+------------------------+
 | Footer / status, mostly quiet                                |
 +--------------------------------------------------------------+
 ```
 
 ## Primary Sidebar
 
-The primary sidebar should stay shallow and stable:
+The primary sidebar should stay shallow and stable as a top-level product-area rail:
 
 ```txt
 Home
@@ -103,6 +104,8 @@ Guidelines:
 - Use the command palette and global search for direct jumps.
 - Use favorites and saved views for each user's frequent destinations.
 - Use module landing pages to expose second-level surfaces.
+- When a secondary sidebar is present, keep the primary sidebar in icon rail mode.
+- The collapse toggle in secondary-sidebar routes should control only the secondary sidebar.
 
 ## Workspace Layout Templates
 
@@ -133,6 +136,7 @@ Primary purpose:
 - Lightweight module health or summary metrics.
 
 Module landing pages replace deep global sidebar nesting.
+They are the right place for module inventory that is too deep or volatile for the primary sidebar.
 
 ### Work Queue Layout
 
@@ -188,6 +192,8 @@ Primary purpose:
 ## Final-State Module Hierarchy
 
 The hierarchy below describes the mature product surface. It is not a sidebar spec. These items should appear through module landing pages, local record navigation, command palette/search, saved views, and contextual actions.
+
+The deep product inventory remains in module landing pages, saved views, command/search, record-local navigation, and contextual actions rather than the primary sidebar.
 
 ### Home
 
