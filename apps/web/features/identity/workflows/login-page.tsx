@@ -11,7 +11,9 @@ import {
 } from "@cognify/ui";
 import { CheckCircle2, ClipboardCheck, FileSearch, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { LoginForm } from "../forms/login-form";
+import { useCurrentUser } from "../hooks/use-current-user";
 
 const proofPoints = [
   {
@@ -35,6 +37,17 @@ export function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNextPath(searchParams.get("next"));
+  const currentUserQuery = useCurrentUser();
+
+  useEffect(() => {
+    if (currentUserQuery.data) {
+      router.replace(next);
+    }
+  }, [currentUserQuery.data, next, router]);
+
+  if (currentUserQuery.isLoading || currentUserQuery.data) {
+    return null;
+  }
 
   return (
     <div className="min-h-svh bg-muted/40 px-4 py-6 text-foreground md:px-8 md:py-10">

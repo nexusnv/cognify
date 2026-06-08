@@ -64,8 +64,8 @@ export function ShellHeader({
                 type="button"
                 variant="outline"
                 size="lg"
-                className="max-w-44"
                 aria-label="Account menu"
+                className="max-w-44"
               >
                 <UserCircle className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden truncate sm:inline">{displayedUserName}</span>

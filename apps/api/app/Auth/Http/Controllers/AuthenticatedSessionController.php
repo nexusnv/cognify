@@ -2,6 +2,8 @@
 
 namespace App\Auth\Http\Controllers;
 
+use App\Exceptions\ApiErrorCode;
+use App\Exceptions\ApiErrorResponse;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +13,15 @@ class AuthenticatedSessionController
 {
     public function store(LoginRequest $request): JsonResponse
     {
+        if (! $request->hasSession()) {
+            return ApiErrorResponse::make(
+                $request,
+                ApiErrorCode::SessionUnavailable,
+                'Session authentication is not available for this browser origin.',
+                419,
+            );
+        }
+
         $authenticated = Auth::guard('web')->attempt(
             $request->only('email', 'password'),
             $request->boolean('remember'),

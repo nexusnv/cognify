@@ -109,18 +109,34 @@ function renderWithQuery(ui: React.ReactElement) {
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
 
+function mockUnauthenticatedCurrentUser() {
+  server.use(
+    http.get("/api/me", () => {
+      return HttpResponse.json({ message: "Unauthenticated." }, { status: 401 });
+    }),
+  );
+}
+
 describe("identity workflow", () => {
-  it("renders login fields and primary actions for workspace sign-in", () => {
+  it("renders login fields and primary actions for workspace sign-in", async () => {
+    mockUnauthenticatedCurrentUser();
+
     renderWithQuery(<LoginPage />);
 
     expect(
-      screen.getByRole("heading", { name: "Sign in to your procurement workspace" }),
+      await screen.findByRole("heading", { name: "Sign in to your procurement workspace" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Email" })).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Remember me" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Forgot password?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveClass("h-9", "px-4");
+    expect(screen.getByRole("button", { name: "Forgot password?" })).toHaveClass(
+      "text-primary",
+      "hover:underline",
+    );
+    expect(screen.getByRole("button", { name: "Forgot password?" })).not.toHaveClass("border");
+    expect(screen.getByRole("textbox", { name: "Email" })).toHaveClass("h-9", "px-3");
+    expect(screen.getByRole("form", { name: "Sign in" })).toHaveAttribute("novalidate");
   });
 
   it("signs in and loads current identity context", async () => {
@@ -143,10 +159,11 @@ describe("identity workflow", () => {
     );
     const user = userEvent.setup();
     searchParams = new URLSearchParams({ next: "/projects/1" });
+    mockUnauthenticatedCurrentUser();
 
     renderWithQuery(<LoginPage />);
 
-    await user.type(screen.getByLabelText("Email"), "test@example.com");
+    await user.type(await screen.findByLabelText("Email"), "test@example.com");
     await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByLabelText("Remember me"));
     await user.click(screen.getByRole("button", { name: "Sign in" }));
@@ -172,15 +189,67 @@ describe("identity workflow", () => {
       }),
     );
     const user = userEvent.setup();
+    mockUnauthenticatedCurrentUser();
 
     renderWithQuery(<LoginPage />);
 
-    await user.type(screen.getByRole("textbox", { name: "Email" }), "test@example.com");
+    await user.type(await screen.findByRole("textbox", { name: "Email" }), "test@example.com");
     await user.type(screen.getByLabelText("Password"), "wrong-password");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid credentials");
+    expect(screen.getByRole("alert")).toHaveClass("px-4", "py-3");
     expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("shows the API reason when session authentication cannot start", async () => {
+    server.use(
+      http.get("/sanctum/csrf-cookie", () => {
+        document.cookie = "XSRF-TOKEN=dev-token";
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.post("/api/auth/login", () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "session_unavailable",
+              message: "Session authentication is not available for this browser origin.",
+              details: {},
+              requestId: "req-test",
+            },
+          },
+          { status: 419 },
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    mockUnauthenticatedCurrentUser();
+
+    renderWithQuery(<LoginPage />);
+
+    await user.type(await screen.findByRole("textbox", { name: "Email" }), "test@example.com");
+    await user.type(screen.getByLabelText("Password"), "password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Session authentication is not available for this browser origin.",
+    );
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("redirects authenticated visitors away from the login form", async () => {
+    server.use(
+      http.get("/api/me", () => {
+        return HttpResponse.json({ data: multiTenantIdentity });
+      }),
+    );
+
+    renderWithQuery(<LoginPage />);
+
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/dashboard"));
+    expect(
+      screen.queryByRole("heading", { name: "Sign in to your procurement workspace" }),
+    ).not.toBeInTheDocument();
   });
 
   beforeEach(() => {
@@ -223,8 +292,10 @@ describe("identity workflow", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Choose workspace" })).toBeInTheDocument();
+    expect(screen.getByText(/Signed in as Test User\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Northwind Sourcing" }));
+    await user.click(screen.getByRole("button", { name: "Northwind Sourcing buyer" }));
 
     expect(await screen.findByText("Workspace ready")).toBeInTheDocument();
   });
@@ -405,6 +476,7 @@ describe("identity workflow", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Choose workspace" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.queryByText("Workspace unavailable.")).not.toBeInTheDocument();
   });
 
@@ -417,10 +489,11 @@ describe("identity workflow", () => {
       }),
     );
     const user = userEvent.setup();
+    mockUnauthenticatedCurrentUser();
 
     renderWithQuery(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "Forgot password?" }));
+    await user.click(await screen.findByRole("button", { name: "Forgot password?" }));
     await user.type(screen.getByLabelText("Email"), "test@example.com");
     await user.click(screen.getByRole("button", { name: "Send reset instructions" }));
 
@@ -440,10 +513,11 @@ describe("identity workflow", () => {
       }),
     );
     const user = userEvent.setup();
+    mockUnauthenticatedCurrentUser();
 
     renderWithQuery(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "Forgot password?" }));
+    await user.click(await screen.findByRole("button", { name: "Forgot password?" }));
     await user.type(screen.getByLabelText("Email"), "test@example.com");
     await user.click(screen.getByRole("button", { name: "Send reset instructions" }));
 

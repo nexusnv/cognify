@@ -107,7 +107,9 @@ describe("app shell", () => {
 
     await expectIdentityLoaded();
     await user.click(screen.getByRole("button", { name: "Account menu" }));
-    await user.click(await screen.findByRole("menuitem", { name: "Sign out" }));
+    const menu = await screen.findByRole("menu");
+    expect(menu).toHaveClass("bg-popover", "shadow-md");
+    await user.click(within(menu).getByRole("menuitem", { name: "Sign out" }));
 
     expect(router.replace).toHaveBeenCalledWith("/login");
   });
