@@ -28,6 +28,7 @@ use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -198,12 +199,18 @@ class PurchaseOrderCreationApiTest extends TestCase
 
     public function test_stale_update_returns_conflict(): void
     {
-        $po = $this->draftPurchaseOrder(lockVersion: 2);
+        $po = $this->draftPurchaseOrder(lockVersion: 2, attributes: ['buyer_note' => 'original note']);
         $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
 
         $this->actingAsTenant($po->tenant, $buyer)
             ->patchJson("/api/purchase-orders/{$po->id}", ['lockVersion' => 1, 'buyerNote' => 'stale'])
             ->assertConflict();
+
+        $this->assertPurchaseOrderState($po, [
+            'status' => 'draft',
+            'lock_version' => 2,
+            'buyer_note' => 'original note',
+        ]);
     }
 
     public function test_ready_for_review_validates_required_fields_and_changes_status(): void
@@ -216,6 +223,16 @@ class PurchaseOrderCreationApiTest extends TestCase
                 'lockVersion' => $po->lock_version,
             ])
             ->assertConflict();
+
+        $this->assertPurchaseOrderState($po, [
+            'status' => 'draft',
+            'lock_version' => 1,
+            'requested_po_date' => null,
+            'expected_delivery_date' => null,
+            'billing_name' => null,
+            'shipping_name' => null,
+            'buyer_note' => null,
+        ]);
 
         $this->actingAsTenant($po->tenant, $buyer)
             ->patchJson("/api/purchase-orders/{$po->id}", [
@@ -244,7 +261,7 @@ class PurchaseOrderCreationApiTest extends TestCase
 
     public function test_cancelled_purchase_order_cannot_be_updated_or_marked_ready(): void
     {
-        $po = $this->cancelledPurchaseOrder();
+        $po = $this->cancelledPurchaseOrder(attributes: ['buyer_note' => 'cancelled note']);
         $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
 
         $this->actingAsTenant($po->tenant, $buyer)
@@ -254,11 +271,79 @@ class PurchaseOrderCreationApiTest extends TestCase
             ])
             ->assertConflict();
 
+        $this->assertPurchaseOrderState($po, [
+            'status' => 'cancelled',
+            'lock_version' => 1,
+            'buyer_note' => 'cancelled note',
+        ]);
+
         $this->actingAsTenant($po->tenant, $buyer)
             ->postJson("/api/purchase-orders/{$po->id}/ready-for-review", [
                 'lockVersion' => $po->lock_version,
             ])
             ->assertConflict();
+
+        $this->assertPurchaseOrderState($po, [
+            'status' => 'cancelled',
+            'lock_version' => 1,
+            'buyer_note' => 'cancelled note',
+        ]);
+    }
+
+    public function test_purchase_order_routes_require_real_session_auth_and_tenant_context(): void
+    {
+        $handoff = $this->readyPurchaseOrderHandoff();
+        $buyer = $this->tenantUser($handoff->tenant, TenantRole::Buyer->value);
+        $purchaseOrder = $this->draftPurchaseOrder($handoff);
+
+        $buyer->forceFill([
+            'email' => 'purchase-order-session@example.com',
+            'password' => Hash::make('secret123'),
+        ])->save();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->get('/sanctum/csrf-cookie')
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'purchase-order-session@example.com',
+                'password' => 'secret123',
+            ])
+            ->assertNoContent();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
+            ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
+            ->assertCreated();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
+            ->patchJson("/api/purchase-orders/{$purchaseOrder->id}", [
+                'lockVersion' => $purchaseOrder->lock_version,
+                'buyerNote' => 'session update',
+            ])
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
+            ->postJson("/api/purchase-orders/{$purchaseOrder->fresh()->id}/ready-for-review", [
+                'lockVersion' => $purchaseOrder->fresh()->lock_version,
+            ])
+            ->assertOk();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/logout')
+            ->assertNoContent();
+
+        Auth::forgetGuards();
+
+        $this->withHeader('Origin', 'http://localhost:8880')
+            ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
+            ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
+            ->assertUnauthorized();
     }
 
     private function readyPurchaseOrderHandoff(): PurchaseOrderRequestHandoff
@@ -310,20 +395,29 @@ class PurchaseOrderCreationApiTest extends TestCase
         return PurchaseOrderRequestHandoff::query()->with('tenant')->findOrFail($handoffId);
     }
 
-    private function draftPurchaseOrder(?PurchaseOrderRequestHandoff $handoff = null, int $lockVersion = 1): PurchaseOrderReference
+    private function draftPurchaseOrder(
+        ?PurchaseOrderRequestHandoff $handoff = null,
+        int $lockVersion = 1,
+        array $attributes = [],
+    ): PurchaseOrderReference
     {
-        return $this->seedPurchaseOrderReference('draft', $handoff, $lockVersion);
+        return $this->seedPurchaseOrderReference('draft', $handoff, $lockVersion, $attributes);
     }
 
-    private function cancelledPurchaseOrder(?PurchaseOrderRequestHandoff $handoff = null, int $lockVersion = 1): PurchaseOrderReference
+    private function cancelledPurchaseOrder(
+        ?PurchaseOrderRequestHandoff $handoff = null,
+        int $lockVersion = 1,
+        array $attributes = [],
+    ): PurchaseOrderReference
     {
-        return $this->seedPurchaseOrderReference('cancelled', $handoff, $lockVersion);
+        return $this->seedPurchaseOrderReference('cancelled', $handoff, $lockVersion, $attributes);
     }
 
     private function seedPurchaseOrderReference(
         string $status,
         ?PurchaseOrderRequestHandoff $handoff = null,
         int $lockVersion = 1,
+        array $attributes = [],
     ): PurchaseOrderReference
     {
         $handoff ??= $this->readyPurchaseOrderHandoff();
@@ -337,7 +431,7 @@ class PurchaseOrderCreationApiTest extends TestCase
 
         DB::table('purchase_orders')->updateOrInsert(
             ['id' => $reference->id],
-            [
+            array_merge([
                 'id' => $reference->id,
                 'tenant_id' => $handoff->tenant_id,
                 'purchase_order_request_handoff_id' => $handoff->id,
@@ -380,7 +474,7 @@ class PurchaseOrderCreationApiTest extends TestCase
                 'lock_version' => $lockVersion,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
+            ], $attributes),
         );
 
         if (Schema::hasTable('purchase_order_lines')) {
@@ -419,6 +513,18 @@ class PurchaseOrderCreationApiTest extends TestCase
         }
 
         return $reference;
+    }
+
+    private function assertPurchaseOrderState(PurchaseOrderReference $po, array $expected): void
+    {
+        if (! Schema::hasTable('purchase_orders')) {
+            return;
+        }
+
+        $this->assertDatabaseHas('purchase_orders', array_merge(
+            ['id' => $po->id, 'tenant_id' => $po->tenant->id],
+            $expected,
+        ));
     }
 
     private function approvedRecommendation(Tenant $tenant, User $buyer, User $approver): array
