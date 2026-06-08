@@ -4,6 +4,7 @@ namespace Domains\PurchaseOrder\Http\Requests;
 
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdatePurchaseOrderRequest extends FormRequest
 {
@@ -34,5 +35,32 @@ class UpdatePurchaseOrderRequest extends FormRequest
             'buyerNote' => ['nullable', 'string', 'max:2000'],
             'financeNote' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $mutableFields = [
+                'requestedPoDate',
+                'expectedDeliveryDate',
+                'billingName',
+                'billingAddress',
+                'shippingName',
+                'shippingAddress',
+                'deliveryAttention',
+                'paymentTerms',
+                'deliveryTerms',
+                'buyerNote',
+                'financeNote',
+            ];
+
+            foreach ($mutableFields as $field) {
+                if ($this->exists($field)) {
+                    return;
+                }
+            }
+
+            $validator->errors()->add('lockVersion', 'At least one editable purchase order field must be provided.');
+        });
     }
 }

@@ -50,7 +50,7 @@ class UpdatePurchaseOrder
             ]);
             $changedFields = [];
 
-            $attributes = ['lock_version' => $purchaseOrder->lock_version + 1];
+            $attributes = [];
 
             $optionalFields = [
                 'requestedPoDate' => 'requested_po_date',
@@ -67,12 +67,28 @@ class UpdatePurchaseOrder
             ];
 
             foreach ($optionalFields as $inputKey => $column) {
-                if (Arr::exists($data, $inputKey)) {
-                    $attributes[$column] = $data[$inputKey];
+                if (! Arr::exists($data, $inputKey)) {
+                    continue;
+                }
+
+                $newValue = $data[$inputKey];
+                $currentValue = $purchaseOrder->getAttribute($column);
+
+                if ($currentValue instanceof \DateTimeInterface) {
+                    $currentValue = $currentValue->format('Y-m-d');
+                }
+
+                if ($newValue !== $currentValue) {
+                    $attributes[$column] = $newValue;
                     $changedFields[] = $inputKey;
                 }
             }
 
+            if ($attributes === []) {
+                return $purchaseOrder->fresh('lines');
+            }
+
+            $attributes['lock_version'] = $purchaseOrder->lock_version + 1;
             $purchaseOrder->forceFill($attributes)->save();
 
             $after = $purchaseOrder->only(array_keys($before));

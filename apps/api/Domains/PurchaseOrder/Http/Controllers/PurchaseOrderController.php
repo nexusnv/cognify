@@ -48,7 +48,10 @@ class PurchaseOrderController extends Controller
             ->when($validated['projectId'] ?? null, fn ($query, string $projectId) => $query->where('project_id', $projectId))
             ->when(
                 $validated['requestedByUserId'] ?? $validated['requesterId'] ?? null,
-                fn ($query, string $requesterId) => $query->where('created_by_user_id', $requesterId)
+                fn ($query, string $requesterId) => $query->whereHas(
+                    'handoff',
+                    fn ($handoffQuery) => $handoffQuery->where('requested_by_user_id', $requesterId),
+                )
             )
             ->when($validated['updatedFrom'] ?? null, fn ($query, string $date) => $query->whereDate('updated_at', '>=', $date))
             ->when($validated['updatedTo'] ?? null, fn ($query, string $date) => $query->whereDate('updated_at', '<=', $date))

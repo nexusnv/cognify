@@ -217,6 +217,65 @@ class PurchaseOrderCreationApiTest extends TestCase
             ->assertJsonPath('data.lockVersion', $po->lock_version + 1);
     }
 
+    public function test_patch_requires_at_least_one_mutable_field_besides_lock_version(): void
+    {
+        $po = $this->draftPurchaseOrder();
+        $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
+
+        $this->actingAsTenant($po->tenant, $buyer)
+            ->patchJson("/api/purchase-orders/{$po->id}", [
+                'lockVersion' => $po->lock_version,
+            ])
+            ->assertUnprocessable();
+    }
+
+    public function test_patch_with_unchanged_values_does_not_increment_lock_version_or_write_audit_noise(): void
+    {
+        $po = $this->draftPurchaseOrder(attributes: [
+            'billing_name' => 'Acme Finance',
+            'billing_address' => json_encode(['line1' => 'Level 10', 'city' => 'Kuala Lumpur', 'country' => 'MY']),
+            'shipping_name' => 'Acme Warehouse',
+            'shipping_address' => json_encode(['line1' => 'Dock 4', 'city' => 'Shah Alam', 'country' => 'MY']),
+            'delivery_attention' => 'Warehouse receiving',
+            'payment_terms' => 'Net 30',
+            'delivery_terms' => 'DAP',
+            'buyer_note' => 'Confirm delivery slot before dispatch.',
+            'finance_note' => 'Charge to expansion budget.',
+        ]);
+        $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
+        $auditCountBefore = AuditEvent::query()
+            ->where('tenant_id', $po->tenant->id)
+            ->where('action', 'purchase_order.updated')
+            ->count();
+
+        $this->actingAsTenant($po->tenant, $buyer)
+            ->patchJson("/api/purchase-orders/{$po->id}", [
+                'lockVersion' => $po->lock_version,
+                'billingName' => 'Acme Finance',
+                'billingAddress' => ['line1' => 'Level 10', 'city' => 'Kuala Lumpur', 'country' => 'MY'],
+                'shippingName' => 'Acme Warehouse',
+                'shippingAddress' => ['line1' => 'Dock 4', 'city' => 'Shah Alam', 'country' => 'MY'],
+                'deliveryAttention' => 'Warehouse receiving',
+                'paymentTerms' => 'Net 30',
+                'deliveryTerms' => 'DAP',
+                'buyerNote' => 'Confirm delivery slot before dispatch.',
+                'financeNote' => 'Charge to expansion budget.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.lockVersion', $po->lock_version);
+
+        $this->assertPurchaseOrderState($po, [
+            'lock_version' => 1,
+            'billing_name' => 'Acme Finance',
+            'shipping_name' => 'Acme Warehouse',
+            'buyer_note' => 'Confirm delivery slot before dispatch.',
+        ]);
+        $this->assertSame(
+            $auditCountBefore,
+            AuditEvent::query()->where('tenant_id', $po->tenant->id)->where('action', 'purchase_order.updated')->count(),
+        );
+    }
+
     public function test_stale_update_returns_conflict(): void
     {
         $po = $this->draftPurchaseOrder(lockVersion: 2, attributes: ['buyer_note' => 'original note']);
@@ -314,15 +373,17 @@ class PurchaseOrderCreationApiTest extends TestCase
     {
         $matchingHandoff = $this->readyPurchaseOrderHandoff();
         $buyer = $this->tenantUser($matchingHandoff->tenant, TenantRole::Buyer->value);
+        $requester = $this->tenantUser($matchingHandoff->tenant, TenantRole::Requester->value);
         $otherHandoff = $this->readyPurchaseOrderHandoff();
+        $otherRequester = $this->tenantUser($otherHandoff->tenant, TenantRole::Requester->value);
 
-        $matching = $this->draftPurchaseOrder($matchingHandoff, attributes: [
-            'number' => 'PO-2026-MATCH',
-            'source_snapshot' => json_encode([
-                'vendor' => ['id' => (string) $matchingHandoff->vendor_id, 'name' => 'Northwind Traders'],
-            ]),
-            'updated_at' => '2026-06-10 10:00:00',
-        ]);
+        $matchingHandoff->forceFill(['requested_by_user_id' => $requester->id])->save();
+        $otherHandoff->forceFill(['requested_by_user_id' => $otherRequester->id])->save();
+
+        $matching = $this->actingAsTenant($matchingHandoff->tenant, $buyer)
+            ->postJson("/api/po-handoffs/{$matchingHandoff->id}/purchase-order")
+            ->assertCreated()
+            ->json('data');
 
         $this->draftPurchaseOrder($otherHandoff, attributes: [
             'number' => 'PO-2026-OTHER',
@@ -331,9 +392,9 @@ class PurchaseOrderCreationApiTest extends TestCase
         ]);
 
         $this->actingAsTenant($matchingHandoff->tenant, $buyer)
-            ->getJson('/api/purchase-orders?status=draft&vendorId='.$matchingHandoff->vendor_id.'&requestedByUserId='.$matchingHandoff->requested_by_user_id.'&search=Northwind&updatedFrom=2026-06-09&updatedTo=2026-06-10&perPage=1')
+            ->getJson('/api/purchase-orders?status=draft&vendorId='.$matchingHandoff->vendor_id.'&requestedByUserId='.$requester->id.'&search=Northwind&perPage=1')
             ->assertOk()
-            ->assertJsonPath('data.0.id', $matching->id)
+            ->assertJsonPath('data.0.id', data_get($matching, 'id'))
             ->assertJsonPath('meta.currentPage', 1)
             ->assertJsonPath('meta.perPage', 1)
             ->assertJsonPath('meta.total', 1)
