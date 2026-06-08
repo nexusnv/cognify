@@ -19,16 +19,16 @@ import {
   RiUserSettingsLine,
 } from "@remixicon/react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
-import { isActivePath } from "./shell-utils";
+import { canUseCalendar, canUseRequisitions, isActivePath } from "./shell-utils";
 
-export type DefaultNavSubItem = {
+export interface DefaultNavSubItem {
   title: string;
   url: string;
   implemented: boolean;
   permission?: (permissions: IdentityPermissions) => boolean;
-};
+}
 
-export type DefaultNavItem = {
+export interface DefaultNavItem {
   title: string;
   url?: string;
   icon: ReactNode;
@@ -36,29 +36,17 @@ export type DefaultNavItem = {
   isActive?: boolean;
   permission?: (permissions: IdentityPermissions) => boolean;
   items?: DefaultNavSubItem[];
-};
+}
 
-export type BreadcrumbItem = {
+export interface BreadcrumbItem {
   label: string;
   href?: string;
-};
-
-const canUseRequisitions = (permissions: IdentityPermissions) =>
-  permissions.canCreateRequisition ||
-  permissions.canViewSubmittedRequisitions ||
-  permissions.canUpdateOwnDraftRequisition ||
-  permissions.canSubmitOwnDraftRequisition;
+}
 
 const canUseSourcingIntake = (permissions: IdentityPermissions) => permissions.canManageSourcingIntake;
 
 const canUseQuotationNormalizations = (permissions: IdentityPermissions) =>
   permissions.canReviewQuotationNormalization;
-
-const canUseCalendar = (permissions: IdentityPermissions) =>
-  permissions.canAccessAdmin ||
-  permissions.canManageSourcingIntake ||
-  permissions.canReviewQuotationNormalization ||
-  permissions.canViewSubmittedRequisitions;
 
 const canUseAdmin = (permissions: IdentityPermissions) => permissions.canAccessAdmin;
 
@@ -232,16 +220,16 @@ export function getVisibleNavigation(
     .map((item) => ({
       ...item,
       implemented:
-        item.implemented && item.permission && permissions ? item.permission(permissions) : item.implemented,
+        item.implemented && (item.permission ? Boolean(permissions && item.permission(permissions)) : true),
       items: item.items?.filter((subItem) =>
-        subItem.permission && permissions ? subItem.permission(permissions) : true,
+        Boolean(subItem.permission && permissions && subItem.permission(permissions)),
       ),
     }));
 }
 
 export function getVisibleSecondaryNavigation(permissions: IdentityPermissions | undefined) {
   return secondaryNavigationItems.filter((item) =>
-    item.permission && permissions ? item.permission(permissions) : true,
+    item.permission ? Boolean(permissions && item.permission(permissions)) : true,
   );
 }
 

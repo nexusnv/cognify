@@ -1,4 +1,7 @@
-import type { TenantRole } from "@/features/identity/types/identity-view-model";
+import type {
+  IdentityPermissions,
+  TenantRole,
+} from "@/features/identity/types/identity-view-model";
 
 export function formatWorkspaceLabel(name: string | null | undefined): string {
   const trimmed = name?.trim() ?? "";
@@ -32,4 +35,22 @@ export function isActivePath(itemHref: string, pathname: string): boolean {
   if (itemHref === "/") return pathname === "/";
 
   return pathname === itemHref || pathname.startsWith(`${itemHref}/`);
+}
+
+export function canUseRequisitions(permissions: IdentityPermissions): boolean {
+  return (
+    permissions.canCreateRequisition ||
+    permissions.canViewSubmittedRequisitions ||
+    permissions.canUpdateOwnDraftRequisition ||
+    permissions.canSubmitOwnDraftRequisition
+  );
+}
+
+export function canUseCalendar(permissions: IdentityPermissions): boolean {
+  return (
+    permissions.canAccessAdmin ||
+    permissions.canManageSourcingIntake ||
+    permissions.canReviewQuotationNormalization ||
+    permissions.canViewSubmittedRequisitions
+  );
 }

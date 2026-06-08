@@ -10,23 +10,13 @@ import {
   Settings,
 } from "lucide-react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
+import { canUseCalendar, canUseRequisitions } from "@/components/default-shell/shell-utils";
 import type { SearchCommandViewModel } from "./types/search-view-model";
 
 export function getSearchCommands(
   permissions?: IdentityPermissions | null,
 ): SearchCommandViewModel[] {
   if (!permissions) return [];
-
-  const canUseRequisitions =
-    permissions.canCreateRequisition ||
-    permissions.canViewSubmittedRequisitions ||
-    permissions.canUpdateOwnDraftRequisition ||
-    permissions.canSubmitOwnDraftRequisition;
-  const canUseCalendar =
-    permissions.canAccessAdmin ||
-    permissions.canManageSourcingIntake ||
-    permissions.canReviewQuotationNormalization ||
-    permissions.canViewSubmittedRequisitions;
 
   const navigationCommands: SearchCommandViewModel[] = [
     {
@@ -37,7 +27,7 @@ export function getSearchCommands(
       href: "/requisitions",
       keywords: ["requisitions", "procurement"],
       icon: FileText,
-      enabled: canUseRequisitions,
+      enabled: canUseRequisitions(permissions),
     },
     {
       id: "navigate:/projects",
@@ -47,7 +37,7 @@ export function getSearchCommands(
       href: "/projects",
       keywords: ["projects", "procurement"],
       icon: FolderKanban,
-      enabled: canUseRequisitions,
+      enabled: canUseRequisitions(permissions),
     },
     {
       id: "navigate:/approvals",
@@ -67,7 +57,7 @@ export function getSearchCommands(
       href: "/calendar",
       keywords: ["calendar", "procurement"],
       icon: CalendarDays,
-      enabled: canUseCalendar,
+      enabled: canUseCalendar(permissions),
     },
     {
       id: "navigate:/sourcing/intake",
@@ -99,7 +89,7 @@ export function getSearchCommands(
       icon: Settings,
       enabled: permissions.canAccessAdmin,
     },
-  ].filter((command) => command.enabled);
+  ];
 
   const createRequisitionCommand: SearchCommandViewModel = {
     id: "action:create-requisition",

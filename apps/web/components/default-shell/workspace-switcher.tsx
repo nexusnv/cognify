@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@cognify/ui/components/dropdown-menu";
 import {
@@ -75,7 +74,6 @@ export function WorkspaceSwitcher({ workspaces }: { workspaces: WorkspaceSwitche
                   <span className="truncate">{workspace.name}</span>
                   <span className="truncate text-xs text-muted-foreground">{workspace.role}</span>
                 </div>
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

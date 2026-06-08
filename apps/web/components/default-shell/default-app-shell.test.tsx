@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import DefaultLayout from "../../app/(default)/layout";
+import DefaultLayout from "../../app/(workspace)/layout";
 import { requesterIdentity } from "../../features/identity/mocks/identity-fixtures";
 import type { CurrentUserContext } from "../../features/identity/types/identity-view-model";
 import { server } from "../../tests/msw/server";

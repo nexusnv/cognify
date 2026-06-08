@@ -90,7 +90,7 @@ export function NavUser({
                   Account
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled title="Coming soon">
                 <RiNotificationLine />
                 Notifications
               </DropdownMenuItem>

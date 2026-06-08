@@ -35,7 +35,12 @@ export function NavSecondary({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
+          <SidebarMenuButton
+            disabled
+            title="Coming soon"
+            tooltip="Coming soon"
+            className="cursor-not-allowed text-sidebar-foreground/70"
+          >
             <RiMoreLine className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
