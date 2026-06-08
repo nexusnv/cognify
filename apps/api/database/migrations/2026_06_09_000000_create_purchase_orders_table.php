@@ -5,6 +5,7 @@ use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
 use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
@@ -19,8 +20,12 @@ return new class extends Migration
         Schema::create('purchase_orders', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignIdFor(Tenant::class)->constrained()->cascadeOnDelete();
-            $table->uuid('purchase_order_request_handoff_id');
-            $table->uuid('rfq_award_recommendation_id');
+            $table->foreignUuid('purchase_order_request_handoff_id')
+                ->constrained('purchase_order_request_handoffs')
+                ->restrictOnDelete();
+            $table->foreignUuid('rfq_award_recommendation_id')
+                ->constrained('rfq_award_recommendations')
+                ->restrictOnDelete();
             $table->foreignIdFor(ApprovalInstance::class, 'approval_instance_id')
                 ->nullable()
                 ->constrained('approval_instances')
@@ -33,7 +38,10 @@ return new class extends Migration
                 ->nullOnDelete();
             $table->foreignIdFor(Vendor::class)->constrained('vendors')->restrictOnDelete();
             $table->foreignIdFor(Quotation::class)->nullable()->constrained('quotations')->nullOnDelete();
-            $table->uuid('quotation_version_id')->nullable();
+            $table->foreignIdFor(QuotationVersion::class, 'quotation_version_id')
+                ->nullable()
+                ->constrained('quotation_versions')
+                ->nullOnDelete();
             $table->string('number');
             $table->string('status');
             $table->string('currency', 3);

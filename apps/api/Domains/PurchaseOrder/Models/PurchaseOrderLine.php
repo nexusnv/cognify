@@ -6,6 +6,8 @@ use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class PurchaseOrderLine extends Model
 {
@@ -53,6 +55,33 @@ class PurchaseOrderLine extends Model
             'expected_delivery_date' => 'immutable_date',
             'source_snapshot' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $line): void {
+            if (! $line->isDirty('purchase_order_id') && ! $line->isDirty('tenant_id')) {
+                return;
+            }
+
+            DB::transaction(function () use ($line): void {
+                if ($line->tenant_id === null && $line->purchase_order_id !== null) {
+                    $line->tenant_id = PurchaseOrder::query()
+                        ->whereKey($line->purchase_order_id)
+                        ->value('tenant_id');
+                }
+
+                $belongsToTenant = PurchaseOrder::query()
+                    ->whereKey($line->purchase_order_id)
+                    ->where('tenant_id', $line->tenant_id)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Purchase order line must belong to the same tenant as the purchase order.');
+                }
+            });
+        });
     }
 
     /**
