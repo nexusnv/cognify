@@ -1,0 +1,146 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: en-US
+early_access: false
+tone_instructions: >-
+  Be concise and evidence-first. Prioritize behavioral regressions, tenant
+  safety, contract drift, missing verification, and user-facing workflow risk
+  over style commentary. Prefer actionable, repo-specific feedback with
+  concrete file references.
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  changed_files_summary: true
+  sequence_diagrams: false
+  suggested_labels: false
+  suggested_reviewers: false
+  in_progress_fortune: false
+  poem: false
+  enable_prompt_for_ai_agents: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 3
+    drafts: false
+    ignore_title_keywords:
+      - wip
+      - do not merge
+      - dnm
+  path_filters:
+    - "!packages/api-client/src/generated/**"
+    - "!apps/api/composer.lock"
+    - "!pnpm-lock.yaml"
+    - "!**/coverage/**"
+    - "!**/.next/**"
+    - "!**/dist/**"
+  path_instructions:
+    - path: "apps/api/**"
+      instructions: |
+        Treat the Laravel backend as the source of truth for procurement workflow behavior.
+        Focus on:
+        - tenant isolation on every query, resource lookup, policy, and side effect
+        - Sanctum session and CSRF behavior on login, logout, and tenant-selection flows
+        - domain logic staying in Domains/* actions, services, states, and policies rather than controllers
+        - audit events, notifications, queue jobs, and storage writes staying consistent with workflow transitions
+        - OpenAPI updates whenever request/response shapes, status codes, or workflow actions change
+        Prefer findings about behavioral regressions, authorization gaps, cross-tenant leaks, stale state transitions, or missing tests over style-only comments.
+    - path: "apps/api/tests/**"
+      instructions: |
+        Prefer regression-oriented feedback.
+        Check that tests prove the real route and middleware stack when auth, sessions, CSRF, or tenant resolution changes.
+        Tenant-sensitive behavior should include cross-tenant fixtures or assertions that would fail if scoping is missing.
+    - path: "apps/api/storage/openapi/openapi.json"
+      instructions: |
+        Treat this OpenAPI document as a contract artifact.
+        Flag mismatches with backend routes, resources, or web client expectations, but avoid nitpicks about ordering or formatting alone.
+    - path: "apps/web/**"
+      instructions: |
+        Review this Next.js product app for workflow correctness, not generic component churn.
+        Focus on:
+        - using typed feature hooks and generated client helpers instead of duplicating API contracts
+        - preserving loading, error, empty, permission-denied, and stale-state UX where workflows need them
+        - persisting active tenant state only after successful server validation
+        - keeping product-specific UI in apps/web rather than packages/ui
+        - avoiding direct imports of mock fixtures into production components
+    - path: "apps/web/features/**/mocks/**"
+      instructions: |
+        MSW handlers and fixtures should mirror the current OpenAPI contract and realistic workflow states.
+        Flag mocks that drift from live response shapes or hide meaningful error, permission, or empty-state cases.
+    - path: "apps/web/tests/**"
+      instructions: |
+        Check that tests assert user-visible workflow behavior, not implementation details.
+        Prefer focused coverage for permission, loading, error, and tenant-selection paths when related code changes.
+    - path: "packages/ui/**"
+      instructions: |
+        This package should contain reusable shadcn/Radix primitives only.
+        Flag Cognify-specific business meaning, procurement copy, workflow logic, tenant concepts, or app-shell composition.
+        Prefer preserving factory-default primitive behavior and accessibility over stylistic rewrites.
+    - path: "packages/api-client/src/**"
+      instructions: |
+        This package owns generated-client plumbing and exports.
+        Review hand-written files for credentials include, CSRF header handling, tenant header propagation, multipart helpers, and error normalization.
+        Do not ask for handwritten replacement types for schemas already generated from OpenAPI.
+    - path: "packages/config/**"
+      instructions: |
+        Shared config changes can affect the whole monorepo.
+        Flag blast-radius issues across apps and packages, and call out when verification should expand beyond the touched package.
+    - path: "tooling/scripts/**"
+      instructions: |
+        Review scripts for deterministic behavior in local and CI use.
+        Flag assumptions about cwd, unsafe file operations, contract-check false positives, or repo-specific paths that could drift.
+    - path: "docs/**"
+      instructions: |
+        Check commands, paths, and workflow descriptions against the current repository layout.
+        Flag documentation drift that would mislead an engineer following the runbook.
+
+chat:
+  art: false
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "ARCHITECTURE.md"
+      - "DEVELOPER_GUIDELINE.md"
+      - "docs/05-runbooks/feature-development.md"
+      - "docs/04-engineering/standards/*.md"
+      - "docs/agentic/AGENTIC_CODING_GUIDELINES.md"
+
+finishing_touches:
+  docstrings:
+    enabled: false
+  unit_tests:
+    enabled: false
+  simplify:
+    enabled: false
+
+pre_merge_checks:
+  title:
+    mode: warning
+    requirements: >-
+      Use a concise, descriptive title that names the workflow, domain, or
+      package being changed.
+  description:
+    mode: warning
+  custom_checks:
+    - name: API contract loopback
+      mode: warning
+      instructions: >-
+        Warn if the pull request changes backend API request or response shapes,
+        route payloads, or workflow action contracts without corresponding
+        updates to `apps/api/storage/openapi/openapi.json` and any impacted
+        generated client files under `packages/api-client/src/generated/`,
+        unless the PR description explicitly states that the change is
+        internal-only and does not affect the API surface.
+    - name: Tenant auth loopback
+      mode: warning
+      instructions: >-
+        Warn if the pull request changes tenant-selection behavior,
+        tenant-scoped routing, or auth/session flows without corresponding
+        tests that cover the real route or middleware path or that prove
+        cross-tenant access is still rejected.
