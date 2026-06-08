@@ -8,7 +8,7 @@ const authHelperSource = readFileSync(path.join(dirname, "e2e/helpers/auth.ts"),
 
 describe("Playwright auth helper", () => {
   it("locates the password field by accessible label", () => {
-    expect(authHelperSource).toContain('getByLabel("Password")');
+    expect(authHelperSource).toContain('getByLabel("Password", { exact: true })');
     expect(authHelperSource).not.toContain('getByRole("textbox", { name: "Password" })');
   });
 });

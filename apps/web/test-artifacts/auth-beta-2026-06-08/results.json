@@ -1,0 +1,77 @@
+[
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/01-login-initial.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Initial logged-out login page"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/02-login-empty-submit.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Clicked primary Sign in with empty fields"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/03-login-invalid-field-values.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Entered malformed email and short password"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/04-login-wrong-credentials.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Submitted valid-looking but incorrect credentials"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/05-login-show-password.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Clicked Show password"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/06-forgot-password-mode.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Clicked Forgot password link button"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/07-forgot-password-empty-submit.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Clicked reset submit with empty email"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/08-forgot-password-success.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Submitted reset request"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/09-back-to-sign-in.png",
+    "url": "http://192.168.0.158:8880/login",
+    "note": "Returned from reset mode to sign-in form"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/10-requester-dashboard-after-login.png",
+    "url": "http://192.168.0.158:8880/dashboard",
+    "note": "Successful requester login lands on dashboard"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/11-authenticated-login-revisit.png",
+    "url": "http://192.168.0.158:8880/dashboard",
+    "note": "Visited /login while already authenticated"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/12-protected-route-unauthenticated.png",
+    "url": "http://192.168.0.158:8880/login?next=%2Fprojects%2F1%3Ftab%3Dactivity",
+    "note": "Visited protected route while logged out"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/13-admin-workspace-selection.png",
+    "url": "http://192.168.0.158:8880/dashboard",
+    "note": "Admin login with no active tenant should show workspace selection"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/14-admin-selected-workspace.png",
+    "url": "http://192.168.0.158:8880/dashboard",
+    "note": "Selected Acme workspace after admin login"
+  },
+  {
+    "screenshot": "/home/leonidas/dev/cognify/apps/web/test-artifacts/auth-beta-2026-06-08/15-after-logout.png",
+    "url": "http://192.168.0.158:8880/dashboard",
+    "note": "Attempted logout from authenticated shell"
+  }
+]

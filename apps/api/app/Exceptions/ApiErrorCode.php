@@ -10,6 +10,7 @@ enum ApiErrorCode: string
     case NotFound = 'not_found';
     case Conflict = 'conflict';
     case AmbiguousTenant = 'ambiguous_tenant';
+    case SessionUnavailable = 'session_unavailable';
     case TooManyRequests = 'too_many_requests';
     case ServerError = 'server_error';
 

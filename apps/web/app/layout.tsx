@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased font-sans", ibmPlexSans.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("h-full antialiased font-sans", ibmPlexSans.variable)}>
       <body className="flex min-h-full flex-col">
         <AppProviders>{children}</AppProviders>
       </body>
