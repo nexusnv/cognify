@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
   AlertDescription,
+  AlertTitle,
   Button,
   Checkbox,
   Field,
@@ -14,7 +15,7 @@ import {
   Form,
   Input,
 } from "@cognify/ui";
-import { Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, CircleAlert, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -78,7 +79,13 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
   if (resetMode) {
     return (
-      <Form method="post" onSubmit={handleResetSubmit(onResetSubmit)} className="grid gap-5">
+      <Form
+        aria-label="Reset password"
+        method="post"
+        noValidate
+        onSubmit={handleResetSubmit(onResetSubmit)}
+        className="grid gap-5"
+      >
         <Field data-invalid={Boolean(resetErrors.email)}>
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <FieldContent>
@@ -118,12 +125,16 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
         </div>
 
         {resetSent && (
-          <Alert className="border-success/30 text-success">
+          <Alert className="border-success/50 text-success">
+            <CheckCircle2 className="size-4" aria-hidden="true" />
+            <AlertTitle>Instructions sent</AlertTitle>
             <AlertDescription>Password reset instructions sent.</AlertDescription>
           </Alert>
         )}
         {resetError && (
           <Alert variant="destructive">
+            <CircleAlert className="size-4" aria-hidden="true" />
+            <AlertTitle>Reset request failed</AlertTitle>
             <AlertDescription>{resetError}</AlertDescription>
           </Alert>
         )}
@@ -132,7 +143,13 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
   }
 
   return (
-    <Form method="post" onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
+    <Form
+      aria-label="Sign in"
+      method="post"
+      noValidate
+      onSubmit={handleSubmit(onSubmit)}
+      className="grid gap-5"
+    >
       <Field data-invalid={Boolean(errors.email)}>
         <FieldLabel htmlFor="login-email">Email</FieldLabel>
         <FieldContent>
@@ -231,6 +248,8 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
       {loginMutation.error && (
         <Alert variant="destructive">
+          <CircleAlert className="size-4" aria-hidden="true" />
+          <AlertTitle>Sign-in failed</AlertTitle>
           <AlertDescription>{loginErrorMessage(loginMutation.error)}</AlertDescription>
         </Alert>
       )}

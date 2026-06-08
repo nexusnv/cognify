@@ -136,6 +136,7 @@ describe("identity workflow", () => {
     );
     expect(screen.getByRole("button", { name: "Forgot password?" })).not.toHaveClass("border");
     expect(screen.getByRole("textbox", { name: "Email" })).toHaveClass("h-9", "px-3");
+    expect(screen.getByRole("form", { name: "Sign in" })).toHaveAttribute("novalidate");
   });
 
   it("signs in and loads current identity context", async () => {
@@ -197,6 +198,7 @@ describe("identity workflow", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid credentials");
+    expect(screen.getByRole("alert")).toHaveClass("px-4", "py-3");
     expect(router.replace).not.toHaveBeenCalled();
   });
 
@@ -290,6 +292,8 @@ describe("identity workflow", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Choose workspace" })).toBeInTheDocument();
+    expect(screen.getByText(/Signed in as Test User\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Northwind Sourcing" }));
 
@@ -472,6 +476,7 @@ describe("identity workflow", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Choose workspace" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.queryByText("Workspace unavailable.")).not.toBeInTheDocument();
   });
 
