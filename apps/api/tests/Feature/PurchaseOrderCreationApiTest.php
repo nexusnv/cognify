@@ -95,10 +95,14 @@ class PurchaseOrderCreationApiTest extends TestCase
             ->assertConflict()
             ->assertJsonPath('message', 'PO handoff must be ready or exported before creating a purchase order.');
 
+        $this->assertNoPurchaseOrderForHandoff($draft->id);
+
         $this->actingAsTenant($cancelled->tenant, $cancelledBuyer)
             ->postJson("/api/po-handoffs/{$cancelled->id}/purchase-order")
             ->assertConflict()
             ->assertJsonPath('message', 'Cancelled PO handoffs cannot create purchase orders.');
+
+        $this->assertNoPurchaseOrderForHandoff($cancelled->id);
     }
 
     public function test_duplicate_creation_reveals_existing_purchase_order(): void
@@ -329,7 +333,10 @@ class PurchaseOrderCreationApiTest extends TestCase
             ->assertCreated()
             ->json('data.id');
 
-        $purchaseOrder = new PurchaseOrderReference($createdPurchaseOrderId ?: (string) Str::uuid(), $handoff->tenant, 1);
+        $this->assertIsString($createdPurchaseOrderId);
+        $this->assertNotSame('', $createdPurchaseOrderId);
+
+        $purchaseOrder = new PurchaseOrderReference($createdPurchaseOrderId, $handoff->tenant, 1);
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
@@ -548,6 +555,17 @@ class PurchaseOrderCreationApiTest extends TestCase
             ['id' => $po->id, 'tenant_id' => $po->tenant->id],
             $expected,
         ));
+    }
+
+    private function assertNoPurchaseOrderForHandoff(string $handoffId): void
+    {
+        if (! Schema::hasTable('purchase_orders')) {
+            return;
+        }
+
+        $this->assertSame(0, PurchaseOrder::query()
+            ->where('purchase_order_request_handoff_id', $handoffId)
+            ->count());
     }
 
     private function approvedRecommendation(Tenant $tenant, User $buyer, User $approver): array
