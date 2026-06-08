@@ -110,6 +110,12 @@ class PurchaseOrder extends Model
     {
         static::saving(function (self $purchaseOrder): void {
             $purchaseOrder->assertBelongsToTenant(
+                relationKey: 'purchase_order_request_handoff_id',
+                dirtyMessage: ['purchase_order_request_handoff_id', 'tenant_id'],
+                query: PurchaseOrderRequestHandoff::query(),
+                error: 'Purchase order handoff must belong to the same tenant.',
+            );
+            $purchaseOrder->assertBelongsToTenant(
                 relationKey: 'rfq_award_recommendation_id',
                 dirtyMessage: ['rfq_award_recommendation_id', 'tenant_id'],
                 query: RfqAwardRecommendation::query(),
