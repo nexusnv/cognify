@@ -119,8 +119,13 @@ describe("identity workflow", () => {
     expect(screen.getByRole("textbox", { name: "Email" })).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Remember me" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Forgot password?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveClass("h-9", "px-4");
+    expect(screen.getByRole("button", { name: "Forgot password?" })).toHaveClass(
+      "text-primary",
+      "hover:underline",
+    );
+    expect(screen.getByRole("button", { name: "Forgot password?" })).not.toHaveClass("border");
+    expect(screen.getByRole("textbox", { name: "Email" })).toHaveClass("h-9", "px-3");
   });
 
   it("signs in and loads current identity context", async () => {
@@ -180,6 +185,40 @@ describe("identity workflow", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid credentials");
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("shows the API reason when session authentication cannot start", async () => {
+    server.use(
+      http.get("/sanctum/csrf-cookie", () => {
+        document.cookie = "XSRF-TOKEN=dev-token";
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.post("/api/auth/login", () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "session_unavailable",
+              message: "Session authentication is not available for this browser origin.",
+              details: {},
+              requestId: "req-test",
+            },
+          },
+          { status: 419 },
+        );
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithQuery(<LoginPage />);
+
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "test@example.com");
+    await user.type(screen.getByLabelText("Password"), "password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Session authentication is not available for this browser origin.",
+    );
     expect(router.replace).not.toHaveBeenCalled();
   });
 

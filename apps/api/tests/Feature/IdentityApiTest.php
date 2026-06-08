@@ -51,10 +51,11 @@ class IdentityApiTest extends TestCase
 
     public function test_login_rejects_invalid_credentials(): void
     {
-        $response = $this->postJson('/api/auth/login', [
-            'email' => 'test@example.com',
-            'password' => 'wrong-password',
-        ]);
+        $response = $this->withHeader('Origin', 'http://localhost:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'test@example.com',
+                'password' => 'wrong-password',
+            ]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['email']);
@@ -81,6 +82,24 @@ class IdentityApiTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.user.email', 'test@example.com')
             ->assertJsonPath('data.activeTenant.id', (string) $tenant->id);
+    }
+
+    public function test_login_without_stateful_session_returns_actionable_error(): void
+    {
+        User::factory()->create([
+            'email' => 'test@example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $response = $this->withHeader('Origin', 'http://192.168.0.172:8880')
+            ->postJson('/api/auth/login', [
+                'email' => 'test@example.com',
+                'password' => 'password123',
+            ]);
+
+        $response->assertStatus(419);
+        $response->assertJsonPath('error.code', 'session_unavailable');
+        $response->assertJsonPath('error.message', 'Session authentication is not available for this browser origin.');
     }
 
     public function test_logout_ends_session(): void

@@ -78,7 +78,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
   if (resetMode) {
     return (
-      <Form onSubmit={handleResetSubmit(onResetSubmit)} className="grid gap-5">
+      <Form method="post" onSubmit={handleResetSubmit(onResetSubmit)} className="grid gap-5">
         <Field data-invalid={Boolean(resetErrors.email)}>
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <FieldContent>
@@ -132,7 +132,7 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
   }
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
+    <Form method="post" onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
       <Field data-invalid={Boolean(errors.email)}>
         <FieldLabel htmlFor="login-email">Email</FieldLabel>
         <FieldContent>
@@ -156,9 +156,9 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
           <FieldLabel htmlFor="password">Password</FieldLabel>
           <Button
             type="button"
-            variant="ghost"
+            variant="link"
             size="sm"
-            className="h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            className="h-auto px-0 py-0 font-normal"
             onClick={() => {
               setResetSent(false);
               setResetMode(true);
@@ -231,13 +231,35 @@ export function LoginForm({ onAuthenticated }: { onAuthenticated?: () => void })
 
       {loginMutation.error && (
         <Alert variant="destructive">
-          <AlertDescription>
-            {loginMutation.error instanceof Error
-              ? loginMutation.error.message
-              : "Invalid credentials"}
-          </AlertDescription>
+          <AlertDescription>{loginErrorMessage(loginMutation.error)}</AlertDescription>
         </Alert>
       )}
     </Form>
   );
+}
+
+function loginErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (isRecord(error)) {
+    const data = error.data;
+
+    if (isRecord(data)) {
+      if (typeof data.message === "string" && data.message) {
+        return data.message;
+      }
+
+      if (isRecord(data.error) && typeof data.error.message === "string" && data.error.message) {
+        return data.error.message;
+      }
+    }
+  }
+
+  return "Invalid credentials";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
