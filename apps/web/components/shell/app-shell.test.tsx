@@ -84,10 +84,10 @@ describe("app shell", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
     expect(screen.getByText("Requester")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Skip to main content" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Primary product areas" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Dashboard");
     expect(screen.getByRole("button", { name: /switch to .* mode/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /open navigation/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse primary sidebar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Account menu" })).toBeEnabled();
@@ -151,8 +151,8 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(within(primaryNav).getByRole("link", { name: "Requisitions" })).toHaveAttribute(
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Procurement" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -214,11 +214,13 @@ describe("app shell", () => {
       </AppShell>,
     );
 
-    expect(await screen.findByRole("navigation", { name: "Primary" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("navigation", { name: "Primary product areas" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Audit")).not.toBeInTheDocument();
   });
 
-  it("shows admin-only audit navigation when the identity can access admin areas", async () => {
+  it("shows admin-only governance navigation when the identity can access admin areas", async () => {
     mockIdentity({
       ...requesterIdentity,
       activeRole: "admin",
@@ -235,9 +237,10 @@ describe("app shell", () => {
       </AppShell>,
     );
 
-    const auditNavItem = await screen.findByRole("link", { name: "Audit" });
-    expect(auditNavItem).toHaveAttribute("aria-disabled", "true");
-    expect(auditNavItem).toHaveAttribute("tabindex", "-1");
+    await expectIdentityLoaded();
+    const primaryNav = await screen.findByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Governance" })).toBeInTheDocument();
+    expect(within(primaryNav).getByRole("link", { name: "Admin" })).toBeInTheDocument();
   });
 
   it("shows system readiness and navigation in the shell for admin identities", async () => {
@@ -268,8 +271,8 @@ describe("app shell", () => {
 
     await expectIdentityLoaded();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("System");
-    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(within(primaryNav).getByRole("link", { name: "System" })).toHaveAttribute(
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Admin" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -314,7 +317,7 @@ describe("app shell", () => {
     expect((await screen.findAllByText("Operational workspace")).length).toBeGreaterThan(0);
   });
 
-  it("opens and closes mobile navigation with the keyboard", async () => {
+  it("tracks primary sidebar state on dashboard routes", async () => {
     const user = userEvent.setup();
 
     renderWithQuery(
@@ -324,44 +327,38 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    const openButton = screen.getByRole("button", { name: "Open navigation" });
-    openButton.focus();
+    const shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "expanded");
+    expect(shell).toHaveAttribute("data-secondary-present", "false");
 
-    await user.click(openButton);
-    const dialog = screen.getByRole("dialog", { name: "Navigation" });
-    expect(dialog).toHaveAttribute("data-state", "open");
-    expect(within(dialog).getByRole("button", { name: "Close navigation" })).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "Collapse primary sidebar" }));
 
-    await user.keyboard("{Escape}");
-    expect(screen.queryByRole("dialog", { name: "Navigation" })).not.toBeInTheDocument();
-    expect(openButton).toHaveFocus();
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(screen.getByRole("button", { name: "Expand primary sidebar" })).toBeInTheDocument();
   });
 
-  it("keeps focus and page scroll contained while mobile navigation is open", async () => {
+  it("tracks secondary sidebar state on procurement routes", async () => {
     const user = userEvent.setup();
-    const previousOverflow = document.body.style.overflow;
+
+    mockPathname = "/requisitions";
 
     renderWithQuery(
       <AppShell>
-        <h1>Dashboard content</h1>
+        <h1>Requisitions workspace</h1>
       </AppShell>,
     );
 
     await expectIdentityLoaded();
-    await user.click(screen.getByRole("button", { name: "Open navigation" }));
+    const shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-present", "true");
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+    expect(screen.queryByRole("button", { name: "Collapse primary sidebar" })).toBeNull();
 
-    const dialog = screen.getByRole("dialog", { name: "Navigation" });
-    expect(document.body).toHaveAttribute("data-scroll-locked", "1");
+    await user.click(screen.getByRole("button", { name: "Collapse secondary sidebar" }));
 
-    const closeButton = within(dialog).getByRole("button", { name: "Close navigation" });
-    const links = within(dialog).getAllByRole("link");
-    links[links.length - 1].focus();
-
-    await user.tab();
-    expect(closeButton).toHaveFocus();
-
-    await user.keyboard("{Escape}");
-    expect(document.body.style.overflow).toBe(previousOverflow);
-    expect(document.body).not.toHaveAttribute("data-scroll-locked");
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-state", "collapsed");
+    expect(screen.getByRole("button", { name: "Expand secondary sidebar" })).toBeInTheDocument();
   });
 });
