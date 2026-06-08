@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -84,13 +84,14 @@ describe("app shell", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
     expect(screen.getByText("Requester")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Skip to main content" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Primary product areas" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Dashboard");
     expect(screen.getByRole("button", { name: /switch to .* mode/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /open navigation/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse primary sidebar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Account menu" })).toBeEnabled();
+    expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");
@@ -151,11 +152,60 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(within(primaryNav).getByRole("link", { name: "Requisitions" })).toHaveAttribute(
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Procurement" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+  });
+
+  it("renders the future primary-only dashboard navigation layout", async () => {
+    mockPathname = "/dashboard";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(screen.queryByRole("navigation", { name: "Secondary workspace navigation" })).toBeNull();
+    expect(within(primaryNav).getByRole("link", { name: "Home" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("button", { name: "Collapse primary sidebar" })).toBeInTheDocument();
+  });
+
+  it("renders the future procurement route with primary and secondary sidebars", async () => {
+    mockPathname = "/requisitions";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Requisitions workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    expect(screen.getByRole("navigation", { name: "Primary product areas" })).toBeInTheDocument();
+    const secondaryNav = screen.getByRole("navigation", {
+      name: "Secondary workspace navigation",
+    });
+    expect(within(secondaryNav).getByRole("link", { name: "Requisitions" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(secondaryNav).getByText("Fulfillment")).toBeInTheDocument();
+    expect(within(secondaryNav).getByRole("link", { name: "Purchase orders" })).toHaveAttribute(
+      "href",
+      "/purchase-orders",
+    );
+    expect(
+      within(secondaryNav).getByRole("link", { name: "Purchase orders" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Collapse secondary sidebar" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse primary sidebar" })).toBeNull();
   });
 
   it("hides admin-only audit navigation from requester identities", async () => {
@@ -165,11 +215,13 @@ describe("app shell", () => {
       </AppShell>,
     );
 
-    expect(await screen.findByRole("navigation", { name: "Primary" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("navigation", { name: "Primary product areas" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Audit")).not.toBeInTheDocument();
   });
 
-  it("shows admin-only audit navigation when the identity can access admin areas", async () => {
+  it("shows admin-only governance navigation when the identity can access admin areas", async () => {
     mockIdentity({
       ...requesterIdentity,
       activeRole: "admin",
@@ -186,9 +238,10 @@ describe("app shell", () => {
       </AppShell>,
     );
 
-    const auditNavItem = await screen.findByRole("link", { name: "Audit" });
-    expect(auditNavItem).toHaveAttribute("aria-disabled", "true");
-    expect(auditNavItem).toHaveAttribute("tabindex", "-1");
+    await expectIdentityLoaded();
+    const primaryNav = await screen.findByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Governance" })).toBeInTheDocument();
+    expect(within(primaryNav).getByRole("link", { name: "Admin" })).toBeInTheDocument();
   });
 
   it("shows system readiness and navigation in the shell for admin identities", async () => {
@@ -219,8 +272,8 @@ describe("app shell", () => {
 
     await expectIdentityLoaded();
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("System");
-    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(within(primaryNav).getByRole("link", { name: "System" })).toHaveAttribute(
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Admin" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -265,7 +318,7 @@ describe("app shell", () => {
     expect((await screen.findAllByText("Operational workspace")).length).toBeGreaterThan(0);
   });
 
-  it("opens and closes mobile navigation with the keyboard", async () => {
+  it("tracks primary sidebar state on dashboard routes", async () => {
     const user = userEvent.setup();
 
     renderWithQuery(
@@ -275,44 +328,160 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    const openButton = screen.getByRole("button", { name: "Open navigation" });
-    openButton.focus();
+    const shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "expanded");
+    expect(shell).toHaveAttribute("data-secondary-present", "false");
 
-    await user.click(openButton);
-    const dialog = screen.getByRole("dialog", { name: "Navigation" });
-    expect(dialog).toHaveAttribute("data-state", "open");
-    expect(within(dialog).getByRole("button", { name: "Close navigation" })).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "Collapse primary sidebar" }));
 
-    await user.keyboard("{Escape}");
-    expect(screen.queryByRole("dialog", { name: "Navigation" })).not.toBeInTheDocument();
-    expect(openButton).toHaveFocus();
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(screen.getByRole("button", { name: "Expand primary sidebar" })).toBeInTheDocument();
   });
 
-  it("keeps focus and page scroll contained while mobile navigation is open", async () => {
+  it("tracks secondary sidebar state on procurement routes", async () => {
     const user = userEvent.setup();
-    const previousOverflow = document.body.style.overflow;
+
+    mockPathname = "/requisitions";
 
     renderWithQuery(
       <AppShell>
-        <h1>Dashboard content</h1>
+        <h1>Requisitions workspace</h1>
       </AppShell>,
     );
 
     await expectIdentityLoaded();
-    await user.click(screen.getByRole("button", { name: "Open navigation" }));
+    const shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-present", "true");
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+    expect(screen.queryByRole("button", { name: "Collapse primary sidebar" })).toBeNull();
 
-    const dialog = screen.getByRole("dialog", { name: "Navigation" });
-    expect(document.body).toHaveAttribute("data-scroll-locked", "1");
+    await user.click(screen.getByRole("button", { name: "Collapse secondary sidebar" }));
 
-    const closeButton = within(dialog).getByRole("button", { name: "Close navigation" });
-    const links = within(dialog).getAllByRole("link");
-    links[links.length - 1].focus();
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-state", "collapsed");
+    expect(screen.getByRole("button", { name: "Expand secondary sidebar" })).toBeInTheDocument();
+  });
 
-    await user.tab();
-    expect(closeButton).toHaveFocus();
+  it("keeps dashboard primary state stable when the shortcut is used on secondary routes", async () => {
+    mockPathname = "/requisitions";
 
-    await user.keyboard("{Escape}");
-    expect(document.body.style.overflow).toBe(previousOverflow);
-    expect(document.body).not.toHaveAttribute("data-scroll-locked");
+    const view = renderWithQuery(
+      <AppShell>
+        <h1>Requisitions workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    let shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-state", "collapsed");
+
+    mockPathname = "/dashboard";
+    view.rerender(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: {
+              queries: { retry: false },
+              mutations: { retry: false },
+            },
+          })
+        }
+      >
+        <AppShell>
+          <h1>Dashboard content</h1>
+        </AppShell>
+      </QueryClientProvider>,
+    );
+
+    await expect(screen.findByRole("navigation", { name: "Primary product areas" })).resolves.toBeTruthy();
+    shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "expanded");
+    expect(shell).toHaveAttribute("data-secondary-present", "false");
+  });
+
+  it("does not collapse the secondary sidebar when the shortcut is used in editable content", async () => {
+    mockPathname = "/requisitions";
+
+    renderWithQuery(
+      <AppShell>
+        <label htmlFor="line-search">Line search</label>
+        <input id="line-search" />
+        <div contentEditable role="textbox" aria-label="Internal note" />
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+
+    fireEvent.keyDown(screen.getByLabelText("Line search"), { key: "b", ctrlKey: true });
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Internal note" }), {
+      key: "b",
+      metaKey: true,
+    });
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+  });
+
+  it("shows procurement primary navigation for sourcing-only identities", async () => {
+    mockIdentity({
+      ...requesterIdentity,
+      permissions: {
+        ...requesterIdentity.permissions,
+        canCreateRequisition: false,
+        canUpdateOwnDraftRequisition: false,
+        canSubmitOwnDraftRequisition: false,
+        canManageSourcingIntake: true,
+      },
+    });
+    mockPathname = "/sourcing/intake";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Sourcing intake workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Procurement" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("shows procurement primary navigation for quotation-only identities", async () => {
+    mockIdentity({
+      ...requesterIdentity,
+      permissions: {
+        ...requesterIdentity.permissions,
+        canCreateRequisition: false,
+        canUpdateOwnDraftRequisition: false,
+        canSubmitOwnDraftRequisition: false,
+        canReviewQuotationNormalization: true,
+      },
+    });
+    mockPathname = "/quotations/normalizations";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Quotations workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Procurement" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

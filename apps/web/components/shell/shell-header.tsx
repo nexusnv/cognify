@@ -20,7 +20,7 @@ export interface ShellHeaderProps {
   userName: string;
   roleLabel: string;
   breadcrumbs: BreadcrumbItem[];
-  mobileNav: React.ReactNode;
+  sidebarToggle: React.ReactNode;
   logoutPending?: boolean;
   onLogout?: () => void;
 }
@@ -30,7 +30,7 @@ export function ShellHeader({
   userName,
   roleLabel,
   breadcrumbs,
-  mobileNav,
+  sidebarToggle,
   logoutPending = false,
   onLogout,
 }: ShellHeaderProps) {
@@ -41,7 +41,7 @@ export function ShellHeader({
   return (
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
       <div className="flex min-h-16 items-center gap-3 px-4 md:px-6">
-        {mobileNav}
+        {sidebarToggle}
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <span className="truncate font-medium">{displayedTenantName}</span>

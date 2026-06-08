@@ -2,7 +2,19 @@ import type {
   IdentityPermissions,
   TenantRole,
 } from "@/features/identity/types/identity-view-model";
-import type { ShellNavGroup } from "./shell-types";
+import type { ShellNavGroup, ShellPrimaryNavItem } from "./shell-types";
+
+function canAccessProcurementArea(permissions: IdentityPermissions): boolean {
+  return (
+    permissions.canCreateRequisition ||
+    permissions.canViewSubmittedRequisitions ||
+    permissions.canUpdateOwnDraftRequisition ||
+    permissions.canSubmitOwnDraftRequisition ||
+    permissions.canManageSourcingIntake ||
+    permissions.canReviewQuotationNormalization ||
+    permissions.canAccessAdmin
+  );
+}
 
 export function formatWorkspaceLabel(name: string | null | undefined): string {
   const trimmed = name?.trim() ?? "";
@@ -35,4 +47,17 @@ export function getVisibleNavGroups(
       items: group.items.filter((item) => (item.permission ? item.permission(permissions) : true)),
     }))
     .filter((group) => group.items.length > 0);
+}
+
+export function getVisiblePrimaryNavItems(
+  items: ShellPrimaryNavItem[],
+  permissions: IdentityPermissions,
+): ShellPrimaryNavItem[] {
+  return items.filter((item) => {
+    if (item.area === "procurement") {
+      return canAccessProcurementArea(permissions);
+    }
+
+    return item.permission ? item.permission(permissions) : true;
+  });
 }
