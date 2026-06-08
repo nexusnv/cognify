@@ -5,3 +5,4 @@ Cognify is an AI-assisted procurement governance platform for requisitions, quot
 ## Roadmap
 
 - `feature-roadmap.md`
+- `navigation-information-architecture.md`
