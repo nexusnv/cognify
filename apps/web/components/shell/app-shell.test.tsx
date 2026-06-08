@@ -90,7 +90,7 @@ describe("app shell", () => {
     expect(screen.getByRole("button", { name: /open navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Test User" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Account menu" })).toBeEnabled();
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");
@@ -106,7 +106,7 @@ describe("app shell", () => {
     );
 
     await expectIdentityLoaded();
-    await user.click(screen.getByRole("button", { name: "Test User" }));
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
     const menu = await screen.findByRole("menu");
     expect(menu).toHaveClass("bg-popover", "shadow-md");
     await user.click(within(menu).getByRole("menuitem", { name: "Sign out" }));

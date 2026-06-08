@@ -295,7 +295,7 @@ describe("identity workflow", () => {
     expect(screen.getByText(/Signed in as Test User\./)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Northwind Sourcing" }));
+    await user.click(screen.getByRole("button", { name: "Northwind Sourcing buyer" }));
 
     expect(await screen.findByText("Workspace ready")).toBeInTheDocument();
   });

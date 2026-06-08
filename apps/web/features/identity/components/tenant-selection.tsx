@@ -17,7 +17,7 @@ export function TenantSelection() {
   const [selectingTenantId, setSelectingTenantId] = useState<string | null>(null);
 
   const tenants = data?.data.tenants ?? [];
-  const userName = data?.data.user.name?.trim() || "your Cognify account";
+  const userName = data?.data.user.name?.trim() || "a Cognify user";
 
   if (tenants.length <= 1) return null;
 
@@ -61,7 +61,7 @@ export function TenantSelection() {
                 onClick={() => handleSelect(tenant.id)}
                 disabled={selectingTenantId !== null || logoutMutation.isPending}
                 aria-busy={selectingTenantId === tenant.id}
-                aria-label={tenant.name}
+                aria-label={`${tenant.name} ${tenant.role}`}
                 className="h-auto justify-between whitespace-normal px-4 py-3 text-left"
               >
                 <span>
