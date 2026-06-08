@@ -24,16 +24,53 @@ class PurchaseOrderController extends Controller
     {
         $tenant = $this->tenantOrAbort($currentTenant);
         $this->authorize('viewAny', PurchaseOrder::class);
+        $validated = $request->validate([
+            'status' => ['sometimes', 'string'],
+            'vendorId' => ['sometimes', 'string'],
+            'requisitionId' => ['sometimes', 'string'],
+            'projectId' => ['sometimes', 'string'],
+            'requesterId' => ['sometimes', 'string'],
+            'requestedByUserId' => ['sometimes', 'string'],
+            'search' => ['sometimes', 'string'],
+            'updatedFrom' => ['sometimes', 'date'],
+            'updatedTo' => ['sometimes', 'date'],
+            'perPage' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
 
-        $purchaseOrders = PurchaseOrder::query()
+        $query = PurchaseOrder::query()
             ->where('tenant_id', $tenant->id)
-            ->with('lines')
-            ->latest('updated_at')
-            ->latest('id')
-            ->get();
+            ->with('lines');
+
+        $query
+            ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->when($validated['vendorId'] ?? null, fn ($query, string $vendorId) => $query->where('vendor_id', $vendorId))
+            ->when($validated['requisitionId'] ?? null, fn ($query, string $requisitionId) => $query->where('requisition_id', $requisitionId))
+            ->when($validated['projectId'] ?? null, fn ($query, string $projectId) => $query->where('project_id', $projectId))
+            ->when(
+                $validated['requestedByUserId'] ?? $validated['requesterId'] ?? null,
+                fn ($query, string $requesterId) => $query->where('created_by_user_id', $requesterId)
+            )
+            ->when($validated['updatedFrom'] ?? null, fn ($query, string $date) => $query->whereDate('updated_at', '>=', $date))
+            ->when($validated['updatedTo'] ?? null, fn ($query, string $date) => $query->whereDate('updated_at', '<=', $date))
+            ->when($validated['search'] ?? null, function ($query, string $search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('number', 'like', "%{$search}%")
+                        ->orWhere('source_snapshot', 'like', "%{$search}%");
+                });
+            })
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id');
+
+        $paginator = $query->paginate((int) ($validated['perPage'] ?? 15));
 
         return response()->json([
-            'data' => PurchaseOrderResource::collection($purchaseOrders)->resolve($request),
+            'data' => PurchaseOrderResource::collection($paginator->getCollection())->resolve($request),
+            'meta' => [
+                'currentPage' => $paginator->currentPage(),
+                'perPage' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'lastPage' => $paginator->lastPage(),
+            ],
         ]);
     }
 

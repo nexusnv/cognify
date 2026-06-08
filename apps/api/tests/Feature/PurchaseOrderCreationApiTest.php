@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Audit\AuditEvent;
 use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
@@ -307,6 +308,91 @@ class PurchaseOrderCreationApiTest extends TestCase
             'lock_version' => 1,
             'buyer_note' => 'cancelled note',
         ]);
+    }
+
+    public function test_purchase_order_list_is_paginated_and_filterable(): void
+    {
+        $matchingHandoff = $this->readyPurchaseOrderHandoff();
+        $buyer = $this->tenantUser($matchingHandoff->tenant, TenantRole::Buyer->value);
+        $otherHandoff = $this->readyPurchaseOrderHandoff();
+
+        $matching = $this->draftPurchaseOrder($matchingHandoff, attributes: [
+            'number' => 'PO-2026-MATCH',
+            'source_snapshot' => json_encode([
+                'vendor' => ['id' => (string) $matchingHandoff->vendor_id, 'name' => 'Northwind Traders'],
+            ]),
+            'updated_at' => '2026-06-10 10:00:00',
+        ]);
+
+        $this->draftPurchaseOrder($otherHandoff, attributes: [
+            'number' => 'PO-2026-OTHER',
+            'status' => 'cancelled',
+            'updated_at' => '2026-06-01 10:00:00',
+        ]);
+
+        $this->actingAsTenant($matchingHandoff->tenant, $buyer)
+            ->getJson('/api/purchase-orders?status=draft&vendorId='.$matchingHandoff->vendor_id.'&requestedByUserId='.$matchingHandoff->requested_by_user_id.'&search=Northwind&updatedFrom=2026-06-09&updatedTo=2026-06-10&perPage=1')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $matching->id)
+            ->assertJsonPath('meta.currentPage', 1)
+            ->assertJsonPath('meta.perPage', 1)
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.lastPage', 1);
+    }
+
+    public function test_purchase_order_actions_record_context_rich_audit_metadata(): void
+    {
+        $handoff = $this->readyPurchaseOrderHandoff();
+        $buyer = $this->tenantUser($handoff->tenant, TenantRole::Buyer->value);
+
+        $purchaseOrderId = $this->actingAsTenant($handoff->tenant, $buyer)
+            ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
+            ->assertCreated()
+            ->json('data.id');
+
+        $this->actingAsTenant($handoff->tenant, $buyer)
+            ->patchJson("/api/purchase-orders/{$purchaseOrderId}", [
+                'lockVersion' => 1,
+                'billingName' => 'Acme Finance',
+                'billingAddress' => ['line1' => 'Level 10', 'city' => 'Kuala Lumpur', 'country' => 'MY'],
+                'shippingName' => 'Acme Warehouse',
+                'shippingAddress' => ['line1' => 'Dock 4', 'city' => 'Shah Alam', 'country' => 'MY'],
+                'paymentTerms' => 'Net 30',
+                'buyerNote' => 'Updated buyer note',
+            ])
+            ->assertOk();
+
+        $this->actingAsTenant($handoff->tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$purchaseOrderId}/ready-for-review", [
+                'lockVersion' => 2,
+            ])
+            ->assertOk();
+
+        $cancelled = $this->draftPurchaseOrder();
+        $this->actingAsTenant($cancelled->tenant, $this->tenantUser($cancelled->tenant, TenantRole::Buyer->value))
+            ->postJson("/api/purchase-orders/{$cancelled->id}/cancel", [
+                'lockVersion' => $cancelled->lock_version,
+                'reason' => 'Buyer cancelled duplicate draft.',
+            ])
+            ->assertOk();
+
+        $createdPurchaseOrder = PurchaseOrder::query()->with('handoff')->findOrFail($purchaseOrderId);
+        $createdEvent = AuditEvent::query()->where('action', 'purchase_order.created')->latest('id')->firstOrFail();
+        $updatedEvent = AuditEvent::query()->where('action', 'purchase_order.updated')->latest('id')->firstOrFail();
+        $readyEvent = AuditEvent::query()->where('action', 'purchase_order.ready_for_review')->latest('id')->firstOrFail();
+        $cancelledEvent = AuditEvent::query()->where('action', 'purchase_order.cancelled')->latest('id')->firstOrFail();
+
+        $this->assertSame($purchaseOrderId, data_get($createdEvent->metadata, 'purchaseOrderId'));
+        $this->assertSame($createdPurchaseOrder->number, data_get($createdEvent->metadata, 'purchaseOrderNumber'));
+        $this->assertSame((string) $handoff->id, data_get($createdEvent->metadata, 'handoffId'));
+        $this->assertSame('POH-2026-000001', data_get($createdEvent->metadata, 'handoffNumber'));
+        $this->assertSame((string) $handoff->rfq_award_recommendation_id, data_get($createdEvent->metadata, 'recommendationId'));
+        $this->assertSame((string) $handoff->vendor_id, data_get($createdEvent->metadata, 'vendorId'));
+        $this->assertSame('131100.00', data_get($createdEvent->metadata, 'totalAmount'));
+        $this->assertSame('MYR', data_get($createdEvent->metadata, 'currency'));
+        $this->assertSame('billingName', data_get($updatedEvent->metadata, 'changedFields.0'));
+        $this->assertSame('ready_for_review', data_get($readyEvent->metadata, 'toStatus'));
+        $this->assertSame('Buyer cancelled duplicate draft.', data_get($cancelledEvent->metadata, 'reason'));
     }
 
     public function test_purchase_order_routes_require_real_session_auth_and_tenant_context(): void

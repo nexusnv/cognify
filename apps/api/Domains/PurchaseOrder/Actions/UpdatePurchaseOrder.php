@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -47,6 +48,7 @@ class UpdatePurchaseOrder
                 'finance_note',
                 'lock_version',
             ]);
+            $changedFields = [];
 
             $attributes = ['lock_version' => $purchaseOrder->lock_version + 1];
 
@@ -67,6 +69,7 @@ class UpdatePurchaseOrder
             foreach ($optionalFields as $inputKey => $column) {
                 if (Arr::exists($data, $inputKey)) {
                     $attributes[$column] = $data[$inputKey];
+                    $changedFields[] = $inputKey;
                 }
             }
 
@@ -79,6 +82,11 @@ class UpdatePurchaseOrder
                 actor: $actor,
                 action: 'purchase_order.updated',
                 subject: $purchaseOrder,
+                metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
+                    'changedFields' => $changedFields,
+                    'fromStatus' => PurchaseOrderStatus::Draft->value,
+                    'toStatus' => PurchaseOrderStatus::Draft->value,
+                ]),
                 before: $before,
                 after: $after,
             ));

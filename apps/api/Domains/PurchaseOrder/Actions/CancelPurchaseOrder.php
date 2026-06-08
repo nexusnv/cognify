@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -55,6 +56,11 @@ class CancelPurchaseOrder
                 actor: $actor,
                 action: 'purchase_order.cancelled',
                 subject: $purchaseOrder,
+                metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
+                    'fromStatus' => PurchaseOrderStatus::Draft->value,
+                    'toStatus' => PurchaseOrderStatus::Cancelled->value,
+                    'reason' => $reason,
+                ]),
                 before: $before,
                 after: $purchaseOrder->only([
                     'status',

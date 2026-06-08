@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -62,6 +63,10 @@ class MarkPurchaseOrderReadyForReview
                 actor: $actor,
                 action: 'purchase_order.ready_for_review',
                 subject: $purchaseOrder,
+                metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
+                    'fromStatus' => PurchaseOrderStatus::Draft->value,
+                    'toStatus' => PurchaseOrderStatus::ReadyForReview->value,
+                ]),
                 before: $before,
                 after: $purchaseOrder->only([
                     'status',

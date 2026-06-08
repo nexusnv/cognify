@@ -10,6 +10,7 @@ use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Domains\PurchaseOrder\Support\PurchaseOrderNumber;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -110,10 +111,9 @@ class CreatePurchaseOrderFromHandoff
                 actor: $actor,
                 action: 'purchase_order.created',
                 subject: $purchaseOrder,
-                metadata: [
-                    'handoffId' => (string) $handoff->id,
-                    'handoffNumber' => $handoff->number,
-                ],
+                metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, $handoff, [
+                    'createdFromStatus' => $handoff->statusState()->value,
+                ]),
                 after: $purchaseOrder->toArray(),
             ));
 
