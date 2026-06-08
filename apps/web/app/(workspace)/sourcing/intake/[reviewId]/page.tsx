@@ -1,5 +1,7 @@
 import { SourcingIntakeDetailPage } from "@/features/sourcing/workflows/sourcing-intake-detail-page";
 
-export default function Page({ params }: { params: { reviewId: string } }) {
-  return <SourcingIntakeDetailPage reviewId={params.reviewId} />;
+export default async function Page({ params }: { params: Promise<{ reviewId: string }> }) {
+  const { reviewId } = await params;
+
+  return <SourcingIntakeDetailPage reviewId={reviewId} />;
 }

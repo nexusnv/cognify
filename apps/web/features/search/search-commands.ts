@@ -1,35 +1,95 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { shellNavGroups } from "@/components/shell/shell-route-config";
-import { getVisibleNavGroups } from "@/components/shell/shell-utils";
+import {
+  CalendarDays,
+  CheckSquare,
+  FileText,
+  FolderKanban,
+  Plus,
+  ReceiptText,
+  Settings,
+} from "lucide-react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
+import { canUseCalendar, canUseRequisitions } from "@/components/default-shell/shell-utils";
 import type { SearchCommandViewModel } from "./types/search-view-model";
 
 export function getSearchCommands(
   permissions?: IdentityPermissions | null,
 ): SearchCommandViewModel[] {
-  const visibleGroups = permissions
-    ? getVisibleNavGroups(shellNavGroups, permissions)
-    : shellNavGroups.map((group) => ({
-        ...group,
-        items: [],
-      }));
+  if (!permissions) return [];
 
-  const navigationCommands = visibleGroups.flatMap((group) =>
-    group.items
-      .filter((item) => item.implemented)
-      .map((item) => ({
-        id: `navigate:${item.href}`,
-        group: "Navigation",
-        label: `Open ${item.label.toLowerCase()}`,
-        description: `Go to ${item.label.toLowerCase()}`,
-        href: item.href,
-        keywords: [item.label.toLowerCase(), group.label.toLowerCase()],
-        icon: item.icon,
-        enabled: true,
-      })),
-  );
+  const navigationCommands: SearchCommandViewModel[] = [
+    {
+      id: "navigate:/requisitions",
+      group: "Navigation",
+      label: "Open requisitions",
+      description: "Go to requisitions",
+      href: "/requisitions",
+      keywords: ["requisitions", "procurement"],
+      icon: FileText,
+      enabled: canUseRequisitions(permissions),
+    },
+    {
+      id: "navigate:/projects",
+      group: "Navigation",
+      label: "Open projects",
+      description: "Go to projects",
+      href: "/projects",
+      keywords: ["projects", "procurement"],
+      icon: FolderKanban,
+      enabled: canUseRequisitions(permissions),
+    },
+    {
+      id: "navigate:/approvals",
+      group: "Navigation",
+      label: "Open approvals",
+      description: "Go to approvals",
+      href: "/approvals",
+      keywords: ["approvals", "my work"],
+      icon: CheckSquare,
+      enabled: true,
+    },
+    {
+      id: "navigate:/calendar",
+      group: "Navigation",
+      label: "Open calendar",
+      description: "Go to calendar",
+      href: "/calendar",
+      keywords: ["calendar", "procurement"],
+      icon: CalendarDays,
+      enabled: canUseCalendar(permissions),
+    },
+    {
+      id: "navigate:/sourcing/intake",
+      group: "Navigation",
+      label: "Open sourcing intake",
+      description: "Go to sourcing intake",
+      href: "/sourcing/intake",
+      keywords: ["sourcing", "intake", "procurement"],
+      icon: CheckSquare,
+      enabled: permissions.canManageSourcingIntake,
+    },
+    {
+      id: "navigate:/quotations/normalizations",
+      group: "Navigation",
+      label: "Open quotations",
+      description: "Go to quotations",
+      href: "/quotations/normalizations",
+      keywords: ["quotations", "normalization", "procurement"],
+      icon: ReceiptText,
+      enabled: permissions.canReviewQuotationNormalization,
+    },
+    {
+      id: "navigate:/system",
+      group: "Navigation",
+      label: "Open system",
+      description: "Go to system",
+      href: "/system",
+      keywords: ["system", "admin"],
+      icon: Settings,
+      enabled: permissions.canAccessAdmin,
+    },
+  ];
 
   const createRequisitionCommand: SearchCommandViewModel = {
     id: "action:create-requisition",
@@ -42,5 +102,5 @@ export function getSearchCommands(
     enabled: permissions?.canCreateRequisition ?? false,
   };
 
-  return permissions ? [...navigationCommands, createRequisitionCommand] : navigationCommands;
+  return [...navigationCommands, createRequisitionCommand].filter((command) => command.enabled);
 }

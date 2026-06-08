@@ -2,7 +2,6 @@ import type {
   IdentityPermissions,
   TenantRole,
 } from "@/features/identity/types/identity-view-model";
-import type { ShellNavGroup } from "./shell-types";
 
 export function formatWorkspaceLabel(name: string | null | undefined): string {
   const trimmed = name?.trim() ?? "";
@@ -18,6 +17,19 @@ export function formatTenantRole(role: TenantRole | null | undefined): string {
     .join(" ");
 }
 
+export function getInitials(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) return "CN";
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
 export function isActivePath(itemHref: string, pathname: string): boolean {
   if (itemHref === "/dashboard") return pathname === "/dashboard" || pathname === "/";
   if (itemHref === "/") return pathname === "/";
@@ -25,14 +37,20 @@ export function isActivePath(itemHref: string, pathname: string): boolean {
   return pathname === itemHref || pathname.startsWith(`${itemHref}/`);
 }
 
-export function getVisibleNavGroups(
-  groups: ShellNavGroup[],
-  permissions: IdentityPermissions,
-): ShellNavGroup[] {
-  return groups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => (item.permission ? item.permission(permissions) : true)),
-    }))
-    .filter((group) => group.items.length > 0);
+export function canUseRequisitions(permissions: IdentityPermissions): boolean {
+  return (
+    permissions.canCreateRequisition ||
+    permissions.canViewSubmittedRequisitions ||
+    permissions.canUpdateOwnDraftRequisition ||
+    permissions.canSubmitOwnDraftRequisition
+  );
+}
+
+export function canUseCalendar(permissions: IdentityPermissions): boolean {
+  return (
+    permissions.canAccessAdmin ||
+    permissions.canManageSourcingIntake ||
+    permissions.canReviewQuotationNormalization ||
+    permissions.canViewSubmittedRequisitions
+  );
 }
