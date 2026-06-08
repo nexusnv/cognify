@@ -1,0 +1,90 @@
+<?php
+
+namespace Domains\PurchaseOrder\Http\Resources;
+
+use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Gate;
+
+/**
+ * @mixin PurchaseOrder
+ */
+class PurchaseOrderResource extends JsonResource
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        /** @var PurchaseOrder $purchaseOrder */
+        $purchaseOrder = $this->resource;
+        $user = $request->user();
+        $status = $purchaseOrder->statusState();
+        $vendor = data_get($purchaseOrder->source_snapshot, 'vendor');
+
+        if (! is_array($vendor)) {
+            $vendor = [];
+        }
+
+        if (! array_key_exists('id', $vendor)) {
+            $vendor['id'] = (string) $purchaseOrder->vendor_id;
+        }
+
+        if (! array_key_exists('name', $vendor)) {
+            $vendor['name'] = null;
+        }
+
+        return [
+            'id' => (string) $purchaseOrder->id,
+            'number' => $purchaseOrder->number,
+            'status' => $status->value,
+            'currency' => $purchaseOrder->currency,
+            'subtotalAmount' => (string) $purchaseOrder->subtotal_amount,
+            'taxAmount' => $purchaseOrder->tax_amount !== null ? (string) $purchaseOrder->tax_amount : null,
+            'freightAmount' => $purchaseOrder->freight_amount !== null ? (string) $purchaseOrder->freight_amount : null,
+            'discountAmount' => $purchaseOrder->discount_amount !== null ? (string) $purchaseOrder->discount_amount : null,
+            'totalAmount' => (string) $purchaseOrder->total_amount,
+            'requestedPoDate' => $purchaseOrder->requested_po_date?->toDateString(),
+            'expectedDeliveryDate' => $purchaseOrder->expected_delivery_date?->toDateString(),
+            'billingName' => $purchaseOrder->billing_name,
+            'billingAddress' => $purchaseOrder->billing_address,
+            'shippingName' => $purchaseOrder->shipping_name,
+            'shippingAddress' => $purchaseOrder->shipping_address,
+            'deliveryAttention' => $purchaseOrder->delivery_attention,
+            'paymentTerms' => $purchaseOrder->payment_terms,
+            'deliveryTerms' => $purchaseOrder->delivery_terms,
+            'buyerNote' => $purchaseOrder->buyer_note,
+            'financeNote' => $purchaseOrder->finance_note,
+            'source' => [
+                'handoffId' => (string) $purchaseOrder->purchase_order_request_handoff_id,
+                'recommendationId' => (string) $purchaseOrder->rfq_award_recommendation_id,
+                'rfqId' => (string) $purchaseOrder->rfq_id,
+                'requisitionId' => $purchaseOrder->requisition_id !== null ? (string) $purchaseOrder->requisition_id : null,
+                'projectId' => $purchaseOrder->project_id !== null ? (string) $purchaseOrder->project_id : null,
+                'quotationId' => $purchaseOrder->quotation_id !== null ? (string) $purchaseOrder->quotation_id : null,
+                'quotationVersionId' => $purchaseOrder->quotation_version_id !== null ? (string) $purchaseOrder->quotation_version_id : null,
+                'snapshot' => $purchaseOrder->source_snapshot ?? [],
+            ],
+            'vendor' => $vendor,
+            'approval' => $purchaseOrder->approval_snapshot ?? [],
+            'evidence' => $purchaseOrder->evidence_snapshot ?? [],
+            'lines' => $purchaseOrder->relationLoaded('lines')
+                ? PurchaseOrderLineResource::collection($purchaseOrder->lines)->resolve()
+                : [],
+            'lockVersion' => $purchaseOrder->lock_version,
+            'permissions' => [
+                'canUpdate' => $status === PurchaseOrderStatus::Draft
+                    && $user !== null
+                    && Gate::forUser($user)->check('update', $purchaseOrder),
+                'canMarkReadyForReview' => $status === PurchaseOrderStatus::Draft
+                    && $user !== null
+                    && Gate::forUser($user)->check('markReadyForReview', $purchaseOrder),
+                'canCancel' => $status === PurchaseOrderStatus::Draft
+                    && $user !== null
+                    && Gate::forUser($user)->check('cancel', $purchaseOrder),
+            ],
+        ];
+    }
+}

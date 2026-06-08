@@ -93,14 +93,14 @@ class PurchaseOrderCreationApiTest extends TestCase
         $this->actingAsTenant($draft->tenant, $draftBuyer)
             ->postJson("/api/po-handoffs/{$draft->id}/purchase-order")
             ->assertConflict()
-            ->assertJsonPath('message', 'PO handoff must be ready or exported before creating a purchase order.');
+            ->assertJsonPath('error.message', 'PO handoff must be ready or exported before creating a purchase order.');
 
         $this->assertNoPurchaseOrderForHandoff($draft->id);
 
         $this->actingAsTenant($cancelled->tenant, $cancelledBuyer)
             ->postJson("/api/po-handoffs/{$cancelled->id}/purchase-order")
             ->assertConflict()
-            ->assertJsonPath('message', 'Cancelled PO handoffs cannot create purchase orders.');
+            ->assertJsonPath('error.message', 'Cancelled PO handoffs cannot create purchase orders.');
 
         $this->assertNoPurchaseOrderForHandoff($cancelled->id);
     }
