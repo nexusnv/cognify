@@ -294,7 +294,8 @@ class PurchaseOrderCreationApiTest extends TestCase
     {
         $handoff = $this->readyPurchaseOrderHandoff();
         $buyer = $this->tenantUser($handoff->tenant, TenantRole::Buyer->value);
-        $purchaseOrder = $this->draftPurchaseOrder($handoff);
+        $otherTenant = Tenant::query()->create(['name' => 'Second tenant for PO session']);
+        $otherTenant->users()->attach($buyer->id, ['role' => TenantRole::Buyer->value]);
 
         $buyer->forceFill([
             'email' => 'purchase-order-session@example.com',
@@ -302,6 +303,7 @@ class PurchaseOrderCreationApiTest extends TestCase
         ])->save();
 
         Auth::forgetGuards();
+        app(CurrentTenant::class)->clear();
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->get('/sanctum/csrf-cookie')
@@ -314,18 +316,39 @@ class PurchaseOrderCreationApiTest extends TestCase
             ])
             ->assertNoContent();
 
-        $this->withHeader('Origin', 'http://localhost:8880')
+        $this->withoutHeader('X-Tenant-Id')
+            ->withHeader('Origin', 'http://localhost:8880')
+            ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
+            ->assertStatus(400)
+            ->assertJsonPath('error.message', 'X-Tenant-Id header is required for users with multiple tenants.')
+            ->assertJsonPath('error.code', 'ambiguous_tenant');
+
+        $createdPurchaseOrderId = $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
             ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
-            ->assertCreated();
+            ->assertCreated()
+            ->json('data.id');
+
+        $purchaseOrder = new PurchaseOrderReference($createdPurchaseOrderId ?: (string) Str::uuid(), $handoff->tenant, 1);
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
             ->patchJson("/api/purchase-orders/{$purchaseOrder->id}", [
                 'lockVersion' => $purchaseOrder->lock_version,
+                'requestedPoDate' => '2026-06-18',
+                'expectedDeliveryDate' => '2026-07-02',
+                'billingName' => 'Acme Finance',
+                'billingAddress' => ['line1' => 'Level 10', 'city' => 'Kuala Lumpur', 'country' => 'MY'],
+                'shippingName' => 'Acme Warehouse',
+                'shippingAddress' => ['line1' => 'Dock 4', 'city' => 'Shah Alam', 'country' => 'MY'],
+                'deliveryAttention' => 'Warehouse receiving',
+                'paymentTerms' => 'Net 30',
+                'deliveryTerms' => 'DAP',
                 'buyerNote' => 'session update',
+                'financeNote' => 'Charge to expansion budget.',
             ])
-            ->assertOk();
+            ->assertOk()
+            ->assertJsonPath('data.lockVersion', $purchaseOrder->lock_version + 1);
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $handoff->tenant_id)
