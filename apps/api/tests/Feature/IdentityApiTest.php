@@ -49,6 +49,16 @@ class IdentityApiTest extends TestCase
         ]);
     }
 
+    public function test_current_identity_returns_json_unauthenticated_response_without_login_route(): void
+    {
+        $response = $this->withHeader('Origin', 'http://localhost:8880')
+            ->get('/api/me');
+
+        $response->assertStatus(401);
+        $response->assertJsonPath('error.code', 'unauthenticated');
+        $response->assertJsonPath('error.message', 'Authentication is required.');
+    }
+
     public function test_login_rejects_invalid_credentials(): void
     {
         $response = $this->withHeader('Origin', 'http://localhost:8880')
