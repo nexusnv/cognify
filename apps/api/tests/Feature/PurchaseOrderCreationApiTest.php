@@ -162,6 +162,7 @@ class PurchaseOrderCreationApiTest extends TestCase
         $handoff = $this->readyPurchaseOrderHandoff();
         $requester = $this->tenantUser($handoff->tenant, TenantRole::Requester->value);
         $po = $this->draftPurchaseOrder($handoff);
+        $vendorLike = User::factory()->create(['password' => Hash::make('secret123')]);
 
         $this->actingAsTenant($handoff->tenant, $requester)
             ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
@@ -171,6 +172,20 @@ class PurchaseOrderCreationApiTest extends TestCase
             ->patchJson("/api/purchase-orders/{$po->id}", [
                 'lockVersion' => $po->lock_version,
                 'buyerNote' => 'Requester should not update purchase orders.',
+            ])
+            ->assertForbidden();
+
+        Sanctum::actingAs($vendorLike);
+        app(CurrentTenant::class)->set($handoff->tenant);
+
+        $this->withHeader('X-Tenant-Id', (string) $handoff->tenant->id)
+            ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
+            ->assertForbidden();
+
+        $this->withHeader('X-Tenant-Id', (string) $po->tenant->id)
+            ->patchJson("/api/purchase-orders/{$po->id}", [
+                'lockVersion' => $po->lock_version,
+                'buyerNote' => 'Vendor-like actor should not update purchase orders.',
             ])
             ->assertForbidden();
     }
