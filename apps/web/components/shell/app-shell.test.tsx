@@ -158,6 +158,55 @@ describe("app shell", () => {
     );
   });
 
+  it("renders the future primary-only dashboard navigation layout", async () => {
+    mockPathname = "/dashboard";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Dashboard content</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(screen.queryByRole("navigation", { name: "Secondary workspace navigation" })).toBeNull();
+    expect(within(primaryNav).getByRole("link", { name: "Home" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("button", { name: "Collapse primary sidebar" })).toBeInTheDocument();
+  });
+
+  it("renders the future procurement route with primary and secondary sidebars", async () => {
+    mockPathname = "/requisitions";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Requisitions workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    expect(screen.getByRole("navigation", { name: "Primary product areas" })).toBeInTheDocument();
+    const secondaryNav = screen.getByRole("navigation", {
+      name: "Secondary workspace navigation",
+    });
+    expect(within(secondaryNav).getByRole("link", { name: "Requisitions" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(secondaryNav).getByText("Fulfillment")).toBeInTheDocument();
+    expect(within(secondaryNav).getByRole("link", { name: "Purchase orders" })).toHaveAttribute(
+      "href",
+      "/purchase-orders",
+    );
+    expect(
+      within(secondaryNav).getByRole("link", { name: "Purchase orders" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Collapse secondary sidebar" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse primary sidebar" })).toBeNull();
+  });
+
   it("hides admin-only audit navigation from requester identities", async () => {
     renderWithQuery(
       <AppShell>
