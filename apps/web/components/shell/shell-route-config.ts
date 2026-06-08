@@ -13,7 +13,13 @@ import {
   UserRound,
 } from "lucide-react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
-import type { BreadcrumbItem, ShellNavGroup } from "./shell-types";
+import type {
+  BreadcrumbItem,
+  ShellNavGroup,
+  ShellPrimaryNavItem,
+  ShellRouteContext,
+} from "./shell-types";
+import { getVisibleNavGroups } from "./shell-utils";
 
 const canUseRequisitions = (permissions: IdentityPermissions) =>
   permissions.canCreateRequisition ||
@@ -44,13 +50,108 @@ const QUOTATION_SCORING_WORKSPACE_PATH = /^\/quotations\/scoring\/[^/]+$/;
 const QUOTATION_SCORING_TEMPLATE_WORKSPACE_PATH = /^\/quotations\/scoring\/templates\/[^/]+$/;
 const QUOTATION_AWARD_WORKSPACE_PATH = /^\/quotations\/awards\/[^/]+$/;
 
-export const shellNavGroups: ShellNavGroup[] = [
+const PROCUREMENT_ROUTE_PATTERNS = [
+  /^\/requisitions(?:\/.*)?$/,
+  /^\/projects(?:\/.*)?$/,
+  /^\/sourcing(?:\/.*)?$/,
+  /^\/quotations(?:\/.*)?$/,
+  /^\/calendar$/,
+];
+
+export const primaryShellNavItems: ShellPrimaryNavItem[] = [
+  { id: "home", area: "home", label: "Home", href: "/dashboard", icon: Gauge, implemented: true },
   {
-    id: "work",
-    label: "Work",
+    id: "my-work",
+    area: "my-work",
+    label: "My Work",
+    href: "/approvals",
+    icon: CheckSquare,
+    implemented: true,
+  },
+  {
+    id: "procurement",
+    area: "procurement",
+    label: "Procurement",
+    href: "/requisitions",
+    icon: FileText,
+    implemented: true,
+    permission: canUseRequisitions,
+  },
+  {
+    id: "vendors",
+    area: "vendors",
+    label: "Vendors",
+    href: "/vendors",
+    icon: Building2,
+    implemented: false,
+  },
+  {
+    id: "finance",
+    area: "finance",
+    label: "Finance",
+    href: "/finance",
+    icon: ReceiptText,
+    implemented: false,
+  },
+  {
+    id: "evidence",
+    area: "evidence",
+    label: "Evidence",
+    href: "/evidence",
+    icon: Archive,
+    implemented: false,
+  },
+  {
+    id: "analytics",
+    area: "analytics",
+    label: "Analytics",
+    href: "/analytics",
+    icon: Activity,
+    implemented: false,
+  },
+  {
+    id: "governance",
+    area: "governance",
+    label: "Governance",
+    href: "/approval-policies",
+    icon: ClipboardCheck,
+    implemented: true,
+    permission: canUseAudit,
+  },
+  {
+    id: "admin",
+    area: "admin",
+    label: "Admin",
+    href: "/system",
+    icon: FileSearch,
+    implemented: true,
+    permission: canUseAudit,
+  },
+  {
+    id: "integrations",
+    area: "integrations",
+    label: "Integrations",
+    href: "/integrations",
+    icon: UserRound,
+    implemented: false,
+  },
+  {
+    id: "account",
+    area: "account",
+    label: "Account",
+    href: "/account",
+    icon: UserRound,
+    implemented: true,
+  },
+];
+
+export const procurementSecondaryNavGroups: ShellNavGroup[] = [
+  {
+    id: "procurement-work",
+    label: "Procurement",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: Gauge, implemented: true },
       {
+        id: "requisitions",
         label: "Requisitions",
         href: "/requisitions",
         icon: FileText,
@@ -58,13 +159,110 @@ export const shellNavGroups: ShellNavGroup[] = [
         permission: canUseRequisitions,
       },
       {
+        id: "projects",
         label: "Projects",
         href: "/projects",
         icon: FolderKanban,
         implemented: true,
         permission: canUseRequisitions,
       },
-      { label: "Approvals", href: "/approvals", icon: CheckSquare, implemented: true },
+      {
+        id: "buyer-intake",
+        label: "Buyer intake",
+        href: "/sourcing/intake",
+        icon: ClipboardCheck,
+        implemented: true,
+        permission: canUseSourcingIntake,
+      },
+      {
+        id: "calendar",
+        label: "Calendar",
+        href: "/calendar",
+        icon: CalendarDays,
+        implemented: true,
+        permission: canUseCalendar,
+      },
+    ],
+  },
+  {
+    id: "procurement-sourcing",
+    label: "Sourcing",
+    items: [
+      {
+        id: "quotations",
+        label: "Quotations",
+        href: "/quotations/normalizations",
+        icon: ReceiptText,
+        implemented: true,
+        permission: canUseQuotationNormalizations,
+      },
+      {
+        id: "rfqs",
+        label: "RFQs",
+        href: "/sourcing/rfqs",
+        icon: ClipboardCheck,
+        implemented: false,
+      },
+      {
+        id: "awards",
+        label: "Awards",
+        href: "/quotations/awards",
+        icon: CheckSquare,
+        implemented: false,
+      },
+    ],
+  },
+  {
+    id: "procurement-fulfillment",
+    label: "Fulfillment",
+    items: [
+      {
+        id: "purchase-orders",
+        label: "Purchase orders",
+        href: "/purchase-orders",
+        icon: ReceiptText,
+        implemented: false,
+      },
+      {
+        id: "receiving",
+        label: "Receiving",
+        href: "/receiving",
+        icon: ClipboardCheck,
+        implemented: false,
+      },
+    ],
+  },
+];
+
+export const shellNavGroups: ShellNavGroup[] = [
+  {
+    id: "work",
+    label: "Work",
+    items: [
+      { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: Gauge, implemented: true },
+      {
+        id: "requisitions",
+        label: "Requisitions",
+        href: "/requisitions",
+        icon: FileText,
+        implemented: true,
+        permission: canUseRequisitions,
+      },
+      {
+        id: "projects",
+        label: "Projects",
+        href: "/projects",
+        icon: FolderKanban,
+        implemented: true,
+        permission: canUseRequisitions,
+      },
+      {
+        id: "approvals",
+        label: "Approvals",
+        href: "/approvals",
+        icon: CheckSquare,
+        implemented: true,
+      },
     ],
   },
   {
@@ -72,6 +270,7 @@ export const shellNavGroups: ShellNavGroup[] = [
     label: "Sourcing",
     items: [
       {
+        id: "calendar",
         label: "Calendar",
         href: "/calendar",
         icon: CalendarDays,
@@ -79,14 +278,22 @@ export const shellNavGroups: ShellNavGroup[] = [
         permission: canUseCalendar,
       },
       {
+        id: "sourcing-intake",
         label: "Sourcing intake",
         href: "/sourcing/intake",
         icon: ClipboardCheck,
         implemented: true,
         permission: canUseSourcingIntake,
       },
-      { label: "Vendors", href: "/vendors", icon: Building2, implemented: false },
       {
+        id: "vendors",
+        label: "Vendors",
+        href: "/vendors",
+        icon: Building2,
+        implemented: false,
+      },
+      {
+        id: "quotations",
         label: "Quotations",
         href: "/quotations/normalizations",
         icon: ReceiptText,
@@ -99,8 +306,15 @@ export const shellNavGroups: ShellNavGroup[] = [
     id: "governance",
     label: "Governance",
     items: [
-      { label: "Evidence", href: "/evidence", icon: Archive, implemented: false },
       {
+        id: "evidence",
+        label: "Evidence",
+        href: "/evidence",
+        icon: Archive,
+        implemented: false,
+      },
+      {
+        id: "audit",
         label: "Audit",
         href: "/audit",
         icon: FileSearch,
@@ -108,6 +322,7 @@ export const shellNavGroups: ShellNavGroup[] = [
         permission: canUseAudit,
       },
       {
+        id: "approval-policies",
         label: "Approval policies",
         href: "/approval-policies",
         icon: CheckSquare,
@@ -121,16 +336,95 @@ export const shellNavGroups: ShellNavGroup[] = [
     label: "Manage",
     items: [
       {
+        id: "system",
         label: "System",
         href: "/system",
         icon: Activity,
         implemented: true,
         permission: canUseAudit,
       },
-      { label: "Account", href: "/account", icon: UserRound, implemented: true },
+      {
+        id: "account",
+        label: "Account",
+        href: "/account",
+        icon: UserRound,
+        implemented: true,
+      },
     ],
   },
 ];
+
+function matchesAnyPattern(pathname: string, patterns: RegExp[]) {
+  return patterns.some((pattern) => pattern.test(pathname));
+}
+
+export function getShellRouteContext(
+  pathname: string,
+  permissions: IdentityPermissions | undefined,
+): ShellRouteContext {
+  const normalizedPathname = pathname.replace(/\/+$/, "") || "/";
+
+  if (matchesAnyPattern(normalizedPathname, PROCUREMENT_ROUTE_PATTERNS)) {
+    const secondaryGroups = permissions
+      ? getVisibleNavGroups(procurementSecondaryNavGroups, permissions)
+      : [];
+
+    return {
+      primaryArea: "procurement",
+      pageTemplate: normalizedPathname.includes("/new") ? "form-workspace" : "work-queue",
+      secondaryGroups,
+      hasSecondarySidebar: secondaryGroups.length > 0,
+    };
+  }
+
+  if (normalizedPathname === "/approvals" || normalizedPathname.startsWith("/approvals/")) {
+    return {
+      primaryArea: "my-work",
+      pageTemplate: normalizedPathname.startsWith("/approvals/tasks/")
+        ? "record-detail"
+        : "work-queue",
+      secondaryGroups: [],
+      hasSecondarySidebar: false,
+    };
+  }
+
+  if (
+    normalizedPathname === "/approval-policies" ||
+    normalizedPathname.startsWith("/approval-policies/")
+  ) {
+    return {
+      primaryArea: "governance",
+      pageTemplate: normalizedPathname.endsWith("/new") ? "form-workspace" : "work-queue",
+      secondaryGroups: [],
+      hasSecondarySidebar: false,
+    };
+  }
+
+  if (normalizedPathname === "/system") {
+    return {
+      primaryArea: "admin",
+      pageTemplate: "utility",
+      secondaryGroups: [],
+      hasSecondarySidebar: false,
+    };
+  }
+
+  if (normalizedPathname === "/account") {
+    return {
+      primaryArea: "account",
+      pageTemplate: "utility",
+      secondaryGroups: [],
+      hasSecondarySidebar: false,
+    };
+  }
+
+  return {
+    primaryArea: "home",
+    pageTemplate: "dashboard",
+    secondaryGroups: [],
+    hasSecondarySidebar: false,
+  };
+}
 
 export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   const normalizedPathname = pathname.replace(/\/+$/, "") || "/";

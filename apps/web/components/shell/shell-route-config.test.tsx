@@ -1,7 +1,60 @@
 import { describe, expect, it } from "vitest";
-import { getBreadcrumbs, shellNavGroups } from "./shell-route-config";
+import {
+  getBreadcrumbs,
+  getShellRouteContext,
+  primaryShellNavItems,
+  shellNavGroups,
+} from "./shell-route-config";
 import { getVisibleNavGroups } from "./shell-utils";
 import { requesterIdentity } from "../../features/identity/mocks/identity-fixtures";
+
+describe("shell route context", () => {
+  it("uses primary-only dashboard navigation by default", () => {
+    const context = getShellRouteContext("/dashboard", requesterIdentity.permissions);
+
+    expect(context.primaryArea).toBe("home");
+    expect(context.secondaryGroups).toEqual([]);
+    expect(context.hasSecondarySidebar).toBe(false);
+  });
+
+  it("uses procurement secondary navigation for requisition routes", () => {
+    const context = getShellRouteContext("/requisitions/req-1", requesterIdentity.permissions);
+
+    expect(context.primaryArea).toBe("procurement");
+    expect(context.hasSecondarySidebar).toBe(true);
+    expect(context.secondaryGroups.map((group) => group.id)).toContain("procurement-work");
+    expect(
+      context.secondaryGroups.flatMap((group) => group.items).map((item) => item.label),
+    ).toContain("Requisitions");
+  });
+
+  it("keeps unimplemented secondary links disabled instead of active links", () => {
+    const context = getShellRouteContext("/requisitions", requesterIdentity.permissions);
+    const purchaseOrders = context.secondaryGroups
+      .flatMap((group) => group.items)
+      .find((item) => item.label === "Purchase orders");
+
+    expect(purchaseOrders).toMatchObject({
+      href: "/purchase-orders",
+      implemented: false,
+    });
+  });
+
+  it("filters admin-only primary areas by permission", () => {
+    const requesterLabels = primaryShellNavItems
+      .filter((item) => (item.permission ? item.permission(requesterIdentity.permissions) : true))
+      .map((item) => item.label);
+
+    expect(requesterLabels).not.toContain("Admin");
+  });
+
+  it("preserves existing breadcrumbs while adding route context", () => {
+    expect(getBreadcrumbs("/requisitions/req-1")).toEqual([
+      { label: "Requisitions", href: "/requisitions" },
+      { label: "Requisition workspace" },
+    ]);
+  });
+});
 
 describe("shell route helpers", () => {
   it("resolves route breadcrumbs", () => {
