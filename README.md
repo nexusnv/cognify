@@ -1,6 +1,6 @@
 # Cognify
 
-Cognify is a greenfield multi-tenant enterprise procurement SaaS. This monorepo contains a Next.js frontend, a Laravel API backend, generated API client packages, shared tooling, and local Docker services for development testing.
+Cognify is a greenfield multi-tenant enterprise procure-to-pay SaaS. The target product covers requisitions, sourcing, awards, purchase orders, receiving, supplier invoices, matching, payment readiness, and spend visibility. This monorepo contains a Next.js frontend, a Laravel API backend, generated API client packages, shared tooling, and local Docker services for development testing.
 
 ## Repository Layout
 

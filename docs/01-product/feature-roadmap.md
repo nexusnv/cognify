@@ -2,12 +2,15 @@
 
 ## Changelog
 
+- 2026-06-08: Shifted target direction from procurement governance through award handoff to complete procure-to-pay SaaS; expanded P1 with purchase order, receiving, invoice, matching, payment readiness, and P2P operational control features.
 - 2026-05-12: Added implementation grouping, ownership mapping, and parallelization guidance.
 - 2026-05-11: Initial comprehensive feature inventory and implementation-priority roadmap.
 
 ## Purpose
 
-This document lists candidate features for Cognify, grouped by the order they should generally be implemented. It is not a commitment to build every feature immediately. It is a product planning inventory for turning Cognify from a requisition workflow into a multi-tenant, AI-assisted procurement governance platform.
+This document lists candidate features for Cognify, grouped by the order they should generally be implemented. It is not a commitment to build every feature immediately. It is a product planning inventory for turning Cognify from a requisition workflow into a multi-tenant, AI-assisted procure-to-pay SaaS.
+
+Cognify's target product direction is the complete operational path from request through sourcing, award, purchase order, receiving, invoice matching, payment readiness, and spend visibility. Governance, auditability, AI assistance, and integrations remain core differentiators, but the P1 product promise should no longer stop at award approval or PO handoff.
 
 Feature specs should still be written before implementation. This roadmap helps choose the next feature slice and gives each candidate enough context to understand why it matters.
 
@@ -16,16 +19,16 @@ Feature specs should still be written before implementation. This roadmap helps 
 Priority is ordered by product dependency, customer value, implementation leverage, and enterprise readiness:
 
 1. **P0 - Platform and workflow foundation**: required before meaningful procurement workflows can scale.
-2. **P1 - Core procurement lifecycle**: requisitions, approvals, sourcing, quotations, comparison, and awards.
-3. **P2 - Governance, risk, audit, and AI assistance**: trust, decision quality, policy enforcement, and automation.
-4. **P3 - Enterprise operations and integrations**: administration, external systems, finance controls, and advanced security.
+2. **P1 - Core procure-to-pay lifecycle**: requisitions, approvals, sourcing, quotations, awards, purchase orders, receiving, invoices, matching, payment readiness, and operational queues.
+3. **P2 - Governance, risk, audit, analytics, and AI assistance**: trust, decision quality, policy enforcement, automation, and P2P visibility.
+4. **P3 - Enterprise operations and integrations**: administration, external systems, advanced finance controls, and advanced security.
 5. **P4 - Optimization, intelligence, and marketplace expansion**: advanced insights, supplier ecosystems, benchmarking, and strategic procurement.
 
 ## Status Assessment
 
 Feature status below is assessed against the current repository state as of 2026-05-22, using shipped routes, tests, generated contracts, and committed spec/plan artifacts.
 
-Exception: P1-32 was updated after this assessment date and reflects Recommendation and Award Decision implementation work from 2026-05-25 and 2026-05-26.
+Exception: P1-32 through P1-35 were updated after this assessment date and reflect recommendation, award approval, purchase-order request handoff, and procurement calendar work from 2026-05-25 through 2026-05-27. P1-36 through P1-54 were added on 2026-06-08 as planned future scope for Cognify's procure-to-pay direction.
 
 ## P0 - Platform and Workflow Foundation
 
@@ -54,9 +57,9 @@ These features establish the tenant-scoped SaaS base, common UX shell, auditabil
 | P0-19 | Seed and Demo Data | Provide realistic tenant, user, vendor, requisition, quotation, approval, and activity data for local development and demos. Good demo data makes workflow testing and product review much faster. | Fully Implemented | 2026-05-15-local-demo-system-readiness-design.md | 2026-05-15-local-demo-system-readiness-implementation.md |  |  |
 | P0-20 | Environment and System Status Surface | Expose app version, API health, queue health, storage health, and system status in admin/debug surfaces. This helps developers and operators understand whether local or deployed environments are healthy. | Fully Implemented | 2026-05-15-local-demo-system-readiness-design.md | 2026-05-15-local-demo-system-readiness-implementation.md |  |  |
 
-## P1 - Core Procurement Lifecycle
+## P1 - Core Procure-To-Pay Lifecycle
 
-These features create the main user-facing procurement journey from request to award. They should be implemented in thin, complete slices that are usable end to end.
+These features create the main user-facing procurement journey from request to payment readiness. The existing P1-01 through P1-35 baseline covers request-to-award and PO handoff. P1-36 onward expands Cognify into durable procure-to-pay operations: purchase orders, receiving, supplier invoices, matching, payment handoff, payment status, and P2P control surfaces. Each feature should still be implemented in thin, complete slices that are usable end to end.
 
 | Feature Number | Feature Name | Feature Description | Feature Status | Design Spec | Implementation Plan | PR Number | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -95,6 +98,25 @@ These features create the main user-facing procurement journey from request to a
 | P1-33 | Award Approval | Route final award recommendations for approval when policy requires it. This can differ from requisition approval because stakeholders may evaluate vendor selection rather than spend request validity. | Fully Implemented | `docs/superpowers/specs/2026-05-26-award-approval-design.md` | `docs/superpowers/plans/2026-05-26-award-approval.md` | 30 | Implemented via `docs/superpowers/plans/2026-05-26-award-approval.md`: award recommendations route through the shared Approval domain and record approval outcomes; approved recommendations now trigger idempotent draft PO handoff creation downstream. |
 | P1-34 | Purchase Order Request Handoff | Generate a structured handoff for ERP or finance systems after award approval. Even before direct ERP integration, Cognify should make the next operational step clear. | Fully Implemented | `docs/superpowers/specs/2026-05-26-purchase-order-request-handoff-design.md` | `docs/superpowers/plans/2026-05-26-purchase-order-request-handoff.md` |  | Implemented as an approved-award PO request handoff package with buyer/admin review, ready/export/cancel states, CSV/JSON export, audit events, and global search. Final award approval auto-creates or reveals the draft handoff idempotently; real ERP integration, PO number sync, vendor notifications, split awards, and procurement calendar remain downstream. |
 | P1-35 | Procurement Calendar | Show RFQ deadlines, approval due dates, expected delivery dates, contract renewal dates, and expiring vendor documents. Calendar visibility helps teams manage time-sensitive work. | Fully Implemented | `docs/superpowers/specs/2026-05-27-procurement-calendar-design.md` | `docs/superpowers/plans/2026-05-27-procurement-calendar.md` |  | Implemented as a read-only, query-backed operational calendar over existing procurement dates with generated-client web views, shell navigation, and unavailable source metadata for vendor document expiry and contract renewals. |
+| P1-36 | Purchase Order Creation | Convert an approved award or PO request handoff into a durable Cognify purchase order with PO number, vendor, billing and shipping details, line items, taxes, freight, payment terms, delivery terms, and status. This turns Cognify from an award handoff tool into an operational purchasing system. | Not Implemented |  |  |  |  |
+| P1-37 | Purchase Order Review and Approval | Support finance or procurement review of generated purchase orders before issue. PO approval is separate from award approval because it validates coding, tax, vendor readiness, delivery details, and operational purchasing accuracy. | Not Implemented |  |  |  |  |
+| P1-38 | Purchase Order Issue to Supplier | Send or expose the approved purchase order to the supplier through the vendor portal, email, or export. Cognify should track issue date, supplier acknowledgement, supplier-facing version, and audit history. | Not Implemented |  |  |  |  |
+| P1-39 | Purchase Order Change Orders | Allow controlled purchase order revisions such as quantity changes, price changes, delivery date changes, cancellation, partial cancellation, and re-approval when policy requires it. Change orders preserve the difference between original commitment and current commitment. | Not Implemented |  |  |  |  |
+| P1-40 | Receiving and Goods Receipt | Record goods receipt or service acceptance against purchase order lines. Support partial receipt, over/under receipt tolerance, receiving notes, attachments, requester confirmation, buyer confirmation, and audit events. | Not Implemented |  |  |  |  |
+| P1-41 | Delivery and Fulfillment Tracking | Track expected delivery, shipment or fulfillment status, late deliveries, backorders, and receipt readiness. This connects procurement commitments to actual supplier performance and downstream invoice matching. | Not Implemented |  |  |  |  |
+| P1-42 | Supplier Invoice Capture | Let AP users, buyers, or suppliers submit invoices against a purchase order. Capture invoice number, invoice date, due date, tax, freight, line details, attachments, and duplicate invoice checks. | Not Implemented |  |  |  |  |
+| P1-43 | Invoice Review Workspace | Provide an operational AP/procurement queue for invoice completeness, coding, attachment, vendor identity, PO linkage, and exception review before matching or approval. | Not Implemented |  |  |  |  |
+| P1-44 | Two-Way and Three-Way Matching | Match invoice lines against purchase order lines and receipt lines. Surface price, quantity, tax, freight, and receipt mismatches with configurable tolerances and clear exception reasons. | Not Implemented |  |  |  |  |
+| P1-45 | Invoice Exception Workflow | Route invoice mismatches to the right owner: requester, buyer, receiver, finance, or vendor. Capture resolution notes, adjusted values, supporting evidence, approval impact, and audit events. | Not Implemented |  |  |  |  |
+| P1-46 | Invoice Approval | Route clean or exception-resolved invoices for approval based on amount, department, cost center, project, vendor, variance, or policy. This should reuse the shared Approval domain with invoice-specific subject metadata. | Not Implemented |  |  |  |  |
+| P1-47 | Payment Readiness and AP Handoff | Mark approved invoices as ready for payment and export structured AP/payment handoff data. This is the invoice-side equivalent of PO handoff and should work before direct accounting integration exists. | Not Implemented |  |  |  |  |
+| P1-48 | Payment Status Tracking | Track payment lifecycle states such as scheduled, paid, partially paid, failed, voided, or remitted. Early scope can be manual status update or import before live bank or accounting sync. | Not Implemented |  |  |  |  |
+| P1-49 | Credit Memo and Invoice Adjustment | Support credits, debit notes, invoice reversals, and invoice adjustments linked to original invoices and purchase order lines. Real AP operations need controlled correction paths. | Not Implemented |  |  |  |  |
+| P1-50 | Budget Commitment and Encumbrance | Commit budget when a purchase order is issued, adjust commitments through change orders, and relieve commitments as invoices are approved or paid. This gives Cognify credible committed, received, invoiced, and actual spend visibility. | Not Implemented |  |  |  |  |
+| P1-51 | Vendor Master Baseline for P2P | Promote vendor records from sourcing-only to payable-ready vendor master data: legal name, tax ID, remittance contacts, addresses, default currency, payment terms, banking status placeholder, and active/blocked state. | Not Implemented |  |  |  |  |
+| P1-52 | Tax, Currency, and Payment Terms Baseline | Standardize tax handling, multi-currency fields, exchange-rate snapshots, payment terms, due-date calculation, and invoice total rules across quotation, PO, receiving, invoice, and payment workflows. | Not Implemented |  |  |  |  |
+| P1-53 | Procure-To-Pay Record Graph | Provide a unified trace from requisition to approval, RFQ, award, purchase order, receipt, invoice, payment readiness, and payment status. Users should see where money is requested, committed, received, invoiced, and paid. | Not Implemented |  |  |  |  |
+| P1-54 | P2P Operational Queues | Add daily work queues for open purchase orders, pending receipts, invoice exceptions, invoices pending approval, payment-ready invoices, overdue supplier actions, and blocked vendor/payment records. | Not Implemented |  |  |  |  |
 
 ## P2 - Governance, Risk, Audit, and AI Assistance
 
@@ -132,11 +154,11 @@ These features make Cognify meaningfully different from a generic procurement tr
 | P2-28 | Vendor Performance Tracking | Track on-time delivery, quality issues, responsiveness, award history, dispute history, and buyer feedback. Performance becomes part of future vendor comparison and risk scoring. | Not Implemented |  |  |  |  |
 | P2-29 | Supplier Document Management | Track vendor certificates, insurance, tax documents, compliance forms, security documents, and expiry dates. Missing or expired documents should block or warn during award depending on policy. | Not Implemented |  |  |  |  |
 | P2-30 | Renewal and Contract Alerts | Notify teams before contracts, certificates, subscriptions, or vendor documents expire. This helps procurement become proactive rather than reactive. | Not Implemented |  |  |  |  |
-| P2-31 | Spend Analytics Dashboard | Show spend by vendor, category, department, requester, project, status, and time period. Spend visibility is a core enterprise procurement value. | Not Implemented |  |  |  |  |
-| P2-32 | Cycle Time Analytics | Measure how long requisitions, approvals, RFQs, comparisons, and awards take. This reveals where procurement operations are slow. | Not Implemented |  |  |  |  |
-| P2-33 | Savings and Avoidance Tracking | Track estimated versus awarded spend, negotiated savings, avoided spend, and budget impact. These metrics help procurement demonstrate business value. | Not Implemented |  |  |  |  |
-| P2-34 | Compliance Dashboard | Show quote count compliance, policy exception rates, missing evidence, overdue approvals, high-risk awards, and audit readiness. This supports procurement governance leaders. | Not Implemented |  |  |  |  |
-| P2-35 | Executive Summary Dashboard | Provide leadership-level procurement metrics: active spend pipeline, approved spend, savings, risk exposure, cycle time, and major pending decisions. This should be concise and trend-oriented. | Not Implemented |  |  |  |  |
+| P2-31 | Spend Analytics Dashboard | Show spend by vendor, category, department, requester, project, status, and time period across requested, awarded, committed, received, invoiced, payment-ready, and paid states. Spend visibility is a core enterprise P2P value. | Not Implemented |  |  |  |  |
+| P2-32 | Cycle Time Analytics | Measure how long requisitions, approvals, RFQs, comparisons, awards, purchase order issue, receiving, invoice review, matching, and payment readiness take. This reveals where P2P operations are slow. | Not Implemented |  |  |  |  |
+| P2-33 | Savings and Avoidance Tracking | Track estimated versus awarded spend, negotiated savings, avoided spend, budget commitment impact, invoiced variance, and paid spend impact. These metrics help procurement demonstrate business value. | Not Implemented |  |  |  |  |
+| P2-34 | Compliance Dashboard | Show quote count compliance, policy exception rates, missing evidence, overdue approvals, high-risk awards, PO exceptions, invoice matching exceptions, and audit readiness. This supports procurement and finance governance leaders. | Not Implemented |  |  |  |  |
+| P2-35 | Executive Summary Dashboard | Provide leadership-level P2P metrics: active spend pipeline, approved spend, committed spend, received spend, invoiced spend, paid spend, savings, risk exposure, cycle time, and major pending decisions. This should be concise and trend-oriented. | Not Implemented |  |  |  |  |
 | P2-36 | Quotation Document Extraction | Parse PDF, XLS, XLSX, CSV, DOC, and DOCX quotation evidence into structured candidate fields with human review and conflict handling before normalization. | Not Implemented |  |  |  | Quotation-specific extraction follow-up; P1-29 normalizes existing structured fields and attachment metadata only. |
 
 ## P3 - Enterprise Operations and Integrations
@@ -157,15 +179,15 @@ These features support larger customers, finance workflows, security requirement
 | P3-10 | Legal Hold | Prevent deletion or retention expiry for records under investigation or audit. Legal hold should be explicit and auditable. | Not Implemented |  |  |  |  |
 | P3-11 | Advanced Notifications | Support email, in-app notifications, digest emails, reminder schedules, escalation alerts, and user preference controls. Notification channels should be configurable per event type. | Partially Implemented | 2026-05-14-notification-foundation-design.md | 2026-05-14-notification-foundation.md |  | In-app notifications and preference controls ship; digest email, reminder scheduling, and multi-channel delivery are not evident. |
 | P3-12 | Email Intake | Allow vendors or internal users to send quotations and procurement evidence to a controlled email address that links files to the correct RFQ or requisition. This accommodates real-world vendor behavior. | Not Implemented |  |  |  |  |
-| P3-13 | ERP Export | Export approved awards or purchase order requests to ERP-compatible formats. Early versions can support CSV or JSON export before direct integrations. | Not Implemented |  |  |  |  |
-| P3-14 | ERP Integration | Integrate with systems such as NetSuite, SAP, Oracle, Microsoft Dynamics, or custom finance systems. This allows approved procurement decisions to flow into purchasing and accounting operations. | Not Implemented |  |  |  |  |
-| P3-15 | Accounting Integration | Connect procurement data to accounting workflows for cost centers, budget codes, vendor master data, and purchase order status. This reduces double entry. | Not Implemented |  |  |  |  |
+| P3-13 | ERP Export | Export purchase orders, receipts, approved invoices, payment handoffs, vendor master data, and spend events to ERP-compatible formats. Early versions can support CSV or JSON export before direct integrations. | Not Implemented |  |  |  | Core P2P records belong in P1; this row is for external-system export coverage. |
+| P3-14 | ERP Integration | Integrate with systems such as NetSuite, SAP, Oracle, Microsoft Dynamics, or custom finance systems. This allows Cognify's purchase orders, receipts, invoices, payment status, and vendor master records to sync with enterprise systems of record. | Not Implemented |  |  |  | Core P2P workflows should work before direct ERP integration exists. |
+| P3-15 | Accounting Integration | Connect Cognify to accounting workflows for cost centers, budget codes, vendor master data, purchase orders, invoices, payments, accruals, and close support. This reduces double entry once P1 has internal P2P records. | Not Implemented |  |  |  |  |
 | P3-16 | Inventory or Asset System Integration | Send awarded equipment or asset purchases to downstream asset systems. This is useful for IT equipment, facilities assets, and operational inventory. | Not Implemented |  |  |  |  |
 | P3-17 | Contract Lifecycle Management Integration | Integrate with CLM systems or provide handoff exports for contracts that must be drafted, reviewed, or signed after award. Procurement often crosses into legal workflows. | Not Implemented |  |  |  |  |
 | P3-18 | E-Signature Integration | Support e-signature providers for vendor agreements, award letters, declarations, or contract documents. Signed documents should return to the evidence vault. | Not Implemented |  |  |  |  |
 | P3-19 | External Risk Data Integrations | Integrate vendor checks such as sanctions, adverse media, financial risk, cybersecurity posture, and ESG data. These signals can feed vendor and award risk scores. | Not Implemented |  |  |  |  |
 | P3-20 | Vendor Master Data Sync | Synchronize vendors with finance or ERP master data systems. This reduces duplicate vendors and ensures awards reference approved supplier records. | Not Implemented |  |  |  |  |
-| P3-21 | Purchase Order Status Sync | Pull purchase order numbers and status back into Cognify after finance processing. Users should know whether an award has become an operational purchase order. | Not Implemented |  |  |  |  |
+| P3-21 | External P2P Status Sync | Pull purchase order, receipt, invoice, and payment status updates back into Cognify from ERP, accounting, inventory, or banking systems. Users should know when downstream systems have changed the operational truth. | Not Implemented |  |  |  | This is external sync scope; core PO and payment status now belong in P1. |
 | P3-22 | Webhooks | Expose webhooks for events such as requisition submitted, approval completed, RFQ closed, award approved, and risk flagged. Webhooks enable customer-specific automation. | Not Implemented |  |  |  |  |
 | P3-23 | Public API | Provide documented tenant-scoped APIs for customers and integrators. Public APIs should include authentication, rate limiting, audit events, and stable versioning. | Partially Implemented | 2026-05-12-audit-api-contract-foundation-design.md | 2026-05-12-audit-api-contract-foundation.md |  | The product has documented internal OpenAPI endpoints and generated clients, but no separate public API program is defined. |
 | P3-24 | Import Tools | Support importing vendors, categories, cost centers, departments, historical spend, and open requisitions. Imports accelerate onboarding and migration from spreadsheets. | Not Implemented |  |  |  |  |
@@ -245,12 +267,16 @@ Each roadmap capability should have one primary frontend feature group and one p
 | Vendor management | `apps/web/features/vendors` | `apps/api/Domains/Vendor` | `EvidenceVault`, `Metric`, `Ai`, `app/Audit` |
 | Quotation intake and comparison | `apps/web/features/quotations` | `apps/api/Domains/Quotation` | `Vendor`, `EvidenceVault`, `Ai`, `Metric`, `Approval` |
 | Award decision | `apps/web/features/awards` or `apps/web/features/quotations` until awards becomes large enough | `apps/api/Domains/Quotation` initially, later `Award` if split out | `Requisition`, `Approval`, `EvidenceVault`, `Metric`, `app/Audit` |
+| Purchase orders and receiving | `apps/web/features/purchase-orders` | `apps/api/Domains/PurchaseOrder` | `Quotation`, `Vendor`, `Approval`, `EvidenceVault`, `Metric`, `app/Audit` |
+| Invoices, matching, and payments | `apps/web/features/accounts-payable` | `apps/api/Domains/AccountsPayable` | `PurchaseOrder`, `Vendor`, `Approval`, `EvidenceVault`, `Metric`, `app/Audit` |
+| Vendor master for P2P | `apps/web/features/vendors` | `apps/api/Domains/Vendor` | `PurchaseOrder`, `AccountsPayable`, `EvidenceVault`, `Metric`, `app/Audit` |
+| Budget commitment and P2P financial controls | `apps/web/features/finance` or embedded P2P workflow panels | `apps/api/Domains/Finance` initially, or `PurchaseOrder`/`AccountsPayable` until split is justified | `Requisition`, `Project`, `PurchaseOrder`, `AccountsPayable`, `Metric`, `app/Audit` |
 | Evidence vault and attachments | `apps/web/features/evidence-vault` | `apps/api/Domains/EvidenceVault` | `Requisition`, `Quotation`, `Vendor`, `Ai`, `app/Audit` |
 | AI extraction, summaries, and risk explanation | `apps/web/features/ai` for shared surfaces, embedded components inside owning workflow features | `apps/api/Domains/Ai` | `EvidenceVault`, `Requisition`, `Quotation`, `Vendor`, `Metric` |
 | Reporting and analytics | `apps/web/features/reporting` | `apps/api/Domains/Reporting` and `apps/api/Domains/Metric` | Read models/events from all workflow domains |
 | Project workspace | `apps/web/features/projects` | `apps/api/Domains/Project` | `Requisition`, `Approval`, `Quotation`, `Metric` |
 | Tenant administration, roles, and settings | `apps/web/features/admin` or `apps/web/features/settings` | `apps/api/app/Auth` and `apps/api/app/Tenancy` | All domains through policies and membership checks |
-| Enterprise integrations | `apps/web/features/integrations` | Integration-specific services under `apps/api/app/*` until a business domain emerges | `Vendor`, `Quotation`, `EvidenceVault`, `Reporting`, `app/Audit` |
+| Enterprise integrations | `apps/web/features/integrations` | Integration-specific services under `apps/api/app/*` until a business domain emerges | `Vendor`, `Quotation`, `PurchaseOrder`, `AccountsPayable`, `EvidenceVault`, `Reporting`, `app/Audit` |
 
 Implementation note: do not create all listed web feature groups immediately. Create a group when there is a real route, workflow, hook, mock, or test to place there.
 
@@ -277,12 +303,16 @@ This keeps the runbook useful without making the roadmap unbuildable. A slice sh
 | Buyer Intake And RFQ | Buyer intake queue, RFQ creation, vendor invitation, procurement calendar dates | Buyer converts submitted requisition into RFQ and invites vendors | Requisition submission, Vendor Foundation for real invitations | Can start with mocked vendors, but real invitation should wait for Vendor Foundation |
 | Quotation Intake | Quotation upload, manual entry, versioning, vendor portal baseline | Buyer uploads or manually records quotation against RFQ | RFQ creation, file attachment baseline | Can parallelize upload/manual-entry UI and backend storage if OpenAPI is agreed first |
 | Quotation Comparison And Award | Normalization, comparison table, scoring matrix, recommendation, award approval, PO handoff | Compare normalized quotation line items and record recommendation rationale | Quotation Intake, Vendor Foundation | Should wait for stable quotation schema |
+| Purchase Order Operations | PO creation, PO review/approval, PO issue, change orders | Convert approved PO handoff into an issued purchase order with line-level state | Award approval, PO handoff, Vendor Foundation | Mostly sequential because PO state becomes the downstream source for receiving and invoice matching |
+| Receiving And Fulfillment | Receiving, goods receipt, service acceptance, delivery tracking | Record partial receipt against an issued PO line | Purchase Order Operations | Can start after PO lines, supplier issue state, and receipt permissions are stable |
+| Accounts Payable Baseline | Supplier invoice capture, invoice review, 2-way/3-way matching, invoice exceptions, invoice approval, AP handoff | Capture a supplier invoice against a PO and surface matching status | Purchase Order Operations, Receiving And Fulfillment, Vendor Master for P2P | Can split invoice intake UI and matching backend once PO line and receipt contracts are stable |
+| Payment And Commitment Controls | Payment readiness, payment status, credit memos, budget commitment, P2P record graph, P2P operational queues | Mark an approved invoice as payment-ready and show committed/invoiced/paid state | Accounts Payable Baseline, Project/cost center data | Should follow invoice approval and matching so metrics reflect real workflow states |
 | Evidence Vault Baseline | Attachments, classification, preview, annotation, evidence links, audit pack foundation | Attach files to requisitions/quotations and show evidence timeline | File attachment baseline, requisition or quotation records | Can run parallel with Approval Baseline if storage contract is stable |
 | Policy And Governance | Policy rules, exceptions, conflict declarations, preferred vendor controls, required evidence | Enforce minimum quote count and threshold warning for award/requisition | Approval, RFQ, quotation, evidence records | Should follow enough workflow data to avoid speculative rules |
 | AI And OCR Assistance | OCR extraction, review queue, confidence, AI summaries, AI comparison narrative, risk explanation | OCR extraction suggestion from uploaded quotation with human review | Evidence Vault, Quotation Intake, AI provider/fallback | Can split into OCR pipeline and UI review once evidence contracts are stable |
 | Reporting And Metrics | Spend dashboard, cycle time, savings, compliance, executive summary, saved views | Requisition and approval cycle-time dashboard from existing events | Audit/activity events, Approval Baseline | Best after workflows emit consistent events |
 | Enterprise Administration | Org structure, approval matrix admin, policy admin, user provisioning, SSO, SCIM, retention, audit console | Admin-managed approval threshold matrix | Approval Baseline, role/permission model | Some identity work can run separately, but policy admin depends on actual policies |
-| Integrations | ERP export/integration, accounting sync, email intake, webhooks, public API, imports | Approved award export as CSV/JSON | Award decision and vendor master data | External integrations should wait until internal workflow state is stable |
+| Integrations | ERP export/integration, accounting sync, email intake, webhooks, public API, imports | Export issued POs, receipts, approved invoices, and payment handoffs as CSV/JSON | Purchase orders, accounts payable, and vendor master data | External integrations should wait until internal P2P workflow state is stable |
 | Strategic Procurement | Strategic sourcing, multi-round RFQ, scenario modeling, split awards, benchmarking, scorecards | Multi-round RFQ revision workflow | RFQ, quotation comparison, award decision | Later-stage work; can parallelize by subdomain after core sourcing matures |
 
 ### Dependency Lanes
@@ -291,18 +321,18 @@ Use these lanes to decide whether two implementation slices can safely run in pa
 
 | Lane | Examples | Parallelization guidance |
 | --- | --- | --- |
-| Core workflow lane | Requisition, approval, RFQ, quotation, award | Usually sequential because each state transition feeds the next. |
+| Core workflow lane | Requisition, approval, RFQ, quotation, award, purchase order, receipt, invoice, payment readiness | Usually sequential because each state transition feeds the next. |
 | Master data lane | Vendors, categories, departments, cost centers, projects | Can often run in parallel once tenancy and permissions are stable. |
-| Evidence and file lane | Attachments, evidence vault, OCR inputs, audit packs | Can run in parallel with core workflow after storage and ownership rules are decided. |
+| Evidence and file lane | Attachments, evidence vault, OCR inputs, audit packs, invoice evidence | Can run in parallel with core workflow after storage and ownership rules are decided. |
 | Intelligence lane | AI summaries, extraction, risk scoring, recommendations | Should wait for stable source records, but pipeline and UI review can split after contracts are agreed. |
-| Analytics lane | Metrics, reports, dashboards, saved views | Should follow real events and state transitions; early read-only dashboards can run in parallel with mature workflows. |
+| Analytics lane | Metrics, reports, dashboards, saved views, committed/received/invoiced/paid spend | Should follow real events and state transitions; early read-only dashboards can run in parallel with mature workflows. |
 | Enterprise/admin lane | SSO, SCIM, policy admin, retention, integrations | Identity/admin work can run separately; workflow-specific admin should wait for the workflow it configures. |
 
 Parallel work is safe when slices have different write surfaces, stable API contracts, and no unresolved ownership conflict. If two slices need to mutate the same OpenAPI resource, database table, or workflow state machine, sequence them or agree the contract first.
 
 ### Suggested Epic Sequence
 
-The recommended sequence after the current requisition draft/submission work is:
+The recommended sequence for the full P1 capability set is:
 
 1. Requisition Foundation.
 2. Approval Baseline.
@@ -310,25 +340,29 @@ The recommended sequence after the current requisition draft/submission work is:
 4. Buyer Intake And RFQ.
 5. Quotation Intake.
 6. Quotation Comparison And Award.
-7. Evidence Vault Baseline.
-8. Policy And Governance.
-9. Reporting And Metrics.
-10. AI And OCR Assistance.
-11. Enterprise Administration.
-12. Integrations.
-13. Strategic Procurement.
+7. Purchase Order Operations.
+8. Receiving And Fulfillment.
+9. Accounts Payable Baseline.
+10. Payment And Commitment Controls.
+11. Evidence Vault Baseline.
+12. Policy And Governance.
+13. Reporting And Metrics.
+14. AI And OCR Assistance.
+15. Enterprise Administration.
+16. Integrations.
+17. Strategic Procurement.
 
-Vendor Foundation and Evidence Vault Baseline are the earliest good candidates for parallel work, provided their contracts are kept separate from the active approval workflow changes.
+Vendor Foundation and Evidence Vault Baseline remain good candidates for parallel work when their contracts are kept separate from active workflow changes. P2P slices should sequence PO line contracts before receiving and invoice matching.
 
 ## Cross-Cutting Product Principles
 
 ### Build Workflow-First
 
-Each feature should move a real procurement record through a clear state change or decision. Avoid dashboards that only summarize data before the underlying workflow exists.
+Each feature should move a real procure-to-pay record through a clear state change or decision. Avoid dashboards that only summarize data before the underlying workflow exists.
 
 ### Preserve Auditability
 
-Every important action should answer who did what, when, why, on which record, and with which evidence. Auditability should be designed into the domain model and UX from the start.
+Every important action should answer who did what, when, why, on which record, and with which evidence. For P2P workflows, this means preserving the trail from requisition through PO, receipt, invoice, and payment readiness. Auditability should be designed into the domain model and UX from the start.
 
 ### Keep AI Assistive and Explainable
 
@@ -348,15 +382,15 @@ Cognify should feel like a dense, fast operational system. Prioritize clear tabl
 
 ## Suggested Near-Term Sequence
 
-The next several implementation slices after requisition draft submission should be:
+The next strategic implementation slices after the completed request-to-award baseline should be:
 
-1. Requisition list and detail workspace hardening.
-2. Requisition comments, activity timeline, and change request workflow.
-3. Approval routing baseline with approver work queue.
-4. Buyer intake review and RFQ creation from a requisition.
-5. Vendor records and vendor invitation to RFQ.
-6. Quotation upload and manual quotation entry.
-7. Quotation normalization and comparison table.
-8. Award recommendation with decision rationale.
-9. Evidence vault baseline attached to requisitions, quotations, and awards.
-10. Policy rule baseline for quote count, thresholds, and required evidence.
+1. Purchase order creation from approved PO handoff.
+2. Purchase order review, approval, and issue to supplier.
+3. Purchase order change orders and line-level state.
+4. Receiving and goods/service acceptance against PO lines.
+5. Supplier invoice capture linked to PO lines and attachments.
+6. Invoice review with two-way and three-way matching.
+7. Invoice exception routing and invoice approval.
+8. Payment readiness/AP handoff, payment status, and P2P operational queues.
+9. Evidence vault baseline attached to requisitions, quotations, awards, purchase orders, receipts, and invoices.
+10. Policy rule baseline for quote count, thresholds, matching tolerances, payment controls, and required evidence.

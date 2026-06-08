@@ -4,7 +4,7 @@
 
 - Status: Active root architecture reference
 - Product: Cognify
-- Last updated: 2026-05-15
+- Last updated: 2026-06-08
 - Audience: engineers and agents adding or reviewing Cognify product behavior
 
 This document explains how Cognify is architected as a software system. It is not only a repository map. A new developer should be able to read it and understand how authenticated screens, tenant-scoped API calls, backend workflow actions, generated contracts, attachments, sessions, state, audit, notifications, and verification fit together.
@@ -19,14 +19,14 @@ The structure borrows from proven architecture documentation patterns:
 
 ## 1. Architectural Intent
 
-Cognify is a multi-tenant enterprise procurement SaaS. The system is designed around procurement workflows rather than isolated CRUD pages. The core architectural priorities are:
+Cognify is a multi-tenant enterprise procure-to-pay SaaS. The system is designed around procurement workflows rather than isolated CRUD pages. The product direction spans requisition, approval, sourcing, quotation, award, purchase order, receiving, supplier invoice, matching, payment readiness, and spend visibility workflows. The core architectural priorities are:
 
 1. Preserve tenant isolation in every user-facing and backend workflow.
 2. Keep authentication and session behavior browser-native, explicit, and testable.
 3. Treat OpenAPI as the frontend/backend contract.
 4. Keep business behavior in backend domain actions and policies, not controllers.
 5. Keep Cognify product UI in the web app and reusable primitives in shared packages.
-6. Make file, audit, notification, and async side effects first-class workflow concerns.
+6. Make file, audit, notification, finance-state, and async side effects first-class workflow concerns.
 7. Prefer vertical workflow slices that can be tested end to end.
 
 The default feature-development shape is:

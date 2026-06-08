@@ -2,11 +2,12 @@
 
 ## Changelog
 
+- 2026-06-08: Updated product language and workflow examples for Cognify's procure-to-pay direction.
 - 2026-05-10: Added workflow-first, contract-first feature development runbook.
 
 ## Purpose
 
-Use this runbook whenever a human developer or agentic coding agent adds a Cognify feature. Cognify is a workflow-oriented procurement SaaS, so features should be built as vertical workflow slices instead of isolated pages, controllers, or database tables.
+Use this runbook whenever a human developer or agentic coding agent adds a Cognify feature. Cognify is a workflow-oriented procure-to-pay SaaS, so features should be built as vertical workflow slices instead of isolated pages, controllers, or database tables.
 
 ## Core Principle
 
@@ -58,8 +59,8 @@ Write down the workflow before coding. Keep it short, but make it explicit.
 
 Capture:
 
-- Actors: requester, buyer, approver, vendor, system, AI worker.
-- States: draft, submitted, extracting, normalized, scored, approved, rejected, awarded, archived.
+- Actors: requester, buyer, approver, receiver, AP analyst, finance user, vendor, system, AI worker.
+- States: draft, submitted, extracting, normalized, scored, approved, rejected, awarded, PO issued, partially received, received, invoiced, matched, exception, payment-ready, paid, archived.
 - Transitions: who or what can move the workflow forward.
 - Side effects: audit events, notifications, queue jobs, file writes, external calls.
 - Failure paths: validation errors, OCR failure, AI unavailable, permission denial, stale workflow state.
@@ -78,6 +79,10 @@ Examples:
 - Run quotation comparison for one requisition.
 - Approve or reject a submitted requisition.
 - Record award decision with audit trail.
+- Issue a purchase order from an approved handoff.
+- Record a partial receipt against a purchase order line.
+- Capture a supplier invoice and show two-way or three-way matching status.
+- Mark an approved invoice as payment-ready.
 
 Avoid building an entire backend module or frontend area before proving one slice.
 

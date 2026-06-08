@@ -65,6 +65,7 @@ Cognify should have a small number of shells. Do not create a new shell for ever
 | My Work       | Main table, dashboard, workflow, or record    |
 | Procurement   |                                              |
 | Vendors       | Optional local tabs / section nav             |
+| Finance       |                                              |
 | Evidence      |                                              |
 | Analytics     | Optional right panel                          |
 | Governance    |                                              |
@@ -85,6 +86,7 @@ Home
 My Work
 Procurement
 Vendors
+Finance
 Evidence
 Analytics
 Governance
@@ -120,7 +122,7 @@ Primary purpose:
 
 ### Module Landing Layout
 
-Used for module roots such as `/procurement`, `/vendors`, `/governance`, and `/analytics`.
+Used for module roots such as `/procurement`, `/vendors`, `/finance`, `/governance`, and `/analytics`.
 
 Primary purpose:
 
@@ -134,7 +136,7 @@ Module landing pages replace deep global sidebar nesting.
 
 ### Work Queue Layout
 
-Used for high-frequency operational views such as approvals, buyer intake, evidence review, and policy exceptions.
+Used for high-frequency operational views such as approvals, buyer intake, purchase order review, receiving, invoice exceptions, payment readiness, evidence review, and policy exceptions.
 
 Primary purpose:
 
@@ -146,7 +148,7 @@ Primary purpose:
 
 ### Record Detail Layout
 
-Used for requisitions, RFQs, quotations, vendors, projects, awards, contracts, and similar durable records.
+Used for requisitions, RFQs, quotations, vendors, projects, awards, purchase orders, receipts, invoices, payments, contracts, and similar durable records.
 
 Primary purpose:
 
@@ -200,6 +202,10 @@ The hierarchy below describes the mature product surface. It is not a sidebar sp
 - My approvals.
 - My requisitions.
 - Assigned buyer reviews.
+- Purchase orders awaiting review.
+- Receipts awaiting confirmation.
+- Invoice exceptions.
+- Payment-ready invoices.
 - Evidence reviews.
 - Policy exceptions.
 - Overdue work.
@@ -247,12 +253,53 @@ The hierarchy below describes the mature product surface. It is not a sidebar sp
   - Award approvals.
   - Split awards.
   - Scenario modeling.
+- Purchase orders.
+  - Draft purchase orders.
+  - Purchase order review.
+  - Issued purchase orders.
+  - Supplier acknowledgements.
+  - Change orders.
+  - Purchase order status.
+- Receiving.
+  - Pending receipts.
+  - Partial receipts.
+  - Goods receipts.
+  - Service acceptance.
 - Purchase order handoffs.
   - Draft handoffs.
   - Ready for export.
   - Export history.
-  - Purchase order status.
 - Procurement calendar.
+
+### Finance
+
+- Supplier invoices.
+  - Invoice capture.
+  - Invoice review.
+  - Invoice attachments.
+  - Duplicate invoice checks.
+- Matching.
+  - Two-way matching.
+  - Three-way matching.
+  - Match exceptions.
+  - Tolerance review.
+- Invoice approvals.
+  - Pending approval.
+  - Approved invoices.
+  - Rejected invoices.
+- Payments.
+  - Payment readiness.
+  - AP handoffs.
+  - Payment status.
+  - Remittance status.
+- Adjustments.
+  - Credit memos.
+  - Debit notes.
+  - Invoice reversals.
+- Commitments.
+  - Budget commitments.
+  - Encumbrance relief.
+  - Committed versus invoiced spend.
 
 ### Vendors
 
@@ -268,6 +315,9 @@ The hierarchy below describes the mature product surface. It is not a sidebar sp
 - Supplier scorecards.
 - Vendor collaboration.
 - Vendor self-service review.
+- Payable-ready vendor master.
+- Remittance contacts.
+- Tax and payment terms.
 - Marketplace or vendor discovery.
 
 ### Evidence
@@ -286,6 +336,10 @@ The hierarchy below describes the mature product surface. It is not a sidebar sp
 
 - Executive summary.
 - Spend analytics.
+- Committed spend.
+- Received spend.
+- Invoiced spend.
+- Paid spend.
 - Cycle time.
 - Savings and avoidance.
 - Compliance.
@@ -306,6 +360,8 @@ The hierarchy below describes the mature product surface. It is not a sidebar sp
 - Policy exceptions.
 - Conflict declarations.
 - Budget thresholds.
+- Matching tolerances.
+- Payment controls.
 - Required evidence.
 - Category management.
 - Preferred vendor controls.
@@ -371,7 +427,7 @@ Contracts may begin as part of Evidence, Vendors, or Procurement. If the surface
 - E-signature integrations.
 - External risk data.
 - Vendor master data sync.
-- Purchase order status sync.
+- External P2P status sync.
 - Email intake.
 - Webhooks.
 - Public API.
@@ -393,6 +449,33 @@ RFQs / quotations
 Award
 Activity
 Risk / policy
+```
+
+### Purchase Order Detail
+
+```txt
+Overview
+Lines
+Supplier
+Approvals
+Issue history
+Receiving
+Invoices
+Change orders
+Activity
+```
+
+### Invoice Detail
+
+```txt
+Overview
+Lines
+PO / receipt matching
+Exceptions
+Approvals
+Payment readiness
+Attachments
+Activity
 ```
 
 ### Vendor Detail
@@ -433,6 +516,8 @@ Document Requests
 Profile
 Contacts
 Certifications
+Purchase Orders
+Invoices
 Collaboration Threads
 ```
 
