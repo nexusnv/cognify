@@ -232,6 +232,8 @@ class PurchaseOrderCreationApiTest extends TestCase
     public function test_patch_with_unchanged_values_does_not_increment_lock_version_or_write_audit_noise(): void
     {
         $po = $this->draftPurchaseOrder(attributes: [
+            'requested_po_date' => '2026-06-18',
+            'expected_delivery_date' => '2026-07-02',
             'billing_name' => 'Acme Finance',
             'billing_address' => json_encode(['line1' => 'Level 10', 'city' => 'Kuala Lumpur', 'country' => 'MY']),
             'shipping_name' => 'Acme Warehouse',
@@ -251,6 +253,8 @@ class PurchaseOrderCreationApiTest extends TestCase
         $this->actingAsTenant($po->tenant, $buyer)
             ->patchJson("/api/purchase-orders/{$po->id}", [
                 'lockVersion' => $po->lock_version,
+                'requestedPoDate' => '2026-06-18',
+                'expectedDeliveryDate' => '2026-07-02',
                 'billingName' => 'Acme Finance',
                 'billingAddress' => ['line1' => 'Level 10', 'city' => 'Kuala Lumpur', 'country' => 'MY'],
                 'shippingName' => 'Acme Warehouse',
@@ -274,6 +278,19 @@ class PurchaseOrderCreationApiTest extends TestCase
             $auditCountBefore,
             AuditEvent::query()->where('tenant_id', $po->tenant->id)->where('action', 'purchase_order.updated')->count(),
         );
+    }
+
+    public function test_patch_rejects_iso_timestamp_dates_for_purchase_order_updates(): void
+    {
+        $po = $this->draftPurchaseOrder();
+        $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
+
+        $this->actingAsTenant($po->tenant, $buyer)
+            ->patchJson("/api/purchase-orders/{$po->id}", [
+                'lockVersion' => $po->lock_version,
+                'requestedPoDate' => '2026-06-18T00:00:00Z',
+            ])
+            ->assertUnprocessable();
     }
 
     public function test_stale_update_returns_conflict(): void

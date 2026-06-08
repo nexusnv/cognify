@@ -23,8 +23,8 @@ class UpdatePurchaseOrderRequest extends FormRequest
     {
         return [
             'lockVersion' => ['required', 'integer', 'min:1'],
-            'requestedPoDate' => ['nullable', 'date'],
-            'expectedDeliveryDate' => ['nullable', 'date'],
+            'requestedPoDate' => ['nullable', 'date_format:Y-m-d'],
+            'expectedDeliveryDate' => ['nullable', 'date_format:Y-m-d'],
             'billingName' => ['nullable', 'string', 'max:255'],
             'billingAddress' => ['nullable', 'array'],
             'shippingName' => ['nullable', 'string', 'max:255'],
