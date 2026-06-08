@@ -23,6 +23,14 @@ import { ShellFooter } from "./shell-footer";
 import { ShellHeader } from "./shell-header";
 import { PrimaryShellNav, SecondaryShellNav } from "./shell-nav";
 
+function isEditableShortcutTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+
+  return Boolean(
+    target.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']"),
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname() || "/dashboard";
@@ -54,6 +62,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "b" || (!event.metaKey && !event.ctrlKey)) {
+        return;
+      }
+
+      if (isEditableShortcutTarget(event.target)) {
         return;
       }
 

@@ -406,6 +406,31 @@ describe("app shell", () => {
     expect(shell).toHaveAttribute("data-secondary-present", "false");
   });
 
+  it("does not collapse the secondary sidebar when the shortcut is used in editable content", async () => {
+    mockPathname = "/requisitions";
+
+    renderWithQuery(
+      <AppShell>
+        <label htmlFor="line-search">Line search</label>
+        <input id="line-search" />
+        <div contentEditable role="textbox" aria-label="Internal note" />
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+
+    fireEvent.keyDown(screen.getByLabelText("Line search"), { key: "b", ctrlKey: true });
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Internal note" }), {
+      key: "b",
+      metaKey: true,
+    });
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+  });
+
   it("shows procurement primary navigation for sourcing-only identities", async () => {
     mockIdentity({
       ...requesterIdentity,
