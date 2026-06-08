@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -91,6 +91,7 @@ describe("app shell", () => {
     expect(screen.getByRole("button", { name: "Open command palette" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open notifications, 2 unread" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Account menu" })).toBeEnabled();
+    expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Cognify");
     expect(document.getElementById("right-panel-host")).not.toHaveAttribute("aria-hidden");
@@ -360,5 +361,102 @@ describe("app shell", () => {
     expect(shell).toHaveAttribute("data-primary-state", "collapsed");
     expect(shell).toHaveAttribute("data-secondary-state", "collapsed");
     expect(screen.getByRole("button", { name: "Expand secondary sidebar" })).toBeInTheDocument();
+  });
+
+  it("keeps dashboard primary state stable when the shortcut is used on secondary routes", async () => {
+    mockPathname = "/requisitions";
+
+    const view = renderWithQuery(
+      <AppShell>
+        <h1>Requisitions workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    let shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-state", "expanded");
+
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+
+    expect(shell).toHaveAttribute("data-primary-state", "collapsed");
+    expect(shell).toHaveAttribute("data-secondary-state", "collapsed");
+
+    mockPathname = "/dashboard";
+    view.rerender(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: {
+              queries: { retry: false },
+              mutations: { retry: false },
+            },
+          })
+        }
+      >
+        <AppShell>
+          <h1>Dashboard content</h1>
+        </AppShell>
+      </QueryClientProvider>,
+    );
+
+    await expect(screen.findByRole("navigation", { name: "Primary product areas" })).resolves.toBeTruthy();
+    shell = screen.getByTestId("desktop-app-shell");
+    expect(shell).toHaveAttribute("data-primary-state", "expanded");
+    expect(shell).toHaveAttribute("data-secondary-present", "false");
+  });
+
+  it("shows procurement primary navigation for sourcing-only identities", async () => {
+    mockIdentity({
+      ...requesterIdentity,
+      permissions: {
+        ...requesterIdentity.permissions,
+        canCreateRequisition: false,
+        canUpdateOwnDraftRequisition: false,
+        canSubmitOwnDraftRequisition: false,
+        canManageSourcingIntake: true,
+      },
+    });
+    mockPathname = "/sourcing/intake";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Sourcing intake workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Procurement" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("shows procurement primary navigation for quotation-only identities", async () => {
+    mockIdentity({
+      ...requesterIdentity,
+      permissions: {
+        ...requesterIdentity.permissions,
+        canCreateRequisition: false,
+        canUpdateOwnDraftRequisition: false,
+        canSubmitOwnDraftRequisition: false,
+        canReviewQuotationNormalization: true,
+      },
+    });
+    mockPathname = "/quotations/normalizations";
+
+    renderWithQuery(
+      <AppShell>
+        <h1>Quotations workspace</h1>
+      </AppShell>,
+    );
+
+    await expectIdentityLoaded();
+    const primaryNav = screen.getByRole("navigation", { name: "Primary product areas" });
+    expect(within(primaryNav).getByRole("link", { name: "Procurement" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

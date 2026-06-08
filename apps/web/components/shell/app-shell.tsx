@@ -1,15 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@cognify/ui/components/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarProvider,
-} from "@cognify/ui/components/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader, SidebarProvider } from "@cognify/ui/components/sidebar";
 import { TooltipProvider } from "@cognify/ui/components/tooltip";
 import { useCurrentUser } from "@/features/identity/hooks/use-current-user";
 import { useLogout } from "@/features/identity/hooks/use-logout";
@@ -54,6 +48,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     [permissions],
   );
   const primaryOpen = routeContext.hasSecondarySidebar ? false : primaryOpenState;
+
+  useEffect(() => {
+    if (!routeContext.hasSecondarySidebar) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "b" || (!event.metaKey && !event.ctrlKey)) {
+        return;
+      }
+
+      event.preventDefault();
+      setSecondaryOpen((open) => !open);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [routeContext.hasSecondarySidebar]);
 
   const headerContent = (
     <>
@@ -112,7 +122,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
         className="min-h-screen bg-background text-foreground"
       >
-        <SidebarProvider open={primaryOpen} onOpenChange={setPrimaryOpenState}>
+        <SidebarProvider
+          open={primaryOpen}
+          onOpenChange={(open) => {
+            if (routeContext.hasSecondarySidebar) return;
+            setPrimaryOpenState(open);
+          }}
+        >
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-foreground focus:px-3 focus:py-2 focus:text-background"
@@ -133,22 +149,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarContent>
           </Sidebar>
           {routeContext.hasSecondarySidebar ? (
-            <SidebarProvider
-              open={secondaryOpen}
-              onOpenChange={setSecondaryOpen}
-              className="min-h-screen flex-1"
-            >
-              <Sidebar collapsible="icon" className="border-r bg-card/60">
-                <SidebarHeader className="px-4 py-5">
-                  <div className="text-sm font-semibold">Workspace</div>
-                  <div className="truncate text-xs text-muted-foreground">Procurement</div>
-                </SidebarHeader>
-                <SidebarContent className="px-3 py-3">
-                  <SecondaryShellNav groups={routeContext.secondaryGroups} pathname={pathname} />
-                </SidebarContent>
-              </Sidebar>
-              <SidebarInset className="min-h-screen">{headerContent}</SidebarInset>
-            </SidebarProvider>
+            <>
+              <div
+                className={[
+                  "hidden min-h-screen shrink-0 overflow-hidden bg-card/60 text-sidebar-foreground transition-[width,border-color] duration-200 ease-linear md:flex md:flex-col",
+                  secondaryOpen ? "w-64 border-r" : "w-0 border-r-0",
+                ].join(" ")}
+                data-secondary-sidebar
+                data-state={secondaryOpen ? "expanded" : "collapsed"}
+              >
+                {secondaryOpen ? (
+                  <>
+                    <SidebarHeader className="px-4 py-5">
+                      <div className="text-sm font-semibold">Workspace</div>
+                      <div className="truncate text-xs text-muted-foreground">Procurement</div>
+                    </SidebarHeader>
+                    <SidebarContent className="px-3 py-3">
+                      <SecondaryShellNav groups={routeContext.secondaryGroups} pathname={pathname} />
+                    </SidebarContent>
+                  </>
+                ) : null}
+              </div>
+              <div className="flex min-h-screen flex-1 flex-col">{headerContent}</div>
+            </>
           ) : (
             <div className="flex min-h-screen flex-1 flex-col">{headerContent}</div>
           )}
