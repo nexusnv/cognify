@@ -54,6 +54,45 @@ describe("shell route context", () => {
       { label: "Requisition workspace" },
     ]);
   });
+
+  it("classifies requisition detail routes as record-detail", () => {
+    expect(getShellRouteContext("/requisitions/req-1", requesterIdentity.permissions).pageTemplate).toBe(
+      "record-detail",
+    );
+    expect(
+      getShellRouteContext("/requisitions/req-new-1", requesterIdentity.permissions).pageTemplate,
+    ).toBe("record-detail");
+  });
+
+  it("classifies requisition edit routes as form-workspace", () => {
+    expect(
+      getShellRouteContext("/requisitions/req-1/edit", requesterIdentity.permissions).pageTemplate,
+    ).toBe("form-workspace");
+  });
+
+  it("classifies project routes explicitly", () => {
+    expect(getShellRouteContext("/projects/new", requesterIdentity.permissions).pageTemplate).toBe(
+      "form-workspace",
+    );
+    expect(getShellRouteContext("/projects/proj-1", requesterIdentity.permissions).pageTemplate).toBe(
+      "record-detail",
+    );
+  });
+
+  it("classifies approval policy detail routes as record-detail", () => {
+    expect(
+      getShellRouteContext("/approval-policies/policy-1", requesterIdentity.permissions).pageTemplate,
+    ).toBe("record-detail");
+  });
+
+  it("classifies quotation scoring template detail routes as record-detail", () => {
+    expect(
+      getShellRouteContext(
+        "/quotations/scoring/templates/template-1",
+        requesterIdentity.permissions,
+      ).pageTemplate,
+    ).toBe("record-detail");
+  });
 });
 
 describe("shell route helpers", () => {

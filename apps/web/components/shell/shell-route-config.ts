@@ -49,6 +49,11 @@ const QUOTATION_COMPARISON_WORKSPACE_PATH = /^\/quotations\/comparisons\/[^/]+$/
 const QUOTATION_SCORING_WORKSPACE_PATH = /^\/quotations\/scoring\/[^/]+$/;
 const QUOTATION_SCORING_TEMPLATE_WORKSPACE_PATH = /^\/quotations\/scoring\/templates\/[^/]+$/;
 const QUOTATION_AWARD_WORKSPACE_PATH = /^\/quotations\/awards\/[^/]+$/;
+const REQUISITION_NEW_PATH = /^\/requisitions\/new$/;
+const PROJECT_NEW_PATH = /^\/projects\/new$/;
+const SOURCING_INTAKE_REVIEW_PATH = /^\/sourcing\/intake\/[^/]+$/;
+const QUOTATION_SCORING_TEMPLATES_INDEX_PATH = /^\/quotations\/scoring\/templates$/;
+const APPROVAL_POLICY_NEW_PATH = /^\/approval-policies\/new$/;
 
 const PROCUREMENT_ROUTE_PATTERNS = [
   /^\/requisitions(?:\/.*)?$/,
@@ -358,6 +363,49 @@ function matchesAnyPattern(pathname: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(pathname));
 }
 
+function getProcurementPageTemplate(pathname: string): ShellRouteContext["pageTemplate"] {
+  if (
+    REQUISITION_NEW_PATH.test(pathname) ||
+    REQUISITION_EDIT_PATH.test(pathname) ||
+    PROJECT_NEW_PATH.test(pathname) ||
+    PROJECT_WORKSPACE_EDIT_PATH.test(pathname)
+  ) {
+    return "form-workspace";
+  }
+
+  if (
+    REQUISITION_WORKSPACE_PATH.test(pathname) ||
+    PROJECT_WORKSPACE_PATH.test(pathname) ||
+    SOURCING_INTAKE_REVIEW_PATH.test(pathname) ||
+    RFQ_WORKSPACE_PATH.test(pathname) ||
+    QUOTATION_NORMALIZATION_WORKSPACE_PATH.test(pathname) ||
+    QUOTATION_COMPARISON_WORKSPACE_PATH.test(pathname) ||
+    QUOTATION_SCORING_WORKSPACE_PATH.test(pathname) ||
+    QUOTATION_SCORING_TEMPLATE_WORKSPACE_PATH.test(pathname) ||
+    QUOTATION_AWARD_WORKSPACE_PATH.test(pathname)
+  ) {
+    return "record-detail";
+  }
+
+  if (QUOTATION_SCORING_TEMPLATES_INDEX_PATH.test(pathname)) {
+    return "work-queue";
+  }
+
+  return "work-queue";
+}
+
+function getApprovalPolicyPageTemplate(pathname: string): ShellRouteContext["pageTemplate"] {
+  if (APPROVAL_POLICY_NEW_PATH.test(pathname)) {
+    return "form-workspace";
+  }
+
+  if (APPROVAL_POLICY_WORKSPACE_PATH.test(pathname)) {
+    return "record-detail";
+  }
+
+  return "work-queue";
+}
+
 export function getShellRouteContext(
   pathname: string,
   permissions: IdentityPermissions | undefined,
@@ -371,7 +419,7 @@ export function getShellRouteContext(
 
     return {
       primaryArea: "procurement",
-      pageTemplate: normalizedPathname.includes("/new") ? "form-workspace" : "work-queue",
+      pageTemplate: getProcurementPageTemplate(normalizedPathname),
       secondaryGroups,
       hasSecondarySidebar: secondaryGroups.length > 0,
     };
@@ -394,7 +442,7 @@ export function getShellRouteContext(
   ) {
     return {
       primaryArea: "governance",
-      pageTemplate: normalizedPathname.endsWith("/new") ? "form-workspace" : "work-queue",
+      pageTemplate: getApprovalPolicyPageTemplate(normalizedPathname),
       secondaryGroups: [],
       hasSecondarySidebar: false,
     };
