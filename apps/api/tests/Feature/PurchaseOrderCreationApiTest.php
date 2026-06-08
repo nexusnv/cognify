@@ -86,14 +86,15 @@ class PurchaseOrderCreationApiTest extends TestCase
     {
         $draft = $this->purchaseOrderHandoffWithStatus(PurchaseOrderRequestHandoffStatus::Draft);
         $cancelled = $this->purchaseOrderHandoffWithStatus(PurchaseOrderRequestHandoffStatus::Cancelled);
-        $buyer = $this->tenantUser($draft->tenant, TenantRole::Buyer->value);
+        $draftBuyer = $this->tenantUser($draft->tenant, TenantRole::Buyer->value);
+        $cancelledBuyer = $this->tenantUser($cancelled->tenant, TenantRole::Buyer->value);
 
-        $this->actingAsTenant($draft->tenant, $buyer)
+        $this->actingAsTenant($draft->tenant, $draftBuyer)
             ->postJson("/api/po-handoffs/{$draft->id}/purchase-order")
             ->assertConflict()
             ->assertJsonPath('message', 'PO handoff must be ready or exported before creating a purchase order.');
 
-        $this->actingAsTenant($cancelled->tenant, $buyer)
+        $this->actingAsTenant($cancelled->tenant, $cancelledBuyer)
             ->postJson("/api/po-handoffs/{$cancelled->id}/purchase-order")
             ->assertConflict()
             ->assertJsonPath('message', 'Cancelled PO handoffs cannot create purchase orders.');
@@ -154,8 +155,8 @@ class PurchaseOrderCreationApiTest extends TestCase
     public function test_requester_cannot_create_or_update_purchase_order(): void
     {
         $handoff = $this->readyPurchaseOrderHandoff();
-        $po = $this->draftPurchaseOrder();
         $requester = $this->tenantUser($handoff->tenant, TenantRole::Requester->value);
+        $po = $this->draftPurchaseOrder($handoff);
 
         $this->actingAsTenant($handoff->tenant, $requester)
             ->postJson("/api/po-handoffs/{$handoff->id}/purchase-order")
@@ -197,7 +198,7 @@ class PurchaseOrderCreationApiTest extends TestCase
 
     public function test_stale_update_returns_conflict(): void
     {
-        $po = $this->draftPurchaseOrder();
+        $po = $this->draftPurchaseOrder(lockVersion: 2);
         $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
 
         $this->actingAsTenant($po->tenant, $buyer)
@@ -309,20 +310,24 @@ class PurchaseOrderCreationApiTest extends TestCase
         return PurchaseOrderRequestHandoff::query()->with('tenant')->findOrFail($handoffId);
     }
 
-    private function draftPurchaseOrder(): PurchaseOrderReference
+    private function draftPurchaseOrder(?PurchaseOrderRequestHandoff $handoff = null, int $lockVersion = 1): PurchaseOrderReference
     {
-        return $this->seedPurchaseOrderReference('draft');
+        return $this->seedPurchaseOrderReference('draft', $handoff, $lockVersion);
     }
 
-    private function cancelledPurchaseOrder(): PurchaseOrderReference
+    private function cancelledPurchaseOrder(?PurchaseOrderRequestHandoff $handoff = null, int $lockVersion = 1): PurchaseOrderReference
     {
-        return $this->seedPurchaseOrderReference('cancelled');
+        return $this->seedPurchaseOrderReference('cancelled', $handoff, $lockVersion);
     }
 
-    private function seedPurchaseOrderReference(string $status): PurchaseOrderReference
+    private function seedPurchaseOrderReference(
+        string $status,
+        ?PurchaseOrderRequestHandoff $handoff = null,
+        int $lockVersion = 1,
+    ): PurchaseOrderReference
     {
-        $handoff = $this->readyPurchaseOrderHandoff();
-        $reference = new PurchaseOrderReference((string) Str::uuid(), $handoff->tenant, 1);
+        $handoff ??= $this->readyPurchaseOrderHandoff();
+        $reference = new PurchaseOrderReference((string) Str::uuid(), $handoff->tenant, $lockVersion);
 
         if (! Schema::hasTable('purchase_orders')) {
             return $reference;
@@ -372,7 +377,7 @@ class PurchaseOrderCreationApiTest extends TestCase
                 'cancelled_by_user_id' => $status === 'cancelled' ? $handoff->requested_by_user_id : null,
                 'cancelled_at' => $status === 'cancelled' ? $now : null,
                 'cancelled_reason' => $status === 'cancelled' ? 'Cancelled before buyer review.' : null,
-                'lock_version' => 1,
+                'lock_version' => $lockVersion,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
