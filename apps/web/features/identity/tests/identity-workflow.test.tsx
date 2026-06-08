@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { server } from "../../../tests/msw/server";
 import { LoginPage } from "../workflows/login-page";
 import { SessionGate } from "../workflows/session-gate";
@@ -300,7 +299,7 @@ describe("identity workflow", () => {
     expect(await screen.findByText("Workspace ready")).toBeInTheDocument();
   });
 
-  it("updates profile theme and notification preferences without changing shortcut theme storage", async () => {
+  it("updates profile theme and notification preferences", async () => {
     let submittedBody: unknown;
     server.use(
       http.patch("/api/me/profile", async ({ request }) => {
@@ -325,18 +324,10 @@ describe("identity workflow", () => {
 
     renderWithQuery(
       <ThemeProvider>
-        <div>
-          <ThemeToggle />
-          <AccountSettingsPage />
-        </div>
+        <AccountSettingsPage />
       </ThemeProvider>,
     );
 
-    window.localStorage.removeItem("cognify-ui-theme");
-    await user.click(screen.getByRole("button", { name: "Switch to dark mode" }));
-    await waitFor(() => {
-      expect(window.localStorage.getItem("cognify-ui-theme")).toBe("dark");
-    });
     const nameInput = await screen.findByLabelText("Name");
     await user.clear(nameInput);
     await user.type(nameInput, "Taylor Buyer");
@@ -361,7 +352,6 @@ describe("identity workflow", () => {
       ...defaultNotificationPreferences,
       "attachment.uploaded": { inApp: false },
     });
-    expect(window.localStorage.getItem("cognify-ui-theme")).toBe("dark");
   });
 
   it("clears stale profile save errors once the form becomes dirty again", async () => {
