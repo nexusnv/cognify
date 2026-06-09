@@ -105,7 +105,7 @@ For each remaining P1 feature, execute this exact sequence.
   - whether it is user-friendly, accessible, keyboard-aware, and responsive
   - whether it matches Cognify's enterprise procurement aspirations
   - whether it avoids decorative or marketing-style UI where an operational work surface is needed
-- Use the i-ux-pro-max skill for constructive screenshot critique when available.
+- Use the ui-ux-pro-max skill for constructive screenshot critique when available.
 - Address relevant critique feedback before moving on.
 
 7. Independent CodeRabbit review
@@ -187,7 +187,7 @@ Prepare these before starting the goal so agents can run the loop without avoida
   - `superpowers:receiving-code-review`
 - CodeRabbit plugin/app/MCP installed and authorized for independent reviews.
 - GitHub plugin/app installed for PR metadata, review comments, and PR lifecycle operations.
-- `i-ux-pro-max` skill installed if visual critique should use that exact skill name. If unavailable, the agent should perform a rigorous screenshot critique manually and note that the skill was unavailable.
+- `ui-ux-pro-max` skill installed if visual critique should use that exact skill name. If unavailable, the agent should perform a rigorous screenshot critique manually and note that the skill was unavailable.
 - Multi-agent tooling available for subagent execution.
 
 ### Local Toolchain
@@ -198,6 +198,7 @@ Prepare these before starting the goal so agents can run the loop without avoida
 - Docker or the documented local service runner available for `pnpm dev:services`.
 - Playwright browser dependencies installed for screenshot and E2E verification.
 - Any required image/screenshot tooling available in the agent environment.
+- shadcn MCP for API reference to shadcn components/composites/blocks
 
 ### Local Environment
 
@@ -219,6 +220,7 @@ Agents should be able to run the relevant commands from AGENTS.md and the featur
 - `pnpm test`
 - `pnpm build`
 - `pnpm dev`
+- `pnpm dev:reset`
 - `pnpm dev:services`
 - `pnpm dev:services:down`
 - `pnpm generate:api`
