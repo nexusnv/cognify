@@ -295,7 +295,8 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'ready')
-            ->assertJsonPath('data.readyByUserId', (string) $buyer->id);
+            ->assertJsonPath('data.readyByUserId', (string) $buyer->id)
+            ->assertJsonPath('data.permissions.canMarkReady', false);
     }
 
     public function test_json_export_get_returns_structured_payload_without_mutating_handoff_state(): void

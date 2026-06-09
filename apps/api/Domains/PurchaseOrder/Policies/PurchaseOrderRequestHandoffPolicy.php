@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 
 class PurchaseOrderRequestHandoffPolicy
 {
@@ -31,7 +32,8 @@ class PurchaseOrderRequestHandoffPolicy
 
     public function markReady(User $user, PurchaseOrderRequestHandoff $handoff): bool
     {
-        return $this->view($user, $handoff);
+        return $handoff->statusState() === PurchaseOrderRequestHandoffStatus::Draft
+            && $this->view($user, $handoff);
     }
 
     public function export(User $user, PurchaseOrderRequestHandoff $handoff): bool

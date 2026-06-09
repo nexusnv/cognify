@@ -22,7 +22,7 @@ class AuditEventController extends Controller
             'action' => ['sometimes', 'string', 'max:120'],
             'actorId' => ['sometimes', 'integer'],
             'subjectType' => ['sometimes', 'string', Rule::in(AuditSubject::publicTypes())],
-            'subjectId' => ['sometimes', 'integer'],
+            'subjectId' => ['sometimes', 'string', 'max:255'],
             'occurredFrom' => ['sometimes', 'date'],
             'occurredTo' => ['sometimes', 'date', 'after_or_equal:occurredFrom'],
             'page' => ['sometimes', 'integer', 'min:1'],
@@ -48,7 +48,7 @@ class AuditEventController extends Controller
 
             $query->where('subject_type', $subjectClass);
         }
-        $query->when($validated['subjectId'] ?? null, fn ($query, int $subjectId) => $query->where('subject_id', $subjectId));
+        $query->when($validated['subjectId'] ?? null, fn ($query, string $subjectId) => $query->where('subject_id', $subjectId));
         $query->when($validated['occurredFrom'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '>=', Carbon::parse($date)->startOfDay()));
         $query->when($validated['occurredTo'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '<=', Carbon::parse($date)->endOfDay()));
 

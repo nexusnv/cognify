@@ -153,6 +153,7 @@ describe("RFQ award recommendation workspace", () => {
     expect(await screen.findByRole("button", { name: "Download JSON" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Download CSV" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Save handoff review" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mark ready" })).not.toBeInTheDocument();
   });
 
   it("downloads JSON and CSV exports for ready PO handoffs", async () => {
