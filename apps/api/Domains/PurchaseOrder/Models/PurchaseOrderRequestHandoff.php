@@ -16,6 +16,7 @@ use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -246,6 +247,14 @@ class PurchaseOrderRequestHandoff extends Model
     public function quotationVersion(): BelongsTo
     {
         return $this->belongsTo(QuotationVersion::class);
+    }
+
+    /**
+     * @return HasOne<PurchaseOrder, $this>
+     */
+    public function purchaseOrder(): HasOne
+    {
+        return $this->hasOne(PurchaseOrder::class, 'purchase_order_request_handoff_id');
     }
 
     /**

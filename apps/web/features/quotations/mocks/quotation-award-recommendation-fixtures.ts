@@ -12,6 +12,7 @@ import type {
   SubmitRfqAwardRecommendationRequest,
   UpdatePurchaseOrderRequestHandoffRequest,
 } from "@cognify/api-client/schemas";
+import { purchaseOrderFixture } from "@/features/purchase-orders/mocks/purchase-order-fixtures";
 
 type AwardRecommendationFixtureState = {
   payload: RfqAwardRecommendation;
@@ -148,6 +149,19 @@ export function cancelPurchaseOrderRequestHandoffFixture(
   handoff.permissions = { canUpdate: false, canMarkReady: false, canExport: false, canCancel: false };
 
   return structuredClone(handoff);
+}
+
+export function createPurchaseOrderFromHandoffFixture(handoffId: string) {
+  const state = findStateByHandoffId(handoffId);
+  const handoff = state.handoff;
+  if (!handoff) throw new Error("PO handoff not found.");
+  if (handoff.status !== "ready" && handoff.status !== "exported") {
+    throw new Error("PO handoff must be ready or exported before creating a purchase order.");
+  }
+
+  handoff.purchaseOrderId = purchaseOrderFixture.id;
+
+  return structuredClone(purchaseOrderFixture);
 }
 
 export function exportPurchaseOrderRequestHandoffJsonFixture(handoffId: string) {
@@ -599,6 +613,7 @@ function buildPoHandoffFixture(rfqId: string): PurchaseOrderRequestHandoff {
     cancelledReason: null,
     lastExportFormat: null,
     lastExportedAt: null,
+    purchaseOrderId: null,
     lockVersion: 1,
     permissions: { canUpdate: true, canMarkReady: true, canExport: false, canCancel: true },
   };

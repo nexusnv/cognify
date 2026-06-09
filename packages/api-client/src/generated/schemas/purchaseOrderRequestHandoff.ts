@@ -17,6 +17,7 @@ import type { PurchaseOrderRequestHandoffReadyAt } from "./purchaseOrderRequestH
 import type { PurchaseOrderRequestHandoffCancelledReason } from "./purchaseOrderRequestHandoffCancelledReason";
 import type { PurchaseOrderRequestHandoffLastExportFormat } from "./purchaseOrderRequestHandoffLastExportFormat";
 import type { PurchaseOrderRequestHandoffLastExportedAt } from "./purchaseOrderRequestHandoffLastExportedAt";
+import type { PurchaseOrderRequestHandoffPurchaseOrderId } from "./purchaseOrderRequestHandoffPurchaseOrderId";
 import type { PurchaseOrderRequestHandoffPermissions } from "./purchaseOrderRequestHandoffPermissions";
 
 export interface PurchaseOrderRequestHandoff {
@@ -39,6 +40,7 @@ export interface PurchaseOrderRequestHandoff {
   cancelledReason?: PurchaseOrderRequestHandoffCancelledReason;
   lastExportFormat?: PurchaseOrderRequestHandoffLastExportFormat;
   lastExportedAt?: PurchaseOrderRequestHandoffLastExportedAt;
+  purchaseOrderId?: PurchaseOrderRequestHandoffPurchaseOrderId;
   lockVersion: number;
   permissions: PurchaseOrderRequestHandoffPermissions;
 }

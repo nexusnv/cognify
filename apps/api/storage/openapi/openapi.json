@@ -19213,6 +19213,13 @@
             ],
             "format": "date-time"
           },
+          "purchaseOrderId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "lockVersion": {
             "type": "integer"
           },

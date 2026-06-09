@@ -383,6 +383,7 @@ export * from "./purchaseOrderRequestHandoffLineTaxAmount";
 export * from "./purchaseOrderRequestHandoffLineUnitOfMeasure";
 export * from "./purchaseOrderRequestHandoffLineUnitPrice";
 export * from "./purchaseOrderRequestHandoffPermissions";
+export * from "./purchaseOrderRequestHandoffPurchaseOrderId";
 export * from "./purchaseOrderRequestHandoffReadyAt";
 export * from "./purchaseOrderRequestHandoffReadyByUserId";
 export * from "./purchaseOrderRequestHandoffResponse";

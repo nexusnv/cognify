@@ -195,7 +195,7 @@ export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: Rfq
             ) : null}
             {canExport ? (
               <>
-                {!handoff.source.purchaseOrderId ? (
+                {!handoff.purchaseOrderId ? (
                   <Button
                     disabled={createPurchaseOrder.isPending}
                     onClick={() => {

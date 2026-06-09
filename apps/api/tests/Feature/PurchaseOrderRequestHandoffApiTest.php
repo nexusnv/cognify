@@ -11,7 +11,9 @@ use Domains\Approval\Models\ApprovalPolicyVersion;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\States\ApprovalPolicyStatus;
 use Domains\Approval\States\ApprovalPolicyVersionStatus;
+use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -183,6 +185,43 @@ class PurchaseOrderRequestHandoffApiTest extends TestCase
             ->assertJsonPath('data.lines.0.description', 'Pallet rack bay')
             ->assertJsonPath('data.approval.stages.0.stage', 'Commercial approval')
             ->assertJsonPath('data.evidence.0.type', 'comparison_note');
+    }
+
+    public function test_handoff_response_includes_existing_purchase_order_reference(): void
+    {
+        [$tenant, $buyer] = $this->tenantUser('buyer');
+        [, $approver] = $this->tenantUser('approver', $tenant);
+        [$rfq, $recommendation, $quotation, $version] = $this->approvedRecommendation($tenant, $buyer, $approver);
+        $handoffId = $this->seedPurchaseOrderRequestHandoff($tenant, $buyer, $rfq, $recommendation, $quotation, $version);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/po-handoffs/{$handoffId}")
+            ->assertOk()
+            ->assertJsonPath('data.purchaseOrderId', null);
+
+        $purchaseOrder = PurchaseOrder::query()->create([
+            'tenant_id' => $tenant->id,
+            'purchase_order_request_handoff_id' => $handoffId,
+            'rfq_award_recommendation_id' => $recommendation->id,
+            'rfq_id' => $rfq->id,
+            'vendor_id' => $quotation->vendor_id,
+            'quotation_id' => $quotation->id,
+            'quotation_version_id' => $version->id,
+            'number' => 'PO-2026-EXISTING',
+            'status' => PurchaseOrderStatus::Draft,
+            'currency' => 'MYR',
+            'total_amount' => '131100.00',
+            'source_snapshot' => [],
+            'approval_snapshot' => [],
+            'evidence_snapshot' => [],
+            'created_by_user_id' => $buyer->id,
+            'lock_version' => 1,
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson("/api/po-handoffs/{$handoffId}")
+            ->assertOk()
+            ->assertJsonPath('data.purchaseOrderId', (string) $purchaseOrder->id);
     }
 
     public function test_buyer_can_update_optional_handoff_fields_with_lock_version(): void

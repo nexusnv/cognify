@@ -191,6 +191,7 @@ describe("RFQ award recommendation workspace", () => {
     await user.click(await screen.findByRole("button", { name: "Create purchase order" }));
 
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/purchase-orders/po-1"));
+    expect(screen.queryByRole("button", { name: "Create purchase order" })).not.toBeInTheDocument();
   });
 
   it("hides export actions for cancelled PO handoffs", async () => {
