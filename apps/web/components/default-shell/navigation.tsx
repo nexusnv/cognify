@@ -96,6 +96,12 @@ export const finalNavigationItems: DefaultNavItem[] = [
         permission: canUseRequisitions,
       },
       {
+        title: "Purchase orders",
+        url: "/purchase-orders",
+        implemented: true,
+        permission: canUseRequisitions,
+      },
+      {
         title: "Calendar",
         url: "/calendar",
         implemented: true,

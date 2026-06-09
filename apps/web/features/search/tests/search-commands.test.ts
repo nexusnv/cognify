@@ -11,6 +11,7 @@ describe("getSearchCommands", () => {
     const commands = getSearchCommands(requesterIdentity.permissions);
 
     expect(commands.some((command) => command.label === "Open requisitions")).toBe(true);
+    expect(commands.some((command) => command.label === "Open purchase orders")).toBe(true);
     expect(commands.some((command) => command.label === "Create requisition")).toBe(true);
     expect(commands.some((command) => command.label === "Open calendar")).toBe(false);
   });
