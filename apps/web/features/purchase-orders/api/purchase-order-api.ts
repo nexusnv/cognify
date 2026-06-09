@@ -26,12 +26,12 @@ function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantI
   };
 }
 
-function unwrapOk(response: { status: number; data: { data: unknown } }, expectedStatus = 200): unknown {
+function unwrapOk(response: { status: number; data: unknown }, expectedStatus = 200): unknown {
   if (response.status !== expectedStatus) {
     throw response.data;
   }
 
-  return response.data.data;
+  return (response.data as { data: unknown }).data;
 }
 
 export async function fetchPurchaseOrders(
