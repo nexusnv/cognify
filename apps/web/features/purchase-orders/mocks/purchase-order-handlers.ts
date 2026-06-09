@@ -18,13 +18,10 @@ function findPurchaseOrder(purchaseOrderId: string) {
 export const purchaseOrderHandlers = [
   http.get("/api/purchase-orders", () => {
     return HttpResponse.json({
-      data: {
-        ...purchaseOrderListResponseFixture,
-        data: purchaseOrders,
-        meta: {
-          ...purchaseOrderListResponseFixture.meta,
-          total: purchaseOrders.length,
-        },
+      data: purchaseOrders,
+      meta: {
+        ...purchaseOrderListResponseFixture.meta,
+        total: purchaseOrders.length,
       },
     });
   }),

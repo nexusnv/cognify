@@ -38,7 +38,11 @@ export async function fetchPurchaseOrders(
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<PurchaseOrderListResponse> {
   const response = await listPurchaseOrdersEndpoint(undefined, withActiveTenantHeader(tenantId));
-  return unwrapOk(response) as PurchaseOrderListResponse;
+  if (response.status !== 200) {
+    throw response.data;
+  }
+
+  return response.data;
 }
 
 export async function fetchPurchaseOrder(
