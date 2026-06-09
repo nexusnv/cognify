@@ -40,6 +40,16 @@ export function getSearchCommands(
       enabled: canUseRequisitions(permissions),
     },
     {
+      id: "navigate:/purchase-orders",
+      group: "Navigation",
+      label: "Open purchase orders",
+      description: "Go to purchase orders",
+      href: "/purchase-orders",
+      keywords: ["purchase orders", "po", "procurement"],
+      icon: ReceiptText,
+      enabled: canUseRequisitions(permissions),
+    },
+    {
       id: "navigate:/approvals",
       group: "Navigation",
       label: "Open approvals",

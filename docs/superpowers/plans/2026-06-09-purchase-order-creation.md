@@ -110,7 +110,7 @@ Do not implement:
 
 - Create: `apps/api/tests/Feature/PurchaseOrderCreationApiTest.php`
 
-- [ ] **Step 1: Create the failing test file**
+- [x] **Step 1: Create the failing test file**
 
 Create `apps/api/tests/Feature/PurchaseOrderCreationApiTest.php` with this test scaffold. Reuse concrete fixture-building patterns from `apps/api/tests/Feature/PurchaseOrderRequestHandoffApiTest.php`.
 
@@ -148,7 +148,7 @@ class PurchaseOrderCreationApiTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Add the ready-handoff creation assertion**
+- [x] **Step 2: Add the ready-handoff creation assertion**
 
 Fill `test_buyer_can_create_draft_purchase_order_from_ready_handoff` with this assertion shape:
 
@@ -182,7 +182,7 @@ $this->assertDatabaseHas('audit_events', [
 ]);
 ```
 
-- [ ] **Step 3: Add state and idempotency assertions**
+- [x] **Step 3: Add state and idempotency assertions**
 
 Use these exact status expectations:
 
@@ -219,7 +219,7 @@ $this->assertSame($first, $second);
 $this->assertSame(1, PurchaseOrder::query()->where('purchase_order_request_handoff_id', $handoff->id)->count());
 ```
 
-- [ ] **Step 4: Add update, stale lock, ready, and cancel assertions**
+- [x] **Step 4: Add update, stale lock, ready, and cancel assertions**
 
 Use these endpoint assertions:
 
@@ -259,7 +259,7 @@ $this->actingAsTenant($po->tenant, $buyer)
     ->assertJsonPath('data.status', 'ready_for_review');
 ```
 
-- [ ] **Step 5: Run the narrow red test**
+- [x] **Step 5: Run the narrow red test**
 
 Run:
 
@@ -269,7 +269,7 @@ cd apps/api && php artisan test --filter PurchaseOrderCreationApiTest
 
 Expected: tests fail because `PurchaseOrder`, routes, and tables do not exist.
 
-- [ ] **Step 6: Commit the red test**
+- [x] **Step 6: Commit the red test**
 
 ```bash
 git add apps/api/tests/Feature/PurchaseOrderCreationApiTest.php
@@ -287,7 +287,7 @@ git commit -m "test: cover purchase order creation workflow"
 - Create: `apps/api/Domains/PurchaseOrder/Support/PurchaseOrderNumber.php`
 - Modify: `apps/api/app/Audit/AuditSubject.php`
 
-- [ ] **Step 1: Add the migration**
+- [x] **Step 1: Add the migration**
 
 Create `apps/api/database/migrations/2026_06_09_000000_create_purchase_orders_table.php`:
 
@@ -392,7 +392,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] **Step 2: Add `PurchaseOrderStatus`**
+- [x] **Step 2: Add `PurchaseOrderStatus`**
 
 Create `apps/api/Domains/PurchaseOrder/States/PurchaseOrderStatus.php`:
 
@@ -414,7 +414,7 @@ enum PurchaseOrderStatus: string
 }
 ```
 
-- [ ] **Step 3: Add `PurchaseOrder` model**
+- [x] **Step 3: Add `PurchaseOrder` model**
 
 Create `apps/api/Domains/PurchaseOrder/Models/PurchaseOrder.php` following the tenant assertion pattern in `PurchaseOrderRequestHandoff.php`. Include these key members:
 
@@ -536,7 +536,7 @@ class PurchaseOrder extends Model
 
 Add `booted()` tenant assertions after matching the exact helper methods available in `PurchaseOrderRequestHandoff.php`.
 
-- [ ] **Step 4: Add `PurchaseOrderLine` model**
+- [x] **Step 4: Add `PurchaseOrderLine` model**
 
 Create `apps/api/Domains/PurchaseOrder/Models/PurchaseOrderLine.php`:
 
@@ -609,7 +609,7 @@ class PurchaseOrderLine extends Model
 }
 ```
 
-- [ ] **Step 5: Add PO number generator**
+- [x] **Step 5: Add PO number generator**
 
 Create `apps/api/Domains/PurchaseOrder/Support/PurchaseOrderNumber.php`:
 
@@ -636,7 +636,7 @@ class PurchaseOrderNumber
 }
 ```
 
-- [ ] **Step 6: Register audit subject**
+- [x] **Step 6: Register audit subject**
 
 Modify `apps/api/app/Audit/AuditSubject.php` so the model map includes:
 
@@ -650,7 +650,7 @@ Add the import:
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 ```
 
-- [ ] **Step 7: Run the API red test again**
+- [x] **Step 7: Run the API red test again**
 
 Run:
 
@@ -660,7 +660,7 @@ cd apps/api && php artisan test --filter PurchaseOrderCreationApiTest
 
 Expected: migration/model errors are resolved; failures now point to missing policy, routes, resources, and actions.
 
-- [ ] **Step 8: Commit the data model**
+- [x] **Step 8: Commit the data model**
 
 ```bash
 git add apps/api/database/migrations/2026_06_09_000000_create_purchase_orders_table.php apps/api/Domains/PurchaseOrder/Models/PurchaseOrder.php apps/api/Domains/PurchaseOrder/Models/PurchaseOrderLine.php apps/api/Domains/PurchaseOrder/States/PurchaseOrderStatus.php apps/api/Domains/PurchaseOrder/Support/PurchaseOrderNumber.php apps/api/app/Audit/AuditSubject.php
@@ -675,7 +675,7 @@ git commit -m "feat: add purchase order data model"
 - Modify: `apps/api/app/Providers/AppServiceProvider.php`
 - Modify: `apps/api/routes/api.php`
 
-- [ ] **Step 1: Add `PurchaseOrderPolicy`**
+- [x] **Step 1: Add `PurchaseOrderPolicy`**
 
 Create `apps/api/Domains/PurchaseOrder/Policies/PurchaseOrderPolicy.php`:
 
@@ -744,7 +744,7 @@ Register it in `apps/api/app/Providers/AppServiceProvider.php`:
 Gate::policy(PurchaseOrder::class, PurchaseOrderPolicy::class);
 ```
 
-- [ ] **Step 2: Add resources**
+- [x] **Step 2: Add resources**
 
 Create `PurchaseOrderLineResource`:
 
@@ -819,7 +819,7 @@ return [
 ];
 ```
 
-- [ ] **Step 3: Add `CreatePurchaseOrderFromHandoff`**
+- [x] **Step 3: Add `CreatePurchaseOrderFromHandoff`**
 
 Create `apps/api/Domains/PurchaseOrder/Actions/CreatePurchaseOrderFromHandoff.php`. The core transaction must match this behavior:
 
@@ -880,7 +880,7 @@ foreach (array_values($handoff->line_snapshot ?? []) as $index => $line) {
 
 Record `purchase_order.created` with source handoff id and number.
 
-- [ ] **Step 4: Add update, ready, and cancel actions**
+- [x] **Step 4: Add update, ready, and cancel actions**
 
 `UpdatePurchaseOrder` must:
 
@@ -925,7 +925,7 @@ If any required value is empty, throw `ConflictHttpException('Purchase order req
 
 `CancelPurchaseOrder` must require draft status, lock version, and a non-empty reason, then set `cancelled`.
 
-- [ ] **Step 5: Add form requests**
+- [x] **Step 5: Add form requests**
 
 `UpdatePurchaseOrderRequest` rules:
 
@@ -961,7 +961,7 @@ return [
 ];
 ```
 
-- [ ] **Step 6: Add controller and routes**
+- [x] **Step 6: Add controller and routes**
 
 Create `PurchaseOrderController` with `index`, `show`, `createFromHandoff`, `update`, `readyForReview`, and `cancel`. Use tenant-filtered queries only:
 
@@ -982,7 +982,7 @@ Route::post('/purchase-orders/{purchaseOrder}/ready-for-review', [PurchaseOrderC
 Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
 ```
 
-- [ ] **Step 7: Run the focused API test**
+- [x] **Step 7: Run the focused API test**
 
 Run:
 
@@ -992,7 +992,7 @@ cd apps/api && php artisan test --filter PurchaseOrderCreationApiTest
 
 Expected: all `PurchaseOrderCreationApiTest` tests pass.
 
-- [ ] **Step 8: Commit API behavior**
+- [x] **Step 8: Commit API behavior**
 
 ```bash
 git add apps/api/Domains/PurchaseOrder apps/api/app/Providers/AppServiceProvider.php apps/api/routes/api.php apps/api/tests/Feature/PurchaseOrderCreationApiTest.php
@@ -1006,7 +1006,7 @@ git commit -m "feat: create purchase orders from handoffs"
 - Modify: `apps/api/storage/openapi/openapi.json`
 - Modify generated files under: `packages/api-client/src/generated/**`
 
-- [ ] **Step 1: Add OpenAPI paths and schemas**
+- [x] **Step 1: Add OpenAPI paths and schemas**
 
 Add schemas for `PurchaseOrder`, `PurchaseOrderLine`, `PurchaseOrderListResponse`, `PurchaseOrderResponse`, `UpdatePurchaseOrderRequest`, `MarkPurchaseOrderReadyForReviewRequest`, and `CancelPurchaseOrderRequest`.
 
@@ -1027,7 +1027,7 @@ Make `PurchaseOrder.status` enum:
 ["draft", "ready_for_review", "cancelled"]
 ```
 
-- [ ] **Step 2: Generate client**
+- [x] **Step 2: Generate client**
 
 Run:
 
@@ -1037,7 +1037,7 @@ pnpm generate:api
 
 Expected: generated endpoint helpers and schemas appear under `packages/api-client/src/generated`.
 
-- [ ] **Step 3: Verify contract**
+- [x] **Step 3: Verify contract**
 
 Run:
 
@@ -1047,7 +1047,7 @@ pnpm check:api-contract
 
 Expected: command exits 0.
 
-- [ ] **Step 4: Commit contract changes**
+- [x] **Step 4: Commit contract changes**
 
 ```bash
 git add apps/api/storage/openapi/openapi.json packages/api-client/src/generated
@@ -1061,7 +1061,7 @@ git commit -m "feat: add purchase order API contract"
 - Create all `apps/web/features/purchase-orders/**` files listed in the file map.
 - Modify quotation handoff mocks and tests.
 
-- [ ] **Step 1: Add web red test**
+- [x] **Step 1: Add web red test**
 
 Create `apps/web/features/purchase-orders/tests/purchase-order-workflow.test.tsx` with tests:
 
@@ -1094,7 +1094,7 @@ pnpm --dir apps/web exec vitest run features/purchase-orders/tests/purchase-orde
 
 Expected: fails because the web feature does not exist.
 
-- [ ] **Step 2: Add API wrappers**
+- [x] **Step 2: Add API wrappers**
 
 Create `apps/web/features/purchase-orders/api/purchase-order-api.ts` using generated functions:
 
@@ -1139,7 +1139,7 @@ export async function cancelDraftPurchaseOrder(id: string, payload: CancelPurcha
 
 Adjust imports to the actual generated function names if Orval adds a suffix.
 
-- [ ] **Step 3: Add hooks**
+- [x] **Step 3: Add hooks**
 
 Create `use-purchase-order.ts` and `use-purchase-order-actions.ts` with TanStack Query keys:
 
@@ -1153,7 +1153,7 @@ export const purchaseOrderKeys = {
 
 Mutations must invalidate both `list(tenantId)` and `detail(tenantId, id)`.
 
-- [ ] **Step 4: Add MSW fixtures and handlers**
+- [x] **Step 4: Add MSW fixtures and handlers**
 
 Create a fixture with one draft PO:
 
@@ -1216,7 +1216,7 @@ http.post("/api/purchase-orders/:purchaseOrder/ready-for-review", () =>
 ),
 ```
 
-- [ ] **Step 5: Add list and workspace pages**
+- [x] **Step 5: Add list and workspace pages**
 
 Create routes that delegate to workflow components:
 
@@ -1239,7 +1239,7 @@ export default async function Page({ params }: { params: Promise<{ purchaseOrder
 
 The workspace must render an `h1` with the PO number, source/vendor summary, line table, draft fields, and action buttons.
 
-- [ ] **Step 6: Run web focused test**
+- [x] **Step 6: Run web-focused test**
 
 Run:
 
@@ -1249,7 +1249,7 @@ pnpm --dir apps/web exec vitest run features/purchase-orders/tests/purchase-orde
 
 Expected: test passes.
 
-- [ ] **Step 7: Commit web PO workspace foundation**
+- [x] **Step 7: Commit web PO workspace foundation**
 
 ```bash
 git add apps/web/app/(workspace)/purchase-orders apps/web/features/purchase-orders
@@ -1265,7 +1265,7 @@ git commit -m "feat: add purchase order workspace"
 - Modify: `apps/web/features/quotations/components/rfq-award-po-handoff-panel.tsx`
 - Modify: quotation mocks/tests listed in file map.
 
-- [ ] **Step 1: Add API wrapper and hook**
+- [x] **Step 1: Add API wrapper and hook**
 
 Add a generated-client-backed wrapper:
 
@@ -1299,7 +1299,7 @@ export function useCreatePurchaseOrderFromRfqAwardHandoff(rfqId: string, handoff
 
 Use the project’s actual active-tenant hook names.
 
-- [ ] **Step 2: Update PO handoff panel**
+- [x] **Step 2: Update PO handoff panel**
 
 Show `Create purchase order` when:
 
@@ -1324,7 +1324,7 @@ Add the button beside export actions:
 </Button>
 ```
 
-- [ ] **Step 3: Extend quotation MSW handlers**
+- [x] **Step 3: Extend quotation MSW handlers**
 
 Add:
 
@@ -1334,7 +1334,7 @@ http.post("/api/po-handoffs/:handoff/purchase-order", ({ params }) => {
 });
 ```
 
-- [ ] **Step 4: Extend workspace test**
+- [x] **Step 4: Extend workspace test**
 
 In `apps/web/features/quotations/tests/rfq-award-recommendation-workspace.test.tsx`, assert:
 
@@ -1343,7 +1343,7 @@ await user.click(screen.getByRole("button", { name: "Create purchase order" }));
 expect(router.push).toHaveBeenCalledWith("/purchase-orders/po-1");
 ```
 
-- [ ] **Step 5: Run focused quotation test**
+- [x] **Step 5: Run focused quotation test**
 
 Run:
 
@@ -1353,7 +1353,7 @@ pnpm --dir apps/web exec vitest run features/quotations/tests/rfq-award-recommen
 
 Expected: passes.
 
-- [ ] **Step 6: Commit handoff-to-PO UI**
+- [x] **Step 6: Commit handoff-to-PO UI**
 
 ```bash
 git add apps/web/features/quotations apps/web/features/purchase-orders
@@ -1370,7 +1370,7 @@ git commit -m "feat: connect PO handoff to purchase order creation"
 - Modify: `apps/web/features/search/mocks/search-fixtures.ts`
 - Modify: `apps/web/features/search/tests/search-commands.test.ts`
 
-- [ ] **Step 1: Add purchase orders navigation**
+- [x] **Step 1: Add purchase orders navigation**
 
 In `finalNavigationItems`, add a Procurement sub-item:
 
@@ -1385,7 +1385,7 @@ In `finalNavigationItems`, add a Procurement sub-item:
 
 Also add a secondary shortcut only if the shell remains visually balanced after adding it; otherwise leave discovery through Procurement and search.
 
-- [ ] **Step 2: Add search command**
+- [x] **Step 2: Add search command**
 
 In `getSearchCommands`, add:
 
@@ -1402,7 +1402,7 @@ In `getSearchCommands`, add:
 }
 ```
 
-- [ ] **Step 3: Add search tests**
+- [x] **Step 3: Add search tests**
 
 In `search-commands.test.ts`, assert:
 
@@ -1410,7 +1410,7 @@ In `search-commands.test.ts`, assert:
 expect(commands.some((command) => command.label === "Open purchase orders")).toBe(true);
 ```
 
-- [ ] **Step 4: Run navigation/search tests**
+- [x] **Step 4: Run navigation/search tests**
 
 Run:
 
@@ -1420,7 +1420,7 @@ pnpm --dir apps/web exec vitest run components/default-shell/navigation.test.tsx
 
 Expected: passes.
 
-- [ ] **Step 5: Commit discovery changes**
+- [x] **Step 5: Commit discovery changes**
 
 ```bash
 git add apps/web/components/default-shell/navigation.tsx apps/web/features/search
@@ -1434,7 +1434,7 @@ git commit -m "feat: surface purchase order navigation"
 - Modify: `docs/01-product/feature-roadmap.md`
 - Modify: this plan by checking completed boxes.
 
-- [ ] **Step 1: Run API verification**
+- [x] **Step 1: Run API verification**
 
 Run:
 
@@ -1444,7 +1444,7 @@ cd apps/api && php artisan test --filter PurchaseOrderCreationApiTest
 
 Expected: all tests pass.
 
-- [ ] **Step 2: Run existing handoff regression**
+- [x] **Step 2: Run existing handoff regression**
 
 Run:
 
@@ -1454,7 +1454,7 @@ cd apps/api && php artisan test --filter PurchaseOrderRequestHandoffApiTest
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Run contract verification**
+- [x] **Step 3: Run contract verification**
 
 Run:
 
@@ -1464,7 +1464,7 @@ pnpm check:api-contract
 
 Expected: exits 0.
 
-- [ ] **Step 4: Run web focused tests**
+- [x] **Step 4: Run web-focused tests**
 
 Run:
 
@@ -1474,7 +1474,7 @@ pnpm --dir apps/web exec vitest run features/purchase-orders/tests/purchase-orde
 
 Expected: all listed tests pass.
 
-- [ ] **Step 5: Run web typecheck**
+- [x] **Step 5: Run web typecheck**
 
 Run:
 
@@ -1484,7 +1484,7 @@ pnpm --filter @cognify/web typecheck
 
 Expected: exits 0.
 
-- [ ] **Step 6: Update roadmap row**
+- [x] **Step 6: Update roadmap row**
 
 After all verification passes, update P1-36 in `docs/01-product/feature-roadmap.md`:
 
@@ -1492,7 +1492,7 @@ After all verification passes, update P1-36 in `docs/01-product/feature-roadmap.
 | P1-36 | Purchase Order Creation | ... | Fully Implemented | `docs/superpowers/specs/2026-06-09-purchase-order-creation-design.md` | `docs/superpowers/plans/2026-06-09-purchase-order-creation.md` |  | Implemented as ready/exported PO handoff conversion into a durable draft purchase order with line rows, buyer/admin draft update, ready-for-review state, audit events, generated-client web workspace, and navigation/search discovery. |
 ```
 
-- [ ] **Step 7: Run whitespace diff check**
+- [x] **Step 7: Run whitespace diff check**
 
 Run:
 
@@ -1502,7 +1502,7 @@ git diff --check
 
 Expected: no output.
 
-- [ ] **Step 8: Commit completion docs**
+- [x] **Step 8: Commit completion docs**
 
 ```bash
 git add docs/01-product/feature-roadmap.md docs/superpowers/plans/2026-06-09-purchase-order-creation.md

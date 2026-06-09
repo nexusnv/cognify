@@ -1,5 +1,6 @@
 import {
   cancelPurchaseOrderRequestHandoff,
+  createPurchaseOrderFromHandoff,
   createRfqAwardRecommendationPoHandoff,
   getRfqAwardRecommendationApprovalSummary,
   markPurchaseOrderRequestHandoffReady,
@@ -19,6 +20,7 @@ import type {
   ApprovalSummary,
   CancelPurchaseOrderRequestHandoffRequest,
   MarkPurchaseOrderRequestHandoffReadyRequest,
+  PurchaseOrder,
   PurchaseOrderRequestHandoff,
   PurchaseOrderRequestHandoffExport,
   RfqAwardRecommendation,
@@ -189,6 +191,19 @@ export async function cancelRfqAwardRecommendationPoHandoff(
   );
 
   return unwrapOk(response) as PurchaseOrderRequestHandoff;
+}
+
+export async function createPurchaseOrderFromPoHandoff(
+  handoffId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrder> {
+  const response = await createPurchaseOrderFromHandoff(handoffId, withActiveTenantHeader(tenantId)).catch(
+    throwResponseData,
+  );
+
+  if (response.status !== 200 && response.status !== 201) throw response.data;
+
+  return unwrapOk(response, response.status) as PurchaseOrder;
 }
 
 export async function exportRfqAwardRecommendationPoHandoffJson(

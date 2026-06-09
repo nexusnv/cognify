@@ -14,5 +14,4 @@ export interface PurchaseOrderRequestHandoffEvidence {
   id?: PurchaseOrderRequestHandoffEvidenceId;
   label?: PurchaseOrderRequestHandoffEvidenceLabel;
   summary?: PurchaseOrderRequestHandoffEvidenceSummary;
-  [key: string]: unknown;
 }

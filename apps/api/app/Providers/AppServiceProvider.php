@@ -15,7 +15,9 @@ use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Project\Policies\ProcurementProjectPolicy;
+use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\Policies\PurchaseOrderPolicy;
 use Domains\PurchaseOrder\Policies\PurchaseOrderRequestHandoffPolicy;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqAwardRecommendation;
@@ -64,6 +66,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Rfq::class, RfqPolicy::class);
         Gate::policy(RfqAwardRecommendation::class, RfqAwardRecommendationPolicy::class);
         Gate::policy(RfqInvitation::class, RfqInvitationPolicy::class);
+        Gate::policy(PurchaseOrder::class, PurchaseOrderPolicy::class);
         Gate::policy(PurchaseOrderRequestHandoff::class, PurchaseOrderRequestHandoffPolicy::class);
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);

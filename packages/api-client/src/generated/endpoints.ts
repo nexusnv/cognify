@@ -25,6 +25,7 @@ import type {
   AttachmentResponse,
   AttachmentUploadRequest,
   AuditEventListResponse,
+  CancelPurchaseOrderRequest,
   CancelPurchaseOrderRequestHandoffRequest,
   CancelRfqInvitationRequest,
   CollaborationCommentListResponse,
@@ -48,6 +49,7 @@ import type {
   ListNotificationsParams,
   ListProcurementCalendarEventsParams,
   ListProjectsParams,
+  ListPurchaseOrdersParams,
   ListQuotationNormalizationsParams,
   ListRequisitionActivity200,
   ListRequisitionLineItemSuggestionsParams,
@@ -56,6 +58,7 @@ import type {
   ListVendorsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
+  MarkPurchaseOrderReadyForReviewRequest,
   MarkPurchaseOrderRequestHandoffReadyRequest,
   NotFoundResponse,
   NotificationListResponse,
@@ -67,8 +70,10 @@ import type {
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
+  PurchaseOrderListResponse,
   PurchaseOrderRequestHandoffExport,
   PurchaseOrderRequestHandoffResponse,
+  PurchaseOrderResponse,
   QuotationComparisonNoteResponse,
   QuotationComparisonResponse,
   QuotationNormalizationResponse,
@@ -131,6 +136,7 @@ import type {
   UpdateApprovalPolicyRequest,
   UpdateCurrentUserProfileRequest,
   UpdateProcurementProjectRequest,
+  UpdatePurchaseOrderRequest,
   UpdatePurchaseOrderRequestHandoffRequest,
   UpdateRequisitionRequest,
   UpdateRfqInvitationStatusRequest,
@@ -8993,4 +8999,424 @@ export const recordPurchaseOrderRequestHandoffCsvExport = async (
       method: "POST",
     },
   );
+};
+
+/**
+ * @summary List purchase orders
+ */
+export type listPurchaseOrdersResponse200 = {
+  data: PurchaseOrderListResponse;
+  status: 200;
+};
+
+export type listPurchaseOrdersResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listPurchaseOrdersResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listPurchaseOrdersResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listPurchaseOrdersResponseSuccess = listPurchaseOrdersResponse200 & {
+  headers: Headers;
+};
+export type listPurchaseOrdersResponseError = (
+  | listPurchaseOrdersResponse400
+  | listPurchaseOrdersResponse401
+  | listPurchaseOrdersResponse403
+) & {
+  headers: Headers;
+};
+
+export type listPurchaseOrdersResponse =
+  | listPurchaseOrdersResponseSuccess
+  | listPurchaseOrdersResponseError;
+
+export const getListPurchaseOrdersUrl = (params?: ListPurchaseOrdersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/purchase-orders?${stringifiedParams}`
+    : `/api/purchase-orders`;
+};
+
+export const listPurchaseOrders = async (
+  params?: ListPurchaseOrdersParams,
+  options?: RequestInit,
+): Promise<listPurchaseOrdersResponse> => {
+  return cognifyFetch<listPurchaseOrdersResponse>(getListPurchaseOrdersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Show purchase order
+ */
+export type showPurchaseOrderResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type showPurchaseOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showPurchaseOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showPurchaseOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type showPurchaseOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showPurchaseOrderResponseSuccess = showPurchaseOrderResponse200 & {
+  headers: Headers;
+};
+export type showPurchaseOrderResponseError = (
+  | showPurchaseOrderResponse400
+  | showPurchaseOrderResponse401
+  | showPurchaseOrderResponse403
+  | showPurchaseOrderResponse404
+) & {
+  headers: Headers;
+};
+
+export type showPurchaseOrderResponse =
+  | showPurchaseOrderResponseSuccess
+  | showPurchaseOrderResponseError;
+
+export const getShowPurchaseOrderUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}`;
+};
+
+export const showPurchaseOrder = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<showPurchaseOrderResponse> => {
+  return cognifyFetch<showPurchaseOrderResponse>(getShowPurchaseOrderUrl(purchaseOrder), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update purchase order
+ */
+export type updatePurchaseOrderResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type updatePurchaseOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updatePurchaseOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updatePurchaseOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type updatePurchaseOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updatePurchaseOrderResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updatePurchaseOrderResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updatePurchaseOrderResponseSuccess = updatePurchaseOrderResponse200 & {
+  headers: Headers;
+};
+export type updatePurchaseOrderResponseError = (
+  | updatePurchaseOrderResponse400
+  | updatePurchaseOrderResponse401
+  | updatePurchaseOrderResponse403
+  | updatePurchaseOrderResponse404
+  | updatePurchaseOrderResponse409
+  | updatePurchaseOrderResponse422
+) & {
+  headers: Headers;
+};
+
+export type updatePurchaseOrderResponse =
+  | updatePurchaseOrderResponseSuccess
+  | updatePurchaseOrderResponseError;
+
+export const getUpdatePurchaseOrderUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}`;
+};
+
+export const updatePurchaseOrder = async (
+  purchaseOrder: string,
+  updatePurchaseOrderRequest: UpdatePurchaseOrderRequest,
+  options?: RequestInit,
+): Promise<updatePurchaseOrderResponse> => {
+  return cognifyFetch<updatePurchaseOrderResponse>(getUpdatePurchaseOrderUrl(purchaseOrder), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePurchaseOrderRequest),
+  });
+};
+
+/**
+ * @summary Create or reveal purchase order from handoff
+ */
+export type createPurchaseOrderFromHandoffResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type createPurchaseOrderFromHandoffResponse201 = {
+  data: PurchaseOrderResponse;
+  status: 201;
+};
+
+export type createPurchaseOrderFromHandoffResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type createPurchaseOrderFromHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createPurchaseOrderFromHandoffResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createPurchaseOrderFromHandoffResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createPurchaseOrderFromHandoffResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type createPurchaseOrderFromHandoffResponseSuccess = (
+  | createPurchaseOrderFromHandoffResponse200
+  | createPurchaseOrderFromHandoffResponse201
+) & {
+  headers: Headers;
+};
+export type createPurchaseOrderFromHandoffResponseError = (
+  | createPurchaseOrderFromHandoffResponse400
+  | createPurchaseOrderFromHandoffResponse401
+  | createPurchaseOrderFromHandoffResponse403
+  | createPurchaseOrderFromHandoffResponse404
+  | createPurchaseOrderFromHandoffResponse409
+) & {
+  headers: Headers;
+};
+
+export type createPurchaseOrderFromHandoffResponse =
+  | createPurchaseOrderFromHandoffResponseSuccess
+  | createPurchaseOrderFromHandoffResponseError;
+
+export const getCreatePurchaseOrderFromHandoffUrl = (handoff: string) => {
+  return `/api/po-handoffs/${handoff}/purchase-order`;
+};
+
+export const createPurchaseOrderFromHandoff = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<createPurchaseOrderFromHandoffResponse> => {
+  return cognifyFetch<createPurchaseOrderFromHandoffResponse>(
+    getCreatePurchaseOrderFromHandoffUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Mark purchase order ready for review
+ */
+export type markPurchaseOrderReadyForReviewResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type markPurchaseOrderReadyForReviewResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type markPurchaseOrderReadyForReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markPurchaseOrderReadyForReviewResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type markPurchaseOrderReadyForReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type markPurchaseOrderReadyForReviewResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type markPurchaseOrderReadyForReviewResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type markPurchaseOrderReadyForReviewResponseSuccess =
+  markPurchaseOrderReadyForReviewResponse200 & {
+    headers: Headers;
+  };
+export type markPurchaseOrderReadyForReviewResponseError = (
+  | markPurchaseOrderReadyForReviewResponse400
+  | markPurchaseOrderReadyForReviewResponse401
+  | markPurchaseOrderReadyForReviewResponse403
+  | markPurchaseOrderReadyForReviewResponse404
+  | markPurchaseOrderReadyForReviewResponse409
+  | markPurchaseOrderReadyForReviewResponse422
+) & {
+  headers: Headers;
+};
+
+export type markPurchaseOrderReadyForReviewResponse =
+  | markPurchaseOrderReadyForReviewResponseSuccess
+  | markPurchaseOrderReadyForReviewResponseError;
+
+export const getMarkPurchaseOrderReadyForReviewUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/ready-for-review`;
+};
+
+export const markPurchaseOrderReadyForReview = async (
+  purchaseOrder: string,
+  markPurchaseOrderReadyForReviewRequest: MarkPurchaseOrderReadyForReviewRequest,
+  options?: RequestInit,
+): Promise<markPurchaseOrderReadyForReviewResponse> => {
+  return cognifyFetch<markPurchaseOrderReadyForReviewResponse>(
+    getMarkPurchaseOrderReadyForReviewUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(markPurchaseOrderReadyForReviewRequest),
+    },
+  );
+};
+
+/**
+ * @summary Cancel purchase order
+ */
+export type cancelPurchaseOrderResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type cancelPurchaseOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type cancelPurchaseOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelPurchaseOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type cancelPurchaseOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelPurchaseOrderResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelPurchaseOrderResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelPurchaseOrderResponseSuccess = cancelPurchaseOrderResponse200 & {
+  headers: Headers;
+};
+export type cancelPurchaseOrderResponseError = (
+  | cancelPurchaseOrderResponse400
+  | cancelPurchaseOrderResponse401
+  | cancelPurchaseOrderResponse403
+  | cancelPurchaseOrderResponse404
+  | cancelPurchaseOrderResponse409
+  | cancelPurchaseOrderResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelPurchaseOrderResponse =
+  | cancelPurchaseOrderResponseSuccess
+  | cancelPurchaseOrderResponseError;
+
+export const getCancelPurchaseOrderUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/cancel`;
+};
+
+export const cancelPurchaseOrder = async (
+  purchaseOrder: string,
+  cancelPurchaseOrderRequest: CancelPurchaseOrderRequest,
+  options?: RequestInit,
+): Promise<cancelPurchaseOrderResponse> => {
+  return cognifyFetch<cancelPurchaseOrderResponse>(getCancelPurchaseOrderUrl(purchaseOrder), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(cancelPurchaseOrderRequest),
+  });
 };

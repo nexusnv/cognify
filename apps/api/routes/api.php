@@ -22,6 +22,7 @@ use Domains\Collaboration\Http\Controllers\RequisitionCommentController;
 use Domains\Project\Http\Controllers\ProcurementProjectController;
 use Domains\Project\Http\Controllers\ProjectActivityController;
 use Domains\Project\Http\Controllers\ProjectRequisitionController;
+use Domains\PurchaseOrder\Http\Controllers\PurchaseOrderController;
 use Domains\PurchaseOrder\Http\Controllers\PurchaseOrderRequestHandoffController;
 use Domains\Quotation\Http\Controllers\RfqController;
 use Domains\Quotation\Http\Controllers\RfqAwardRecommendationController;
@@ -146,6 +147,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/rfqs/{rfq}/award-recommendation/po-handoff', [PurchaseOrderRequestHandoffController::class, 'showForRfq']);
             Route::post('/rfqs/{rfq}/award-recommendation/po-handoff', [PurchaseOrderRequestHandoffController::class, 'createForRfq']);
             Route::get('/po-handoffs/{handoff}', [PurchaseOrderRequestHandoffController::class, 'show']);
+            Route::post('/po-handoffs/{handoff}/purchase-order', [PurchaseOrderController::class, 'createFromHandoff']);
             Route::patch('/po-handoffs/{handoff}', [PurchaseOrderRequestHandoffController::class, 'update']);
             Route::post('/po-handoffs/{handoff}/ready', [PurchaseOrderRequestHandoffController::class, 'ready']);
             Route::post('/po-handoffs/{handoff}/cancel', [PurchaseOrderRequestHandoffController::class, 'cancel']);
@@ -153,6 +155,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/po-handoffs/{handoff}/export.json', [PurchaseOrderRequestHandoffController::class, 'recordExportJson']);
             Route::get('/po-handoffs/{handoff}/export.csv', [PurchaseOrderRequestHandoffController::class, 'exportCsv']);
             Route::post('/po-handoffs/{handoff}/export.csv', [PurchaseOrderRequestHandoffController::class, 'recordExportCsv']);
+            Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
+            Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show']);
+            Route::patch('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update']);
+            Route::post('/purchase-orders/{purchaseOrder}/ready-for-review', [PurchaseOrderController::class, 'readyForReview']);
+            Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);

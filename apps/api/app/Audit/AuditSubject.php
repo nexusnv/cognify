@@ -4,6 +4,7 @@ namespace App\Audit;
 
 use Domains\Attachment\Models\Attachment;
 use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -31,6 +32,7 @@ class AuditSubject
         QuotationNormalization::class => 'quotation_normalization',
         RfqScorecard::class => 'scorecard',
         RfqAwardRecommendation::class => 'award',
+        PurchaseOrder::class => 'purchase_order',
         PurchaseOrderRequestHandoff::class => 'po_handoff',
     ];
 

@@ -7,6 +7,8 @@ use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Award\Models\Award;
 use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationScoringTemplate;
@@ -62,6 +64,12 @@ class DemoSeedContext
     /** @var Collection<string, Award> */
     public Collection $awards;
 
+    /** @var Collection<string, PurchaseOrderRequestHandoff> */
+    public Collection $purchaseOrderRequestHandoffs;
+
+    /** @var Collection<string, PurchaseOrder> */
+    public Collection $purchaseOrders;
+
     public function __construct()
     {
         $this->tenants = collect();
@@ -78,5 +86,7 @@ class DemoSeedContext
         $this->sourcingIntakeReviews = collect();
         $this->approvalTasks = collect();
         $this->awards = collect();
+        $this->purchaseOrderRequestHandoffs = collect();
+        $this->purchaseOrders = collect();
     }
 }

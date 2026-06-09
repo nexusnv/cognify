@@ -18,5 +18,4 @@ export interface PurchaseOrderRequestHandoffApproval {
   approvedAt?: PurchaseOrderRequestHandoffApprovalApprovedAt;
   approvedBy?: PurchaseOrderRequestHandoffApprovalApprovedBy;
   stages?: PurchaseOrderRequestHandoffApprovalStagesItem[];
-  [key: string]: unknown;
 }

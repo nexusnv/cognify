@@ -9,6 +9,7 @@ import type {
 } from "@cognify/api-client/schemas";
 import {
   cancelPurchaseOrderRequestHandoffFixture,
+  createPurchaseOrderFromHandoffFixture,
   createPurchaseOrderRequestHandoffFixture,
   exportPurchaseOrderRequestHandoffCsvFixture,
   exportPurchaseOrderRequestHandoffJsonFixture,
@@ -45,7 +46,7 @@ function errorMessage(error: unknown, fallback: string): string {
 
 function invalidStateOrNotFound(error: unknown, fallback: string) {
   const message = errorMessage(error, fallback);
-  if (message.includes("RFQ award recommendation not found.")) {
+  if (message.includes("RFQ award recommendation not found.") || message.includes("PO handoff not found.")) {
     return notFound(message);
   }
 
@@ -208,6 +209,14 @@ export const quotationAwardRecommendationHandlers = [
       return HttpResponse.json({ data: cancelPurchaseOrderRequestHandoffFixture(String(params.handoff), payload) });
     } catch (error) {
       return invalidStateOrNotFound(error, "PO handoff could not be cancelled.");
+    }
+  }),
+
+  http.post("/api/po-handoffs/:handoff/purchase-order", ({ params }) => {
+    try {
+      return HttpResponse.json({ data: createPurchaseOrderFromHandoffFixture(String(params.handoff)) }, { status: 201 });
+    } catch (error) {
+      return invalidStateOrNotFound(error, "Purchase order could not be created from PO handoff.");
     }
   }),
 

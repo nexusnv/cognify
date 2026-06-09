@@ -16,5 +16,4 @@ export interface PurchaseOrderRequestHandoffSource {
   quotation?: PurchaseOrderRequestHandoffSourceQuotation;
   quotationVersion?: PurchaseOrderRequestHandoffSourceQuotationVersion;
   award?: PurchaseOrderRequestHandoffSourceAward;
-  [key: string]: unknown;
 }

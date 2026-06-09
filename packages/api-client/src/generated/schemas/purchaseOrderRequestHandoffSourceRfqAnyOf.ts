@@ -4,5 +4,12 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderRequestHandoffSourceRfqAnyOfId } from "./purchaseOrderRequestHandoffSourceRfqAnyOfId";
+import type { PurchaseOrderRequestHandoffSourceRfqAnyOfNumber } from "./purchaseOrderRequestHandoffSourceRfqAnyOfNumber";
+import type { PurchaseOrderRequestHandoffSourceRfqAnyOfTitle } from "./purchaseOrderRequestHandoffSourceRfqAnyOfTitle";
 
-export type PurchaseOrderRequestHandoffSourceRfqAnyOf = { [key: string]: unknown };
+export type PurchaseOrderRequestHandoffSourceRfqAnyOf = {
+  id?: PurchaseOrderRequestHandoffSourceRfqAnyOfId;
+  number?: PurchaseOrderRequestHandoffSourceRfqAnyOfNumber;
+  title?: PurchaseOrderRequestHandoffSourceRfqAnyOfTitle;
+};

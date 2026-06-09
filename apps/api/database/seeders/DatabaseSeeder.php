@@ -53,6 +53,8 @@ class DatabaseSeeder extends Seeder
                         'quotation_normalizations' => $context->quotationNormalizations->count(),
                         'quotation_scoring_templates' => $context->quotationScoringTemplates->count(),
                         'rfq_scorecards' => $context->rfqScorecards->count(),
+                        'purchase_order_request_handoffs' => $context->purchaseOrderRequestHandoffs->count(),
+                        'purchase_orders' => $context->purchaseOrders->count(),
                     ],
                 ],
             );

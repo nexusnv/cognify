@@ -46,7 +46,7 @@ cd apps/api
 php artisan migrate:fresh --seed
 ```
 
-The seed creates deterministic Cognify demo tenants, users, requisitions, vendors, projects, RFQs, quotations, approvals, awards, audit events, notifications, and sample attachment files. It is idempotent for repeated local refreshes through the default database seeder.
+The seed creates deterministic Cognify demo tenants, users, requisitions, vendors, projects, RFQs, quotations, approvals, awards, purchase-order handoffs, purchase orders, audit events, notifications, and sample attachment files. It is idempotent for repeated local refreshes through the default database seeder.
 
 Admin users can inspect local readiness in the web app at `/system`. The API readiness endpoint is `GET /api/system/status`; it reports core checks, demo seed metadata, and the API version.
 

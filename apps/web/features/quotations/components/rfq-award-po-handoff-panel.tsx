@@ -6,6 +6,7 @@ import { getApiErrorMessage } from "@cognify/api-client";
 import type { PurchaseOrderRequestHandoff } from "@cognify/api-client/schemas";
 import {
   useCancelRfqAwardRecommendationPoHandoff,
+  useCreatePurchaseOrderFromRfqAwardHandoff,
   useCreateRfqAwardRecommendationPoHandoff,
   useDownloadRfqAwardRecommendationPoHandoffCsv,
   useExportRfqAwardRecommendationPoHandoffJson,
@@ -30,16 +31,21 @@ type ReviewDraft = {
 
 export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: RfqAwardPoHandoffPanelProps) {
   const create = useCreateRfqAwardRecommendationPoHandoff(rfqId);
+  const createPurchaseOrder = useCreatePurchaseOrderFromRfqAwardHandoff(rfqId, handoff?.id);
   const update = useUpdateRfqAwardRecommendationPoHandoff(rfqId, handoff?.id);
   const markReady = useMarkRfqAwardRecommendationPoHandoffReady(rfqId, handoff?.id);
   const exportJson = useExportRfqAwardRecommendationPoHandoffJson(rfqId, handoff?.id);
   const exportCsv = useDownloadRfqAwardRecommendationPoHandoffCsv(rfqId, handoff?.id);
   const cancel = useCancelRfqAwardRecommendationPoHandoff(rfqId, handoff?.id);
   const [draft, setDraft] = useState<ReviewDraft>(() => buildReviewDraft(handoff));
-  const [lastAction, setLastAction] = useState<"create" | "update" | "ready" | "json" | "csv" | "cancel" | null>(null);
+  const [lastAction, setLastAction] = useState<
+    "create" | "createPurchaseOrder" | "update" | "ready" | "json" | "csv" | "cancel" | null
+  >(null);
 
   const actionError = lastAction === "create"
     ? create.error
+    : lastAction === "createPurchaseOrder"
+      ? createPurchaseOrder.error
     : lastAction === "update"
       ? update.error
       : lastAction === "ready"
@@ -189,6 +195,17 @@ export function RfqAwardPoHandoffPanel({ rfqId, handoff, isLoading, error }: Rfq
             ) : null}
             {canExport ? (
               <>
+                {!handoff.purchaseOrderId ? (
+                  <Button
+                    disabled={createPurchaseOrder.isPending}
+                    onClick={() => {
+                      setLastAction("createPurchaseOrder");
+                      createPurchaseOrder.mutate();
+                    }}
+                  >
+                    Create purchase order
+                  </Button>
+                ) : null}
                 <Button
                   disabled={exportJson.isPending}
                   onClick={() => {

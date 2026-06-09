@@ -46,6 +46,7 @@ class PurchaseOrderRequestHandoffResource extends JsonResource
             'cancelledReason' => $handoff->cancelled_reason,
             'lastExportFormat' => $handoff->last_export_format,
             'lastExportedAt' => $handoff->last_exported_at?->toISOString(),
+            'purchaseOrderId' => $handoff->purchaseOrder?->id !== null ? (string) $handoff->purchaseOrder->id : null,
             'lockVersion' => $handoff->lock_version,
             'permissions' => [
                 'canUpdate' => $user !== null && Gate::forUser($user)->check('update', $handoff),
