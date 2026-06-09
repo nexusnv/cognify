@@ -68,7 +68,21 @@ class PurchaseOrderResource extends JsonResource
                 'snapshot' => $purchaseOrder->source_snapshot ?? [],
             ],
             'vendor' => $vendor,
-            'approval' => $purchaseOrder->approval_snapshot ?? [],
+            'approval' => [
+                'approvalInstanceId' => $purchaseOrder->approval_instance_id !== null ? (string) $purchaseOrder->approval_instance_id : null,
+                'submittedByUserId' => $purchaseOrder->approval_submitted_by_user_id !== null ? (string) $purchaseOrder->approval_submitted_by_user_id : null,
+                'submittedAt' => $purchaseOrder->approval_submitted_at?->toISOString(),
+                'approvedByUserId' => $purchaseOrder->approved_by_user_id !== null ? (string) $purchaseOrder->approved_by_user_id : null,
+                'approvedAt' => $purchaseOrder->approved_at?->toISOString(),
+                'rejectedByUserId' => $purchaseOrder->rejected_by_user_id !== null ? (string) $purchaseOrder->rejected_by_user_id : null,
+                'rejectedAt' => $purchaseOrder->rejected_at?->toISOString(),
+                'rejectedReason' => $purchaseOrder->rejected_reason,
+                'changesRequestedByUserId' => $purchaseOrder->changes_requested_by_user_id !== null ? (string) $purchaseOrder->changes_requested_by_user_id : null,
+                'changesRequestedAt' => $purchaseOrder->changes_requested_at?->toISOString(),
+                'changesRequestedReason' => $purchaseOrder->changes_requested_reason,
+                'changesRequestedFields' => $purchaseOrder->changes_requested_fields ?? [],
+                'snapshot' => $purchaseOrder->approval_snapshot ?? [],
+            ],
             'evidence' => $purchaseOrder->evidence_snapshot ?? [],
             'lines' => $purchaseOrder->relationLoaded('lines')
                 ? PurchaseOrderLineResource::collection($purchaseOrder->lines)->resolve()
@@ -84,6 +98,9 @@ class PurchaseOrderResource extends JsonResource
                 'canCancel' => $status === PurchaseOrderStatus::Draft
                     && $user !== null
                     && Gate::forUser($user)->check('cancel', $purchaseOrder),
+                'canSubmitForApproval' => in_array($status, [PurchaseOrderStatus::ReadyForReview, PurchaseOrderStatus::ChangesRequested], true)
+                    && $user !== null
+                    && Gate::forUser($user)->check('submitApproval', $purchaseOrder),
             ],
         ];
     }

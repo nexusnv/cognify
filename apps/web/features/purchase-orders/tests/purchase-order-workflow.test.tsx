@@ -1,11 +1,18 @@
 import { http, HttpResponse, delay } from "msw";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw/server";
-import { purchaseOrderFixture } from "../mocks/purchase-order-fixtures";
-import { resetPurchaseOrderMockState } from "../mocks/purchase-order-handlers";
+import {
+  approvedPurchaseOrderFixture,
+  changesRequestedPurchaseOrderFixture,
+  inReviewPurchaseOrderFixture,
+  purchaseOrderFixture,
+  readyPurchaseOrderFixture,
+  rejectedPurchaseOrderFixture,
+} from "../mocks/purchase-order-fixtures";
+import { resetPurchaseOrderMockState, setPurchaseOrderMockState } from "../mocks/purchase-order-handlers";
 import { PurchaseOrderListPage } from "../workflows/purchase-order-list-page";
 import { PurchaseOrderWorkspacePage } from "../workflows/purchase-order-workspace-page";
 
@@ -114,7 +121,7 @@ describe("purchase order workflow", () => {
     await user.click(screen.getByRole("button", { name: "Mark ready for review" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Mark ready for review" })).toBeDisabled();
+      expect(screen.queryByRole("button", { name: "Mark ready for review" })).not.toBeInTheDocument();
     });
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Save draft" })).toBeDisabled();
@@ -143,5 +150,83 @@ describe("purchase order workflow", () => {
     } finally {
       prompt.mockRestore();
     }
+  });
+
+  it("submits a ready purchase order for approval", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([readyPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    expect(await screen.findByRole("region", { name: "Purchase order approval" })).toBeInTheDocument();
+    expect(screen.getByText("Ready for review")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submit for approval" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Submit for approval" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("In review")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("group", { name: "Purchase order draft fields" })).toBeDisabled();
+  });
+
+  it("shows submit approval conflicts inline", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([readyPurchaseOrderFixture]);
+    server.use(
+      http.post("/api/purchase-orders/:purchaseOrder/submit-approval", () =>
+        HttpResponse.json(
+          { error: { code: "invalid_state", message: "The purchase order has changed. Reload and try again." } },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    await user.click(await screen.findByRole("button", { name: "Submit for approval" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The purchase order has changed. Reload and try again.");
+  });
+
+  it("locks draft fields while purchase order is in review", async () => {
+    setPurchaseOrderMockState([inReviewPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    expect(await screen.findByText("In review")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Submit for approval" })).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Purchase order draft fields" })).toBeDisabled();
+  });
+
+  it("shows changes requested reason and keeps fields editable", async () => {
+    setPurchaseOrderMockState([changesRequestedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const approvalRegion = await screen.findByRole("region", { name: "Purchase order approval" });
+    expect(within(approvalRegion).getAllByText("Changes requested").length).toBeGreaterThan(0);
+    expect(screen.getByText("Payment terms and tax amount require correction.")).toBeInTheDocument();
+    expect(screen.getByText("Fields: taxAmount, paymentTerms")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Purchase order draft fields" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Submit for approval" })).toBeEnabled();
+  });
+
+  it("shows approved and rejected review outcomes", async () => {
+    setPurchaseOrderMockState([approvedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    expect(await screen.findByText("Approved")).toBeInTheDocument();
+    expect(screen.getByText("This purchase order is approved for the future supplier issue workflow.")).toBeInTheDocument();
+
+    cleanup();
+    setPurchaseOrderMockState([rejectedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const rejectedApprovalRegion = await screen.findByRole("region", { name: "Purchase order approval" });
+    expect(within(rejectedApprovalRegion).getAllByText("Rejected").length).toBeGreaterThan(0);
+    expect(screen.getByText("Tax coding does not match the approved quotation.")).toBeInTheDocument();
   });
 });

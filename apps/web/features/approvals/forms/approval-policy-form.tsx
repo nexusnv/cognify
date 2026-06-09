@@ -32,6 +32,7 @@ import {
   approvalPolicySchema,
   awardRuleFields,
   defaultApprovalPolicyValues,
+  purchaseOrderRuleFields,
   requisitionRuleFields,
   type ApprovalPolicySchemaInput,
   type ApprovalPolicySchemaValues,
@@ -41,6 +42,7 @@ import type { ApprovalPolicyRule } from "../types/approval-view-model";
 const subjectLabels = {
   requisition: "Requisition",
   rfq_award_recommendation: "RFQ award recommendation",
+  purchase_order: "Purchase order",
 } as const;
 
 const ruleFieldLabels: Record<string, string> = {
@@ -55,6 +57,9 @@ const ruleFieldLabels: Record<string, string> = {
   scorecardWeightedTotal: "Scorecard weighted total",
   riskSummaryPresent: "Risk summary present",
   exceptionSummaryPresent: "Exception summary present",
+  currency: "Currency",
+  vendorId: "Vendor",
+  paymentTerms: "Payment terms",
 };
 
 const operatorLabels = {
@@ -87,7 +92,11 @@ export function ApprovalPolicyForm({
   const values = useWatch({ control }) as ApprovalPolicySchemaValues;
   const subjectType = values?.subjectType ?? defaultValues.subjectType;
   const ruleFields =
-    subjectType === "rfq_award_recommendation" ? awardRuleFields : requisitionRuleFields;
+    subjectType === "rfq_award_recommendation"
+      ? awardRuleFields
+      : subjectType === "purchase_order"
+        ? purchaseOrderRuleFields
+        : requisitionRuleFields;
   const rules = useFieldArray({ control, name: "rules" });
 
   useEffect(() => {

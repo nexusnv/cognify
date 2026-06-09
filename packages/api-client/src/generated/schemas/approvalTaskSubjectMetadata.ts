@@ -6,7 +6,9 @@
  */
 import type { ApprovalRequisitionSubjectMetadata } from "./approvalRequisitionSubjectMetadata";
 import type { ApprovalAwardRecommendationSubjectMetadata } from "./approvalAwardRecommendationSubjectMetadata";
+import type { ApprovalPurchaseOrderSubjectMetadata } from "./approvalPurchaseOrderSubjectMetadata";
 
 export type ApprovalTaskSubjectMetadata =
   | ApprovalRequisitionSubjectMetadata
-  | ApprovalAwardRecommendationSubjectMetadata;
+  | ApprovalAwardRecommendationSubjectMetadata
+  | ApprovalPurchaseOrderSubjectMetadata;

@@ -2831,7 +2831,8 @@
               "type": "string",
               "enum": [
                 "requisition",
-                "rfq_award_recommendation"
+                "rfq_award_recommendation",
+                "purchase_order"
               ]
             }
           },
@@ -7478,6 +7479,66 @@
           }
         }
       }
+    },
+    "/api/purchase-orders/{purchaseOrder}/submit-approval": {
+      "post": {
+        "operationId": "submitPurchaseOrderApproval",
+        "summary": "Submit purchase order for approval",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPurchaseOrderApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submitted purchase order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7699,7 +7760,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "rfq_award_recommendation"
+              "rfq_award_recommendation",
+              "purchase_order"
             ]
           },
           "status": {
@@ -11234,7 +11296,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "rfq_award_recommendation"
+              "rfq_award_recommendation",
+              "purchase_order"
             ]
           },
           "priority": {
@@ -11273,7 +11336,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "rfq_award_recommendation"
+              "rfq_award_recommendation",
+              "purchase_order"
             ]
           },
           "rules": {
@@ -11303,7 +11367,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "rfq_award_recommendation"
+              "rfq_award_recommendation",
+              "purchase_order"
             ]
           },
           "requisitionId": {
@@ -11755,7 +11820,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "rfq_award_recommendation"
+              "rfq_award_recommendation",
+              "purchase_order"
             ]
           },
           "priority": {
@@ -12422,7 +12488,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "rfq_award_recommendation"
+              "rfq_award_recommendation",
+              "purchase_order"
             ]
           },
           "id": {
@@ -12477,6 +12544,9 @@
               },
               {
                 "$ref": "#/components/schemas/ApprovalAwardRecommendationSubjectMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/ApprovalPurchaseOrderSubjectMetadata"
               }
             ]
           }
@@ -19742,7 +19812,11 @@
         "enum": [
           "draft",
           "ready_for_review",
-          "cancelled"
+          "cancelled",
+          "in_review",
+          "changes_requested",
+          "approved",
+          "rejected"
         ]
       },
       "PurchaseOrderPermissions": {
@@ -19750,7 +19824,8 @@
         "required": [
           "canUpdate",
           "canMarkReadyForReview",
-          "canCancel"
+          "canCancel",
+          "canSubmitForApproval"
         ],
         "properties": {
           "canUpdate": {
@@ -19760,6 +19835,9 @@
             "type": "boolean"
           },
           "canCancel": {
+            "type": "boolean"
+          },
+          "canSubmitForApproval": {
             "type": "boolean"
           }
         }
@@ -19831,7 +19909,93 @@
       },
       "PurchaseOrderApproval": {
         "type": "object",
-        "additionalProperties": true
+        "required": [
+          "approvalInstanceId",
+          "changesRequestedFields"
+        ],
+        "properties": {
+          "approvalInstanceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submittedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "approvedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "rejectedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "rejectedReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changesRequestedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changesRequestedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "changesRequestedReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changesRequestedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "snapshot": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
       },
       "PurchaseOrderEvidenceItem": {
         "type": "object",
@@ -20527,6 +20691,66 @@
             "maxLength": 1000
           }
         }
+      },
+      "SubmitPurchaseOrderApprovalRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "ApprovalPurchaseOrderSubjectMetadata": {
+        "type": "object",
+        "properties": {
+          "purchaseOrderId": {
+            "type": "string"
+          },
+          "purchaseOrderNumber": {
+            "type": "string"
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
       }
     }
   }

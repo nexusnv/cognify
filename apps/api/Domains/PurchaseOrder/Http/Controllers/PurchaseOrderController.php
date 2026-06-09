@@ -8,9 +8,11 @@ use App\Tenancy\Tenant;
 use Domains\PurchaseOrder\Actions\CancelPurchaseOrder;
 use Domains\PurchaseOrder\Actions\CreatePurchaseOrderFromHandoff;
 use Domains\PurchaseOrder\Actions\MarkPurchaseOrderReadyForReview;
+use Domains\PurchaseOrder\Actions\SubmitPurchaseOrderForApproval;
 use Domains\PurchaseOrder\Actions\UpdatePurchaseOrder;
 use Domains\PurchaseOrder\Http\Requests\CancelPurchaseOrderRequest;
 use Domains\PurchaseOrder\Http\Requests\MarkPurchaseOrderReadyForReviewRequest;
+use Domains\PurchaseOrder\Http\Requests\SubmitPurchaseOrderApprovalRequest;
 use Domains\PurchaseOrder\Http\Requests\UpdatePurchaseOrderRequest;
 use Domains\PurchaseOrder\Http\Resources\PurchaseOrderResource;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
@@ -123,6 +125,21 @@ class PurchaseOrderController extends Controller
     ): JsonResponse {
         $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
         $this->authorize('markReadyForReview', $purchaseOrder);
+
+        return $this->resourceResponse(
+            $request,
+            $action->handle($purchaseOrder, $request->user(), (int) $request->validated('lockVersion')),
+        );
+    }
+
+    public function submitApproval(
+        SubmitPurchaseOrderApprovalRequest $request,
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        SubmitPurchaseOrderForApproval $action,
+    ): JsonResponse {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('submitApproval', $purchaseOrder);
 
         return $this->resourceResponse(
             $request,

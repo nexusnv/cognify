@@ -120,9 +120,7 @@ export function ApprovalTasksTable({
                       <DropdownMenuItem asChild>
                         <Link href={task.subject.href} className="min-h-11">
                           <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                          {task.subject.type === "rfq_award_recommendation"
-                            ? "Open award recommendation"
-                            : "Open requisition"}
+                          {subjectLinkLabel(task.subject.type)}
                         </Link>
                       </DropdownMenuItem>
                     ) : null}
@@ -142,6 +140,12 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(
     new Date(value),
   );
+}
+
+function subjectLinkLabel(subjectType: string) {
+  if (subjectType === "rfq_award_recommendation") return "Open award recommendation";
+  if (subjectType === "purchase_order") return "Open purchase order";
+  return "Open requisition";
 }
 
 function subjectRequester(task: ApprovalTask): string | null {

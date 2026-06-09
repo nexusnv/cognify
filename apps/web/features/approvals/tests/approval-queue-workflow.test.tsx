@@ -20,6 +20,7 @@ describe("approval queue workflow", () => {
     expect(await screen.findByRole("heading", { name: "Approvals" })).toBeInTheDocument();
     expect(await screen.findByRole("table", { name: "Approval tasks" })).toBeInTheDocument();
     expect(screen.getByText("Warehouse packing supplies")).toBeInTheDocument();
+    expect(screen.getByText("Purchase order for sustainability packaging")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Assigned to me" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Overdue" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Due soon" })).toBeInTheDocument();
@@ -38,6 +39,7 @@ describe("approval queue workflow", () => {
     expect(screen.getByLabelText("Updated to")).toBeInTheDocument();
     expect(screen.getByLabelText("Subject type")).toBeInTheDocument();
     expect(screen.getByText("Award recommendation for Enterprise laptop refresh")).toBeInTheDocument();
+    expect(screen.getByText("PO-2026-SUSTAIN-REVIEW")).toBeInTheDocument();
     const slaSummary = await screen.findByRole("region", { name: "Approval SLA summary" });
     expect(slaSummary).toBeInTheDocument();
     expect(within(slaSummary).getByText("Due soon")).toBeInTheDocument();
@@ -50,6 +52,11 @@ describe("approval queue workflow", () => {
 
     await user.selectOptions(screen.getByLabelText("Subject type"), "rfq_award_recommendation");
     expect(await screen.findByText("Award recommendation for Enterprise laptop refresh")).toBeInTheDocument();
+    expect(screen.queryByText("Warehouse packing supplies")).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Subject type"), "purchase_order");
+    expect(await screen.findByText("Purchase order for sustainability packaging")).toBeInTheDocument();
+    expect(screen.getByText("PO-2026-SUSTAIN-REVIEW")).toBeInTheDocument();
     expect(screen.queryByText("Warehouse packing supplies")).not.toBeInTheDocument();
   });
 });

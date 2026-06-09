@@ -5,6 +5,7 @@ import {
   listPurchaseOrders as listPurchaseOrdersEndpoint,
   markPurchaseOrderReadyForReview as markPurchaseOrderReadyForReviewEndpoint,
   showPurchaseOrder as showPurchaseOrderEndpoint,
+  submitPurchaseOrderApproval as submitPurchaseOrderApprovalEndpoint,
   updatePurchaseOrder as updatePurchaseOrderEndpoint,
 } from "@cognify/api-client/endpoints";
 import type {
@@ -12,6 +13,7 @@ import type {
   MarkPurchaseOrderReadyForReviewRequest,
   PurchaseOrder,
   PurchaseOrderListResponse,
+  SubmitPurchaseOrderApprovalRequest,
   UpdatePurchaseOrderRequest,
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
@@ -32,6 +34,14 @@ function unwrapOk(response: { status: number; data: unknown }, expectedStatus = 
   }
 
   return (response.data as { data: unknown }).data;
+}
+
+function throwResponseData(error: unknown): never {
+  if (typeof error === "object" && error !== null && "data" in error) {
+    throw (error as { data: unknown }).data;
+  }
+
+  throw error;
 }
 
 export async function fetchPurchaseOrders(
@@ -62,7 +72,7 @@ export async function savePurchaseOrder(
     purchaseOrderId,
     payload,
     withActiveTenantHeader(tenantId),
-  );
+  ).catch(throwResponseData);
   return unwrapOk(response) as PurchaseOrder;
 }
 
@@ -75,7 +85,20 @@ export async function readyPurchaseOrder(
     purchaseOrderId,
     payload,
     withActiveTenantHeader(tenantId),
-  );
+  ).catch(throwResponseData);
+  return unwrapOk(response) as PurchaseOrder;
+}
+
+export async function submitPurchaseOrderApproval(
+  purchaseOrderId: string,
+  payload: SubmitPurchaseOrderApprovalRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrder> {
+  const response = await submitPurchaseOrderApprovalEndpoint(
+    purchaseOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
   return unwrapOk(response) as PurchaseOrder;
 }
 
@@ -88,6 +111,6 @@ export async function cancelDraftPurchaseOrder(
     purchaseOrderId,
     payload,
     withActiveTenantHeader(tenantId),
-  );
+  ).catch(throwResponseData);
   return unwrapOk(response) as PurchaseOrder;
 }

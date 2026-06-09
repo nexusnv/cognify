@@ -64,6 +64,17 @@ class PurchaseOrder extends Model
         'created_by_user_id',
         'ready_for_review_by_user_id',
         'ready_for_review_at',
+        'approval_submitted_by_user_id',
+        'approval_submitted_at',
+        'approved_by_user_id',
+        'approved_at',
+        'rejected_by_user_id',
+        'rejected_at',
+        'rejected_reason',
+        'changes_requested_by_user_id',
+        'changes_requested_at',
+        'changes_requested_reason',
+        'changes_requested_fields',
         'cancelled_by_user_id',
         'cancelled_at',
         'cancelled_reason',
@@ -87,6 +98,11 @@ class PurchaseOrder extends Model
             'approval_snapshot' => 'array',
             'evidence_snapshot' => 'array',
             'ready_for_review_at' => 'datetime',
+            'approval_submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'changes_requested_at' => 'datetime',
+            'changes_requested_fields' => 'array',
             'cancelled_at' => 'datetime',
             'lock_version' => 'integer',
         ];
@@ -172,6 +188,26 @@ class PurchaseOrder extends Model
                 userKey: 'ready_for_review_by_user_id',
                 dirtyMessage: ['ready_for_review_by_user_id', 'tenant_id'],
                 error: 'Purchase order ready-for-review actor must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'approval_submitted_by_user_id',
+                dirtyMessage: ['approval_submitted_by_user_id', 'tenant_id'],
+                error: 'Purchase order approval submitter must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'approved_by_user_id',
+                dirtyMessage: ['approved_by_user_id', 'tenant_id'],
+                error: 'Purchase order approver must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'rejected_by_user_id',
+                dirtyMessage: ['rejected_by_user_id', 'tenant_id'],
+                error: 'Purchase order rejector must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'changes_requested_by_user_id',
+                dirtyMessage: ['changes_requested_by_user_id', 'tenant_id'],
+                error: 'Purchase order changes requester must belong to the same tenant.',
             );
             $purchaseOrder->assertUserBelongsToTenant(
                 userKey: 'cancelled_by_user_id',
@@ -275,6 +311,38 @@ class PurchaseOrder extends Model
     public function readyForReviewByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'ready_for_review_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function approvalSubmittedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approval_submitted_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function approvedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function rejectedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function changesRequestedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'changes_requested_by_user_id');
     }
 
     /**
