@@ -37,7 +37,7 @@ export function PurchaseOrderActions({ purchaseOrder }: { purchaseOrder: Purchas
     financeNote: purchaseOrder.financeNote ?? "",
   });
   const isBusy = updateMutation.isPending || readyMutation.isPending || cancelMutation.isPending;
-  const isEditable = purchaseOrder.permissions.canUpdate && !isBusy;
+  const isEditable = purchaseOrder.permissions.canUpdate && ["draft", "changes_requested"].includes(purchaseOrder.status) && !isBusy;
   const cancelPurchaseOrder = () => {
     const reason = window.prompt("Cancellation reason");
     if (reason?.trim()) {
@@ -51,7 +51,7 @@ export function PurchaseOrderActions({ purchaseOrder }: { purchaseOrder: Purchas
         <div>
           <h2 className="text-base font-semibold">Draft fields</h2>
           <p className="text-sm text-muted-foreground">
-            Operational notes stay editable while the purchase order is in draft.
+            Operational notes stay editable while the purchase order is draft or changes requested.
           </p>
         </div>
       </div>
@@ -138,7 +138,7 @@ export function PurchaseOrderActions({ purchaseOrder }: { purchaseOrder: Purchas
         <Button
           type="button"
           variant="outline"
-          disabled={!purchaseOrder.permissions.canUpdate || isBusy}
+          disabled={!isEditable}
           onClick={() =>
             updateMutation.mutate({
               lockVersion: purchaseOrder.lockVersion,
@@ -158,13 +158,15 @@ export function PurchaseOrderActions({ purchaseOrder }: { purchaseOrder: Purchas
         >
           {updateMutation.isPending ? "Saving" : "Save draft"}
         </Button>
-        <Button
-          type="button"
-          disabled={!purchaseOrder.permissions.canMarkReadyForReview || isBusy}
-          onClick={() => readyMutation.mutate({ lockVersion: purchaseOrder.lockVersion })}
-        >
-          {readyMutation.isPending ? "Marking ready" : "Mark ready for review"}
-        </Button>
+        {purchaseOrder.status === "draft" && purchaseOrder.permissions.canMarkReadyForReview ? (
+          <Button
+            type="button"
+            disabled={isBusy}
+            onClick={() => readyMutation.mutate({ lockVersion: purchaseOrder.lockVersion })}
+          >
+            {readyMutation.isPending ? "Marking ready" : "Mark ready for review"}
+          </Button>
+        ) : null}
         {purchaseOrder.permissions.canCancel ? (
           <Button type="button" variant="destructive" disabled={isBusy} onClick={cancelPurchaseOrder}>
             {cancelMutation.isPending ? "Cancelling" : "Cancel"}

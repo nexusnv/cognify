@@ -18,12 +18,21 @@ export const awardRuleFields = [
   "exceptionSummaryPresent",
 ] as const;
 
+export const purchaseOrderRuleFields = [
+  "amount",
+  "currency",
+  "vendorId",
+  "paymentTerms",
+  "riskClassification",
+] as const;
+
 const ruleFieldsBySubject = {
   requisition: requisitionRuleFields,
   rfq_award_recommendation: awardRuleFields,
+  purchase_order: purchaseOrderRuleFields,
 } as const;
 
-const approvalSubjectTypeSchema = z.enum(["requisition", "rfq_award_recommendation"]);
+const approvalSubjectTypeSchema = z.enum(["requisition", "rfq_award_recommendation", "purchase_order"]);
 
 const approvalRuleSchema = z.object({
   field: z.string().min(1, "Rule field is required"),

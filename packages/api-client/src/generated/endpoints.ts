@@ -126,6 +126,7 @@ import type {
   StoreApprovalPolicyRequest,
   StoreApprovalPolicyVersionRequest,
   StoreProcurementProjectRequest,
+  SubmitPurchaseOrderApprovalRequest,
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
   SystemStatusResponse,
@@ -9419,4 +9420,80 @@ export const cancelPurchaseOrder = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(cancelPurchaseOrderRequest),
   });
+};
+
+/**
+ * @summary Submit purchase order for approval
+ */
+export type submitPurchaseOrderApprovalResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type submitPurchaseOrderApprovalResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type submitPurchaseOrderApprovalResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type submitPurchaseOrderApprovalResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type submitPurchaseOrderApprovalResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type submitPurchaseOrderApprovalResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type submitPurchaseOrderApprovalResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type submitPurchaseOrderApprovalResponseSuccess = submitPurchaseOrderApprovalResponse200 & {
+  headers: Headers;
+};
+export type submitPurchaseOrderApprovalResponseError = (
+  | submitPurchaseOrderApprovalResponse400
+  | submitPurchaseOrderApprovalResponse401
+  | submitPurchaseOrderApprovalResponse403
+  | submitPurchaseOrderApprovalResponse404
+  | submitPurchaseOrderApprovalResponse409
+  | submitPurchaseOrderApprovalResponse422
+) & {
+  headers: Headers;
+};
+
+export type submitPurchaseOrderApprovalResponse =
+  | submitPurchaseOrderApprovalResponseSuccess
+  | submitPurchaseOrderApprovalResponseError;
+
+export const getSubmitPurchaseOrderApprovalUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/submit-approval`;
+};
+
+export const submitPurchaseOrderApproval = async (
+  purchaseOrder: string,
+  submitPurchaseOrderApprovalRequest: SubmitPurchaseOrderApprovalRequest,
+  options?: RequestInit,
+): Promise<submitPurchaseOrderApprovalResponse> => {
+  return cognifyFetch<submitPurchaseOrderApprovalResponse>(
+    getSubmitPurchaseOrderApprovalUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitPurchaseOrderApprovalRequest),
+    },
+  );
 };

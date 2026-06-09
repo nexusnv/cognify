@@ -29,8 +29,8 @@ class UpdatePurchaseOrder
                 ->with('lines')
                 ->firstOrFail();
 
-            if ($purchaseOrder->statusState() !== PurchaseOrderStatus::Draft) {
-                throw new ConflictHttpException('Only draft purchase orders can be updated.');
+            if (! in_array($purchaseOrder->statusState(), [PurchaseOrderStatus::Draft, PurchaseOrderStatus::ChangesRequested], true)) {
+                throw new ConflictHttpException('Only draft or changes-requested purchase orders can be updated.');
             }
 
             $purchaseOrder->assertLockVersion((int) Arr::get($data, 'lockVersion'));
@@ -101,8 +101,8 @@ class UpdatePurchaseOrder
                 subject: $purchaseOrder,
                 metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
                     'changedFields' => $changedFields,
-                    'fromStatus' => PurchaseOrderStatus::Draft->value,
-                    'toStatus' => PurchaseOrderStatus::Draft->value,
+                    'fromStatus' => $purchaseOrder->statusState()->value,
+                    'toStatus' => $purchaseOrder->statusState()->value,
                 ]),
                 before: $before,
                 after: $after,

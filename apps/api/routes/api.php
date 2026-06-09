@@ -159,6 +159,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show']);
             Route::patch('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update']);
             Route::post('/purchase-orders/{purchaseOrder}/ready-for-review', [PurchaseOrderController::class, 'readyForReview']);
+            Route::post('/purchase-orders/{purchaseOrder}/submit-approval', [PurchaseOrderController::class, 'submitApproval']);
             Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);

@@ -12,4 +12,5 @@ export type UpdateApprovalPolicyRequestSubjectType =
 export const UpdateApprovalPolicyRequestSubjectType = {
   requisition: "requisition",
   rfq_award_recommendation: "rfq_award_recommendation",
+  purchase_order: "purchase_order",
 } as const;

@@ -35,6 +35,11 @@ class PurchaseOrderPolicy
         return $this->view($user, $purchaseOrder);
     }
 
+    public function submitApproval(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
     public function cancel(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $this->view($user, $purchaseOrder);

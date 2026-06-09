@@ -4,7 +4,31 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderApprovalApprovalInstanceId } from "./purchaseOrderApprovalApprovalInstanceId";
+import type { PurchaseOrderApprovalSubmittedByUserId } from "./purchaseOrderApprovalSubmittedByUserId";
+import type { PurchaseOrderApprovalSubmittedAt } from "./purchaseOrderApprovalSubmittedAt";
+import type { PurchaseOrderApprovalApprovedByUserId } from "./purchaseOrderApprovalApprovedByUserId";
+import type { PurchaseOrderApprovalApprovedAt } from "./purchaseOrderApprovalApprovedAt";
+import type { PurchaseOrderApprovalRejectedByUserId } from "./purchaseOrderApprovalRejectedByUserId";
+import type { PurchaseOrderApprovalRejectedAt } from "./purchaseOrderApprovalRejectedAt";
+import type { PurchaseOrderApprovalRejectedReason } from "./purchaseOrderApprovalRejectedReason";
+import type { PurchaseOrderApprovalChangesRequestedByUserId } from "./purchaseOrderApprovalChangesRequestedByUserId";
+import type { PurchaseOrderApprovalChangesRequestedAt } from "./purchaseOrderApprovalChangesRequestedAt";
+import type { PurchaseOrderApprovalChangesRequestedReason } from "./purchaseOrderApprovalChangesRequestedReason";
+import type { PurchaseOrderApprovalSnapshot } from "./purchaseOrderApprovalSnapshot";
 
 export interface PurchaseOrderApproval {
-  [key: string]: unknown;
+  approvalInstanceId: PurchaseOrderApprovalApprovalInstanceId;
+  submittedByUserId?: PurchaseOrderApprovalSubmittedByUserId;
+  submittedAt?: PurchaseOrderApprovalSubmittedAt;
+  approvedByUserId?: PurchaseOrderApprovalApprovedByUserId;
+  approvedAt?: PurchaseOrderApprovalApprovedAt;
+  rejectedByUserId?: PurchaseOrderApprovalRejectedByUserId;
+  rejectedAt?: PurchaseOrderApprovalRejectedAt;
+  rejectedReason?: PurchaseOrderApprovalRejectedReason;
+  changesRequestedByUserId?: PurchaseOrderApprovalChangesRequestedByUserId;
+  changesRequestedAt?: PurchaseOrderApprovalChangesRequestedAt;
+  changesRequestedReason?: PurchaseOrderApprovalChangesRequestedReason;
+  changesRequestedFields: string[];
+  snapshot?: PurchaseOrderApprovalSnapshot;
 }

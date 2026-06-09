@@ -29,7 +29,7 @@ class ApprovalTaskController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $validated = $request->validate([
             'scope' => ['sometimes', 'string', 'in:assigned_to_me,overdue,due_soon,completed_by_me,all'],
-            'subjectType' => ['sometimes', 'string', 'in:requisition,rfq_award_recommendation'],
+            'subjectType' => ['sometimes', 'string', 'in:requisition,rfq_award_recommendation,purchase_order'],
             'status' => ['sometimes', 'string'],
             'dueFrom' => ['sometimes', 'date'],
             'dueTo' => ['sometimes', 'date'],

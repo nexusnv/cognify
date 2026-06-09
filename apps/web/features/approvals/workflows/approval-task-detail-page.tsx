@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import type {
   ApprovalAwardRecommendationSubjectMetadata,
+  ApprovalPurchaseOrderSubjectMetadata,
   ApprovalRequisitionSubjectMetadata,
 } from "@cognify/api-client/schemas";
 import { ApprovalActionDialog } from "../components/approval-action-dialog";
@@ -55,7 +56,9 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
   }
 
   const isAwardRecommendation = task.subject.type === "rfq_award_recommendation";
+  const isPurchaseOrder = task.subject.type === "purchase_order";
   const awardMetadata = task.subject.metadata as ApprovalAwardRecommendationSubjectMetadata;
+  const purchaseOrderMetadata = task.subject.metadata as ApprovalPurchaseOrderSubjectMetadata;
   const requisitionMetadata = task.subject.metadata as ApprovalRequisitionSubjectMetadata;
   const canApprove = task.permissions.canApprove;
   const canReject = task.permissions.canReject;
@@ -114,6 +117,12 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
                   <Metric label="RFQ" value={awardMetadata.rfqNumber ?? task.subject.number ?? "Unknown RFQ"} />
                   <Metric label="Weighted score" value={formatNumber(awardMetadata.scorecardWeightedTotal)} />
                 </>
+              ) : isPurchaseOrder ? (
+                <>
+                  <Metric label="Vendor" value={purchaseOrderMetadata.vendorName ?? task.subject.primaryParty ?? "Unknown"} />
+                  <Metric label="RFQ" value={purchaseOrderMetadata.rfqNumber ?? "Not sourced from RFQ"} />
+                  <Metric label="Payment terms" value={purchaseOrderMetadata.paymentTerms ?? "Not recorded"} />
+                </>
               ) : (
                 <>
                   <Metric label="Requester" value={requisitionMetadata.requester?.name ?? task.subject.primaryParty ?? "Unknown"} />
@@ -127,7 +136,7 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
           <Card>
             <CardHeader>
               <CardTitle>
-                <h2>{isAwardRecommendation ? "Award recommendation" : "Requisition"}</h2>
+                <h2>{subjectSectionTitle(task.subject.type)}</h2>
               </CardTitle>
               <CardDescription>
                 {task.subject.title} is currently {task.subject.status?.replaceAll("_", " ")}.
@@ -141,10 +150,17 @@ export function ApprovalTaskDetailPage({ taskId }: { taskId: string }) {
                   <Metric label="Risk summary" value={awardMetadata.riskSummary ?? "Not provided"} />
                   <Metric label="Exception summary" value={awardMetadata.exceptionSummary ?? "Not provided"} />
                 </div>
+              ) : isPurchaseOrder ? (
+                <div className="grid gap-3 text-sm md:grid-cols-2">
+                  <Metric label="Vendor" value={purchaseOrderMetadata.vendorName ?? task.subject.primaryParty ?? "Unknown"} />
+                  <Metric label="Payment terms" value={purchaseOrderMetadata.paymentTerms ?? "Not recorded"} />
+                  <Metric label="Delivery terms" value={purchaseOrderMetadata.deliveryTerms ?? "Not recorded"} />
+                  <Metric label="Amount" value={formatMoney(task.subject.amount, task.subject.currency)} />
+                </div>
               ) : null}
               <Button asChild variant="outline">
-                <Link href={isAwardRecommendation ? awardRecommendationHref(task, awardMetadata) : `/requisitions/${task.subject.id}`}>
-                  {isAwardRecommendation ? "Open award recommendation" : "Open requisition"}
+                <Link href={subjectHref(task, awardMetadata)}>
+                  {subjectLinkLabel(task.subject.type)}
                 </Link>
               </Button>
             </CardContent>
@@ -266,6 +282,33 @@ function formatDate(value?: string | null) {
 function formatNumber(value?: number | null) {
   if (typeof value !== "number") return "Not scored";
   return new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(value);
+}
+
+function formatMoney(amount?: number | null, currency?: string | null) {
+  if (typeof amount !== "number") return "Not recorded";
+  return new Intl.NumberFormat("en", { style: "currency", currency: currency ?? "MYR" }).format(amount);
+}
+
+function subjectSectionTitle(subjectType: string) {
+  if (subjectType === "rfq_award_recommendation") return "Award recommendation";
+  if (subjectType === "purchase_order") return "Purchase order";
+  return "Requisition";
+}
+
+function subjectLinkLabel(subjectType: string) {
+  if (subjectType === "rfq_award_recommendation") return "Open award recommendation";
+  if (subjectType === "purchase_order") return "Open purchase order";
+  return "Open requisition";
+}
+
+function subjectHref(
+  task: { subject: { type: string; href?: string | null; id: string } },
+  awardMetadata: Pick<ApprovalAwardRecommendationSubjectMetadata, "rfqId">,
+) {
+  if (task.subject.href) return task.subject.href;
+  if (task.subject.type === "rfq_award_recommendation") return awardRecommendationHref(task, awardMetadata);
+  if (task.subject.type === "purchase_order") return `/purchase-orders/${task.subject.id}`;
+  return `/requisitions/${task.subject.id}`;
 }
 
 function rejectionSuccessMessage(subjectType: string) {

@@ -3,6 +3,7 @@
 import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { PurchaseOrderActions } from "../components/purchase-order-actions";
+import { PurchaseOrderApprovalPanel } from "../components/purchase-order-approval-panel";
 import { PurchaseOrderDetailCard } from "../components/purchase-order-detail-card";
 import { PurchaseOrderLinesTable } from "../components/purchase-order-lines-table";
 import { usePurchaseOrder } from "../hooks/use-purchase-order";
@@ -68,6 +69,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
     >
       <PurchaseOrderDetailCard purchaseOrder={purchaseOrder} />
       <PurchaseOrderLinesTable lines={purchaseOrder.lines} currency={purchaseOrder.currency} />
+      <PurchaseOrderApprovalPanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderActions purchaseOrder={purchaseOrder} />
     </WorkflowStateLayout>
   );

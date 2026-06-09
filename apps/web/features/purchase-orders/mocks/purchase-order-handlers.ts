@@ -3,6 +3,7 @@ import type {
   CancelPurchaseOrderRequest,
   MarkPurchaseOrderReadyForReviewRequest,
   PurchaseOrder,
+  SubmitPurchaseOrderApprovalRequest,
   UpdatePurchaseOrderRequest,
 } from "@cognify/api-client/schemas";
 import {
@@ -14,6 +15,10 @@ let purchaseOrders: PurchaseOrder[] = [structuredClone(purchaseOrderFixture)];
 
 export function resetPurchaseOrderMockState() {
   purchaseOrders = [structuredClone(purchaseOrderFixture)];
+}
+
+export function setPurchaseOrderMockState(nextPurchaseOrders: PurchaseOrder[]) {
+  purchaseOrders = nextPurchaseOrders.map((purchaseOrder) => structuredClone(purchaseOrder));
 }
 
 function findPurchaseOrder(purchaseOrderId: string) {
@@ -149,6 +154,51 @@ export const purchaseOrderHandlers = [
         ...purchaseOrder.permissions,
         canUpdate: false,
         canMarkReadyForReview: false,
+        canSubmitForApproval: true,
+      },
+    };
+
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updated.id ? updated : item));
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.post("/api/purchase-orders/:purchaseOrder/submit-approval", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as SubmitPurchaseOrderApprovalRequest;
+    if (payload.lockVersion !== purchaseOrder.lockVersion) {
+      return conflictResponse();
+    }
+    if (!["ready_for_review", "changes_requested"].includes(purchaseOrder.status)) {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Only ready or changes-requested purchase orders can be submitted for approval." } },
+        { status: 409 },
+      );
+    }
+
+    const updated = {
+      ...purchaseOrder,
+      status: "in_review" as const,
+      lockVersion: purchaseOrder.lockVersion + 1,
+      approval: {
+        ...purchaseOrder.approval,
+        approvalInstanceId: "approval-po-1",
+        submittedByUserId: "buyer-1",
+        submittedAt: "2026-06-09T08:00:00.000Z",
+      },
+      permissions: {
+        ...purchaseOrder.permissions,
+        canUpdate: false,
+        canMarkReadyForReview: false,
+        canCancel: false,
+        canSubmitForApproval: false,
       },
     };
 
@@ -186,6 +236,7 @@ export const purchaseOrderHandlers = [
         canUpdate: false,
         canMarkReadyForReview: false,
         canCancel: false,
+        canSubmitForApproval: false,
       },
     };
 

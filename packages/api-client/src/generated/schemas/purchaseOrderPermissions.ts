@@ -9,4 +9,5 @@ export interface PurchaseOrderPermissions {
   canUpdate: boolean;
   canMarkReadyForReview: boolean;
   canCancel: boolean;
+  canSubmitForApproval: boolean;
 }

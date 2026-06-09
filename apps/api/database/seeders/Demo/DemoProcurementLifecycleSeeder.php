@@ -105,7 +105,8 @@ class DemoProcurementLifecycleSeeder
             $buyer,
             $finance,
         );
-        $this->seedPurchaseOrders($context, $tenant, $buyer, $finance);
+        $purchaseOrderPolicy = $this->approvalPolicy($tenant, $finance, 'purchase_order', 'Demo purchase order approval policy');
+        $this->seedPurchaseOrders($context, $tenant, $buyer, $finance, $purchaseOrderPolicy);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -739,6 +740,10 @@ class DemoProcurementLifecycleSeeder
         $pending = $this->recommendation($tenant, $rfqs->get('cancelled'), $buyer, RfqAwardRecommendationStatus::PendingApproval, $greenline, $greenlineVersion, $scorecard);
         $routed = $this->recommendation($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::ApprovalRouted, $greenline, $greenlineVersion, $scorecard);
         $approved = $this->recommendation($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, $greenline, $greenlineVersion, $scorecard, 'Approved recommendation for seeded award governance.');
+        $poInReview = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-in-review-source', $greenline, $greenlineVersion, $scorecard);
+        $poChangesRequested = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-changes-requested-source', $greenline, $greenlineVersion, $scorecard);
+        $poApproved = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-approved-source', $greenline, $greenlineVersion, $scorecard);
+        $poRejected = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-rejected-source', $greenline, $greenlineVersion, $scorecard);
 
         $routedTask = $this->seedApprovalRoute(
             tenant: $tenant,
@@ -785,11 +790,21 @@ class DemoProcurementLifecycleSeeder
         $context->rfqAwardRecommendations->put('pending', $pending->refresh());
         $context->rfqAwardRecommendations->put('routed', $routed->refresh());
         $context->rfqAwardRecommendations->put('approved', $approved->refresh());
+        $context->rfqAwardRecommendations->put('po-in-review-source', $poInReview->refresh());
+        $context->rfqAwardRecommendations->put('po-changes-requested-source', $poChangesRequested->refresh());
+        $context->rfqAwardRecommendations->put('po-approved-source', $poApproved->refresh());
+        $context->rfqAwardRecommendations->put('po-rejected-source', $poRejected->refresh());
         $context->approvalTasks->put('award-routed', $routedTask->refresh());
         $context->approvalTasks->put('award-approved', $approvedTask->refresh());
     }
 
-    private function seedPurchaseOrders(DemoSeedContext $context, Tenant $tenant, User $buyer, User $finance): void
+    private function seedPurchaseOrders(
+        DemoSeedContext $context,
+        Tenant $tenant,
+        User $buyer,
+        User $finance,
+        ApprovalPolicyVersion $policyVersion,
+    ): void
     {
         $records = [
             'draft' => [
@@ -809,6 +824,42 @@ class DemoProcurementLifecycleSeeder
                 'poNumber' => 'PO-2026-SUSTAIN-REVIEW',
                 'poStatus' => PurchaseOrderStatus::ReadyForReview,
                 'lockVersion' => 2,
+            ],
+            'in-review' => [
+                'handoffKey' => 'in-review-source',
+                'recommendationKey' => 'po-in-review-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-IN-REVIEW',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-IN-REVIEW',
+                'poStatus' => PurchaseOrderStatus::InReview,
+                'lockVersion' => 3,
+            ],
+            'changes-requested' => [
+                'handoffKey' => 'changes-requested-source',
+                'recommendationKey' => 'po-changes-requested-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-CHANGES',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-CHANGES',
+                'poStatus' => PurchaseOrderStatus::ChangesRequested,
+                'lockVersion' => 4,
+            ],
+            'approved' => [
+                'handoffKey' => 'approved-source',
+                'recommendationKey' => 'po-approved-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-APPROVED',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-APPROVED',
+                'poStatus' => PurchaseOrderStatus::Approved,
+                'lockVersion' => 4,
+            ],
+            'rejected' => [
+                'handoffKey' => 'rejected-source',
+                'recommendationKey' => 'po-rejected-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-REJECTED',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-REJECTED',
+                'poStatus' => PurchaseOrderStatus::Rejected,
+                'lockVersion' => 4,
             ],
             'cancelled' => [
                 'handoffKey' => 'cancelled-source',
@@ -929,6 +980,17 @@ class DemoProcurementLifecycleSeeder
                     'cancelled_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? $buyer->id : null,
                     'cancelled_at' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? '2026-05-26 12:00:00' : null,
                     'cancelled_reason' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? 'Duplicate draft replaced by PO-2026-SUSTAIN-REVIEW.' : null,
+                    'approval_submitted_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Rejected], true) ? $buyer->id : null,
+                    'approval_submitted_at' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Rejected], true) ? '2026-06-09 08:00:00' : null,
+                    'approved_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Approved ? $finance->id : null,
+                    'approved_at' => $record['poStatus'] === PurchaseOrderStatus::Approved ? '2026-06-09 12:00:00' : null,
+                    'rejected_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? $finance->id : null,
+                    'rejected_at' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? '2026-06-09 12:30:00' : null,
+                    'rejected_reason' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? 'Tax coding does not match the approved quotation.' : null,
+                    'changes_requested_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? $finance->id : null,
+                    'changes_requested_at' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? '2026-06-09 10:00:00' : null,
+                    'changes_requested_reason' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? 'Payment terms and tax amount require correction.' : null,
+                    'changes_requested_fields' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? ['taxAmount', 'paymentTerms'] : [],
                     'lock_version' => $record['lockVersion'],
                 ],
             );
@@ -955,6 +1017,7 @@ class DemoProcurementLifecycleSeeder
                 ]);
             }
 
+            $purchaseOrder = $this->seedPurchaseOrderApprovalRoute($context, $tenant, $purchaseOrder->refresh(), $policyVersion, $buyer, $finance);
             $this->recordPurchaseOrderAudit($tenant, $buyer, $purchaseOrder->refresh());
             $context->purchaseOrderRequestHandoffs->put($record['handoffKey'], $handoff->refresh());
             $context->purchaseOrders->put($poKey, $purchaseOrder->refresh());
@@ -989,6 +1052,10 @@ class DemoProcurementLifecycleSeeder
         $action = match ($purchaseOrder->statusState()) {
             PurchaseOrderStatus::Draft => 'purchase_order.created',
             PurchaseOrderStatus::ReadyForReview => 'purchase_order.ready_for_review',
+            PurchaseOrderStatus::InReview => 'purchase_order.approval_submitted',
+            PurchaseOrderStatus::ChangesRequested => 'purchase_order.changes_requested',
+            PurchaseOrderStatus::Approved => 'purchase_order.approved',
+            PurchaseOrderStatus::Rejected => 'purchase_order.rejected',
             PurchaseOrderStatus::Cancelled => 'purchase_order.cancelled',
         };
 
@@ -1000,6 +1067,80 @@ class DemoProcurementLifecycleSeeder
             metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: ['demo' => true]),
             after: $purchaseOrder->toArray(),
         ));
+    }
+
+    private function seedPurchaseOrderApprovalRoute(
+        DemoSeedContext $context,
+        Tenant $tenant,
+        PurchaseOrder $purchaseOrder,
+        ApprovalPolicyVersion $policyVersion,
+        User $buyer,
+        User $finance,
+    ): PurchaseOrder {
+        $status = $purchaseOrder->statusState();
+
+        if (! in_array($status, [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Rejected], true)) {
+            return $purchaseOrder;
+        }
+
+        $task = $this->seedApprovalRoute(
+            tenant: $tenant,
+            subject: $purchaseOrder,
+            policyVersion: $policyVersion,
+            assignee: $finance,
+            title: "Review {$purchaseOrder->number}",
+            instanceStatus: match ($status) {
+                PurchaseOrderStatus::Approved => ApprovalInstanceStatus::Approved,
+                PurchaseOrderStatus::ChangesRequested => ApprovalInstanceStatus::ChangesRequested,
+                PurchaseOrderStatus::Rejected => ApprovalInstanceStatus::Rejected,
+                default => ApprovalInstanceStatus::Active,
+            },
+            taskStatus: match ($status) {
+                PurchaseOrderStatus::Approved => ApprovalTaskStatus::Approved,
+                PurchaseOrderStatus::ChangesRequested => ApprovalTaskStatus::ChangesRequested,
+                PurchaseOrderStatus::Rejected => ApprovalTaskStatus::Rejected,
+                default => ApprovalTaskStatus::Active,
+            },
+            startedAt: '2026-06-09 08:00:00',
+            dueAt: '2026-06-11 08:00:00',
+            decidedAt: match ($status) {
+                PurchaseOrderStatus::Approved => '2026-06-09 12:00:00',
+                PurchaseOrderStatus::ChangesRequested => '2026-06-09 10:00:00',
+                PurchaseOrderStatus::Rejected => '2026-06-09 12:30:00',
+                default => null,
+            },
+            decision: match ($status) {
+                PurchaseOrderStatus::Approved => 'approved',
+                PurchaseOrderStatus::ChangesRequested => 'changes_requested',
+                PurchaseOrderStatus::Rejected => 'rejected',
+                default => null,
+            },
+            decisionReason: match ($status) {
+                PurchaseOrderStatus::Approved => 'Approved for supplier issue demo.',
+                PurchaseOrderStatus::ChangesRequested => 'Payment terms and tax amount require correction.',
+                PurchaseOrderStatus::Rejected => 'Tax coding does not match the approved quotation.',
+                default => null,
+            },
+        );
+
+        $purchaseOrder->forceFill([
+            'approval_instance_id' => $task->approval_instance_id,
+            'approval_submitted_by_user_id' => $buyer->id,
+            'approval_submitted_at' => '2026-06-09 08:00:00',
+            'approved_by_user_id' => $status === PurchaseOrderStatus::Approved ? $finance->id : null,
+            'approved_at' => $status === PurchaseOrderStatus::Approved ? '2026-06-09 12:00:00' : null,
+            'rejected_by_user_id' => $status === PurchaseOrderStatus::Rejected ? $finance->id : null,
+            'rejected_at' => $status === PurchaseOrderStatus::Rejected ? '2026-06-09 12:30:00' : null,
+            'rejected_reason' => $status === PurchaseOrderStatus::Rejected ? 'Tax coding does not match the approved quotation.' : null,
+            'changes_requested_by_user_id' => $status === PurchaseOrderStatus::ChangesRequested ? $finance->id : null,
+            'changes_requested_at' => $status === PurchaseOrderStatus::ChangesRequested ? '2026-06-09 10:00:00' : null,
+            'changes_requested_reason' => $status === PurchaseOrderStatus::ChangesRequested ? 'Payment terms and tax amount require correction.' : null,
+            'changes_requested_fields' => $status === PurchaseOrderStatus::ChangesRequested ? ['taxAmount', 'paymentTerms'] : [],
+        ])->save();
+
+        $context->approvalTasks->put("purchase-order-{$purchaseOrder->statusState()->value}", $task->refresh());
+
+        return $purchaseOrder->refresh();
     }
 
     private function recommendation(
@@ -1028,6 +1169,40 @@ class DemoProcurementLifecycleSeeder
                 'submitted_by_user_id' => in_array($status, [RfqAwardRecommendationStatus::PendingApproval, RfqAwardRecommendationStatus::ApprovalRouted, RfqAwardRecommendationStatus::Approved], true) ? $buyer->id : null,
                 'submitted_at' => in_array($status, [RfqAwardRecommendationStatus::PendingApproval, RfqAwardRecommendationStatus::ApprovalRouted, RfqAwardRecommendationStatus::Approved], true) ? '2026-05-24 17:00:00' : null,
                 'decision_reason' => $decisionReason,
+            ],
+        );
+    }
+
+    private function recommendationVariant(
+        Tenant $tenant,
+        Rfq $rfq,
+        User $buyer,
+        RfqAwardRecommendationStatus $status,
+        string $variant,
+        Quotation $quotation,
+        QuotationVersion $version,
+        RfqScorecard $scorecard,
+    ): RfqAwardRecommendation {
+        return RfqAwardRecommendation::query()->updateOrCreate(
+            [
+                'tenant_id' => $tenant->id,
+                'rfq_id' => $rfq->id,
+                'status' => $status,
+                'rationale' => "Seeded {$variant} recommendation for purchase order review demos.",
+            ],
+            [
+                'recommended_vendor_id' => $quotation->vendor_id,
+                'recommended_quotation_id' => $quotation->id,
+                'recommended_quotation_version_id' => $version->id,
+                'scorecard_id' => $scorecard->id,
+                'tradeoff_summary' => 'Higher total cost accepted for stronger ESG compliance.',
+                'risk_summary' => 'Primary risk is delivery coordination during the office expansion.',
+                'exception_summary' => 'Atlas is cheaper but lacks ESG evidence.',
+                'created_by_user_id' => $buyer->id,
+                'updated_by_user_id' => $buyer->id,
+                'submitted_by_user_id' => $buyer->id,
+                'submitted_at' => '2026-05-24 17:00:00',
+                'decision_reason' => 'Approved recommendation for seeded purchase order review state.',
             ],
         );
     }

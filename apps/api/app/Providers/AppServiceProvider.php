@@ -9,6 +9,7 @@ use App\Tenancy\CurrentTenant;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\Approval\Policies\ApprovalTaskPolicy;
 use Domains\Approval\Services\ApprovalSubjectRegistry;
+use Domains\Approval\SubjectHandlers\PurchaseOrderApprovalSubjectHandler;
 use Domains\Approval\SubjectHandlers\RequisitionApprovalSubjectHandler;
 use Domains\Approval\SubjectHandlers\RfqAwardRecommendationApprovalSubjectHandler;
 use Domains\Attachment\Models\Attachment;
@@ -50,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ApprovalSubjectRegistry::class, fn ($app) => new ApprovalSubjectRegistry([
             $app->make(RequisitionApprovalSubjectHandler::class),
             $app->make(RfqAwardRecommendationApprovalSubjectHandler::class),
+            $app->make(PurchaseOrderApprovalSubjectHandler::class),
         ]));
     }
 

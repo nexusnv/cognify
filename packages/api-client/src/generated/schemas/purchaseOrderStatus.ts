@@ -12,4 +12,8 @@ export const PurchaseOrderStatus = {
   draft: "draft",
   ready_for_review: "ready_for_review",
   cancelled: "cancelled",
+  in_review: "in_review",
+  changes_requested: "changes_requested",
+  approved: "approved",
+  rejected: "rejected",
 } as const;

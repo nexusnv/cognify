@@ -99,6 +99,7 @@ export function ApprovalQueuePage() {
                   <option value="">Any subject</option>
                   <option value="requisition">Requisition</option>
                   <option value="rfq_award_recommendation">Award recommendation</option>
+                  <option value="purchase_order">Purchase order</option>
                 </NativeSelect>
               </FieldContent>
             </Field>
