@@ -38,6 +38,12 @@ export function PurchaseOrderActions({ purchaseOrder }: { purchaseOrder: Purchas
   });
   const isBusy = updateMutation.isPending || readyMutation.isPending || cancelMutation.isPending;
   const isEditable = purchaseOrder.permissions.canUpdate && !isBusy;
+  const cancelPurchaseOrder = () => {
+    const reason = window.prompt("Cancellation reason");
+    if (reason?.trim()) {
+      cancelMutation.mutate({ lockVersion: purchaseOrder.lockVersion, reason: reason.trim() });
+    }
+  };
 
   return (
     <section id="draft-fields" className="rounded-md border p-4">
@@ -159,6 +165,11 @@ export function PurchaseOrderActions({ purchaseOrder }: { purchaseOrder: Purchas
         >
           {readyMutation.isPending ? "Marking ready" : "Mark ready for review"}
         </Button>
+        {purchaseOrder.permissions.canCancel ? (
+          <Button type="button" variant="destructive" disabled={isBusy} onClick={cancelPurchaseOrder}>
+            {cancelMutation.isPending ? "Cancelling" : "Cancel"}
+          </Button>
+        ) : null}
       </div>
     </section>
   );

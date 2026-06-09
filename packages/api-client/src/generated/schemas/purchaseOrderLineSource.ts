@@ -4,5 +4,53 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderLineSourceId } from "./purchaseOrderLineSourceId";
+import type { PurchaseOrderLineSourceLineNumber } from "./purchaseOrderLineSourceLineNumber";
+import type { PurchaseOrderLineSourceItemCode } from "./purchaseOrderLineSourceItemCode";
+import type { PurchaseOrderLineSourceSku } from "./purchaseOrderLineSourceSku";
+import type { PurchaseOrderLineSourceDescription } from "./purchaseOrderLineSourceDescription";
+import type { PurchaseOrderLineSourceCategory } from "./purchaseOrderLineSourceCategory";
+import type { PurchaseOrderLineSourceQuantity } from "./purchaseOrderLineSourceQuantity";
+import type { PurchaseOrderLineSourceUnit } from "./purchaseOrderLineSourceUnit";
+import type { PurchaseOrderLineSourceUnitOfMeasure } from "./purchaseOrderLineSourceUnitOfMeasure";
+import type { PurchaseOrderLineSourceUnitPrice } from "./purchaseOrderLineSourceUnitPrice";
+import type { PurchaseOrderLineSourceSubtotalAmount } from "./purchaseOrderLineSourceSubtotalAmount";
+import type { PurchaseOrderLineSourceTaxAmount } from "./purchaseOrderLineSourceTaxAmount";
+import type { PurchaseOrderLineSourceFreightAmount } from "./purchaseOrderLineSourceFreightAmount";
+import type { PurchaseOrderLineSourceDiscountAmount } from "./purchaseOrderLineSourceDiscountAmount";
+import type { PurchaseOrderLineSourceTotalAmount } from "./purchaseOrderLineSourceTotalAmount";
+import type { PurchaseOrderLineSourceLineTotal } from "./purchaseOrderLineSourceLineTotal";
+import type { PurchaseOrderLineSourceCurrency } from "./purchaseOrderLineSourceCurrency";
+import type { PurchaseOrderLineSourceNeededByDate } from "./purchaseOrderLineSourceNeededByDate";
+import type { PurchaseOrderLineSourceExpectedDeliveryDate } from "./purchaseOrderLineSourceExpectedDeliveryDate";
+import type { PurchaseOrderLineSourceNotes } from "./purchaseOrderLineSourceNotes";
 
-export type PurchaseOrderLineSource = { [key: string]: unknown };
+export type PurchaseOrderLineSource = {
+  id?: PurchaseOrderLineSourceId;
+  lineNumber?: PurchaseOrderLineSourceLineNumber;
+  itemCode?: PurchaseOrderLineSourceItemCode;
+  sku?: PurchaseOrderLineSourceSku;
+  description?: PurchaseOrderLineSourceDescription;
+  category?: PurchaseOrderLineSourceCategory;
+  quantity?: PurchaseOrderLineSourceQuantity;
+  unit?: PurchaseOrderLineSourceUnit;
+  unitOfMeasure?: PurchaseOrderLineSourceUnitOfMeasure;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  unitPrice?: PurchaseOrderLineSourceUnitPrice;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  subtotalAmount?: PurchaseOrderLineSourceSubtotalAmount;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  taxAmount?: PurchaseOrderLineSourceTaxAmount;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  freightAmount?: PurchaseOrderLineSourceFreightAmount;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  discountAmount?: PurchaseOrderLineSourceDiscountAmount;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  totalAmount?: PurchaseOrderLineSourceTotalAmount;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  lineTotal?: PurchaseOrderLineSourceLineTotal;
+  currency?: PurchaseOrderLineSourceCurrency;
+  neededByDate?: PurchaseOrderLineSourceNeededByDate;
+  expectedDeliveryDate?: PurchaseOrderLineSourceExpectedDeliveryDate;
+  notes?: PurchaseOrderLineSourceNotes;
+};

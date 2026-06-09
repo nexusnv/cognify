@@ -4,6 +4,7 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderStatus } from "./purchaseOrderStatus";
 
 export type ListPurchaseOrdersParams = {
   /**
@@ -15,7 +16,7 @@ export type ListPurchaseOrdersParams = {
    * @maximum 100
    */
   perPage?: number;
-  status?: string;
+  status?: PurchaseOrderStatus;
   vendorId?: string;
   requisitionId?: string;
   projectId?: string;

@@ -27,6 +27,7 @@ class CreatePurchaseOrderFromHandoff
         return DB::transaction(function () use ($handoff, $actor): array {
             $handoff = PurchaseOrderRequestHandoff::query()
                 ->whereKey($handoff->id)
+                ->where('tenant_id', $handoff->tenant_id)
                 ->lockForUpdate()
                 ->firstOrFail();
 

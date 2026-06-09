@@ -20,6 +20,7 @@ class MarkPurchaseOrderReadyForReview
         return DB::transaction(function () use ($purchaseOrder, $actor, $lockVersion): PurchaseOrder {
             $purchaseOrder = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
+                ->where('tenant_id', $purchaseOrder->tenant_id)
                 ->lockForUpdate()
                 ->with('lines')
                 ->firstOrFail();
@@ -39,7 +40,7 @@ class MarkPurchaseOrderReadyForReview
             ];
 
             foreach ($required as $value) {
-                if ($value === null || $value === '' || $value === []) {
+                if ($value === null || (is_string($value) && trim($value) === '') || (is_array($value) && $value === [])) {
                     throw new ConflictHttpException('Purchase order requires billing, shipping, and payment terms before review.');
                 }
             }

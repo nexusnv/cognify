@@ -9009,6 +9009,11 @@ export type listPurchaseOrdersResponse200 = {
   status: 200;
 };
 
+export type listPurchaseOrdersResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type listPurchaseOrdersResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -9023,6 +9028,7 @@ export type listPurchaseOrdersResponseSuccess = listPurchaseOrdersResponse200 & 
   headers: Headers;
 };
 export type listPurchaseOrdersResponseError = (
+  | listPurchaseOrdersResponse400
   | listPurchaseOrdersResponse401
   | listPurchaseOrdersResponse403
 ) & {
@@ -9067,6 +9073,11 @@ export type showPurchaseOrderResponse200 = {
   status: 200;
 };
 
+export type showPurchaseOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type showPurchaseOrderResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -9086,6 +9097,7 @@ export type showPurchaseOrderResponseSuccess = showPurchaseOrderResponse200 & {
   headers: Headers;
 };
 export type showPurchaseOrderResponseError = (
+  | showPurchaseOrderResponse400
   | showPurchaseOrderResponse401
   | showPurchaseOrderResponse403
   | showPurchaseOrderResponse404
@@ -9119,6 +9131,11 @@ export type updatePurchaseOrderResponse200 = {
   status: 200;
 };
 
+export type updatePurchaseOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type updatePurchaseOrderResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -9148,6 +9165,7 @@ export type updatePurchaseOrderResponseSuccess = updatePurchaseOrderResponse200 
   headers: Headers;
 };
 export type updatePurchaseOrderResponseError = (
+  | updatePurchaseOrderResponse400
   | updatePurchaseOrderResponse401
   | updatePurchaseOrderResponse403
   | updatePurchaseOrderResponse404
@@ -9191,6 +9209,11 @@ export type createPurchaseOrderFromHandoffResponse201 = {
   status: 201;
 };
 
+export type createPurchaseOrderFromHandoffResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type createPurchaseOrderFromHandoffResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -9218,6 +9241,7 @@ export type createPurchaseOrderFromHandoffResponseSuccess = (
   headers: Headers;
 };
 export type createPurchaseOrderFromHandoffResponseError = (
+  | createPurchaseOrderFromHandoffResponse400
   | createPurchaseOrderFromHandoffResponse401
   | createPurchaseOrderFromHandoffResponse403
   | createPurchaseOrderFromHandoffResponse404
@@ -9255,6 +9279,11 @@ export type markPurchaseOrderReadyForReviewResponse200 = {
   status: 200;
 };
 
+export type markPurchaseOrderReadyForReviewResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type markPurchaseOrderReadyForReviewResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -9285,6 +9314,7 @@ export type markPurchaseOrderReadyForReviewResponseSuccess =
     headers: Headers;
   };
 export type markPurchaseOrderReadyForReviewResponseError = (
+  | markPurchaseOrderReadyForReviewResponse400
   | markPurchaseOrderReadyForReviewResponse401
   | markPurchaseOrderReadyForReviewResponse403
   | markPurchaseOrderReadyForReviewResponse404
@@ -9326,6 +9356,11 @@ export type cancelPurchaseOrderResponse200 = {
   status: 200;
 };
 
+export type cancelPurchaseOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
 export type cancelPurchaseOrderResponse401 = {
   data: UnauthenticatedResponse;
   status: 401;
@@ -9355,6 +9390,7 @@ export type cancelPurchaseOrderResponseSuccess = cancelPurchaseOrderResponse200 
   headers: Headers;
 };
 export type cancelPurchaseOrderResponseError = (
+  | cancelPurchaseOrderResponse400
   | cancelPurchaseOrderResponse401
   | cancelPurchaseOrderResponse403
   | cancelPurchaseOrderResponse404

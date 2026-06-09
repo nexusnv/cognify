@@ -20,6 +20,7 @@ class CancelPurchaseOrder
         return DB::transaction(function () use ($purchaseOrder, $actor, $lockVersion, $reason): PurchaseOrder {
             $purchaseOrder = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
+                ->where('tenant_id', $purchaseOrder->tenant_id)
                 ->lockForUpdate()
                 ->with('lines')
                 ->firstOrFail();

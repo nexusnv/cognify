@@ -1239,7 +1239,7 @@ export default async function Page({ params }: { params: Promise<{ purchaseOrder
 
 The workspace must render an `h1` with the PO number, source/vendor summary, line table, draft fields, and action buttons.
 
-- [x] **Step 6: Run web focused test**
+- [x] **Step 6: Run web-focused test**
 
 Run:
 
@@ -1464,7 +1464,7 @@ pnpm check:api-contract
 
 Expected: exits 0.
 
-- [x] **Step 4: Run web focused tests**
+- [x] **Step 4: Run web-focused tests**
 
 Run:
 

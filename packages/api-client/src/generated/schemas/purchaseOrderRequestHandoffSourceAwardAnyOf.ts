@@ -4,5 +4,16 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderRequestHandoffSourceAwardAnyOfRecommendationId } from "./purchaseOrderRequestHandoffSourceAwardAnyOfRecommendationId";
+import type { PurchaseOrderRequestHandoffSourceAwardAnyOfRationale } from "./purchaseOrderRequestHandoffSourceAwardAnyOfRationale";
+import type { PurchaseOrderRequestHandoffSourceAwardAnyOfTradeoffSummary } from "./purchaseOrderRequestHandoffSourceAwardAnyOfTradeoffSummary";
+import type { PurchaseOrderRequestHandoffSourceAwardAnyOfRiskSummary } from "./purchaseOrderRequestHandoffSourceAwardAnyOfRiskSummary";
+import type { PurchaseOrderRequestHandoffSourceAwardAnyOfExceptionSummary } from "./purchaseOrderRequestHandoffSourceAwardAnyOfExceptionSummary";
 
-export type PurchaseOrderRequestHandoffSourceAwardAnyOf = { [key: string]: unknown };
+export type PurchaseOrderRequestHandoffSourceAwardAnyOf = {
+  recommendationId?: PurchaseOrderRequestHandoffSourceAwardAnyOfRecommendationId;
+  rationale?: PurchaseOrderRequestHandoffSourceAwardAnyOfRationale;
+  tradeoffSummary?: PurchaseOrderRequestHandoffSourceAwardAnyOfTradeoffSummary;
+  riskSummary?: PurchaseOrderRequestHandoffSourceAwardAnyOfRiskSummary;
+  exceptionSummary?: PurchaseOrderRequestHandoffSourceAwardAnyOfExceptionSummary;
+};

@@ -24,6 +24,7 @@ class UpdatePurchaseOrder
         return DB::transaction(function () use ($purchaseOrder, $actor, $data): PurchaseOrder {
             $purchaseOrder = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
+                ->where('tenant_id', $purchaseOrder->tenant_id)
                 ->lockForUpdate()
                 ->with('lines')
                 ->firstOrFail();

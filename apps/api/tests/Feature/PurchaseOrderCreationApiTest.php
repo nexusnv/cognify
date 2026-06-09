@@ -355,6 +355,29 @@ class PurchaseOrderCreationApiTest extends TestCase
             ->assertJsonPath('data.status', 'ready_for_review');
     }
 
+    public function test_ready_for_review_rejects_blank_required_text_fields(): void
+    {
+        $po = $this->draftPurchaseOrder(attributes: [
+            'billing_name' => '   ',
+            'billing_address' => json_encode(['line1' => 'Level 10']),
+            'shipping_name' => 'Acme Warehouse',
+            'shipping_address' => json_encode(['line1' => 'Dock 4']),
+            'payment_terms' => 'Net 30',
+        ]);
+        $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
+
+        $this->actingAsTenant($po->tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/ready-for-review", [
+                'lockVersion' => $po->lock_version,
+            ])
+            ->assertConflict();
+
+        $this->assertPurchaseOrderState($po, [
+            'status' => 'draft',
+            'lock_version' => 1,
+        ]);
+    }
+
     public function test_cancelled_purchase_order_cannot_be_updated_or_marked_ready(): void
     {
         $po = $this->cancelledPurchaseOrder(attributes: ['buyer_note' => 'cancelled note']);
@@ -416,6 +439,16 @@ class PurchaseOrderCreationApiTest extends TestCase
             ->assertJsonPath('meta.perPage', 1)
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('meta.lastPage', 1);
+    }
+
+    public function test_purchase_order_list_rejects_unknown_status_filter(): void
+    {
+        $po = $this->draftPurchaseOrder();
+        $buyer = $this->tenantUser($po->tenant, TenantRole::Buyer->value);
+
+        $this->actingAsTenant($po->tenant, $buyer)
+            ->getJson('/api/purchase-orders?status=not-a-status')
+            ->assertUnprocessable();
     }
 
     public function test_purchase_order_actions_record_context_rich_audit_metadata(): void

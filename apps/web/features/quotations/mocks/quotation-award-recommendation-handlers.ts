@@ -46,7 +46,7 @@ function errorMessage(error: unknown, fallback: string): string {
 
 function invalidStateOrNotFound(error: unknown, fallback: string) {
   const message = errorMessage(error, fallback);
-  if (message.includes("RFQ award recommendation not found.")) {
+  if (message.includes("RFQ award recommendation not found.") || message.includes("PO handoff not found.")) {
     return notFound(message);
   }
 

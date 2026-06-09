@@ -15,8 +15,11 @@ use Domains\PurchaseOrder\Http\Requests\UpdatePurchaseOrderRequest;
 use Domains\PurchaseOrder\Http\Resources\PurchaseOrderResource;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PurchaseOrderController extends Controller
 {
@@ -25,7 +28,7 @@ class PurchaseOrderController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $this->authorize('viewAny', PurchaseOrder::class);
         $validated = $request->validate([
-            'status' => ['sometimes', 'string'],
+            'status' => ['sometimes', 'string', Rule::enum(PurchaseOrderStatus::class)],
             'vendorId' => ['sometimes', 'string'],
             'requisitionId' => ['sometimes', 'string'],
             'projectId' => ['sometimes', 'string'],
@@ -58,7 +61,7 @@ class PurchaseOrderController extends Controller
             ->when($validated['search'] ?? null, function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {
                     $query->where('number', 'like', "%{$search}%")
-                        ->orWhere('source_snapshot', 'like', "%{$search}%");
+                        ->orWhereRaw($this->sourceSnapshotTextSearchSql(), ["%{$search}%"]);
                 });
             })
             ->orderByDesc('updated_at')
@@ -189,5 +192,12 @@ class PurchaseOrderController extends Controller
         abort_if($tenant === null, 403, 'Tenant context missing.');
 
         return $tenant;
+    }
+
+    private function sourceSnapshotTextSearchSql(): string
+    {
+        return DB::getDriverName() === 'pgsql'
+            ? 'source_snapshot::text LIKE ?'
+            : 'CAST(source_snapshot AS TEXT) LIKE ?';
     }
 }

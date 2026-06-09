@@ -4,5 +4,18 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderRequestHandoffApprovalStagesItemStage } from "./purchaseOrderRequestHandoffApprovalStagesItemStage";
+import type { PurchaseOrderRequestHandoffApprovalStagesItemName } from "./purchaseOrderRequestHandoffApprovalStagesItemName";
+import type { PurchaseOrderRequestHandoffApprovalStagesItemActor } from "./purchaseOrderRequestHandoffApprovalStagesItemActor";
+import type { PurchaseOrderRequestHandoffApprovalStagesItemActorId } from "./purchaseOrderRequestHandoffApprovalStagesItemActorId";
+import type { PurchaseOrderRequestHandoffApprovalStagesItemStatus } from "./purchaseOrderRequestHandoffApprovalStagesItemStatus";
+import type { PurchaseOrderRequestHandoffApprovalStagesItemDecidedAt } from "./purchaseOrderRequestHandoffApprovalStagesItemDecidedAt";
 
-export type PurchaseOrderRequestHandoffApprovalStagesItem = { [key: string]: unknown };
+export type PurchaseOrderRequestHandoffApprovalStagesItem = {
+  stage?: PurchaseOrderRequestHandoffApprovalStagesItemStage;
+  name?: PurchaseOrderRequestHandoffApprovalStagesItemName;
+  actor?: PurchaseOrderRequestHandoffApprovalStagesItemActor;
+  actorId?: PurchaseOrderRequestHandoffApprovalStagesItemActorId;
+  status?: PurchaseOrderRequestHandoffApprovalStagesItemStatus;
+  decidedAt?: PurchaseOrderRequestHandoffApprovalStagesItemDecidedAt;
+};

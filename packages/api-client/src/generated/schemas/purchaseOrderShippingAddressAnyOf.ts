@@ -4,5 +4,18 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { PurchaseOrderShippingAddressAnyOfLine1 } from "./purchaseOrderShippingAddressAnyOfLine1";
+import type { PurchaseOrderShippingAddressAnyOfLine2 } from "./purchaseOrderShippingAddressAnyOfLine2";
+import type { PurchaseOrderShippingAddressAnyOfCity } from "./purchaseOrderShippingAddressAnyOfCity";
+import type { PurchaseOrderShippingAddressAnyOfState } from "./purchaseOrderShippingAddressAnyOfState";
+import type { PurchaseOrderShippingAddressAnyOfPostalCode } from "./purchaseOrderShippingAddressAnyOfPostalCode";
+import type { PurchaseOrderShippingAddressAnyOfCountry } from "./purchaseOrderShippingAddressAnyOfCountry";
 
-export type PurchaseOrderShippingAddressAnyOf = { [key: string]: unknown };
+export type PurchaseOrderShippingAddressAnyOf = {
+  line1?: PurchaseOrderShippingAddressAnyOfLine1;
+  line2?: PurchaseOrderShippingAddressAnyOfLine2;
+  city?: PurchaseOrderShippingAddressAnyOfCity;
+  state?: PurchaseOrderShippingAddressAnyOfState;
+  postalCode?: PurchaseOrderShippingAddressAnyOfPostalCode;
+  country?: PurchaseOrderShippingAddressAnyOfCountry;
+};

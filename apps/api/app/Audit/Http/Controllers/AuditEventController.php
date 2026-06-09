@@ -48,7 +48,9 @@ class AuditEventController extends Controller
 
             $query->where('subject_type', $subjectClass);
         }
-        $query->when($validated['subjectId'] ?? null, fn ($query, string $subjectId) => $query->where('subject_id', $subjectId));
+        if (array_key_exists('subjectId', $validated)) {
+            $query->where('subject_id', $validated['subjectId']);
+        }
         $query->when($validated['occurredFrom'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '>=', Carbon::parse($date)->startOfDay()));
         $query->when($validated['occurredTo'] ?? null, fn ($query, string $date) => $query->where('occurred_at', '<=', Carbon::parse($date)->endOfDay()));
 

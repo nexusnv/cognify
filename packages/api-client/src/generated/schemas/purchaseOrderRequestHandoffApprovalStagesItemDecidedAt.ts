@@ -5,4 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PurchaseOrderSourceSnapshot = { [key: string]: unknown };
+export type PurchaseOrderRequestHandoffApprovalStagesItemDecidedAt = string | null;

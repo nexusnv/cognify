@@ -8,7 +8,7 @@ import type { PurchaseOrderSourceRequisitionId } from "./purchaseOrderSourceRequ
 import type { PurchaseOrderSourceProjectId } from "./purchaseOrderSourceProjectId";
 import type { PurchaseOrderSourceQuotationId } from "./purchaseOrderSourceQuotationId";
 import type { PurchaseOrderSourceQuotationVersionId } from "./purchaseOrderSourceQuotationVersionId";
-import type { PurchaseOrderSourceSnapshot } from "./purchaseOrderSourceSnapshot";
+import type { PurchaseOrderRequestHandoffSource } from "./purchaseOrderRequestHandoffSource";
 
 export interface PurchaseOrderSource {
   handoffId: string;
@@ -18,5 +18,5 @@ export interface PurchaseOrderSource {
   projectId?: PurchaseOrderSourceProjectId;
   quotationId?: PurchaseOrderSourceQuotationId;
   quotationVersionId?: PurchaseOrderSourceQuotationVersionId;
-  snapshot: PurchaseOrderSourceSnapshot;
+  snapshot: PurchaseOrderRequestHandoffSource;
 }
