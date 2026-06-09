@@ -16,8 +16,16 @@ use Domains\Approval\States\ApprovalPolicyStatus;
 use Domains\Approval\States\ApprovalPolicyVersionStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
+use App\Audit\AuditEventData;
+use App\Audit\AuditRecorder;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderLine;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -55,6 +63,8 @@ use Illuminate\Support\Collection;
 class DemoProcurementLifecycleSeeder
 {
     private const SEEDED_AT = '2026-05-21 09:00:00';
+
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     public function run(DemoSeedContext $context): void
     {
@@ -95,6 +105,7 @@ class DemoProcurementLifecycleSeeder
             $buyer,
             $finance,
         );
+        $this->seedPurchaseOrders($context, $tenant, $buyer, $finance);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -725,7 +736,7 @@ class DemoProcurementLifecycleSeeder
         $greenlineVersion = QuotationVersion::query()->whereKey($greenline->current_version_id)->firstOrFail();
 
         $draft = $this->recommendation($tenant, $rfqs->get('draft'), $buyer, RfqAwardRecommendationStatus::Draft);
-        $pending = $this->recommendation($tenant, $rfqs->get('cancelled'), $buyer, RfqAwardRecommendationStatus::PendingApproval);
+        $pending = $this->recommendation($tenant, $rfqs->get('cancelled'), $buyer, RfqAwardRecommendationStatus::PendingApproval, $greenline, $greenlineVersion, $scorecard);
         $routed = $this->recommendation($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::ApprovalRouted, $greenline, $greenlineVersion, $scorecard);
         $approved = $this->recommendation($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, $greenline, $greenlineVersion, $scorecard, 'Approved recommendation for seeded award governance.');
 
@@ -776,6 +787,219 @@ class DemoProcurementLifecycleSeeder
         $context->rfqAwardRecommendations->put('approved', $approved->refresh());
         $context->approvalTasks->put('award-routed', $routedTask->refresh());
         $context->approvalTasks->put('award-approved', $approvedTask->refresh());
+    }
+
+    private function seedPurchaseOrders(DemoSeedContext $context, Tenant $tenant, User $buyer, User $finance): void
+    {
+        $records = [
+            'draft' => [
+                'handoffKey' => 'ready',
+                'recommendationKey' => 'approved',
+                'handoffNumber' => 'POH-2026-SUSTAIN-READY',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Ready,
+                'poNumber' => 'PO-2026-SUSTAIN-DRAFT',
+                'poStatus' => PurchaseOrderStatus::Draft,
+                'lockVersion' => 1,
+            ],
+            'review' => [
+                'handoffKey' => 'exported',
+                'recommendationKey' => 'routed',
+                'handoffNumber' => 'POH-2026-SUSTAIN-EXPORTED',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-REVIEW',
+                'poStatus' => PurchaseOrderStatus::ReadyForReview,
+                'lockVersion' => 2,
+            ],
+            'cancelled' => [
+                'handoffKey' => 'cancelled-source',
+                'recommendationKey' => 'pending',
+                'handoffNumber' => 'POH-2026-SUSTAIN-CANCELLED',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-CANCELLED',
+                'poStatus' => PurchaseOrderStatus::Cancelled,
+                'lockVersion' => 2,
+            ],
+        ];
+
+        foreach ($records as $poKey => $record) {
+            $recommendation = $context->rfqAwardRecommendations->get($record['recommendationKey'])->refresh();
+            $quotation = Quotation::query()->findOrFail($recommendation->recommended_quotation_id);
+            $version = QuotationVersion::query()->findOrFail($recommendation->recommended_quotation_version_id);
+            $rfq = Rfq::query()->findOrFail($recommendation->rfq_id);
+            $lineSnapshot = $this->purchaseOrderLineSnapshot($version);
+            $sourceSnapshot = [
+                'rfq' => ['id' => (string) $rfq->id, 'number' => $rfq->number, 'title' => $rfq->title],
+                'vendor' => ['id' => (string) $quotation->vendor_id, 'name' => $quotation->vendor?->name],
+                'quotation' => ['id' => (string) $quotation->id, 'number' => $quotation->number, 'totalAmount' => (string) $quotation->total_amount, 'currency' => $quotation->currency],
+                'quotationVersion' => ['id' => (string) $version->id, 'versionNumber' => $version->version_number],
+                'award' => ['recommendationId' => (string) $recommendation->id, 'rationale' => $recommendation->rationale],
+            ];
+            $approvalSnapshot = [
+                'approvalInstanceId' => $recommendation->approval_instance_id !== null ? (string) $recommendation->approval_instance_id : null,
+                'status' => $record['recommendationKey'] === 'approved' ? 'approved' : 'pending_approval',
+                'finalDecision' => $record['recommendationKey'] === 'approved' ? 'approved' : null,
+                'approvedAt' => $recommendation->approved_at?->toJSON(),
+                'approvedBy' => $record['recommendationKey'] === 'approved' ? $finance->name : null,
+                'stages' => [['stage' => 'Manager review', 'actor' => $finance->name, 'status' => $record['recommendationKey'] === 'approved' ? 'approved' : 'active']],
+            ];
+            $evidenceSnapshot = $recommendation->evidenceReferences()
+                ->get()
+                ->map(fn ($evidence): array => [
+                    'type' => $evidence->evidence_type->value,
+                    'id' => (string) $evidence->evidence_id,
+                    'label' => $evidence->label,
+                    'summary' => 'Seeded evidence for purchase order demo.',
+                ])
+                ->values()
+                ->all();
+
+            $handoff = PurchaseOrderRequestHandoff::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'rfq_award_recommendation_id' => $recommendation->id],
+                [
+                    'approval_instance_id' => $recommendation->approval_instance_id,
+                    'rfq_id' => $recommendation->rfq_id,
+                    'requisition_id' => $rfq->requisition_id,
+                    'project_id' => $rfq->project_id,
+                    'vendor_id' => $quotation->vendor_id,
+                    'quotation_id' => $quotation->id,
+                    'quotation_version_id' => $version->id,
+                    'number' => $record['handoffNumber'],
+                    'status' => $record['handoffStatus'],
+                    'currency' => $quotation->currency,
+                    'subtotal_amount' => $quotation->subtotal_amount,
+                    'tax_amount' => $quotation->tax_amount,
+                    'freight_amount' => $quotation->freight_amount,
+                    'discount_amount' => $quotation->discount_amount,
+                    'total_amount' => $quotation->total_amount,
+                    'requested_po_date' => '2026-06-03',
+                    'delivery_attention' => 'Facilities receiving dock',
+                    'finance_note' => 'Seeded purchase order demo for sustainable furniture.',
+                    'export_memo' => $record['handoffStatus'] === PurchaseOrderRequestHandoffStatus::Exported ? 'Exported to ERP sandbox for demo testing.' : null,
+                    'requested_by_user_id' => $buyer->id,
+                    'ready_by_user_id' => $buyer->id,
+                    'ready_at' => '2026-05-26 09:30:00',
+                    'last_exported_by_user_id' => $record['handoffStatus'] === PurchaseOrderRequestHandoffStatus::Exported ? $buyer->id : null,
+                    'last_exported_at' => $record['handoffStatus'] === PurchaseOrderRequestHandoffStatus::Exported ? '2026-05-26 10:00:00' : null,
+                    'last_export_format' => $record['handoffStatus'] === PurchaseOrderRequestHandoffStatus::Exported ? 'json' : null,
+                    'source_snapshot' => $sourceSnapshot,
+                    'line_snapshot' => $lineSnapshot,
+                    'approval_snapshot' => $approvalSnapshot,
+                    'evidence_snapshot' => $evidenceSnapshot,
+                    'readiness_warnings' => [],
+                    'lock_version' => 1,
+                ],
+            );
+
+            $purchaseOrder = PurchaseOrder::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'purchase_order_request_handoff_id' => $handoff->id],
+                [
+                    'rfq_award_recommendation_id' => $recommendation->id,
+                    'approval_instance_id' => $recommendation->approval_instance_id,
+                    'rfq_id' => $recommendation->rfq_id,
+                    'requisition_id' => $rfq->requisition_id,
+                    'project_id' => $rfq->project_id,
+                    'vendor_id' => $quotation->vendor_id,
+                    'quotation_id' => $quotation->id,
+                    'quotation_version_id' => $version->id,
+                    'number' => $record['poNumber'],
+                    'status' => $record['poStatus'],
+                    'currency' => $quotation->currency,
+                    'subtotal_amount' => $quotation->subtotal_amount,
+                    'tax_amount' => $quotation->tax_amount,
+                    'freight_amount' => $quotation->freight_amount,
+                    'discount_amount' => $quotation->discount_amount,
+                    'total_amount' => $quotation->total_amount,
+                    'requested_po_date' => '2026-06-03',
+                    'expected_delivery_date' => '2026-07-15',
+                    'billing_name' => 'Acme Procurement Finance',
+                    'billing_address' => ['line1' => 'Level 10, Acme Tower', 'city' => 'Kuala Lumpur', 'country' => 'MY'],
+                    'shipping_name' => 'HQ East Wing Facilities',
+                    'shipping_address' => ['line1' => 'HQ East Wing - Level 4', 'city' => 'Kuala Lumpur', 'country' => 'MY'],
+                    'delivery_attention' => 'Facilities receiving dock',
+                    'payment_terms' => 'Net 30',
+                    'delivery_terms' => 'Delivered duty paid',
+                    'buyer_note' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? 'Duplicate draft cancelled during demo cleanup.' : 'Seeded PO can be edited and progressed by the buyer.',
+                    'finance_note' => 'Charge to OPS-100 sustainable expansion budget.',
+                    'source_snapshot' => $sourceSnapshot,
+                    'approval_snapshot' => $approvalSnapshot,
+                    'evidence_snapshot' => $evidenceSnapshot,
+                    'created_by_user_id' => $buyer->id,
+                    'ready_for_review_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::ReadyForReview ? $buyer->id : null,
+                    'ready_for_review_at' => $record['poStatus'] === PurchaseOrderStatus::ReadyForReview ? '2026-05-26 11:00:00' : null,
+                    'cancelled_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? $buyer->id : null,
+                    'cancelled_at' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? '2026-05-26 12:00:00' : null,
+                    'cancelled_reason' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? 'Duplicate draft replaced by PO-2026-SUSTAIN-REVIEW.' : null,
+                    'lock_version' => $record['lockVersion'],
+                ],
+            );
+
+            $purchaseOrder->lines()->delete();
+            foreach ($lineSnapshot as $line) {
+                PurchaseOrderLine::query()->create([
+                    'tenant_id' => $tenant->id,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'source_line_id' => $line['id'],
+                    'line_number' => $line['lineNumber'],
+                    'description' => $line['description'],
+                    'unit' => $line['unit'],
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['unitPrice'],
+                    'subtotal_amount' => $line['subtotalAmount'],
+                    'tax_amount' => $line['taxAmount'],
+                    'freight_amount' => $line['freightAmount'],
+                    'discount_amount' => $line['discountAmount'],
+                    'total_amount' => $line['totalAmount'],
+                    'currency' => $quotation->currency,
+                    'delivery_location' => 'HQ East Wing - Level 4',
+                    'source_snapshot' => $line,
+                ]);
+            }
+
+            $this->recordPurchaseOrderAudit($tenant, $buyer, $purchaseOrder->refresh());
+            $context->purchaseOrderRequestHandoffs->put($record['handoffKey'], $handoff->refresh());
+            $context->purchaseOrders->put($poKey, $purchaseOrder->refresh());
+        }
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function purchaseOrderLineSnapshot(QuotationVersion $version): array
+    {
+        return $version->lineItems()->get()->map(fn ($line): array => [
+            'id' => (string) $line->id,
+            'lineNumber' => (int) $line->position,
+            'description' => $line->description,
+            'quantity' => (string) $line->quantity,
+            'unit' => $line->unit,
+            'unitOfMeasure' => $line->unit,
+            'unitPrice' => (string) $line->unit_price,
+            'subtotalAmount' => (string) $line->subtotal_amount,
+            'taxAmount' => null,
+            'freightAmount' => null,
+            'discountAmount' => null,
+            'totalAmount' => (string) $line->total_amount,
+            'lineTotal' => (string) $line->total_amount,
+            'currency' => $version->currency,
+        ])->values()->all();
+    }
+
+    private function recordPurchaseOrderAudit(Tenant $tenant, User $buyer, PurchaseOrder $purchaseOrder): void
+    {
+        $action = match ($purchaseOrder->statusState()) {
+            PurchaseOrderStatus::Draft => 'purchase_order.created',
+            PurchaseOrderStatus::ReadyForReview => 'purchase_order.ready_for_review',
+            PurchaseOrderStatus::Cancelled => 'purchase_order.cancelled',
+        };
+
+        $this->auditRecorder->record(new AuditEventData(
+            tenant: $tenant,
+            actor: $buyer,
+            action: $action,
+            subject: $purchaseOrder,
+            metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: ['demo' => true]),
+            after: $purchaseOrder->toArray(),
+        ));
     }
 
     private function recommendation(

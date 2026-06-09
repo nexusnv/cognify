@@ -14,6 +14,10 @@ use Domains\Award\Models\Award;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Demo\Models\DemoSeedRun;
 use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -403,6 +407,11 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::PendingApproval->value]);
         $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::ApprovalRouted->value]);
         $this->assertDatabaseHas('rfq_award_recommendations', ['status' => RfqAwardRecommendationStatus::Approved->value]);
+        $this->assertDatabaseHas('purchase_order_request_handoffs', ['number' => 'POH-2026-SUSTAIN-READY', 'status' => PurchaseOrderRequestHandoffStatus::Ready->value]);
+        $this->assertDatabaseHas('purchase_order_request_handoffs', ['number' => 'POH-2026-SUSTAIN-EXPORTED', 'status' => PurchaseOrderRequestHandoffStatus::Exported->value]);
+        $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-DRAFT', 'status' => PurchaseOrderStatus::Draft->value]);
+        $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-REVIEW', 'status' => PurchaseOrderStatus::ReadyForReview->value]);
+        $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-CANCELLED', 'status' => PurchaseOrderStatus::Cancelled->value]);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
@@ -436,6 +445,9 @@ class DemoSeederTest extends TestCase
         $this->assertSame(9, DB::table('rfq_scorecard_entries')->count());
         $this->assertSame(2, CollaborationComment::query()->where('subject_type', Requisition::class)->whereHasMorph('subject', [Requisition::class], fn ($query) => $query->where('number', 'REQ-2026-SUSTAIN'))->count());
         $this->assertSame(2, ApprovalInstance::query()->where('subject_type', RfqAwardRecommendation::class)->count());
+        $this->assertSame(3, PurchaseOrderRequestHandoff::query()->count());
+        $this->assertSame(3, PurchaseOrder::query()->count());
+        $this->assertSame(9, DB::table('purchase_order_lines')->count());
 
         foreach (Attachment::query()->get() as $attachment) {
             $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
@@ -457,6 +469,8 @@ class DemoSeederTest extends TestCase
             'quotation_normalizations' => 4,
             'quotation_scoring_templates' => 1,
             'rfq_scorecards' => 1,
+            'purchase_order_request_handoffs' => 3,
+            'purchase_orders' => 3,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }

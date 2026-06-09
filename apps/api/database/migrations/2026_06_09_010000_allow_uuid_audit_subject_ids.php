@@ -29,6 +29,12 @@ return new class extends Migration
         }
 
         if (DB::getDriverName() === 'mysql') {
+            $nonNumericSubjectIds = (int) DB::selectOne("SELECT COUNT(*) AS aggregate FROM audit_events WHERE subject_id NOT REGEXP '^[0-9]+$'")->aggregate;
+
+            if ($nonNumericSubjectIds > 0) {
+                throw new RuntimeException('Cannot roll back audit_events.subject_id to bigint while UUID subject IDs exist.');
+            }
+
             DB::statement('ALTER TABLE audit_events MODIFY subject_id bigint unsigned NOT NULL');
         }
     }

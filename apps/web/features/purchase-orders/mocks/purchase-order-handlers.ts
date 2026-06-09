@@ -20,10 +20,39 @@ function findPurchaseOrder(purchaseOrderId: string) {
   return purchaseOrders.find((purchaseOrder) => purchaseOrder.id === purchaseOrderId);
 }
 
+function hasRequiredPurchaseOrderReviewFields(purchaseOrder: PurchaseOrder) {
+  const requiredFields = [
+    purchaseOrder.billingName,
+    purchaseOrder.billingAddress,
+    purchaseOrder.shippingName,
+    purchaseOrder.shippingAddress,
+    purchaseOrder.paymentTerms,
+  ];
+
+  return requiredFields.every((value) => {
+    if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== null && value !== undefined;
+  });
+}
+
 function conflictResponse() {
   return HttpResponse.json(
-    { error: { code: "conflict", message: "Lock version mismatch." } },
+    { error: { code: "invalid_state", message: "The purchase order has changed. Reload and try again." } },
     { status: 409 },
+  );
+}
+
+function validationFailedResponse(message: string, fields: Record<string, string[]>) {
+  return HttpResponse.json(
+    {
+      error: {
+        code: "validation_failed",
+        message,
+        details: { fields },
+      },
+    },
+    { status: 422 },
   );
 }
 
@@ -102,6 +131,15 @@ export const purchaseOrderHandlers = [
     if (payload.lockVersion !== purchaseOrder.lockVersion) {
       return conflictResponse();
     }
+    if (!hasRequiredPurchaseOrderReviewFields(purchaseOrder)) {
+      return validationFailedResponse("Purchase order requires billing, shipping, and payment terms before review.", {
+        billingName: ["Billing name is required."],
+        billingAddress: ["Billing address is required."],
+        shippingName: ["Shipping name is required."],
+        shippingAddress: ["Shipping address is required."],
+        paymentTerms: ["Payment terms are required."],
+      });
+    }
 
     const updated = {
       ...purchaseOrder,
@@ -131,6 +169,11 @@ export const purchaseOrderHandlers = [
     const payload = (await request.json()) as CancelPurchaseOrderRequest;
     if (payload.lockVersion !== purchaseOrder.lockVersion) {
       return conflictResponse();
+    }
+    if ((payload.reason?.trim() ?? "").length < 3) {
+      return validationFailedResponse("The given data was invalid.", {
+        reason: ["The reason field must be at least 3 characters."],
+      });
     }
 
     const updated = {

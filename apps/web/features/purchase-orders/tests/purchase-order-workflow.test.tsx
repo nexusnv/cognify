@@ -125,18 +125,23 @@ describe("purchase order workflow", () => {
   it("renders and submits the cancel action when allowed", async () => {
     const user = userEvent.setup();
     const prompt = vi.spyOn(window, "prompt").mockReturnValue("Duplicate draft");
-    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
 
-    expect(await screen.findByRole("button", { name: "Cancel" })).toBeEnabled();
+    try {
+      renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
 
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(await screen.findByRole("button", { name: "Cancel" })).toBeEnabled();
 
-    expect(prompt).toHaveBeenCalledWith("Cancellation reason");
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getAllByText("cancelled").length).toBeGreaterThan(0);
-    });
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(prompt).toHaveBeenCalledWith("Cancellation reason");
+      await waitFor(() => {
+        expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+      });
+      await waitFor(() => {
+        expect(screen.getAllByText("cancelled").length).toBeGreaterThan(0);
+      });
+    } finally {
+      prompt.mockRestore();
+    }
   });
 });
