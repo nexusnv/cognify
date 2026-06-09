@@ -18,12 +18,25 @@ import {
 } from "../mocks/quotation-award-recommendation-fixtures";
 import { RfqAwardRecommendationWorkspace } from "../workflows/rfq-award-recommendation-workspace";
 
+const router = {
+  push: vi.fn(),
+};
+
+vi.mock("next/navigation", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/navigation")>();
+  return {
+    ...actual,
+    useRouter: () => router,
+  };
+});
+
 describe("RFQ award recommendation workspace", () => {
   beforeEach(() => {
     resetQuotationAwardRecommendationMockState();
     window.localStorage.clear();
     window.localStorage.setItem("cognify.activeTenantId", "1");
     server.use(...quotationAwardRecommendationHandlers);
+    router.push.mockReset();
   });
 
   it("renders context and vendor options", async () => {
@@ -167,6 +180,17 @@ describe("RFQ award recommendation workspace", () => {
     expect(await screen.findByText(/Last exported/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download JSON" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Download CSV" })).toBeEnabled();
+  });
+
+  it("creates a purchase order from a ready PO handoff and routes to the workspace", async () => {
+    const user = userEvent.setup();
+    render(<RfqAwardRecommendationWorkspace rfqId="rfq-approved-recommendation" />, { wrapper: TestProviders });
+    await screen.findByRole("region", { name: "PO request handoff" });
+
+    await user.click(await screen.findByRole("button", { name: "Mark ready" }));
+    await user.click(await screen.findByRole("button", { name: "Create purchase order" }));
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/purchase-orders/po-1"));
   });
 
   it("hides export actions for cancelled PO handoffs", async () => {

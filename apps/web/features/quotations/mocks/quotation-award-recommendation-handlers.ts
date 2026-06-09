@@ -7,6 +7,7 @@ import type {
   UpdatePurchaseOrderRequestHandoffRequest,
   WithdrawRfqAwardRecommendationRequest,
 } from "@cognify/api-client/schemas";
+import { purchaseOrderFixture } from "@/features/purchase-orders/mocks/purchase-order-fixtures";
 import {
   cancelPurchaseOrderRequestHandoffFixture,
   createPurchaseOrderRequestHandoffFixture,
@@ -210,6 +211,9 @@ export const quotationAwardRecommendationHandlers = [
       return invalidStateOrNotFound(error, "PO handoff could not be cancelled.");
     }
   }),
+
+  http.post("/api/po-handoffs/:handoff/purchase-order", () =>
+    HttpResponse.json({ data: purchaseOrderFixture }, { status: 201 })),
 
   http.get("/api/po-handoffs/:handoff/export.json", ({ params }) => {
     try {

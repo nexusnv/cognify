@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import type {
   CancelPurchaseOrderRequestHandoffRequest,
   MarkPurchaseOrderRequestHandoffReadyRequest,
@@ -12,6 +13,7 @@ import type {
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   cancelRfqAwardRecommendationPoHandoff,
+  createPurchaseOrderFromPoHandoff,
   createRfqAwardRecommendationPoHandoffForRfq,
   downloadPurchaseOrderRequestHandoffCsv,
   exportRfqAwardRecommendationPoHandoffJson,
@@ -27,6 +29,10 @@ import {
   rfqAwardRecommendationPoHandoffQueryKey,
   rfqAwardRecommendationQueryKey,
 } from "./use-rfq-award-recommendation";
+
+function queryTenantIdOrFallback() {
+  return getStoredActiveTenantId() ?? "no-tenant";
+}
 
 export function useSaveRfqAwardRecommendation(rfqId: string) {
   const tenantId = getStoredActiveTenantId();
@@ -83,11 +89,12 @@ export function useRouteRfqAwardRecommendationApproval(rfqId: string) {
 
 function useInvalidatePoHandoff(rfqId: string, tenantId: string | null) {
   const queryClient = useQueryClient();
+  const queryTenantId = tenantId ?? "no-tenant";
 
   return async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationPoHandoffQueryKey(rfqId, tenantId) }),
-      queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationQueryKey(rfqId, tenantId) }),
+      queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationPoHandoffQueryKey(rfqId, queryTenantId) }),
+      queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationQueryKey(rfqId, queryTenantId) }),
     ]);
   };
 }
@@ -113,6 +120,28 @@ export function useUpdateRfqAwardRecommendationPoHandoff(rfqId: string, handoffI
       return updateRfqAwardRecommendationPoHandoff(handoffId, payload, tenantId);
     },
     onSuccess: invalidate,
+  });
+}
+
+export function useCreatePurchaseOrderFromRfqAwardHandoff(rfqId: string, handoffId: string | null | undefined) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
+  const queryTenantId = queryTenantIdOrFallback();
+
+  return useMutation({
+    mutationFn: () => {
+      if (!handoffId) throw new Error("Cannot create a purchase order without a handoff id.");
+
+      return createPurchaseOrderFromPoHandoff(handoffId, tenantId);
+    },
+    onSuccess: async (purchaseOrder) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationPoHandoffQueryKey(rfqId, queryTenantId) }),
+        queryClient.invalidateQueries({ queryKey: rfqAwardRecommendationQueryKey(rfqId, queryTenantId) }),
+      ]);
+      router.push(`/purchase-orders/${purchaseOrder.id}`);
+    },
   });
 }
 
