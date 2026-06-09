@@ -1,6 +1,6 @@
 {
-  "pid": 23795,
+  "pid": 4102,
   "version": "0.9.9",
-  "socketPath": "/home/conrad/dev/cognify/.codegraph/daemon.sock",
-  "startedAt": 1781006467127
+  "socketPath": "/home/leonidas/dev/cognify/.codegraph/daemon.sock",
+  "startedAt": 1781018321957
 }

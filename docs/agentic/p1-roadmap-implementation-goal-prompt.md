@@ -189,6 +189,7 @@ Prepare these before starting the goal so agents can run the loop without avoida
 - GitHub plugin/app installed for PR metadata, review comments, and PR lifecycle operations.
 - `ui-ux-pro-max` skill installed if visual critique should use that exact skill name. If unavailable, the agent should perform a rigorous screenshot critique manually and note that the skill was unavailable.
 - Multi-agent tooling available for subagent execution.
+- CodeGraph for code discovery
 
 ### Local Toolchain
 
