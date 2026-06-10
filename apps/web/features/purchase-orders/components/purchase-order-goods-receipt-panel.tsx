@@ -25,8 +25,9 @@ export function PurchaseOrderGoodsReceiptPanel({ purchaseOrder }: { purchaseOrde
   const [lineNotes, setLineNotes] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  const canRecord = purchaseOrder.permissions.canRecordGoodsReceipt;
-  const canConfirm = purchaseOrder.permissions.canRecordGoodsReceipt;
+  const hasLines = purchaseOrder.lines.length > 0;
+  const canRecord = purchaseOrder.permissions.canRecordGoodsReceipt && hasLines;
+  const canConfirm = purchaseOrder.permissions.canConfirmGoodsReceipt;
 
   const errorMessage =
     errorToMessage(recordMutation.error) ??
@@ -119,7 +120,7 @@ export function PurchaseOrderGoodsReceiptPanel({ purchaseOrder }: { purchaseOrde
             <Textarea value={lineNotes} onChange={(e) => setLineNotes(e.target.value)} />
           </label>
           <div className="flex gap-2">
-            <Button type="button" disabled={!quantityReceived || recordMutation.isPending} onClick={handleRecord}>
+            <Button type="button" disabled={!receivingLineId || !quantityReceived || recordMutation.isPending} onClick={handleRecord}>
               {recordMutation.isPending ? "Recording" : "Record"}
             </Button>
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>

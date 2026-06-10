@@ -172,7 +172,8 @@ class GoodsReceiptApiTest extends TestCase
 
         $receiptId = $response->json('data.id');
 
-        [$otherTenant, $requester] = $this->tenantUserPair(TenantRole::Requester->value);
+        $requester = User::factory()->create(['password' => Hash::make('secret123')]);
+        $tenant->users()->attach($requester->id, ['role' => TenantRole::Requester->value]);
 
         $this->actingAsTenant($tenant, $requester)
             ->postJson("/api/goods-receipts/{$receiptId}/confirm-requester", [

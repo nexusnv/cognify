@@ -1,0 +1,148 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e16]:
+    - link "Skip to main content" [ref=e17] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e20]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - button "Acme Procurement Buyer" [ref=e24]:
+            - img [ref=e26]
+            - generic [ref=e28]:
+              - generic [ref=e29]: Acme Procurement
+              - generic [ref=e30]: Buyer
+            - img [ref=e31]
+      - generic [ref=e33]:
+        - navigation "Primary" [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Platform
+            - list [ref=e37]:
+              - listitem [ref=e38]:
+                - link "Home" [ref=e39] [cursor=pointer]:
+                  - /url: /dashboard
+                  - img [ref=e40]
+                  - generic [ref=e42]: Home
+              - listitem [ref=e43]:
+                - link "My Work" [ref=e44] [cursor=pointer]:
+                  - /url: /approvals
+                  - img [ref=e45]
+                  - generic [ref=e47]: My Work
+              - listitem [ref=e48]:
+                - link "Procurement" [expanded] [ref=e49] [cursor=pointer]:
+                  - /url: /requisitions
+                  - img [ref=e50]
+                  - generic [ref=e52]: Procurement
+                  - img [ref=e53]
+                - list [ref=e56]:
+                  - listitem [ref=e57]:
+                    - link "Requisitions" [ref=e58] [cursor=pointer]:
+                      - /url: /requisitions
+                      - generic [ref=e59]: Requisitions
+                  - listitem [ref=e60]:
+                    - link "Projects" [ref=e61] [cursor=pointer]:
+                      - /url: /projects
+                      - generic [ref=e62]: Projects
+                  - listitem [ref=e63]:
+                    - link "Purchase orders" [ref=e64] [cursor=pointer]:
+                      - /url: /purchase-orders
+                      - generic [ref=e65]: Purchase orders
+                  - listitem [ref=e66]:
+                    - link "Calendar" [ref=e67] [cursor=pointer]:
+                      - /url: /calendar
+                      - generic [ref=e68]: Calendar
+                  - listitem [ref=e69]:
+                    - link "Sourcing intake" [ref=e70] [cursor=pointer]:
+                      - /url: /sourcing/intake
+                      - generic [ref=e71]: Sourcing intake
+                  - listitem [ref=e72]:
+                    - link "Quotations" [ref=e73] [cursor=pointer]:
+                      - /url: /quotations/normalizations
+                      - generic [ref=e74]: Quotations
+              - listitem [ref=e75]:
+                - button "Vendors" [ref=e76]:
+                  - img [ref=e77]
+                  - generic [ref=e79]: Vendors
+              - listitem [ref=e80]:
+                - button "Finance" [ref=e81]:
+                  - img [ref=e82]
+                  - generic [ref=e84]: Finance
+              - listitem [ref=e85]:
+                - button "Evidence" [ref=e86]:
+                  - img [ref=e87]
+                  - generic [ref=e89]: Evidence
+              - listitem [ref=e90]:
+                - button "Analytics" [ref=e91]:
+                  - img [ref=e92]
+                  - generic [ref=e94]: Analytics
+              - listitem [ref=e95]:
+                - button "Governance" [ref=e96]:
+                  - img [ref=e97]
+                  - generic [ref=e99]: Governance
+              - listitem [ref=e100]:
+                - button "AI Assistant" [ref=e101]:
+                  - img [ref=e102]
+                  - generic [ref=e104]: AI Assistant
+              - listitem [ref=e105]:
+                - button "Admin" [ref=e106]:
+                  - img [ref=e107]
+                  - generic [ref=e109]: Admin
+              - listitem [ref=e110]:
+                - button "Integrations" [ref=e111]:
+                  - img [ref=e112]
+                  - generic [ref=e114]: Integrations
+        - generic [ref=e115]:
+          - generic [ref=e116]: Shortcuts
+          - list [ref=e117]:
+            - listitem [ref=e118]:
+              - link "Calendar" [ref=e119] [cursor=pointer]:
+                - /url: /calendar
+                - img [ref=e120]
+                - generic [ref=e122]: Calendar
+            - listitem [ref=e123]:
+              - link "Approvals" [ref=e124] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e125]
+                - generic [ref=e127]: Approvals
+            - listitem [ref=e128]:
+              - link "Projects" [ref=e129] [cursor=pointer]:
+                - /url: /projects
+                - img [ref=e130]
+                - generic [ref=e132]: Projects
+            - listitem [ref=e133]:
+              - link "Sourcing intake" [ref=e134] [cursor=pointer]:
+                - /url: /sourcing/intake
+                - img [ref=e135]
+                - generic [ref=e137]: Sourcing intake
+            - listitem [ref=e138]:
+              - button "More" [disabled]:
+                - img
+                - generic: More
+      - list [ref=e140]:
+        - listitem [ref=e141]:
+          - button "BU Buyer User buyer@example.com" [ref=e142]:
+            - generic [ref=e144]: BU
+            - generic [ref=e145]:
+              - generic [ref=e146]: Buyer User
+              - generic [ref=e147]: buyer@example.com
+            - img [ref=e148]
+      - button "Toggle Sidebar" [ref=e150]
+    - main [ref=e151]:
+      - generic [ref=e153]:
+        - button "Toggle Sidebar" [ref=e154]:
+          - img
+          - generic [ref=e155]: Toggle Sidebar
+        - navigation "breadcrumb" [ref=e156]:
+          - list [ref=e157]:
+            - listitem [ref=e158]:
+              - link "Workspace" [disabled] [ref=e159]
+      - generic [ref=e242]: Loading purchase order workspace
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e243] [cursor=pointer]:
+    - generic [ref=e246]:
+      - text: Compiling
+      - generic [ref=e247]:
+        - generic [ref=e248]: .
+        - generic [ref=e249]: .
+        - generic [ref=e250]: .
+  - alert [ref=e15]

@@ -1,0 +1,510 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e16]:
+    - link "Skip to main content" [ref=e17] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e20]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - button "Acme Procurement Buyer" [ref=e24]:
+            - img [ref=e26]
+            - generic [ref=e28]:
+              - generic [ref=e29]: Acme Procurement
+              - generic [ref=e30]: Buyer
+            - img [ref=e31]
+      - generic [ref=e33]:
+        - navigation "Primary" [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Platform
+            - list [ref=e37]:
+              - listitem [ref=e38]:
+                - link "Home" [ref=e39] [cursor=pointer]:
+                  - /url: /dashboard
+                  - img [ref=e40]
+                  - generic [ref=e42]: Home
+              - listitem [ref=e43]:
+                - link "My Work" [ref=e44] [cursor=pointer]:
+                  - /url: /approvals
+                  - img [ref=e45]
+                  - generic [ref=e47]: My Work
+              - listitem [ref=e48]:
+                - link "Procurement" [expanded] [ref=e49] [cursor=pointer]:
+                  - /url: /requisitions
+                  - img [ref=e50]
+                  - generic [ref=e52]: Procurement
+                  - img [ref=e53]
+                - list [ref=e56]:
+                  - listitem [ref=e57]:
+                    - link "Requisitions" [ref=e58] [cursor=pointer]:
+                      - /url: /requisitions
+                      - generic [ref=e59]: Requisitions
+                  - listitem [ref=e60]:
+                    - link "Projects" [ref=e61] [cursor=pointer]:
+                      - /url: /projects
+                      - generic [ref=e62]: Projects
+                  - listitem [ref=e63]:
+                    - link "Purchase orders" [ref=e64] [cursor=pointer]:
+                      - /url: /purchase-orders
+                      - generic [ref=e65]: Purchase orders
+                  - listitem [ref=e66]:
+                    - link "Calendar" [ref=e67] [cursor=pointer]:
+                      - /url: /calendar
+                      - generic [ref=e68]: Calendar
+                  - listitem [ref=e69]:
+                    - link "Sourcing intake" [ref=e70] [cursor=pointer]:
+                      - /url: /sourcing/intake
+                      - generic [ref=e71]: Sourcing intake
+                  - listitem [ref=e72]:
+                    - link "Quotations" [ref=e73] [cursor=pointer]:
+                      - /url: /quotations/normalizations
+                      - generic [ref=e74]: Quotations
+              - listitem [ref=e75]:
+                - button "Vendors" [ref=e76]:
+                  - img [ref=e77]
+                  - generic [ref=e79]: Vendors
+              - listitem [ref=e80]:
+                - button "Finance" [ref=e81]:
+                  - img [ref=e82]
+                  - generic [ref=e84]: Finance
+              - listitem [ref=e85]:
+                - button "Evidence" [ref=e86]:
+                  - img [ref=e87]
+                  - generic [ref=e89]: Evidence
+              - listitem [ref=e90]:
+                - button "Analytics" [ref=e91]:
+                  - img [ref=e92]
+                  - generic [ref=e94]: Analytics
+              - listitem [ref=e95]:
+                - button "Governance" [ref=e96]:
+                  - img [ref=e97]
+                  - generic [ref=e99]: Governance
+              - listitem [ref=e100]:
+                - button "AI Assistant" [ref=e101]:
+                  - img [ref=e102]
+                  - generic [ref=e104]: AI Assistant
+              - listitem [ref=e105]:
+                - button "Admin" [ref=e106]:
+                  - img [ref=e107]
+                  - generic [ref=e109]: Admin
+              - listitem [ref=e110]:
+                - button "Integrations" [ref=e111]:
+                  - img [ref=e112]
+                  - generic [ref=e114]: Integrations
+        - generic [ref=e115]:
+          - generic [ref=e116]: Shortcuts
+          - list [ref=e117]:
+            - listitem [ref=e118]:
+              - link "Calendar" [ref=e119] [cursor=pointer]:
+                - /url: /calendar
+                - img [ref=e120]
+                - generic [ref=e122]: Calendar
+            - listitem [ref=e123]:
+              - link "Approvals" [ref=e124] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e125]
+                - generic [ref=e127]: Approvals
+            - listitem [ref=e128]:
+              - link "Projects" [ref=e129] [cursor=pointer]:
+                - /url: /projects
+                - img [ref=e130]
+                - generic [ref=e132]: Projects
+            - listitem [ref=e133]:
+              - link "Sourcing intake" [ref=e134] [cursor=pointer]:
+                - /url: /sourcing/intake
+                - img [ref=e135]
+                - generic [ref=e137]: Sourcing intake
+            - listitem [ref=e138]:
+              - button "More" [disabled]:
+                - img
+                - generic: More
+      - list [ref=e140]:
+        - listitem [ref=e141]:
+          - button "BU Buyer User buyer@example.com" [ref=e142]:
+            - generic [ref=e144]: BU
+            - generic [ref=e145]:
+              - generic [ref=e146]: Buyer User
+              - generic [ref=e147]: buyer@example.com
+            - img [ref=e148]
+      - button "Toggle Sidebar" [ref=e150]
+    - main [ref=e151]:
+      - generic [ref=e153]:
+        - button "Toggle Sidebar" [ref=e154]:
+          - img
+          - generic [ref=e155]: Toggle Sidebar
+        - navigation "breadcrumb" [ref=e156]:
+          - list [ref=e157]:
+            - listitem [ref=e158]:
+              - link "Workspace" [disabled] [ref=e159]
+      - generic [ref=e251]:
+        - link "Back to purchase orders" [ref=e252] [cursor=pointer]:
+          - /url: /purchase-orders
+          - img [ref=e253]
+          - text: Back to purchase orders
+        - generic [ref=e256]:
+          - generic [ref=e257]:
+            - generic [ref=e258]: 019eb2b3-0c9b-7125-bdef-492589ba01b8
+            - generic [ref=e259]: acknowledged
+          - heading "PO-2026-SUSTAIN-ACK" [level=1] [ref=e260]
+          - group "Record metadata" [ref=e261]:
+            - generic [ref=e262]:
+              - term [ref=e263]: Currency
+              - definition [ref=e264]: USD
+            - generic [ref=e265]:
+              - term [ref=e266]: Total
+              - definition [ref=e267]: US$82,500.00
+            - generic [ref=e268]:
+              - term [ref=e269]: Source handoff
+              - definition [ref=e270]: 019eb2b3-0c78-7197-91e3-ec5518786e21
+        - navigation "Record sections" [ref=e271]:
+          - generic [ref=e272]:
+            - link "Overview" [ref=e273] [cursor=pointer]:
+              - /url: "#overview"
+            - link "Lines" [ref=e274] [cursor=pointer]:
+              - /url: "#lines"
+            - link "Change orders" [ref=e275] [cursor=pointer]:
+              - /url: "#change-orders"
+            - link "Goods receipt" [active] [ref=e276] [cursor=pointer]:
+              - /url: "#goods-receipts"
+            - link "Draft fields" [ref=e277] [cursor=pointer]:
+              - /url: "#draft-fields"
+        - generic [ref=e278]:
+          - generic [ref=e279]:
+            - generic [ref=e281]:
+              - generic [ref=e283]: Purchase order summary
+              - generic [ref=e284]:
+                - generic [ref=e285]:
+                  - paragraph [ref=e286]: Status
+                  - paragraph [ref=e287]: acknowledged
+                - generic [ref=e288]:
+                  - paragraph [ref=e289]: Requested PO date
+                  - paragraph [ref=e290]: 2026-06-03
+                - generic [ref=e291]:
+                  - paragraph [ref=e292]: Expected delivery
+                  - paragraph [ref=e293]: 2026-07-15
+                - generic [ref=e294]:
+                  - paragraph [ref=e295]: Payment terms
+                  - paragraph [ref=e296]: Net 30
+                - generic [ref=e297]:
+                  - paragraph [ref=e298]: Delivery terms
+                  - paragraph [ref=e299]: Delivered duty paid
+                - generic [ref=e300]:
+                  - paragraph [ref=e301]: Billing
+                  - paragraph [ref=e302]: Acme Procurement Finance
+                - generic [ref=e303]:
+                  - paragraph [ref=e304]: Shipping
+                  - paragraph [ref=e305]: HQ East Wing Facilities
+                - generic [ref=e306]:
+                  - paragraph [ref=e307]: Delivery attention
+                  - paragraph [ref=e308]: Facilities receiving dock
+                - generic [ref=e309]:
+                  - paragraph [ref=e310]: Source handoff
+                  - paragraph [ref=e311]: 019eb2b3-0c78-7197-91e3-ec5518786e21
+            - table "Purchase order lines" [ref=e314]:
+              - caption [ref=e315]: Purchase order lines
+              - rowgroup [ref=e316]:
+                - row "Line Description Unit Quantity Unit price Total" [ref=e317]:
+                  - columnheader "Line" [ref=e318]
+                  - columnheader "Description" [ref=e319]
+                  - columnheader "Unit" [ref=e320]
+                  - columnheader "Quantity" [ref=e321]
+                  - columnheader "Unit price" [ref=e322]
+                  - columnheader "Total" [ref=e323]
+              - rowgroup [ref=e324]:
+                - row "1 greenline ergonomic chair each 50.0000 US$400.00 US$20,000.00" [ref=e325]:
+                  - cell "1" [ref=e326]
+                  - cell "greenline ergonomic chair" [ref=e327]
+                  - cell "each" [ref=e328]
+                  - cell "50.0000" [ref=e329]
+                  - cell "US$400.00" [ref=e330]
+                  - cell "US$20,000.00" [ref=e331]
+                - row "2 greenline adjustable desk each 50.0000 US$900.00 US$45,000.00" [ref=e332]:
+                  - cell "2" [ref=e333]
+                  - cell "greenline adjustable desk" [ref=e334]
+                  - cell "each" [ref=e335]
+                  - cell "50.0000" [ref=e336]
+                  - cell "US$900.00" [ref=e337]
+                  - cell "US$45,000.00" [ref=e338]
+                - row "3 greenline desk lamp package each 50.0000 US$350.00 US$17,500.00" [ref=e339]:
+                  - cell "3" [ref=e340]
+                  - cell "greenline desk lamp package" [ref=e341]
+                  - cell "each" [ref=e342]
+                  - cell "50.0000" [ref=e343]
+                  - cell "US$350.00" [ref=e344]
+                  - cell "US$17,500.00" [ref=e345]
+            - region "Purchase order change orders" [ref=e346]:
+              - generic [ref=e348]:
+                - heading "Change orders" [level=2] [ref=e349]
+                - paragraph [ref=e350]: Draft, submit, and track purchase order changes from this workspace.
+              - generic [ref=e351]:
+                - generic [ref=e352]:
+                  - term [ref=e353]: Current
+                  - definition [ref=e354]: None
+                - generic [ref=e355]:
+                  - term [ref=e356]: Latest
+                  - definition [ref=e357]: PO-2026-SUSTAIN-ACK-CO-001 (approved)
+                - generic [ref=e358]:
+                  - term [ref=e359]: Count
+                  - definition [ref=e360]: "1"
+                - generic [ref=e361]:
+                  - term [ref=e362]: Material
+                  - definition [ref=e363]: None
+              - table [ref=e365]:
+                - rowgroup [ref=e366]:
+                  - row "Number Status Type Reason" [ref=e367]:
+                    - columnheader "Number" [ref=e368]
+                    - columnheader "Status" [ref=e369]
+                    - columnheader "Type" [ref=e370]
+                    - columnheader "Reason" [ref=e371]
+                - rowgroup [ref=e372]:
+                  - row "PO-2026-SUSTAIN-ACK-CO-001 approved amendment Approved material price and quantity update after supplier acknowledgement." [ref=e373]:
+                    - cell "PO-2026-SUSTAIN-ACK-CO-001" [ref=e374]
+                    - cell "approved" [ref=e375]
+                    - cell "amendment" [ref=e376]
+                    - cell "Approved material price and quantity update after supplier acknowledgement." [ref=e377]
+              - generic [ref=e378]:
+                - generic [ref=e379]:
+                  - text: Change type
+                  - combobox "Change type" [ref=e380]:
+                    - option "Amendment" [selected]
+                    - option "Partial cancellation"
+                    - option "Full cancellation"
+                - generic [ref=e381]:
+                  - text: Reason
+                  - textbox "Reason" [ref=e382]
+                - generic [ref=e383]:
+                  - generic [ref=e384]:
+                    - text: Requested PO date
+                    - textbox "Requested PO date" [ref=e385]: 2026-06-03
+                  - generic [ref=e386]:
+                    - text: Expected delivery date
+                    - textbox "Expected delivery date" [ref=e387]: 2026-07-15
+                  - generic [ref=e388]:
+                    - text: Billing name
+                    - textbox "Billing name" [ref=e389]: Acme Procurement Finance
+                  - generic [ref=e390]:
+                    - text: Shipping name
+                    - textbox "Shipping name" [ref=e391]: HQ East Wing Facilities
+                  - generic [ref=e392]:
+                    - text: Delivery attention
+                    - textbox "Delivery attention" [ref=e393]: Facilities receiving dock
+                  - generic [ref=e394]:
+                    - text: Payment terms
+                    - textbox "Payment terms" [ref=e395]: Net 30
+                  - generic [ref=e396]:
+                    - text: Delivery terms
+                    - textbox "Delivery terms" [ref=e397]: Delivered duty paid
+                - generic [ref=e398]:
+                  - text: Buyer note
+                  - textbox "Buyer note" [ref=e399]: Seeded PO can be edited and progressed by the buyer.
+                - generic [ref=e400]:
+                  - text: Finance note
+                  - textbox "Finance note" [ref=e401]: Charge to OPS-100 sustainable expansion budget.
+              - generic [ref=e402]:
+                - generic [ref=e403]:
+                  - heading "Line changes" [level=3] [ref=e404]
+                  - paragraph [ref=e405]: Update quantity, price, delivery, or cancellation intent for current committed lines.
+                - table [ref=e407]:
+                  - rowgroup [ref=e408]:
+                    - row "Line Action Qty Unit price Delivery date Delivery location Notes" [ref=e409]:
+                      - columnheader "Line" [ref=e410]
+                      - columnheader "Action" [ref=e411]
+                      - columnheader "Qty" [ref=e412]
+                      - columnheader "Unit price" [ref=e413]
+                      - columnheader "Delivery date" [ref=e414]
+                      - columnheader "Delivery location" [ref=e415]
+                      - columnheader "Notes" [ref=e416]
+                  - rowgroup [ref=e417]:
+                    - 'row "greenline ergonomic chair #1 Update 50.0000 400.0000 HQ East Wing - Level 4" [ref=e418]':
+                      - 'cell "greenline ergonomic chair #1" [ref=e419]':
+                        - generic [ref=e420]: greenline ergonomic chair
+                        - generic [ref=e421]: "#1"
+                      - cell "Update" [ref=e422]:
+                        - combobox "greenline ergonomic chair action" [ref=e423]:
+                          - option "Update" [selected]
+                          - option "Cancel"
+                      - cell "50.0000" [ref=e424]:
+                        - textbox "greenline ergonomic chair quantity" [ref=e425]: "50.0000"
+                      - cell "400.0000" [ref=e426]:
+                        - textbox "greenline ergonomic chair unit price" [ref=e427]: "400.0000"
+                      - cell [ref=e428]:
+                        - textbox "greenline ergonomic chair expected delivery date" [ref=e429]
+                      - cell "HQ East Wing - Level 4" [ref=e430]:
+                        - textbox "greenline ergonomic chair delivery location" [ref=e431]: HQ East Wing - Level 4
+                      - cell [ref=e432]:
+                        - textbox "greenline ergonomic chair notes" [ref=e433]
+                    - 'row "greenline adjustable desk #2 Update 50.0000 900.0000 HQ East Wing - Level 4" [ref=e434]':
+                      - 'cell "greenline adjustable desk #2" [ref=e435]':
+                        - generic [ref=e436]: greenline adjustable desk
+                        - generic [ref=e437]: "#2"
+                      - cell "Update" [ref=e438]:
+                        - combobox "greenline adjustable desk action" [ref=e439]:
+                          - option "Update" [selected]
+                          - option "Cancel"
+                      - cell "50.0000" [ref=e440]:
+                        - textbox "greenline adjustable desk quantity" [ref=e441]: "50.0000"
+                      - cell "900.0000" [ref=e442]:
+                        - textbox "greenline adjustable desk unit price" [ref=e443]: "900.0000"
+                      - cell [ref=e444]:
+                        - textbox "greenline adjustable desk expected delivery date" [ref=e445]
+                      - cell "HQ East Wing - Level 4" [ref=e446]:
+                        - textbox "greenline adjustable desk delivery location" [ref=e447]: HQ East Wing - Level 4
+                      - cell [ref=e448]:
+                        - textbox "greenline adjustable desk notes" [ref=e449]
+                    - 'row "greenline desk lamp package #3 Update 50.0000 350.0000 HQ East Wing - Level 4" [ref=e450]':
+                      - 'cell "greenline desk lamp package #3" [ref=e451]':
+                        - generic [ref=e452]: greenline desk lamp package
+                        - generic [ref=e453]: "#3"
+                      - cell "Update" [ref=e454]:
+                        - combobox "greenline desk lamp package action" [ref=e455]:
+                          - option "Update" [selected]
+                          - option "Cancel"
+                      - cell "50.0000" [ref=e456]:
+                        - textbox "greenline desk lamp package quantity" [ref=e457]: "50.0000"
+                      - cell "350.0000" [ref=e458]:
+                        - textbox "greenline desk lamp package unit price" [ref=e459]: "350.0000"
+                      - cell [ref=e460]:
+                        - textbox "greenline desk lamp package expected delivery date" [ref=e461]
+                      - cell "HQ East Wing - Level 4" [ref=e462]:
+                        - textbox "greenline desk lamp package delivery location" [ref=e463]: HQ East Wing - Level 4
+                      - cell [ref=e464]:
+                        - textbox "greenline desk lamp package notes" [ref=e465]
+              - button "Create change order" [ref=e467]
+            - region "Goods receipt" [ref=e468]:
+              - generic [ref=e469]:
+                - generic [ref=e470]:
+                  - heading "Goods receipt" [level=2] [ref=e471]
+                  - paragraph [ref=e472]: 1 receipt(s) recorded
+                - button "Record receipt" [ref=e473]
+              - generic [ref=e475]:
+                - generic [ref=e476]:
+                  - generic [ref=e477]:
+                    - paragraph [ref=e478]: GR-2026-000005
+                    - paragraph [ref=e479]: 2026-06-12 — GR-REF-CONFIRMED
+                  - generic [ref=e480]: requester confirmed
+                - generic [ref=e481]:
+                  - generic [ref=e482]:
+                    - generic [ref=e483]: Line 1
+                    - generic [ref=e484]: "Ordered: 50.0000"
+                    - generic [ref=e485]: "Received: 50.0000"
+                    - generic [ref=e486]: "Accepted: 50.0000"
+                  - generic [ref=e487]:
+                    - generic [ref=e488]: Line 2
+                    - generic [ref=e489]: "Ordered: 50.0000"
+                    - generic [ref=e490]: "Received: 50.0000"
+                    - generic [ref=e491]: "Accepted: 50.0000"
+                  - generic [ref=e492]:
+                    - generic [ref=e493]: Line 3
+                    - generic [ref=e494]: "Ordered: 50.0000"
+                    - generic [ref=e495]: "Received: 50.0000"
+                    - generic [ref=e496]: "Accepted: 50.0000"
+                - paragraph [ref=e497]: Seeded goods receipt for demo.
+                - button "Confirm as buyer" [ref=e499]
+            - region "Purchase order approval" [ref=e500]:
+              - generic [ref=e502]:
+                - heading "Approval review" [level=2] [ref=e503]
+                - paragraph [ref=e504]: This purchase order is approved for supplier issue.
+              - generic [ref=e505]:
+                - generic [ref=e506]:
+                  - term [ref=e507]: Status
+                  - definition [ref=e508]: Approved
+                - generic [ref=e509]:
+                  - term [ref=e510]: Instance
+                  - definition [ref=e511]: "14"
+                - generic [ref=e512]:
+                  - term [ref=e513]: Updated
+                  - definition [ref=e514]: 2026-06-09T12:00:00.000000Z
+            - region "Supplier issue" [ref=e515]:
+              - generic [ref=e517]:
+                - heading "Supplier issue" [level=2] [ref=e518]
+                - paragraph [ref=e519]: The supplier has acknowledged the issued purchase order.
+              - generic [ref=e520]:
+                - generic [ref=e521]:
+                  - generic [ref=e522]:
+                    - term [ref=e523]: Status
+                    - definition [ref=e524]: Acknowledged
+                  - generic [ref=e525]:
+                    - term [ref=e526]: Issued
+                    - definition [ref=e527]: 2026-06-10T10:00:00.000000Z
+                  - generic [ref=e528]:
+                    - term [ref=e529]: Method
+                    - definition [ref=e530]: manual email
+                  - generic [ref=e531]:
+                    - term [ref=e532]: Contact
+                    - definition [ref=e533]: Priya Supplier
+                  - generic [ref=e534]:
+                    - term [ref=e535]: Email
+                    - definition [ref=e536]: priya.supplier@example.com
+                  - generic [ref=e537]:
+                    - term [ref=e538]: Last export
+                    - definition [ref=e539]: json at 2026-06-10T10:05:00.000000Z
+                - generic [ref=e540]:
+                  - button "Preview JSON" [ref=e541]
+                  - button "Record JSON export" [ref=e542]
+              - generic [ref=e543]:
+                - paragraph [ref=e544]: Supplier acknowledged
+                - paragraph [ref=e545]: ACK-PO-100 by Priya Supplier
+                - paragraph [ref=e546]: Supplier confirmed delivery in week 29.
+            - generic [ref=e547]:
+              - generic [ref=e549]:
+                - heading "Draft fields" [level=2] [ref=e550]
+                - paragraph [ref=e551]: Operational notes stay editable while the purchase order is draft or changes requested.
+              - group "Purchase order draft fields" [ref=e552]:
+                - generic [ref=e553]: Purchase order draft fields
+                - generic [ref=e554]:
+                  - generic [ref=e555]:
+                    - text: Requested PO date
+                    - textbox "Requested PO date" [disabled]: 2026-06-03
+                  - generic [ref=e556]:
+                    - text: Expected delivery date
+                    - textbox "Expected delivery date" [disabled]: 2026-07-15
+                  - generic [ref=e557]:
+                    - text: Billing name
+                    - textbox "Billing name" [disabled]: Acme Procurement Finance
+                  - generic [ref=e558]:
+                    - text: Shipping name
+                    - textbox "Shipping name" [disabled]: HQ East Wing Facilities
+                  - generic [ref=e559]:
+                    - text: Delivery attention
+                    - textbox "Delivery attention" [disabled]: Facilities receiving dock
+                  - generic [ref=e560]:
+                    - text: Payment terms
+                    - textbox "Payment terms" [disabled]: Net 30
+                  - generic [ref=e561]:
+                    - text: Delivery terms
+                    - textbox "Delivery terms" [disabled]: Delivered duty paid
+                - generic [ref=e562]:
+                  - generic [ref=e563]:
+                    - text: Buyer note
+                    - textbox "Buyer note" [disabled] [ref=e564]: Seeded PO can be edited and progressed by the buyer.
+                  - generic [ref=e565]:
+                    - text: Finance note
+                    - textbox "Finance note" [disabled] [ref=e566]: Charge to OPS-100 sustainable expansion budget.
+              - generic [ref=e567]:
+                - button "Save draft" [disabled]
+          - complementary "Record sidebar" [ref=e568]:
+            - generic [ref=e569]:
+              - generic [ref=e571]: Vendor summary
+              - generic [ref=e572]:
+                - paragraph [ref=e573]: Greenline Facilities
+                - paragraph [ref=e574]: RFQ 3
+                - paragraph [ref=e575]: Recommendation 019eb2b3-06f1-73ba-8471-9e4222d7daf2
+            - generic [ref=e576]:
+              - generic [ref=e578]: Operational totals
+              - generic [ref=e579]:
+                - generic [ref=e580]:
+                  - generic [ref=e581]: Subtotal
+                  - generic [ref=e582]: US$81,000.00
+                - generic [ref=e583]:
+                  - generic [ref=e584]: Tax
+                  - generic [ref=e585]: US$0.00
+                - generic [ref=e586]:
+                  - generic [ref=e587]: Freight
+                  - generic [ref=e588]: US$1,500.00
+                - generic [ref=e589]:
+                  - generic [ref=e590]: Total
+                  - generic [ref=e591]: US$82,500.00
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]

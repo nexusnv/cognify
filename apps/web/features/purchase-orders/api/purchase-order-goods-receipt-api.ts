@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  getApiPurchaseOrdersPurchaseOrderGoodsReceipts as listGoodsReceiptsEndpoint,
-  postApiPurchaseOrdersPurchaseOrderGoodsReceipts as recordGoodsReceiptEndpoint,
-  postApiGoodsReceiptsGoodsReceiptConfirmRequester as confirmRequesterEndpoint,
-  postApiGoodsReceiptsGoodsReceiptConfirmBuyer as confirmBuyerEndpoint,
+  listGoodsReceipts as listGoodsReceiptsEndpoint,
+  recordGoodsReceipt as recordGoodsReceiptEndpoint,
+  confirmGoodsReceiptRequester as confirmRequesterEndpoint,
+  confirmGoodsReceiptBuyer as confirmBuyerEndpoint,
 } from "@cognify/api-client/endpoints";
 import type {
   ConfirmGoodsReceiptRequest,

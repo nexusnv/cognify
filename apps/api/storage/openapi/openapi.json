@@ -7960,6 +7960,7 @@
     },
     "/api/purchase-orders/{purchaseOrder}/goods-receipts": {
       "get": {
+        "operationId": "listGoodsReceipts",
         "tags": ["Purchase Orders"],
         "summary": "List goods receipts for a purchase order",
         "parameters": [
@@ -7983,10 +7984,12 @@
                 }
               }
             }
-          }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
         }
       },
       "post": {
+        "operationId": "recordGoodsReceipt",
         "tags": ["Purchase Orders"],
         "summary": "Record a goods receipt",
         "parameters": [
@@ -8016,12 +8019,14 @@
               }
             }
           },
+          "404": { "$ref": "#/components/responses/NotFound" },
           "422": { "$ref": "#/components/responses/ValidationError" }
         }
       }
     },
     "/api/goods-receipts/{goodsReceipt}": {
       "get": {
+        "operationId": "showGoodsReceipt",
         "tags": ["Purchase Orders"],
         "summary": "Show a goods receipt",
         "parameters": [
@@ -8055,6 +8060,7 @@
     },
     "/api/goods-receipts/{goodsReceipt}/confirm-requester": {
       "post": {
+        "operationId": "confirmGoodsReceiptRequester",
         "tags": ["Purchase Orders"],
         "summary": "Confirm goods receipt as requester",
         "parameters": [
@@ -8091,12 +8097,15 @@
             }
           },
           "403": { "$ref": "#/components/responses/Forbidden" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
         }
       }
     },
     "/api/goods-receipts/{goodsReceipt}/confirm-buyer": {
       "post": {
+        "operationId": "confirmGoodsReceiptBuyer",
         "tags": ["Purchase Orders"],
         "summary": "Confirm goods receipt as buyer",
         "parameters": [
@@ -8133,7 +8142,9 @@
             }
           },
           "403": { "$ref": "#/components/responses/Forbidden" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
         }
       }
     },
@@ -20716,7 +20727,8 @@
           "canUpdateChangeOrder",
           "canSubmitChangeOrder",
           "canCancelChangeOrder",
-          "canRecordGoodsReceipt"
+          "canRecordGoodsReceipt",
+          "canConfirmGoodsReceipt"
         ],
         "properties": {
           "canUpdate": {
@@ -20753,6 +20765,9 @@
             "type": "boolean"
           },
           "canRecordGoodsReceipt": {
+            "type": "boolean"
+          },
+          "canConfirmGoodsReceipt": {
             "type": "boolean"
           }
         }

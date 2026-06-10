@@ -52,8 +52,27 @@ class RecordGoodsReceipt
                 'lock_version' => 1,
             ]);
 
-            $linesData = [];
-            $lineIds = collect($payload['lines'])->pluck('purchaseOrderLineId')->toArray();
+            $lines = $payload['lines'];
+
+            if (! is_array($lines) || count($lines) === 0) {
+                throw new InvalidArgumentException('At least one line is required.');
+            }
+
+            $lineIds = [];
+            foreach ($lines as $index => $linePayload) {
+                $pId = $linePayload['purchaseOrderLineId'] ?? null;
+
+                if ($pId === null) {
+                    throw new InvalidArgumentException("Line at index {$index} is missing purchaseOrderLineId.");
+                }
+
+                if (in_array($pId, $lineIds, true)) {
+                    throw new InvalidArgumentException("Duplicate purchase order line {$pId} in receipt lines.");
+                }
+
+                $lineIds[] = $pId;
+            }
+
             $poLines = PurchaseOrderLine::query()
                 ->whereIn('id', $lineIds)
                 ->where('tenant_id', $po->tenant_id)
@@ -62,7 +81,7 @@ class RecordGoodsReceipt
                 ->get()
                 ->keyBy('id');
 
-            foreach ($payload['lines'] as $linePayload) {
+            foreach ($lines as $linePayload) {
                 $poLine = $poLines->get($linePayload['purchaseOrderLineId']);
 
                 if ($poLine === null) {
@@ -75,6 +94,19 @@ class RecordGoodsReceipt
 
                 $quantityReceived = $linePayload['quantityReceived'];
                 $quantityAccepted = $linePayload['quantityAccepted'] ?? $quantityReceived;
+
+                if (bccomp((string) $quantityReceived, '0', 4) <= 0) {
+                    throw new InvalidArgumentException("Line {$poLine->line_number}: quantity received must be greater than zero.");
+                }
+
+                if (bccomp((string) $quantityAccepted, '0', 4) < 0) {
+                    throw new InvalidArgumentException("Line {$poLine->line_number}: quantity accepted cannot be negative.");
+                }
+
+                if (bccomp((string) $quantityAccepted, (string) $quantityReceived, 4) > 0) {
+                    throw new InvalidArgumentException("Line {$poLine->line_number}: quantity accepted cannot exceed quantity received.");
+                }
+
                 $newCumulativeReceived = bcadd($poLine->cumulative_quantity_received, $quantityReceived, 4);
                 $orderedQuantity = $poLine->quantity;
                 $tolerancePercent = $poLine->over_receipt_tolerance_percent;
@@ -88,6 +120,12 @@ class RecordGoodsReceipt
                 }
 
                 $newCumulativeAccepted = bcadd($poLine->cumulative_quantity_accepted, $quantityAccepted, 4);
+
+                if (bccomp($newCumulativeAccepted, $newCumulativeReceived, 4) > 0) {
+                    throw new InvalidArgumentException(
+                        "Line {$poLine->line_number}: cumulative accepted quantity {$newCumulativeAccepted} cannot exceed cumulative received quantity {$newCumulativeReceived}."
+                    );
+                }
 
                 $linesData[] = [
                     'tenant_id' => $po->tenant_id,

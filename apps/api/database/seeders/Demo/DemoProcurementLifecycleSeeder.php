@@ -1631,6 +1631,14 @@ class DemoProcurementLifecycleSeeder
             }
         }
 
+        $existingCount = GoodsReceipt::query()
+            ->whereIn('purchase_order_id', array_map(fn ($po) => $po->id, $receivablePOs))
+            ->count();
+
+        if ($existingCount > 0) {
+            return;
+        }
+
         foreach ($receivablePOs as $i => $po) {
             $linesData = [];
             $receiptDate = '2026-06-12';
@@ -1729,6 +1737,16 @@ class DemoProcurementLifecycleSeeder
 
     private function createDemoReceipt(Tenant $tenant, PurchaseOrder $po, User $buyer, string $date, GoodsReceiptStatus $status, string $reference): GoodsReceipt
     {
+        $existing = GoodsReceipt::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('purchase_order_id', $po->id)
+            ->where('receipt_reference', $reference)
+            ->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
         $receiptNumber = ReceivingNumber::nextFor($po);
 
         return GoodsReceipt::query()->create([
@@ -1769,7 +1787,10 @@ class DemoProcurementLifecycleSeeder
     private function createDemoReceiptLines(array $linesData): void
     {
         foreach ($linesData as $lineData) {
-            GoodsReceiptLine::query()->create($lineData);
+            GoodsReceiptLine::query()->firstOrCreate(
+                ['goods_receipt_id' => $lineData['goods_receipt_id'], 'purchase_order_line_id' => $lineData['purchase_order_line_id']],
+                $lineData,
+            );
         }
     }
 

@@ -1,0 +1,143 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e87]:
+    - link "Skip to main content" [ref=e88] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e91]:
+      - list [ref=e93]:
+        - listitem [ref=e94]:
+          - button "Acme Procurement Buyer" [ref=e95]:
+            - img [ref=e97]
+            - generic [ref=e99]:
+              - generic [ref=e100]: Acme Procurement
+              - generic [ref=e101]: Buyer
+            - img [ref=e102]
+      - generic [ref=e104]:
+        - navigation "Primary" [ref=e105]:
+          - generic [ref=e106]:
+            - generic [ref=e107]: Platform
+            - list [ref=e108]:
+              - listitem [ref=e109]:
+                - link "Home" [ref=e110] [cursor=pointer]:
+                  - /url: /dashboard
+                  - img [ref=e111]
+                  - generic [ref=e113]: Home
+              - listitem [ref=e114]:
+                - link "My Work" [ref=e115] [cursor=pointer]:
+                  - /url: /approvals
+                  - img [ref=e116]
+                  - generic [ref=e118]: My Work
+              - listitem [ref=e119]:
+                - link "Procurement" [expanded] [ref=e120] [cursor=pointer]:
+                  - /url: /requisitions
+                  - img [ref=e121]
+                  - generic [ref=e123]: Procurement
+                  - img [ref=e124]
+                - list [ref=e127]:
+                  - listitem [ref=e128]:
+                    - link "Requisitions" [ref=e129] [cursor=pointer]:
+                      - /url: /requisitions
+                      - generic [ref=e130]: Requisitions
+                  - listitem [ref=e131]:
+                    - link "Projects" [ref=e132] [cursor=pointer]:
+                      - /url: /projects
+                      - generic [ref=e133]: Projects
+                  - listitem [ref=e134]:
+                    - link "Purchase orders" [ref=e135] [cursor=pointer]:
+                      - /url: /purchase-orders
+                      - generic [ref=e136]: Purchase orders
+                  - listitem [ref=e137]:
+                    - link "Calendar" [ref=e138] [cursor=pointer]:
+                      - /url: /calendar
+                      - generic [ref=e139]: Calendar
+                  - listitem [ref=e140]:
+                    - link "Sourcing intake" [ref=e141] [cursor=pointer]:
+                      - /url: /sourcing/intake
+                      - generic [ref=e142]: Sourcing intake
+                  - listitem [ref=e143]:
+                    - link "Quotations" [ref=e144] [cursor=pointer]:
+                      - /url: /quotations/normalizations
+                      - generic [ref=e145]: Quotations
+              - listitem [ref=e146]:
+                - button "Vendors" [ref=e147]:
+                  - img [ref=e148]
+                  - generic [ref=e150]: Vendors
+              - listitem [ref=e151]:
+                - button "Finance" [ref=e152]:
+                  - img [ref=e153]
+                  - generic [ref=e155]: Finance
+              - listitem [ref=e156]:
+                - button "Evidence" [ref=e157]:
+                  - img [ref=e158]
+                  - generic [ref=e160]: Evidence
+              - listitem [ref=e161]:
+                - button "Analytics" [ref=e162]:
+                  - img [ref=e163]
+                  - generic [ref=e165]: Analytics
+              - listitem [ref=e166]:
+                - button "Governance" [ref=e167]:
+                  - img [ref=e168]
+                  - generic [ref=e170]: Governance
+              - listitem [ref=e171]:
+                - button "AI Assistant" [ref=e172]:
+                  - img [ref=e173]
+                  - generic [ref=e175]: AI Assistant
+              - listitem [ref=e176]:
+                - button "Admin" [ref=e177]:
+                  - img [ref=e178]
+                  - generic [ref=e180]: Admin
+              - listitem [ref=e181]:
+                - button "Integrations" [ref=e182]:
+                  - img [ref=e183]
+                  - generic [ref=e185]: Integrations
+        - generic [ref=e186]:
+          - generic [ref=e187]: Shortcuts
+          - list [ref=e188]:
+            - listitem [ref=e189]:
+              - link "Calendar" [ref=e190] [cursor=pointer]:
+                - /url: /calendar
+                - img [ref=e191]
+                - generic [ref=e193]: Calendar
+            - listitem [ref=e194]:
+              - link "Approvals" [ref=e195] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e196]
+                - generic [ref=e198]: Approvals
+            - listitem [ref=e199]:
+              - link "Projects" [ref=e200] [cursor=pointer]:
+                - /url: /projects
+                - img [ref=e201]
+                - generic [ref=e203]: Projects
+            - listitem [ref=e204]:
+              - link "Sourcing intake" [ref=e205] [cursor=pointer]:
+                - /url: /sourcing/intake
+                - img [ref=e206]
+                - generic [ref=e208]: Sourcing intake
+            - listitem [ref=e209]:
+              - button "More" [disabled]:
+                - img
+                - generic: More
+      - list [ref=e211]:
+        - listitem [ref=e212]:
+          - button "BU Buyer User buyer@example.com" [ref=e213]:
+            - generic [ref=e215]: BU
+            - generic [ref=e216]:
+              - generic [ref=e217]: Buyer User
+              - generic [ref=e218]: buyer@example.com
+            - img [ref=e219]
+      - button "Toggle Sidebar" [ref=e221]
+    - main [ref=e222]:
+      - generic [ref=e224]:
+        - button "Toggle Sidebar" [ref=e225]:
+          - img
+          - generic [ref=e226]: Toggle Sidebar
+        - navigation "breadcrumb" [ref=e227]:
+          - list [ref=e228]:
+            - listitem [ref=e229]:
+              - link "Workspace" [disabled] [ref=e230]
+      - generic [ref=e232]: Purchase order could not be loaded.
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e86]

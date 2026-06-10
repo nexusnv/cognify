@@ -12,14 +12,29 @@ class ReceivingNumber
         $year = now()->format('Y');
 
         $sequence = DB::transaction(function () use ($purchaseOrder, $year): int {
-            $row = DB::table('goods_receipts')
+            $sequence = DB::table('goods_receipt_sequences')
                 ->where('tenant_id', $purchaseOrder->tenant_id)
-                ->where('number', 'like', "GR-{$year}-%")
+                ->where('year', $year)
                 ->lockForUpdate()
-                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING(number, LENGTH(?) + 2) AS UNSIGNED)), 0) + 1 AS next_seq', ["GR-{$year}-"])
                 ->first();
 
-            return (int) $row->next_seq;
+            if ($sequence === null) {
+                DB::table('goods_receipt_sequences')->insert([
+                    'tenant_id' => $purchaseOrder->tenant_id,
+                    'year' => $year,
+                    'last_sequence' => 1,
+                ]);
+
+                return 1;
+            }
+
+            $nextSeq = $sequence->last_sequence + 1;
+
+            DB::table('goods_receipt_sequences')
+                ->where('id', $sequence->id)
+                ->update(['last_sequence' => $nextSeq]);
+
+            return $nextSeq;
         });
 
         return sprintf('GR-%s-%06d', $year, $sequence);

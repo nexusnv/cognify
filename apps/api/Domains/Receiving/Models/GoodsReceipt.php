@@ -75,6 +75,30 @@ class GoodsReceipt extends Model
                     throw new InvalidArgumentException('Goods receipt recorder must belong to the same tenant.');
                 }
             }
+
+            if ($receipt->requester_confirmed_by_user_id !== null && $receipt->isDirty(['requester_confirmed_by_user_id', 'tenant_id'])) {
+                $belongsToTenant = User::query()
+                    ->whereKey($receipt->requester_confirmed_by_user_id)
+                    ->whereHas('tenants', fn ($q) => $q->whereKey($receipt->tenant_id))
+                    ->lockForUpdate()
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Goods receipt requester confirmer must belong to the same tenant.');
+                }
+            }
+
+            if ($receipt->buyer_confirmed_by_user_id !== null && $receipt->isDirty(['buyer_confirmed_by_user_id', 'tenant_id'])) {
+                $belongsToTenant = User::query()
+                    ->whereKey($receipt->buyer_confirmed_by_user_id)
+                    ->whereHas('tenants', fn ($q) => $q->whereKey($receipt->tenant_id))
+                    ->lockForUpdate()
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Goods receipt buyer confirmer must belong to the same tenant.');
+                }
+            }
         });
     }
 

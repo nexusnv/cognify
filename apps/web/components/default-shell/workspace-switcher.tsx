@@ -65,7 +65,7 @@ export function WorkspaceSwitcher({ workspaces }: { workspaces: WorkspaceSwitche
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Workspaces
             </DropdownMenuLabel>
-            {workspaces.map((workspace, index) => (
+            {workspaces.map((workspace) => (
               <DropdownMenuItem key={workspace.id} className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-md border">
                   {workspace.active ? <RiCheckboxCircleLine /> : <RiBuilding4Line />}

@@ -1408,7 +1408,7 @@ class GoodsReceiptController
             ->orderByDesc('recorded_at')
             ->get();
 
-        return GoodReceiptResource::collection($receipts);
+        return GoodsReceiptResource::collection($receipts);
     }
 
     public function store(RecordGoodsReceiptRequest $request, PurchaseOrder $purchaseOrder): GoodsReceiptResource

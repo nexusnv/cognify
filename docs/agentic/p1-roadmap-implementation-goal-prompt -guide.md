@@ -94,7 +94,7 @@ For each remaining P1 feature, execute this exact sequence.
 - Use real route middleware tests for Sanctum/session-sensitive behavior.
 - Do not claim completion until verification commands have been run and their outputs are reviewed.
 - Spawn subagent to run a strit spec compliance review, comparing the implementation against the implementation plan's specification document that it relates to. The resulting review results must be verified and addressed accordingly before moving on.
-- Spawn subagent to run a strict code quality review. This review ensure that the implementation plan has been carried out fully and the output code are well structured, in accordance to the project architechture (ARCHITECTURE.md) and feature development runbook (docs/05-runbooks/feature-development.md). The resulting review results must be verified and addressed accordingly before moving on.
+- Spawn subagent to run a strict code quality review. This review ensure that the implementation plan has been carried out fully and the output code are well structured, in accordance to the project architecture (ARCHITECTURE.md) and feature development runbook (docs/05-runbooks/feature-development.md). The resulting review results must be verified and addressed accordingly before moving on.
 
 6. Visual inspection gate
 - If the feature adds new screens or makes substantial UI/UX changes to existing screens, visual inspection is mandatory before completion.

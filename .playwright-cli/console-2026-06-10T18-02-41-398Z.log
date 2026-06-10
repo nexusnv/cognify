@@ -1,0 +1,9 @@
+[     683ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[     805ms] [LOG] [HMR] connected @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[    1351ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://127.0.0.1:8880/api/me:0
+[    3127ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[    3596ms] [LOG] [Fast Refresh] done in 568ms @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[    3851ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[    4073ms] [LOG] [Fast Refresh] done in 323ms @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[    4394ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477
+[    5216ms] [LOG] [Fast Refresh] done in 922ms @ http://127.0.0.1:8880/_next/static/chunks/080c_next_dist_0wqeui1._.js:2477

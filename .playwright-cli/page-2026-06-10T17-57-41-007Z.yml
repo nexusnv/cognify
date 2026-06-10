@@ -1,0 +1,74 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e4]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]:
+              - paragraph [ref=e21]: Enterprise procurement
+              - paragraph [ref=e22]: Cognify
+            - generic [ref=e23]: Secure workspace
+          - generic [ref=e24]:
+            - generic [ref=e25]: First-party procurement control
+            - generic [ref=e26]:
+              - heading "Control spend before it becomes a surprise." [level=2] [ref=e27]
+              - paragraph [ref=e28]: Route every request through budget context, sourcing evidence, approval policy, and audit history before teams commit spend.
+        - generic [ref=e29]:
+          - article [ref=e30]:
+            - img [ref=e31]
+            - heading "Governed intake" [level=3] [ref=e35]
+            - paragraph [ref=e36]: Start requisitions with budget, policy, and approval context attached.
+          - article [ref=e37]:
+            - img [ref=e38]
+            - heading "Audit-ready workflow" [level=3] [ref=e41]
+            - paragraph [ref=e42]: Keep comments, attachments, decisions, and handoffs in one traceable path.
+          - article [ref=e43]:
+            - img [ref=e44]
+            - heading "Supplier decisions" [level=3] [ref=e49]
+            - paragraph [ref=e50]: Compare quotations and preserve evidence before award recommendations.
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - img [ref=e54]
+          - heading "Sign in to your procurement workspace" [level=1] [ref=e57]
+          - generic [ref=e58]: Sign in to your procurement workspace
+          - generic [ref=e59]: Use your Cognify account to continue.
+        - generic [ref=e60]:
+          - form "Sign in" [ref=e61]:
+            - group [ref=e62]:
+              - generic [ref=e63]: Email
+              - generic [ref=e64]:
+                - textbox "Email" [ref=e65]: buyer@cognify.dev
+                - paragraph [ref=e66]: Enter the work email tied to your procurement workspace access.
+            - group [ref=e67]:
+              - generic [ref=e68]:
+                - generic [ref=e69]: Password
+                - button "Forgot password?" [ref=e70]
+              - generic [ref=e71]:
+                - generic [ref=e72]:
+                  - textbox "Password" [ref=e73]: password123
+                  - button "Show password" [ref=e74]:
+                    - img
+                - paragraph [ref=e75]: Use the password from your invited Cognify account.
+            - group [ref=e76]:
+              - checkbox "Remember me" [ref=e77]
+              - checkbox
+              - generic [ref=e78]:
+                - generic [ref=e79]: Remember me
+                - paragraph [ref=e80]: Keep this browser signed in for your next procurement session.
+            - button "Sign in" [ref=e82]
+            - alert [ref=e93]:
+              - img [ref=e94]
+              - generic [ref=e96]: Sign-in failed
+              - generic [ref=e97]: The provided credentials are incorrect.
+          - paragraph [ref=e83]: Access is limited to invited workspace members. Contact your procurement administrator if you need an account.
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e84] [cursor=pointer]:
+    - generic [ref=e87]:
+      - text: Compiling
+      - generic [ref=e88]:
+        - generic [ref=e89]: .
+        - generic [ref=e90]: .
+        - generic [ref=e91]: .
+  - alert [ref=e92]

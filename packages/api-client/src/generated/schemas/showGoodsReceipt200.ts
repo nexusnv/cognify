@@ -6,6 +6,6 @@
  */
 import type { GoodsReceipt } from "./goodsReceipt";
 
-export type PostApiGoodsReceiptsGoodsReceiptConfirmBuyer200 = {
+export type ShowGoodsReceipt200 = {
   data: GoodsReceipt;
 };
