@@ -26,6 +26,7 @@ import type {
   AttachmentResponse,
   AttachmentUploadRequest,
   AuditEventListResponse,
+  CancelPurchaseOrderChangeOrderRequest,
   CancelPurchaseOrderRequest,
   CancelPurchaseOrderRequestHandoffRequest,
   CancelRfqInvitationRequest,
@@ -73,6 +74,8 @@ import type {
   ProjectActivityListResponse,
   ProjectRequisitionListResponse,
   ProjectRequisitionResponse,
+  PurchaseOrderChangeOrderResponse,
+  PurchaseOrderChangeOrdersResponse,
   PurchaseOrderListResponse,
   PurchaseOrderRequestHandoffExport,
   PurchaseOrderRequestHandoffResponse,
@@ -110,6 +113,7 @@ import type {
   RfqScorecardResponse,
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
+  SavePurchaseOrderChangeOrderRequest,
   SaveQuotationComparisonNoteRequest,
   SaveQuotationManualEntryRequest,
   SaveQuotationManualEntryRequestForVendor,
@@ -130,6 +134,7 @@ import type {
   StoreApprovalPolicyVersionRequest,
   StoreProcurementProjectRequest,
   SubmitPurchaseOrderApprovalRequest,
+  SubmitPurchaseOrderChangeOrderRequest,
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
   SystemStatusResponse,
@@ -9947,6 +9952,438 @@ export const acknowledgePurchaseOrderSupplier = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(acknowledgePurchaseOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary List purchase order change orders
+ */
+export type listPurchaseOrderChangeOrdersResponse200 = {
+  data: PurchaseOrderChangeOrdersResponse;
+  status: 200;
+};
+
+export type listPurchaseOrderChangeOrdersResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listPurchaseOrderChangeOrdersResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listPurchaseOrderChangeOrdersResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listPurchaseOrderChangeOrdersResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listPurchaseOrderChangeOrdersResponseSuccess =
+  listPurchaseOrderChangeOrdersResponse200 & {
+    headers: Headers;
+  };
+export type listPurchaseOrderChangeOrdersResponseError = (
+  | listPurchaseOrderChangeOrdersResponse400
+  | listPurchaseOrderChangeOrdersResponse401
+  | listPurchaseOrderChangeOrdersResponse403
+  | listPurchaseOrderChangeOrdersResponse404
+) & {
+  headers: Headers;
+};
+
+export type listPurchaseOrderChangeOrdersResponse =
+  | listPurchaseOrderChangeOrdersResponseSuccess
+  | listPurchaseOrderChangeOrdersResponseError;
+
+export const getListPurchaseOrderChangeOrdersUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/change-orders`;
+};
+
+export const listPurchaseOrderChangeOrders = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<listPurchaseOrderChangeOrdersResponse> => {
+  return cognifyFetch<listPurchaseOrderChangeOrdersResponse>(
+    getListPurchaseOrderChangeOrdersUrl(purchaseOrder),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create purchase order change order
+ */
+export type savePurchaseOrderChangeOrderResponse201 = {
+  data: PurchaseOrderChangeOrderResponse;
+  status: 201;
+};
+
+export type savePurchaseOrderChangeOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type savePurchaseOrderChangeOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type savePurchaseOrderChangeOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type savePurchaseOrderChangeOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type savePurchaseOrderChangeOrderResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type savePurchaseOrderChangeOrderResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type savePurchaseOrderChangeOrderResponseSuccess =
+  savePurchaseOrderChangeOrderResponse201 & {
+    headers: Headers;
+  };
+export type savePurchaseOrderChangeOrderResponseError = (
+  | savePurchaseOrderChangeOrderResponse400
+  | savePurchaseOrderChangeOrderResponse401
+  | savePurchaseOrderChangeOrderResponse403
+  | savePurchaseOrderChangeOrderResponse404
+  | savePurchaseOrderChangeOrderResponse409
+  | savePurchaseOrderChangeOrderResponse422
+) & {
+  headers: Headers;
+};
+
+export type savePurchaseOrderChangeOrderResponse =
+  | savePurchaseOrderChangeOrderResponseSuccess
+  | savePurchaseOrderChangeOrderResponseError;
+
+export const getSavePurchaseOrderChangeOrderUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/change-orders`;
+};
+
+export const savePurchaseOrderChangeOrder = async (
+  purchaseOrder: string,
+  savePurchaseOrderChangeOrderRequest: SavePurchaseOrderChangeOrderRequest,
+  options?: RequestInit,
+): Promise<savePurchaseOrderChangeOrderResponse> => {
+  return cognifyFetch<savePurchaseOrderChangeOrderResponse>(
+    getSavePurchaseOrderChangeOrderUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(savePurchaseOrderChangeOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary Show purchase order change order
+ */
+export type showPurchaseOrderChangeOrderResponse200 = {
+  data: PurchaseOrderChangeOrderResponse;
+  status: 200;
+};
+
+export type showPurchaseOrderChangeOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showPurchaseOrderChangeOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showPurchaseOrderChangeOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type showPurchaseOrderChangeOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showPurchaseOrderChangeOrderResponseSuccess =
+  showPurchaseOrderChangeOrderResponse200 & {
+    headers: Headers;
+  };
+export type showPurchaseOrderChangeOrderResponseError = (
+  | showPurchaseOrderChangeOrderResponse400
+  | showPurchaseOrderChangeOrderResponse401
+  | showPurchaseOrderChangeOrderResponse403
+  | showPurchaseOrderChangeOrderResponse404
+) & {
+  headers: Headers;
+};
+
+export type showPurchaseOrderChangeOrderResponse =
+  | showPurchaseOrderChangeOrderResponseSuccess
+  | showPurchaseOrderChangeOrderResponseError;
+
+export const getShowPurchaseOrderChangeOrderUrl = (changeOrder: string) => {
+  return `/api/purchase-order-change-orders/${changeOrder}`;
+};
+
+export const showPurchaseOrderChangeOrder = async (
+  changeOrder: string,
+  options?: RequestInit,
+): Promise<showPurchaseOrderChangeOrderResponse> => {
+  return cognifyFetch<showPurchaseOrderChangeOrderResponse>(
+    getShowPurchaseOrderChangeOrderUrl(changeOrder),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Update purchase order change order
+ */
+export type updatePurchaseOrderChangeOrderResponse200 = {
+  data: PurchaseOrderChangeOrderResponse;
+  status: 200;
+};
+
+export type updatePurchaseOrderChangeOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updatePurchaseOrderChangeOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updatePurchaseOrderChangeOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type updatePurchaseOrderChangeOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updatePurchaseOrderChangeOrderResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type updatePurchaseOrderChangeOrderResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updatePurchaseOrderChangeOrderResponseSuccess =
+  updatePurchaseOrderChangeOrderResponse200 & {
+    headers: Headers;
+  };
+export type updatePurchaseOrderChangeOrderResponseError = (
+  | updatePurchaseOrderChangeOrderResponse400
+  | updatePurchaseOrderChangeOrderResponse401
+  | updatePurchaseOrderChangeOrderResponse403
+  | updatePurchaseOrderChangeOrderResponse404
+  | updatePurchaseOrderChangeOrderResponse409
+  | updatePurchaseOrderChangeOrderResponse422
+) & {
+  headers: Headers;
+};
+
+export type updatePurchaseOrderChangeOrderResponse =
+  | updatePurchaseOrderChangeOrderResponseSuccess
+  | updatePurchaseOrderChangeOrderResponseError;
+
+export const getUpdatePurchaseOrderChangeOrderUrl = (changeOrder: string) => {
+  return `/api/purchase-order-change-orders/${changeOrder}`;
+};
+
+export const updatePurchaseOrderChangeOrder = async (
+  changeOrder: string,
+  savePurchaseOrderChangeOrderRequest: SavePurchaseOrderChangeOrderRequest,
+  options?: RequestInit,
+): Promise<updatePurchaseOrderChangeOrderResponse> => {
+  return cognifyFetch<updatePurchaseOrderChangeOrderResponse>(
+    getUpdatePurchaseOrderChangeOrderUrl(changeOrder),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(savePurchaseOrderChangeOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary Submit purchase order change order
+ */
+export type submitPurchaseOrderChangeOrderResponse200 = {
+  data: PurchaseOrderChangeOrderResponse;
+  status: 200;
+};
+
+export type submitPurchaseOrderChangeOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type submitPurchaseOrderChangeOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type submitPurchaseOrderChangeOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type submitPurchaseOrderChangeOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type submitPurchaseOrderChangeOrderResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type submitPurchaseOrderChangeOrderResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type submitPurchaseOrderChangeOrderResponseSuccess =
+  submitPurchaseOrderChangeOrderResponse200 & {
+    headers: Headers;
+  };
+export type submitPurchaseOrderChangeOrderResponseError = (
+  | submitPurchaseOrderChangeOrderResponse400
+  | submitPurchaseOrderChangeOrderResponse401
+  | submitPurchaseOrderChangeOrderResponse403
+  | submitPurchaseOrderChangeOrderResponse404
+  | submitPurchaseOrderChangeOrderResponse409
+  | submitPurchaseOrderChangeOrderResponse422
+) & {
+  headers: Headers;
+};
+
+export type submitPurchaseOrderChangeOrderResponse =
+  | submitPurchaseOrderChangeOrderResponseSuccess
+  | submitPurchaseOrderChangeOrderResponseError;
+
+export const getSubmitPurchaseOrderChangeOrderUrl = (changeOrder: string) => {
+  return `/api/purchase-order-change-orders/${changeOrder}/submit`;
+};
+
+export const submitPurchaseOrderChangeOrder = async (
+  changeOrder: string,
+  submitPurchaseOrderChangeOrderRequest: SubmitPurchaseOrderChangeOrderRequest,
+  options?: RequestInit,
+): Promise<submitPurchaseOrderChangeOrderResponse> => {
+  return cognifyFetch<submitPurchaseOrderChangeOrderResponse>(
+    getSubmitPurchaseOrderChangeOrderUrl(changeOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitPurchaseOrderChangeOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary Cancel purchase order change order
+ */
+export type cancelPurchaseOrderChangeOrderResponse200 = {
+  data: PurchaseOrderChangeOrderResponse;
+  status: 200;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelPurchaseOrderChangeOrderResponseSuccess =
+  cancelPurchaseOrderChangeOrderResponse200 & {
+    headers: Headers;
+  };
+export type cancelPurchaseOrderChangeOrderResponseError = (
+  | cancelPurchaseOrderChangeOrderResponse400
+  | cancelPurchaseOrderChangeOrderResponse401
+  | cancelPurchaseOrderChangeOrderResponse403
+  | cancelPurchaseOrderChangeOrderResponse404
+  | cancelPurchaseOrderChangeOrderResponse409
+  | cancelPurchaseOrderChangeOrderResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelPurchaseOrderChangeOrderResponse =
+  | cancelPurchaseOrderChangeOrderResponseSuccess
+  | cancelPurchaseOrderChangeOrderResponseError;
+
+export const getCancelPurchaseOrderChangeOrderUrl = (changeOrder: string) => {
+  return `/api/purchase-order-change-orders/${changeOrder}/cancel`;
+};
+
+export const cancelPurchaseOrderChangeOrder = async (
+  changeOrder: string,
+  cancelPurchaseOrderChangeOrderRequest: CancelPurchaseOrderChangeOrderRequest,
+  options?: RequestInit,
+): Promise<cancelPurchaseOrderChangeOrderResponse> => {
+  return cognifyFetch<cancelPurchaseOrderChangeOrderResponse>(
+    getCancelPurchaseOrderChangeOrderUrl(changeOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(cancelPurchaseOrderChangeOrderRequest),
     },
   );
 };

@@ -3,6 +3,7 @@
 namespace Domains\PurchaseOrder\Http\Resources;
 
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -104,6 +105,25 @@ class PurchaseOrderResource extends JsonResource
             'lines' => $purchaseOrder->relationLoaded('lines')
                 ? PurchaseOrderLineResource::collection($purchaseOrder->lines)->resolve()
                 : [],
+            'changeOrdersSummary' => [
+                'currentChangeOrder' => $purchaseOrder->relationLoaded('currentChangeOrder') && $purchaseOrder->currentChangeOrder instanceof PurchaseOrderChangeOrder
+                    ? [
+                        'id' => (string) $purchaseOrder->currentChangeOrder->id,
+                        'number' => $purchaseOrder->currentChangeOrder->number,
+                        'status' => $purchaseOrder->currentChangeOrder->statusState()->value,
+                        'changeType' => $purchaseOrder->currentChangeOrder->typeState()->value,
+                        'materialChange' => (bool) $purchaseOrder->currentChangeOrder->material_change,
+                        'requiresApproval' => (bool) $purchaseOrder->currentChangeOrder->requires_approval,
+                    ]
+                    : null,
+                'latestChangeOrder' => $purchaseOrder->relationLoaded('changeOrders') && $purchaseOrder->changeOrders->isNotEmpty()
+                    ? [
+                        'id' => (string) $purchaseOrder->changeOrders->first()->id,
+                        'number' => $purchaseOrder->changeOrders->first()->number,
+                        'status' => $purchaseOrder->changeOrders->first()->statusState()->value,
+                    ]
+                    : null,
+            ],
             'lockVersion' => $purchaseOrder->lock_version,
             'permissions' => [
                 'canUpdate' => $status === PurchaseOrderStatus::Draft
@@ -127,6 +147,19 @@ class PurchaseOrderResource extends JsonResource
                 'canAcknowledgeSupplier' => $status === PurchaseOrderStatus::Issued
                     && $user !== null
                     && Gate::forUser($user)->check('acknowledgeSupplier', $purchaseOrder),
+                'canCreateChangeOrder' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)
+                    && $purchaseOrder->current_change_order_id === null
+                    && $user !== null
+                    && Gate::forUser($user)->check('saveChangeOrder', $purchaseOrder),
+                'canUpdateChangeOrder' => $purchaseOrder->current_change_order_id !== null
+                    && $user !== null
+                    && Gate::forUser($user)->check('saveChangeOrder', $purchaseOrder),
+                'canSubmitChangeOrder' => $purchaseOrder->current_change_order_id !== null
+                    && $user !== null
+                    && Gate::forUser($user)->check('submitChangeOrder', $purchaseOrder),
+                'canCancelChangeOrder' => $purchaseOrder->current_change_order_id !== null
+                    && $user !== null
+                    && Gate::forUser($user)->check('cancelChangeOrder', $purchaseOrder),
             ],
         ];
     }

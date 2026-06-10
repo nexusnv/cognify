@@ -3,6 +3,7 @@
 namespace Domains\PurchaseOrder\Models;
 
 use App\Tenancy\Tenant;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +40,11 @@ class PurchaseOrderLine extends Model
         'delivery_location',
         'notes',
         'source_snapshot',
+        'status',
+        'current_version_number',
+        'cancelled_by_change_order_id',
+        'cancelled_at',
+        'cancelled_reason',
     ];
 
     protected function casts(): array
@@ -54,6 +60,8 @@ class PurchaseOrderLine extends Model
             'needed_by_date' => 'immutable_date',
             'expected_delivery_date' => 'immutable_date',
             'source_snapshot' => 'array',
+            'current_version_number' => 'integer',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -98,5 +106,10 @@ class PurchaseOrderLine extends Model
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function cancelledByChangeOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderChangeOrder::class, 'cancelled_by_change_order_id');
     }
 }

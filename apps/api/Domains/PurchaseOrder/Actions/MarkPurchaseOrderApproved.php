@@ -6,6 +6,8 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\PurchaseOrder\Actions\ApplyPurchaseOrderChangeOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
@@ -13,12 +15,25 @@ use Illuminate\Support\Facades\DB;
 
 class MarkPurchaseOrderApproved
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder) {}
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly ApplyPurchaseOrderChangeOrder $applyChangeOrder,
+    ) {}
 
     public function handle(PurchaseOrder $purchaseOrder, ApprovalInstance $instance, User $actor): PurchaseOrder
     {
         return DB::transaction(function () use ($purchaseOrder, $instance, $actor): PurchaseOrder {
             $purchaseOrder = $this->lockedPurchaseOrder($purchaseOrder);
+
+            if ($purchaseOrder->current_change_order_id !== null) {
+                $changeOrder = PurchaseOrderChangeOrder::query()
+                    ->where('tenant_id', $purchaseOrder->tenant_id)
+                    ->whereKey($purchaseOrder->current_change_order_id)
+                    ->firstOrFail();
+
+                return $this->applyChangeOrder->handle($changeOrder, $actor, $instance)->purchaseOrder->fresh('lines');
+            }
+
             $before = $purchaseOrder->only(['status', 'approved_by_user_id', 'approved_at', 'lock_version']);
 
             $purchaseOrder->forceFill([

@@ -19,8 +19,8 @@ Target scope:
 - Work only on P1 - Core Procure-To-Pay Lifecycle.
 - At the start of the goal and before each feature, re-read the roadmap and inspect the live code to determine which P1 features are still not implemented or only partially implemented.
 - As of this prompt, the expected remaining P1 range is P1-37 through P1-54:
-  - P1-37 Purchase Order Review and Approval
-  - P1-38 Purchase Order Issue to Supplier
+  - P1-37 Purchase Order Review and Approval - completed
+  - P1-38 Purchase Order Issue to Supplier - completed
   - P1-39 Purchase Order Change Orders
   - P1-40 Receiving and Goods Receipt
   - P1-41 Delivery and Fulfillment Tracking
@@ -74,7 +74,7 @@ For each remaining P1 feature, execute this exact sequence.
   - PR completion checklist
 
 4. Execute the plan sub-agently
-- Use subagents where tasks are independent and can be safely parallelized.
+- Use subagents where tasks are independent and can be safely parallelized. If you have problem spawning sub-agent, stop your work and ask clarification from user.
 - Keep all implementation work on the current goal-feature/* branch.
 - Use TDD or regression-first edits when fixing findings or changing existing behavior.
 - Respect repo boundaries:
@@ -120,10 +120,12 @@ For each remaining P1 feature, execute this exact sequence.
 - Commit all feature changes with a clear message.
 - Push the goal-feature/* branch.
 - Open a GitHub PR in ready-for-review state, not draft.
-- Include the design spec, implementation plan, tests run, visual inspection evidence if applicable, and CodeRabbit review/fix summary in the PR description.
+- The PR description must begins with this statement. "IMPORTANT. This PR comprises of the changes that we made to fully implement the [INSERT IMPLEMENTATION PLAN RELATIVE PATH] in accordance to the design specification of [INSERT THE DESIGN SPEC FILE RELATIVE PATH].
+- Include the tests run, visual inspection evidence if applicable, and CodeRabbit review/fix summary in the PR description.
+- Include the running PR instance at this url, https://pr-[INSERT PR NUMBER]-preview.nexusnv.net. and list out all accessible and testable urls to guide user to the right pages when reviewing (if applicable).
 
 9. Wait for human/PR review
-- Wait 10-15 minutes for review comments after opening the PR. If the diff is large or checks are still running, wait longer.
+- Wait 30-45 minutes for review comments after opening the PR. If the diff is large or checks are still running, wait longer.
 - Retrieve all unresolved PR review comments and inline threads.
 - Apply necessary fixes where the comments are valid and relevant.
 - If a comment is technically questionable, use the superpowers:receiving-code-review skill before changing code.

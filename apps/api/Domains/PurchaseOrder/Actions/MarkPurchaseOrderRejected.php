@@ -7,13 +7,18 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
+use Domains\PurchaseOrder\Actions\RejectPurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Illuminate\Support\Facades\DB;
 
 class MarkPurchaseOrderRejected
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder) {}
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly RejectPurchaseOrderChangeOrder $rejectChangeOrder,
+    ) {}
 
     public function handle(PurchaseOrder $purchaseOrder, ApprovalInstance $instance, User $actor, string $reason): PurchaseOrder
     {
@@ -21,8 +26,14 @@ class MarkPurchaseOrderRejected
             $purchaseOrder = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
                 ->where('tenant_id', $purchaseOrder->tenant_id)
+                ->with('currentChangeOrder')
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($purchaseOrder->current_change_order_id !== null && $purchaseOrder->currentChangeOrder instanceof PurchaseOrderChangeOrder) {
+                return $this->rejectChangeOrder->handle($purchaseOrder->currentChangeOrder, $instance, $actor, $reason);
+            }
+
             $before = $purchaseOrder->only(['status', 'rejected_by_user_id', 'rejected_at', 'rejected_reason', 'lock_version']);
 
             $purchaseOrder->forceFill([

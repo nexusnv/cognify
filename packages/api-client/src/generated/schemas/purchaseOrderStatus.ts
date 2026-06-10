@@ -13,6 +13,7 @@ export const PurchaseOrderStatus = {
   ready_for_review: "ready_for_review",
   cancelled: "cancelled",
   in_review: "in_review",
+  change_pending: "change_pending",
   changes_requested: "changes_requested",
   approved: "approved",
   rejected: "rejected",

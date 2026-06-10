@@ -8,6 +8,7 @@ enum PurchaseOrderStatus: string
     case ReadyForReview = 'ready_for_review';
     case InReview = 'in_review';
     case ChangesRequested = 'changes_requested';
+    case ChangePending = 'change_pending';
     case Approved = 'approved';
     case Issued = 'issued';
     case Acknowledged = 'acknowledged';

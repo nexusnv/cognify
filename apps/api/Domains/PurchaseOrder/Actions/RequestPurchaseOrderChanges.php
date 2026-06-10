@@ -7,13 +7,18 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
+use Domains\PurchaseOrder\Actions\RequestPurchaseOrderChangeOrderChanges;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Illuminate\Support\Facades\DB;
 
 class RequestPurchaseOrderChanges
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder) {}
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly RequestPurchaseOrderChangeOrderChanges $requestChangeOrderChanges,
+    ) {}
 
     /**
      * @param  array<int, string>  $requestedFields
@@ -24,8 +29,14 @@ class RequestPurchaseOrderChanges
             $purchaseOrder = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
                 ->where('tenant_id', $purchaseOrder->tenant_id)
+                ->with('currentChangeOrder')
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($purchaseOrder->current_change_order_id !== null && $purchaseOrder->currentChangeOrder instanceof PurchaseOrderChangeOrder) {
+                return $this->requestChangeOrderChanges->handle($purchaseOrder->currentChangeOrder, $instance, $actor, $reason, $requestedFields);
+            }
+
             $before = $purchaseOrder->only(['status', 'changes_requested_by_user_id', 'changes_requested_at', 'changes_requested_reason', 'changes_requested_fields', 'lock_version']);
 
             $purchaseOrder->forceFill([

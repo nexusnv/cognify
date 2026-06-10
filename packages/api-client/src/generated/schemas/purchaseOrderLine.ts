@@ -14,6 +14,10 @@ import type { PurchaseOrderLineExpectedDeliveryDate } from "./purchaseOrderLineE
 import type { PurchaseOrderLineDeliveryLocation } from "./purchaseOrderLineDeliveryLocation";
 import type { PurchaseOrderLineNotes } from "./purchaseOrderLineNotes";
 import type { PurchaseOrderLineSource } from "./purchaseOrderLineSource";
+import type { PurchaseOrderLineStatus } from "./purchaseOrderLineStatus";
+import type { PurchaseOrderLineCancelledByChangeOrderId } from "./purchaseOrderLineCancelledByChangeOrderId";
+import type { PurchaseOrderLineCancelledAt } from "./purchaseOrderLineCancelledAt";
+import type { PurchaseOrderLineCancelledReason } from "./purchaseOrderLineCancelledReason";
 
 export interface PurchaseOrderLine {
   id: string;
@@ -39,4 +43,9 @@ export interface PurchaseOrderLine {
   deliveryLocation?: PurchaseOrderLineDeliveryLocation;
   notes?: PurchaseOrderLineNotes;
   source?: PurchaseOrderLineSource;
+  status: PurchaseOrderLineStatus;
+  currentVersionNumber: number;
+  cancelledByChangeOrderId: PurchaseOrderLineCancelledByChangeOrderId;
+  cancelledAt: PurchaseOrderLineCancelledAt;
+  cancelledReason: PurchaseOrderLineCancelledReason;
 }

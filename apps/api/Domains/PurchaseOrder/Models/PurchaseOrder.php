@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Project\Models\ProcurementProject;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
@@ -91,6 +92,9 @@ class PurchaseOrder extends Model
         'acknowledged_contact_name',
         'acknowledgement_reference',
         'acknowledgement_note',
+        'current_change_order_id',
+        'current_supplier_version_number',
+        'change_order_count',
         'cancelled_by_user_id',
         'cancelled_at',
         'cancelled_reason',
@@ -122,6 +126,8 @@ class PurchaseOrder extends Model
             'issued_at' => 'datetime',
             'supplier_version' => 'array',
             'supplier_version_number' => 'integer',
+            'current_supplier_version_number' => 'integer',
+            'change_order_count' => 'integer',
             'last_supplier_exported_at' => 'datetime',
             'acknowledged_at' => 'datetime',
             'cancelled_at' => 'datetime',
@@ -249,6 +255,12 @@ class PurchaseOrder extends Model
                 userKey: 'cancelled_by_user_id',
                 dirtyMessage: ['cancelled_by_user_id', 'tenant_id'],
                 error: 'Purchase order cancellation actor must belong to the same tenant.',
+            );
+            $purchaseOrder->assertBelongsToTenant(
+                relationKey: 'current_change_order_id',
+                dirtyMessage: ['current_change_order_id', 'tenant_id'],
+                query: PurchaseOrderChangeOrder::query(),
+                error: 'Purchase order current change order must belong to the same tenant.',
             );
         });
     }
@@ -419,6 +431,22 @@ class PurchaseOrder extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(PurchaseOrderLine::class)->orderBy('line_number');
+    }
+
+    /**
+     * @return HasMany<PurchaseOrderChangeOrder, $this>
+     */
+    public function changeOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderChangeOrder::class)->orderByDesc('created_at')->orderByDesc('id');
+    }
+
+    /**
+     * @return BelongsTo<PurchaseOrderChangeOrder, $this>
+     */
+    public function currentChangeOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderChangeOrder::class, 'current_change_order_id');
     }
 
     /**

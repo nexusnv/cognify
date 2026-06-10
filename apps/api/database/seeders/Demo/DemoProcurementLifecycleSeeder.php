@@ -21,11 +21,16 @@ use App\Audit\AuditRecorder;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrderLine;
 use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderStatus;
+use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
+use Domains\PurchaseOrder\Support\PurchaseOrderChangeOrderDelta;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -744,6 +749,8 @@ class DemoProcurementLifecycleSeeder
         $poChangesRequested = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-changes-requested-source', $greenline, $greenlineVersion, $scorecard);
         $poApproved = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-approved-source', $greenline, $greenlineVersion, $scorecard);
         $poIssued = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-issued-source', $greenline, $greenlineVersion, $scorecard);
+        $poIssuedPendingChange = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-issued-pending-change-source', $greenline, $greenlineVersion, $scorecard);
+        $poIssuedDeliveryChange = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-issued-delivery-change-source', $greenline, $greenlineVersion, $scorecard);
         $poAcknowledged = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-acknowledged-source', $greenline, $greenlineVersion, $scorecard);
         $poRejected = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-rejected-source', $greenline, $greenlineVersion, $scorecard);
 
@@ -796,6 +803,8 @@ class DemoProcurementLifecycleSeeder
         $context->rfqAwardRecommendations->put('po-changes-requested-source', $poChangesRequested->refresh());
         $context->rfqAwardRecommendations->put('po-approved-source', $poApproved->refresh());
         $context->rfqAwardRecommendations->put('po-issued-source', $poIssued->refresh());
+        $context->rfqAwardRecommendations->put('po-issued-pending-change-source', $poIssuedPendingChange->refresh());
+        $context->rfqAwardRecommendations->put('po-issued-delivery-change-source', $poIssuedDeliveryChange->refresh());
         $context->rfqAwardRecommendations->put('po-acknowledged-source', $poAcknowledged->refresh());
         $context->rfqAwardRecommendations->put('po-rejected-source', $poRejected->refresh());
         $context->approvalTasks->put('award-routed', $routedTask->refresh());
@@ -865,6 +874,24 @@ class DemoProcurementLifecycleSeeder
                 'poStatus' => PurchaseOrderStatus::Issued,
                 'lockVersion' => 5,
             ],
+            'issued-pending-change' => [
+                'handoffKey' => 'issued-pending-change-source',
+                'recommendationKey' => 'po-issued-pending-change-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-CO-PENDING',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-CO-PENDING',
+                'poStatus' => PurchaseOrderStatus::ChangePending,
+                'lockVersion' => 7,
+            ],
+            'issued-delivery-change' => [
+                'handoffKey' => 'issued-delivery-change-source',
+                'recommendationKey' => 'po-issued-delivery-change-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-CO-DELIVERY',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-CO-DELIVERY',
+                'poStatus' => PurchaseOrderStatus::Issued,
+                'lockVersion' => 6,
+            ],
             'acknowledged' => [
                 'handoffKey' => 'acknowledged-source',
                 'recommendationKey' => 'po-acknowledged-source',
@@ -925,7 +952,7 @@ class DemoProcurementLifecycleSeeder
                 ])
                 ->values()
                 ->all();
-            $supplierVersion = in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)
+            $supplierVersion = in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
                 ? $this->purchaseOrderSupplierVersion($record, $quotation, $lineSnapshot, $sourceSnapshot, $approvalSnapshot)
                 : null;
 
@@ -1005,8 +1032,8 @@ class DemoProcurementLifecycleSeeder
                     'cancelled_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? $buyer->id : null,
                     'cancelled_at' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? '2026-05-26 12:00:00' : null,
                     'cancelled_reason' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? 'Duplicate draft replaced by PO-2026-SUSTAIN-REVIEW.' : null,
-                    'approval_submitted_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::Rejected], true) ? $buyer->id : null,
-                    'approval_submitted_at' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::Rejected], true) ? '2026-06-09 08:00:00' : null,
+                    'approval_submitted_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::ChangePending, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::Rejected], true) ? $buyer->id : null,
+                    'approval_submitted_at' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::ChangePending, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::Rejected], true) ? '2026-06-09 08:00:00' : null,
                     'approved_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? $finance->id : null,
                     'approved_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? '2026-06-09 12:00:00' : null,
                     'rejected_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? $finance->id : null,
@@ -1016,17 +1043,17 @@ class DemoProcurementLifecycleSeeder
                     'changes_requested_at' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? '2026-06-09 10:00:00' : null,
                     'changes_requested_reason' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? 'Payment terms and tax amount require correction.' : null,
                     'changes_requested_fields' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? ['taxAmount', 'paymentTerms'] : [],
-                    'issued_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? $buyer->id : null,
-                    'issued_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? '2026-06-10 10:00:00' : null,
-                    'issue_method' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'manual_email' : null,
-                    'supplier_contact_name' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'Priya Supplier' : null,
-                    'supplier_contact_email' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'priya.supplier@example.com' : null,
-                    'issue_message' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'Please confirm receipt and planned delivery date.' : null,
+                    'issued_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? $buyer->id : null,
+                    'issued_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? '2026-06-10 10:00:00' : null,
+                    'issue_method' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? 'manual_email' : null,
+                    'supplier_contact_name' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? 'Priya Supplier' : null,
+                    'supplier_contact_email' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? 'priya.supplier@example.com' : null,
+                    'issue_message' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? 'Please confirm receipt and planned delivery date.' : null,
                     'supplier_version' => $supplierVersion,
                     'supplier_version_number' => $supplierVersion !== null ? 1 : 0,
-                    'last_supplier_exported_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? $buyer->id : null,
-                    'last_supplier_exported_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? '2026-06-10 10:05:00' : null,
-                    'last_supplier_export_format' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'json' : null,
+                    'last_supplier_exported_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? $buyer->id : null,
+                    'last_supplier_exported_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? '2026-06-10 10:05:00' : null,
+                    'last_supplier_export_format' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true) ? 'json' : null,
                     'acknowledged_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? $buyer->id : null,
                     'acknowledged_at' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? '2026-06-10 11:00:00' : null,
                     'acknowledged_contact_name' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? 'Priya Supplier' : null,
@@ -1060,7 +1087,7 @@ class DemoProcurementLifecycleSeeder
 
             $purchaseOrder = $this->seedPurchaseOrderApprovalRoute($context, $tenant, $purchaseOrder->refresh(), $policyVersion, $buyer, $finance);
 
-            if (in_array($purchaseOrder->statusState(), [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)) {
+            if (in_array($purchaseOrder->statusState(), [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)) {
                 $approvedSnapshot = [
                     'approvalInstanceId' => $purchaseOrder->approval_instance_id !== null ? (string) $purchaseOrder->approval_instance_id : null,
                     'status' => 'approved',
@@ -1076,10 +1103,179 @@ class DemoProcurementLifecycleSeeder
                 ])->save();
             }
 
+            $purchaseOrder = $this->seedPurchaseOrderChangeOrderDemo($purchaseOrder->refresh(), $poKey, $buyer, $finance);
+
             $this->recordPurchaseOrderAudit($tenant, $buyer, $purchaseOrder->refresh());
             $context->purchaseOrderRequestHandoffs->put($record['handoffKey'], $handoff->refresh());
             $context->purchaseOrders->put($poKey, $purchaseOrder->refresh());
         }
+    }
+
+    private function seedPurchaseOrderChangeOrderDemo(PurchaseOrder $purchaseOrder, string $poKey, User $buyer, User $finance): PurchaseOrder
+    {
+        $line = $purchaseOrder->lines()->orderBy('line_number')->first();
+
+        if (! $line instanceof PurchaseOrderLine) {
+            return $purchaseOrder;
+        }
+
+        $scenario = match ($poKey) {
+            'acknowledged' => [
+                'number' => "{$purchaseOrder->number}-CO-001",
+                'status' => PurchaseOrderChangeOrderStatus::Approved,
+                'type' => PurchaseOrderChangeOrderType::Amendment,
+                'reason' => 'Approved material price and quantity update after supplier acknowledgement.',
+                'payload' => [
+                    'changeType' => PurchaseOrderChangeOrderType::Amendment->value,
+                    'reason' => 'Approved material price and quantity update after supplier acknowledgement.',
+                    'lines' => [[
+                        'lineId' => (string) $line->id,
+                        'action' => 'update',
+                        'quantity' => '48.0000',
+                        'unitPrice' => '975.0000',
+                        'notes' => 'Supplier accepted revised commercial commitment.',
+                    ]],
+                ],
+                'material' => true,
+                'requiresApproval' => true,
+                'supplierVersionNumber' => 2,
+            ],
+            'issued-pending-change' => [
+                'number' => "{$purchaseOrder->number}-CO-001",
+                'status' => PurchaseOrderChangeOrderStatus::PendingApproval,
+                'type' => PurchaseOrderChangeOrderType::Amendment,
+                'reason' => 'Pending approval for material quantity and price revision.',
+                'payload' => [
+                    'changeType' => PurchaseOrderChangeOrderType::Amendment->value,
+                    'reason' => 'Pending approval for material quantity and price revision.',
+                    'lines' => [[
+                        'lineId' => (string) $line->id,
+                        'action' => 'update',
+                        'quantity' => '45.0000',
+                        'unitPrice' => '990.0000',
+                        'notes' => 'Pending commercial review for revised supplier quote.',
+                    ]],
+                ],
+                'material' => true,
+                'requiresApproval' => true,
+                'supplierVersionNumber' => null,
+            ],
+            'issued-delivery-change' => [
+                'number' => "{$purchaseOrder->number}-CO-001",
+                'status' => PurchaseOrderChangeOrderStatus::Approved,
+                'type' => PurchaseOrderChangeOrderType::Amendment,
+                'reason' => 'Applied non-material delivery date update.',
+                'payload' => [
+                    'changeType' => PurchaseOrderChangeOrderType::Amendment->value,
+                    'reason' => 'Applied non-material delivery date update.',
+                    'expectedDeliveryDate' => '2026-07-22',
+                    'lines' => [[
+                        'lineId' => (string) $line->id,
+                        'action' => 'update',
+                        'expectedDeliveryDate' => '2026-07-22',
+                        'deliveryLocation' => 'HQ East Wing - Level 5',
+                        'notes' => 'Receiving dock changed without commercial impact.',
+                    ]],
+                ],
+                'material' => false,
+                'requiresApproval' => false,
+                'supplierVersionNumber' => 2,
+            ],
+            default => null,
+        };
+
+        if ($scenario === null) {
+            $purchaseOrder->forceFill(['current_change_order_id' => null])->save();
+            $purchaseOrder->changeOrders()->delete();
+
+            return $purchaseOrder->refresh();
+        }
+
+        $purchaseOrder->forceFill(['current_change_order_id' => null])->save();
+        $purchaseOrder->changeOrders()->delete();
+        $delta = app(PurchaseOrderChangeOrderDelta::class)->calculate($purchaseOrder->refresh()->load('lines'), $scenario['payload']);
+        $status = $scenario['status'];
+        $submittedAt = '2026-06-10 12:00:00';
+        $approvedAt = $status === PurchaseOrderChangeOrderStatus::Approved ? '2026-06-10 13:00:00' : null;
+
+        $changeOrder = PurchaseOrderChangeOrder::query()->create([
+            'tenant_id' => $purchaseOrder->tenant_id,
+            'purchase_order_id' => $purchaseOrder->id,
+            'approval_instance_id' => $scenario['requiresApproval'] ? $purchaseOrder->approval_instance_id : null,
+            'number' => $scenario['number'],
+            'status' => $status,
+            'change_type' => $scenario['type'],
+            'from_purchase_order_status' => PurchaseOrderStatus::Issued->value,
+            'to_purchase_order_status' => $scenario['type'] === PurchaseOrderChangeOrderType::FullCancellation
+                ? PurchaseOrderStatus::Cancelled->value
+                : PurchaseOrderStatus::Issued->value,
+            'reason' => $scenario['reason'],
+            'material_change' => $scenario['material'],
+            'requires_approval' => $scenario['requiresApproval'],
+            'requested_by_user_id' => $buyer->id,
+            'requested_at' => '2026-06-10 11:30:00',
+            'submitted_by_user_id' => $buyer->id,
+            'submitted_at' => $submittedAt,
+            'approved_by_user_id' => $status === PurchaseOrderChangeOrderStatus::Approved ? $finance->id : null,
+            'approved_at' => $approvedAt,
+            'before_snapshot' => $delta['before'],
+            'after_snapshot' => $delta['after'],
+            'delta_snapshot' => $delta['delta'],
+            'supplier_version_number' => $scenario['supplierVersionNumber'],
+            'lock_version' => 1,
+        ]);
+
+        foreach ($delta['lineChanges'] as $lineChange) {
+            $before = $lineChange['before'];
+            $after = $lineChange['after'];
+            PurchaseOrderChangeOrderLine::query()->create([
+                'tenant_id' => $purchaseOrder->tenant_id,
+                'purchase_order_change_order_id' => $changeOrder->id,
+                'purchase_order_line_id' => $lineChange['lineId'],
+                'line_number' => $before['lineNumber'],
+                'change_action' => $lineChange['action'],
+                'quantity_before' => $before['quantity'],
+                'quantity_after' => $after['quantity'],
+                'unit_price_before' => $before['unitPrice'],
+                'unit_price_after' => $after['unitPrice'],
+                'subtotal_amount_before' => $before['subtotalAmount'],
+                'subtotal_amount_after' => $after['subtotalAmount'],
+                'tax_amount_before' => $before['taxAmount'],
+                'tax_amount_after' => $after['taxAmount'],
+                'freight_amount_before' => $before['freightAmount'],
+                'freight_amount_after' => $after['freightAmount'],
+                'discount_amount_before' => $before['discountAmount'],
+                'discount_amount_after' => $after['discountAmount'],
+                'total_amount_before' => $before['totalAmount'],
+                'total_amount_after' => $after['totalAmount'],
+                'expected_delivery_date_before' => $before['expectedDeliveryDate'],
+                'expected_delivery_date_after' => $after['expectedDeliveryDate'],
+                'delivery_location_before' => $before['deliveryLocation'],
+                'delivery_location_after' => $after['deliveryLocation'],
+                'notes_before' => $before['notes'],
+                'notes_after' => $after['notes'],
+                'delta_snapshot' => $lineChange,
+            ]);
+        }
+
+        $updates = ['current_change_order_id' => null];
+
+        if ($status === PurchaseOrderChangeOrderStatus::PendingApproval) {
+            $updates['current_change_order_id'] = $changeOrder->id;
+        }
+
+        if ($scenario['supplierVersionNumber'] !== null) {
+            $updates['supplier_version_number'] = $scenario['supplierVersionNumber'];
+            $updates['current_supplier_version_number'] = $scenario['supplierVersionNumber'];
+        }
+
+        if ($poKey === 'issued-delivery-change') {
+            $updates['expected_delivery_date'] = '2026-07-22';
+        }
+
+        $purchaseOrder->forceFill($updates)->save();
+
+        return $purchaseOrder->refresh();
     }
 
     /**
@@ -1159,6 +1355,7 @@ class DemoProcurementLifecycleSeeder
             PurchaseOrderStatus::ReadyForReview => 'purchase_order.ready_for_review',
             PurchaseOrderStatus::InReview => 'purchase_order.approval_submitted',
             PurchaseOrderStatus::ChangesRequested => 'purchase_order.changes_requested',
+            PurchaseOrderStatus::ChangePending => 'purchase_order.change_order.submitted',
             PurchaseOrderStatus::Approved => 'purchase_order.approved',
             PurchaseOrderStatus::Issued => 'purchase_order.issued',
             PurchaseOrderStatus::Acknowledged => 'purchase_order.acknowledged',
@@ -1188,7 +1385,7 @@ class DemoProcurementLifecycleSeeder
 
         $approvedStatuses = [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged];
 
-        if (! in_array($status, [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, ...$approvedStatuses, PurchaseOrderStatus::Rejected], true)) {
+        if (! in_array($status, [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::ChangePending, ...$approvedStatuses, PurchaseOrderStatus::Rejected], true)) {
             return $purchaseOrder;
         }
 
