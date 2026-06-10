@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 
 class PurchaseOrderPolicy
 {
@@ -78,6 +79,17 @@ class PurchaseOrderPolicy
     public function cancel(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $this->view($user, $purchaseOrder);
+    }
+
+    public function recordGoodsReceipt(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->isTenantScoped($purchaseOrder->tenant_id)
+            && in_array($purchaseOrder->statusState(), [
+                PurchaseOrderStatus::Issued,
+                PurchaseOrderStatus::Acknowledged,
+                PurchaseOrderStatus::ChangePending,
+            ], true)
+            && $this->buyerOrAdmin($user);
     }
 
     private function buyerOrAdmin(User $user): bool

@@ -1,9 +1,11 @@
-# P1 Roadmap Implementation Goal
+# P1 Roadmap Implementation Goal Prompt
 
+Use this prompt to start a long-running Codex/Codex style goal for finishing every remaining P1 feature in `docs/01-product/feature-roadmap.md`.
+
+```text
 Goal: Implement all remaining P1 Cognify features from docs/01-product/feature-roadmap.md, one feature at a time, using a strict branch, design, implementation, review, PR, and merge loop.
 
 Repository context:
-
 - Cognify is a multi-tenant enterprise procure-to-pay SaaS.
 - Follow AGENTS.md, ARCHITECTURE.md, docs/agentic/AGENTIC_CODING_GUIDELINES.md, docs/05-runbooks/feature-development.md, docs/04-engineering/standards/*, and the repo boundaries in the roadmap.
 - Cognify-specific app workflows live in apps/web.
@@ -162,3 +164,84 @@ Operational constraints:
 - Do not duplicate generated API response types in app code.
 - Do not use mock-only verification for completed production workflows.
 - Do not run destructive git commands unless explicitly approved.
+```
+
+## Prerequisites And Dependencies
+
+Prepare these before starting the goal so agents can run the loop without avoidable interruptions.
+
+### Repository And GitHub
+
+- `main` is clean, protected, and pushable through PR merge.
+- Remote `origin` is configured.
+- The agent has permission to create branches named `goal-feature/*`.
+- The agent has permission to push branches, open ready-for-review PRs, read PR review comments, resolve/respond to comments where appropriate, and merge approved PRs.
+- GitHub CLI `gh` is authenticated, or the GitHub connector app is installed and authorized for this repository.
+- Branch protection, required checks, and merge strategy are known.
+
+### Codex Skills And Apps
+
+- Superpowers plugin installed and available, especially:
+  - `superpowers:brainstorming`
+  - `superpowers:writing-plans`
+  - `superpowers:subagent-driven-development`
+  - `superpowers:dispatching-parallel-agents`
+  - `superpowers:test-driven-development`
+  - `superpowers:systematic-debugging`
+  - `superpowers:verification-before-completion`
+  - `superpowers:receiving-code-review`
+- CodeRabbit plugin/app/MCP installed and authorized for independent reviews.
+- GitHub plugin/app installed for PR metadata, review comments, and PR lifecycle operations.
+- `ui-ux-pro-max` skill installed if visual critique should use that exact skill name. If unavailable, the agent should perform a rigorous screenshot critique manually and note that the skill was unavailable.
+- Multi-agent tooling available for subagent execution.
+- CodeGraph for code discovery
+
+### Local Toolchain
+
+- Node.js and pnpm versions compatible with the repo.
+- PHP and Composer versions compatible with `apps/api`.
+- Database/client tools required by the Laravel app.
+- Docker or the documented local service runner available for `pnpm dev:services`.
+- Playwright browser dependencies installed for screenshot and E2E verification.
+- Any required image/screenshot tooling available in the agent environment.
+- shadcn MCP for API reference to shadcn components/composites/blocks
+
+### Local Environment
+
+- `.env` files are present for `apps/web`, `apps/api`, and root-level tooling where required.
+- Local services can start with:
+  - `pnpm dev:services`
+  - `pnpm dev`
+- Laravel migrations and seeders can run locally.
+- Demo data is sufficient to exercise requester, buyer, approver, finance/AP, receiver, admin, and vendor-facing P2P workflows.
+- Real API verification is possible against local services; MSW-only verification is not enough for completed workflows.
+
+### Verification Commands
+
+Agents should be able to run the relevant commands from AGENTS.md and the feature runbook, including:
+
+- `pnpm install`
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
+- `pnpm dev`
+- `pnpm dev:reset`
+- `pnpm dev:services`
+- `pnpm dev:services:down`
+- `pnpm generate:api`
+- `pnpm check:api-contract`
+- Laravel API test commands from `docs/05-runbooks/feature-development.md`
+
+### Review And Rate Limits
+
+- CodeRabbit review quota/rate limits are available.
+- Enforce at least 15 minutes between CodeRabbit review starts.
+- Enforce no more than 2 CodeRabbit review cycles per feature branch.
+- Human/PR reviewers know to expect a 10-15 minute review wait window per feature, longer for large diffs.
+
+### Product Inputs
+
+- `docs/01-product/feature-roadmap.md` is accepted as the P1 source of truth.
+- Existing specs and plans under `docs/superpowers/specs` and `docs/superpowers/plans` are available for adjacent workflow context.
+- The agent is allowed to make product/design decisions based on Cognify's target market: enterprise procurement/procure-to-pay teams needing operational clarity, governance, auditability, and realistic AP/procurement workflows.

@@ -31,6 +31,10 @@ use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Domains\PurchaseOrder\Support\PurchaseOrderChangeOrderDelta;
+use Domains\Receiving\Models\GoodsReceipt;
+use Domains\Receiving\Models\GoodsReceiptLine;
+use Domains\Receiving\States\GoodsReceiptStatus;
+use Domains\Receiving\Support\ReceivingNumber;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -112,6 +116,8 @@ class DemoProcurementLifecycleSeeder
         );
         $purchaseOrderPolicy = $this->approvalPolicy($tenant, $finance, 'purchase_order', 'Demo purchase order approval policy');
         $this->seedPurchaseOrders($context, $tenant, $buyer, $finance, $purchaseOrderPolicy);
+
+        $this->seedGoodsReceipts($context, $tenant, $buyer);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -1605,5 +1611,79 @@ class DemoProcurementLifecycleSeeder
                 'metadata' => ['demo' => true],
             ],
         );
+    }
+
+    private function seedGoodsReceipts(DemoSeedContext $context, Tenant $tenant, User $buyer): void
+    {
+        $receivableStatuses = [
+            PurchaseOrderStatus::Issued,
+            PurchaseOrderStatus::Acknowledged,
+            PurchaseOrderStatus::ChangePending,
+        ];
+
+        foreach ($context->purchaseOrders as $purchaseOrder) {
+            $po = $purchaseOrder->fresh()->load('lines');
+
+            if (! in_array($po->statusState(), $receivableStatuses, true)) {
+                continue;
+            }
+
+            $receiptNumber = ReceivingNumber::nextFor($po);
+
+            $receipt = GoodsReceipt::query()->create([
+                'tenant_id' => $tenant->id,
+                'purchase_order_id' => $po->id,
+                'number' => $receiptNumber,
+                'status' => GoodsReceiptStatus::Completed,
+                'receipt_date' => '2026-06-12',
+                'receipt_reference' => "GR-REF-{$po->number}",
+                'notes' => 'Seeded goods receipt for demo.',
+                'recorded_by_user_id' => $buyer->id,
+                'recorded_at' => '2026-06-12 10:00:00',
+                'lock_version' => 1,
+            ]);
+
+            $linesData = [];
+
+            foreach ($po->lines as $line) {
+                $quantityReceived = (float) $line->quantity;
+                $newCumulativeReceived = round((float) $line->cumulative_quantity_received + $quantityReceived, 4);
+
+                $linesData[] = [
+                    'tenant_id' => $tenant->id,
+                    'goods_receipt_id' => $receipt->id,
+                    'purchase_order_line_id' => $line->id,
+                    'line_number' => $line->line_number,
+                    'quantity_ordered' => $line->quantity,
+                    'quantity_received' => (string) $quantityReceived,
+                    'quantity_accepted' => (string) $quantityReceived,
+                    'notes' => 'Seeded goods receipt line for demo.',
+                ];
+
+                $line->forceFill([
+                    'cumulative_quantity_received' => (string) $newCumulativeReceived,
+                    'cumulative_quantity_accepted' => (string) $newCumulativeReceived,
+                    'last_receipt_at' => '2026-06-12 10:00:00',
+                ])->save();
+            }
+
+            foreach ($linesData as $lineData) {
+                GoodsReceiptLine::query()->create($lineData);
+            }
+
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $tenant,
+                actor: $buyer,
+                action: 'goods_receipt.recorded',
+                subject: $receipt,
+                metadata: [
+                    'purchaseOrderId' => (string) $po->id,
+                    'purchaseOrderNumber' => $po->number,
+                    'receiptNumber' => $receiptNumber,
+                    'lineCount' => count($linesData),
+                    'totalQuantityReceived' => array_sum(array_map(fn ($l) => (float) $l['quantity_received'], $linesData)),
+                ],
+            ));
+        }
     }
 }

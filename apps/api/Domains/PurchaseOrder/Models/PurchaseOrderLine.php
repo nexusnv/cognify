@@ -45,6 +45,10 @@ class PurchaseOrderLine extends Model
         'cancelled_by_change_order_id',
         'cancelled_at',
         'cancelled_reason',
+        'cumulative_quantity_received',
+        'cumulative_quantity_accepted',
+        'over_receipt_tolerance_percent',
+        'last_receipt_at',
     ];
 
     protected function casts(): array
@@ -62,6 +66,10 @@ class PurchaseOrderLine extends Model
             'source_snapshot' => 'array',
             'current_version_number' => 'integer',
             'cancelled_at' => 'datetime',
+            'cumulative_quantity_received' => 'decimal:4',
+            'cumulative_quantity_accepted' => 'decimal:4',
+            'over_receipt_tolerance_percent' => 'decimal:2',
+            'last_receipt_at' => 'datetime',
         ];
     }
 

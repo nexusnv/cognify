@@ -17,4 +17,5 @@ export interface PurchaseOrderPermissions {
   canUpdateChangeOrder: boolean;
   canSubmitChangeOrder: boolean;
   canCancelChangeOrder: boolean;
+  canRecordGoodsReceipt: boolean;
 }
