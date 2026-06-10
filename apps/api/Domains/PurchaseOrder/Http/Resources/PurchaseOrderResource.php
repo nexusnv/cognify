@@ -105,6 +105,14 @@ class PurchaseOrderResource extends JsonResource
             'lines' => $purchaseOrder->relationLoaded('lines')
                 ? PurchaseOrderLineResource::collection($purchaseOrder->lines)->resolve()
                 : [],
+            'receivingSummary' => [
+                'totalReceiptCount' => $purchaseOrder->relationLoaded('goodsReceipts')
+                    ? $purchaseOrder->goodsReceipts->count()
+                    : 0,
+                'latestReceiptDate' => $purchaseOrder->relationLoaded('lines')
+                    ? $purchaseOrder->lines->max('last_receipt_at')?->toDateString()
+                    : null,
+            ],
             'changeOrdersSummary' => [
                 'currentChangeOrder' => $purchaseOrder->relationLoaded('currentChangeOrder') && $purchaseOrder->currentChangeOrder instanceof PurchaseOrderChangeOrder
                     ? [
@@ -160,6 +168,11 @@ class PurchaseOrderResource extends JsonResource
                 'canCancelChangeOrder' => $purchaseOrder->current_change_order_id !== null
                     && $user !== null
                     && Gate::forUser($user)->check('cancelChangeOrder', $purchaseOrder),
+                'canRecordGoodsReceipt' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
+                    && $user !== null
+                    && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
+                'canConfirmGoodsReceipt' => $user !== null
+                    && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
             ],
         ];
     }

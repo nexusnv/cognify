@@ -174,6 +174,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/purchase-orders/{purchaseOrder}/supplier-export.csv', [PurchaseOrderController::class, 'exportSupplierCsv']);
             Route::post('/purchase-orders/{purchaseOrder}/supplier-export.csv', [PurchaseOrderController::class, 'recordSupplierExportCsv']);
             Route::post('/purchase-orders/{purchaseOrder}/acknowledge', [PurchaseOrderController::class, 'acknowledge']);
+            Route::get('/purchase-orders/{purchaseOrder}/goods-receipts', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'index']);
+            Route::post('/purchase-orders/{purchaseOrder}/goods-receipts', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'store']);
+            Route::get('/goods-receipts/{goodsReceipt}', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'show']);
+            Route::post('/goods-receipts/{goodsReceipt}/confirm-requester', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'confirmRequester']);
+            Route::post('/goods-receipts/{goodsReceipt}/confirm-buyer', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'confirmBuyer']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);

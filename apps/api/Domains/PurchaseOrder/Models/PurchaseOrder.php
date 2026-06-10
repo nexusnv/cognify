@@ -8,6 +8,7 @@ use Domains\Approval\Models\ApprovalInstance;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\Receiving\Models\GoodsReceipt;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
@@ -439,6 +440,14 @@ class PurchaseOrder extends Model
     public function changeOrders(): HasMany
     {
         return $this->hasMany(PurchaseOrderChangeOrder::class)->orderByDesc('created_at')->orderByDesc('id');
+    }
+
+    /**
+     * @return HasMany<GoodsReceipt, $this>
+     */
+    public function goodsReceipts(): HasMany
+    {
+        return $this->hasMany(GoodsReceipt::class);
     }
 
     /**

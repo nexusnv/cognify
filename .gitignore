@@ -46,3 +46,7 @@ Thumbs.db
 
 # Local agent/editor runtime state
 .kilo/agent-manager.json
+
+# CLI tool artifacts
+.antigravitycli/
+.playwright-cli/

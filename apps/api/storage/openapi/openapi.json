@@ -7958,6 +7958,196 @@
         }
       }
     },
+    "/api/purchase-orders/{purchaseOrder}/goods-receipts": {
+      "get": {
+        "operationId": "listGoodsReceipts",
+        "tags": ["Purchase Orders"],
+        "summary": "List goods receipts for a purchase order",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of goods receipts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/GoodsReceipt" }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "recordGoodsReceipt",
+        "tags": ["Purchase Orders"],
+        "summary": "Record a goods receipt",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecordGoodsReceiptRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Goods receipt recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/goods-receipts/{goodsReceipt}": {
+      "get": {
+        "operationId": "showGoodsReceipt",
+        "tags": ["Purchase Orders"],
+        "summary": "Show a goods receipt",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "goodsReceipt",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Goods receipt UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Goods receipt detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/goods-receipts/{goodsReceipt}/confirm-requester": {
+      "post": {
+        "operationId": "confirmGoodsReceiptRequester",
+        "tags": ["Purchase Orders"],
+        "summary": "Confirm goods receipt as requester",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "goodsReceipt",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Goods receipt UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConfirmGoodsReceiptRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Goods receipt confirmed by requester",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/goods-receipts/{goodsReceipt}/confirm-buyer": {
+      "post": {
+        "operationId": "confirmGoodsReceiptBuyer",
+        "tags": ["Purchase Orders"],
+        "summary": "Confirm goods receipt as buyer",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "goodsReceipt",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Goods receipt UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConfirmGoodsReceiptRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Goods receipt confirmed by buyer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
     "/api/purchase-order-change-orders/{changeOrder}": {
       "get": {
         "operationId": "showPurchaseOrderChangeOrder",
@@ -8198,6 +8388,26 @@
         "schema": {
           "type": "string"
         }
+      },
+      "TenantId": {
+        "name": "X-Tenant-Id",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Tenant UUID"
+      },
+      "PurchaseOrderId": {
+        "name": "purchaseOrder",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Purchase order UUID"
       }
     },
     "responses": {
@@ -8277,6 +8487,47 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "string" },
+                    "message": { "type": "string" },
+                    "details": { "type": "object" },
+                    "requestId": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict (e.g. stale lock version)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "string" },
+                    "message": { "type": "string" },
+                    "requestId": { "type": "string" }
+                  }
+                }
+              }
             }
           }
         }
@@ -20475,7 +20726,9 @@
           "canCreateChangeOrder",
           "canUpdateChangeOrder",
           "canSubmitChangeOrder",
-          "canCancelChangeOrder"
+          "canCancelChangeOrder",
+          "canRecordGoodsReceipt",
+          "canConfirmGoodsReceipt"
         ],
         "properties": {
           "canUpdate": {
@@ -20509,6 +20762,12 @@
             "type": "boolean"
           },
           "canCancelChangeOrder": {
+            "type": "boolean"
+          },
+          "canRecordGoodsReceipt": {
+            "type": "boolean"
+          },
+          "canConfirmGoodsReceipt": {
             "type": "boolean"
           }
         }
@@ -20688,7 +20947,11 @@
           "currentVersionNumber",
           "cancelledByChangeOrderId",
           "cancelledAt",
-          "cancelledReason"
+          "cancelledReason",
+          "cumulativeQuantityReceived",
+          "cumulativeQuantityAccepted",
+          "overReceiptTolerancePercent",
+          "lastReceiptAt"
         ],
         "properties": {
           "id": {
@@ -20940,6 +21203,25 @@
               "string",
               "null"
             ]
+          },
+          "cumulativeQuantityReceived": {
+            "type": "string",
+            "pattern": "^[-]?[0-9]+(\\.[0-9]{1,4})?$"
+          },
+          "cumulativeQuantityAccepted": {
+            "type": "string",
+            "pattern": "^[-]?[0-9]+(\\.[0-9]{1,4})?$"
+          },
+          "overReceiptTolerancePercent": {
+            "type": "string",
+            "pattern": "^[-]?[0-9]+(\\.[0-9]{1,2})?$"
+          },
+          "lastReceiptAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -20959,7 +21241,8 @@
           "lines",
           "lockVersion",
           "permissions",
-          "changeOrdersSummary"
+          "changeOrdersSummary",
+          "receivingSummary"
         ],
         "properties": {
           "id": {
@@ -21179,6 +21462,9 @@
           },
           "changeOrdersSummary": {
             "$ref": "#/components/schemas/PurchaseOrderChangeOrdersSummary"
+          },
+          "receivingSummary": {
+            "$ref": "#/components/schemas/PurchaseOrderReceivingSummary"
           }
         }
       },
@@ -21839,6 +22125,25 @@
         },
         "additionalProperties": false
       },
+      "PurchaseOrderReceivingSummary": {
+        "type": "object",
+        "required": [
+          "totalReceiptCount",
+          "latestReceiptDate"
+        ],
+        "properties": {
+          "totalReceiptCount": {
+            "type": "integer",
+            "description": "Total number of goods receipts recorded"
+          },
+          "latestReceiptDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Date of the most recent goods receipt (null if none)"
+          }
+        },
+        "additionalProperties": false
+      },
       "PurchaseOrderChangeOrderLine": {
         "type": "object",
         "required": [
@@ -22418,6 +22723,80 @@
             "maxLength": 2000
           }
         }
+      },
+      "GoodsReceipt": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Goods receipt UUID" },
+          "purchaseOrderId": { "type": "string", "format": "uuid", "description": "Purchase order UUID" },
+          "number": { "type": "string", "description": "Goods receipt number (GR-YYYY-NNNNNN)" },
+          "status": { "type": "string", "enum": ["completed", "requester_confirmed", "buyer_confirmed"], "description": "Receipt status" },
+          "receiptDate": { "type": "string", "format": "date", "description": "Date goods were received" },
+          "receiptReference": { "type": "string", "nullable": true, "description": "External reference (e.g. delivery order number)" },
+          "notes": { "type": "string", "nullable": true, "description": "Receipt notes" },
+          "recordedByUserId": { "type": "string", "format": "uuid", "description": "User who recorded the receipt" },
+          "recordedAt": { "type": "string", "format": "date-time", "description": "When the receipt was recorded" },
+          "requesterConfirmedByUserId": { "type": "string", "format": "uuid", "nullable": true },
+          "requesterConfirmedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "buyerConfirmedByUserId": { "type": "string", "format": "uuid", "nullable": true },
+          "buyerConfirmedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "lockVersion": { "type": "integer", "description": "Optimistic lock version" },
+          "lines": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GoodsReceiptLine" }
+          }
+        },
+        "required": ["id", "purchaseOrderId", "number", "status", "receiptDate", "recordedByUserId", "recordedAt", "lockVersion", "lines"]
+      },
+      "GoodsReceiptLine": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
+          "lineNumber": { "type": "integer" },
+          "quantityOrdered": { "type": "string", "description": "Ordered quantity (decimal string)" },
+          "quantityReceived": { "type": "string", "description": "Quantity received (decimal string)" },
+          "quantityAccepted": { "type": "string", "description": "Quantity accepted (decimal string)" },
+          "rejectionReason": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true }
+        },
+        "required": ["id", "purchaseOrderLineId", "lineNumber", "quantityOrdered", "quantityReceived", "quantityAccepted"]
+      },
+      "RecordGoodsReceiptRequest": {
+        "type": "object",
+        "properties": {
+          "lockVersion": { "type": "integer", "minimum": 1 },
+          "receiptDate": { "type": "string", "format": "date", "description": "Date goods were received" },
+          "receiptReference": { "type": "string", "nullable": true, "maxLength": 100 },
+          "notes": { "type": "string", "nullable": true, "maxLength": 2000 },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/RecordGoodsReceiptLineItem"
+            }
+          }
+        },
+        "required": ["lockVersion", "receiptDate", "lines"]
+      },
+      "RecordGoodsReceiptLineItem": {
+        "type": "object",
+        "properties": {
+          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
+          "quantityReceived": { "type": "string", "description": "Quantity received (decimal string)" },
+          "quantityAccepted": { "type": "string", "nullable": true, "description": "Quantity accepted (decimal string, defaults to received)" },
+          "rejectionReason": { "type": "string", "nullable": true, "maxLength": 1000 },
+          "notes": { "type": "string", "nullable": true, "maxLength": 2000 }
+        },
+        "required": ["purchaseOrderLineId", "quantityReceived"]
+      },
+      "ConfirmGoodsReceiptRequest": {
+        "type": "object",
+        "properties": {
+          "lockVersion": { "type": "integer", "minimum": 1 }
+        },
+        "required": ["lockVersion"]
       }
     }
   }

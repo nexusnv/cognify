@@ -33,6 +33,10 @@ import type {
   CollaborationCommentListResponse,
   CollaborationCommentResponse,
   CollaborationMentionCandidateListResponse,
+  ConfirmGoodsReceiptBuyer200,
+  ConfirmGoodsReceiptRequest,
+  ConfirmGoodsReceiptRequester200,
+  ConflictResponse,
   CreateCollaborationCommentRequest,
   CreateQuotationRevisionRequest,
   CreateRequisitionRequest,
@@ -50,6 +54,7 @@ import type {
   ListApprovalTasksParams,
   ListAuditEventsParams,
   ListGlobalSearchParams,
+  ListGoodsReceipts200,
   ListNotificationsParams,
   ListProcurementCalendarEventsParams,
   ListProjectsParams,
@@ -93,6 +98,8 @@ import type {
   QuotationVersionListResponse,
   QuotationVersionResponse,
   ReasonedRequisitionActionRequest,
+  RecordGoodsReceipt201,
+  RecordGoodsReceiptRequest,
   RejectApprovalTaskRequest,
   RequestApprovalChangesRequest,
   RequestRequisitionChangesRequest,
@@ -123,6 +130,7 @@ import type {
   SaveRfqAwardRecommendationRequest,
   SearchResponse,
   SetCurrentTenantRequest,
+  ShowGoodsReceipt200,
   SourcingIntakeReviewCloseRequest,
   SourcingIntakeReviewDecisionRequest,
   SourcingIntakeReviewListResponse,
@@ -150,6 +158,7 @@ import type {
   UpdateRequisitionRequest,
   UpdateRfqInvitationStatusRequest,
   UpdateRfqScorecardScoresRequest,
+  ValidationErrorResponse,
   ValidationFailedResponse,
   VendorCreateQuotationRevisionRequest,
   VendorPickerListResponse,
@@ -10091,6 +10100,260 @@ export const savePurchaseOrderChangeOrder = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(savePurchaseOrderChangeOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary List goods receipts for a purchase order
+ */
+export type listGoodsReceiptsResponse200 = {
+  data: ListGoodsReceipts200;
+  status: 200;
+};
+
+export type listGoodsReceiptsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listGoodsReceiptsResponseSuccess = listGoodsReceiptsResponse200 & {
+  headers: Headers;
+};
+export type listGoodsReceiptsResponseError = listGoodsReceiptsResponse404 & {
+  headers: Headers;
+};
+
+export type listGoodsReceiptsResponse =
+  | listGoodsReceiptsResponseSuccess
+  | listGoodsReceiptsResponseError;
+
+export const getListGoodsReceiptsUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/goods-receipts`;
+};
+
+export const listGoodsReceipts = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<listGoodsReceiptsResponse> => {
+  return cognifyFetch<listGoodsReceiptsResponse>(getListGoodsReceiptsUrl(purchaseOrder), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Record a goods receipt
+ */
+export type recordGoodsReceiptResponse201 = {
+  data: RecordGoodsReceipt201;
+  status: 201;
+};
+
+export type recordGoodsReceiptResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordGoodsReceiptResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type recordGoodsReceiptResponseSuccess = recordGoodsReceiptResponse201 & {
+  headers: Headers;
+};
+export type recordGoodsReceiptResponseError = (
+  | recordGoodsReceiptResponse404
+  | recordGoodsReceiptResponse422
+) & {
+  headers: Headers;
+};
+
+export type recordGoodsReceiptResponse =
+  | recordGoodsReceiptResponseSuccess
+  | recordGoodsReceiptResponseError;
+
+export const getRecordGoodsReceiptUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/goods-receipts`;
+};
+
+export const recordGoodsReceipt = async (
+  purchaseOrder: string,
+  recordGoodsReceiptRequest: RecordGoodsReceiptRequest,
+  options?: RequestInit,
+): Promise<recordGoodsReceiptResponse> => {
+  return cognifyFetch<recordGoodsReceiptResponse>(getRecordGoodsReceiptUrl(purchaseOrder), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(recordGoodsReceiptRequest),
+  });
+};
+
+/**
+ * @summary Show a goods receipt
+ */
+export type showGoodsReceiptResponse200 = {
+  data: ShowGoodsReceipt200;
+  status: 200;
+};
+
+export type showGoodsReceiptResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showGoodsReceiptResponseSuccess = showGoodsReceiptResponse200 & {
+  headers: Headers;
+};
+export type showGoodsReceiptResponseError = showGoodsReceiptResponse404 & {
+  headers: Headers;
+};
+
+export type showGoodsReceiptResponse =
+  | showGoodsReceiptResponseSuccess
+  | showGoodsReceiptResponseError;
+
+export const getShowGoodsReceiptUrl = (goodsReceipt: string) => {
+  return `/api/goods-receipts/${goodsReceipt}`;
+};
+
+export const showGoodsReceipt = async (
+  goodsReceipt: string,
+  options?: RequestInit,
+): Promise<showGoodsReceiptResponse> => {
+  return cognifyFetch<showGoodsReceiptResponse>(getShowGoodsReceiptUrl(goodsReceipt), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Confirm goods receipt as requester
+ */
+export type confirmGoodsReceiptRequesterResponse200 = {
+  data: ConfirmGoodsReceiptRequester200;
+  status: 200;
+};
+
+export type confirmGoodsReceiptRequesterResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type confirmGoodsReceiptRequesterResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type confirmGoodsReceiptRequesterResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type confirmGoodsReceiptRequesterResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type confirmGoodsReceiptRequesterResponseSuccess =
+  confirmGoodsReceiptRequesterResponse200 & {
+    headers: Headers;
+  };
+export type confirmGoodsReceiptRequesterResponseError = (
+  | confirmGoodsReceiptRequesterResponse403
+  | confirmGoodsReceiptRequesterResponse404
+  | confirmGoodsReceiptRequesterResponse409
+  | confirmGoodsReceiptRequesterResponse422
+) & {
+  headers: Headers;
+};
+
+export type confirmGoodsReceiptRequesterResponse =
+  | confirmGoodsReceiptRequesterResponseSuccess
+  | confirmGoodsReceiptRequesterResponseError;
+
+export const getConfirmGoodsReceiptRequesterUrl = (goodsReceipt: string) => {
+  return `/api/goods-receipts/${goodsReceipt}/confirm-requester`;
+};
+
+export const confirmGoodsReceiptRequester = async (
+  goodsReceipt: string,
+  confirmGoodsReceiptRequest: ConfirmGoodsReceiptRequest,
+  options?: RequestInit,
+): Promise<confirmGoodsReceiptRequesterResponse> => {
+  return cognifyFetch<confirmGoodsReceiptRequesterResponse>(
+    getConfirmGoodsReceiptRequesterUrl(goodsReceipt),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(confirmGoodsReceiptRequest),
+    },
+  );
+};
+
+/**
+ * @summary Confirm goods receipt as buyer
+ */
+export type confirmGoodsReceiptBuyerResponse200 = {
+  data: ConfirmGoodsReceiptBuyer200;
+  status: 200;
+};
+
+export type confirmGoodsReceiptBuyerResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type confirmGoodsReceiptBuyerResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type confirmGoodsReceiptBuyerResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type confirmGoodsReceiptBuyerResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type confirmGoodsReceiptBuyerResponseSuccess = confirmGoodsReceiptBuyerResponse200 & {
+  headers: Headers;
+};
+export type confirmGoodsReceiptBuyerResponseError = (
+  | confirmGoodsReceiptBuyerResponse403
+  | confirmGoodsReceiptBuyerResponse404
+  | confirmGoodsReceiptBuyerResponse409
+  | confirmGoodsReceiptBuyerResponse422
+) & {
+  headers: Headers;
+};
+
+export type confirmGoodsReceiptBuyerResponse =
+  | confirmGoodsReceiptBuyerResponseSuccess
+  | confirmGoodsReceiptBuyerResponseError;
+
+export const getConfirmGoodsReceiptBuyerUrl = (goodsReceipt: string) => {
+  return `/api/goods-receipts/${goodsReceipt}/confirm-buyer`;
+};
+
+export const confirmGoodsReceiptBuyer = async (
+  goodsReceipt: string,
+  confirmGoodsReceiptRequest: ConfirmGoodsReceiptRequest,
+  options?: RequestInit,
+): Promise<confirmGoodsReceiptBuyerResponse> => {
+  return cognifyFetch<confirmGoodsReceiptBuyerResponse>(
+    getConfirmGoodsReceiptBuyerUrl(goodsReceipt),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(confirmGoodsReceiptRequest),
     },
   );
 };

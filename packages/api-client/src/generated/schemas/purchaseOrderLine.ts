@@ -18,6 +18,7 @@ import type { PurchaseOrderLineStatus } from "./purchaseOrderLineStatus";
 import type { PurchaseOrderLineCancelledByChangeOrderId } from "./purchaseOrderLineCancelledByChangeOrderId";
 import type { PurchaseOrderLineCancelledAt } from "./purchaseOrderLineCancelledAt";
 import type { PurchaseOrderLineCancelledReason } from "./purchaseOrderLineCancelledReason";
+import type { PurchaseOrderLineLastReceiptAt } from "./purchaseOrderLineLastReceiptAt";
 
 export interface PurchaseOrderLine {
   id: string;
@@ -48,4 +49,11 @@ export interface PurchaseOrderLine {
   cancelledByChangeOrderId: PurchaseOrderLineCancelledByChangeOrderId;
   cancelledAt: PurchaseOrderLineCancelledAt;
   cancelledReason: PurchaseOrderLineCancelledReason;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  cumulativeQuantityReceived: string;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,4})?$ */
+  cumulativeQuantityAccepted: string;
+  /** @pattern ^[-]?[0-9]+(\.[0-9]{1,2})?$ */
+  overReceiptTolerancePercent: string;
+  lastReceiptAt: PurchaseOrderLineLastReceiptAt;
 }

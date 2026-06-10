@@ -9,6 +9,7 @@ import { searchHandlers } from "../../features/search/mocks/search-handlers";
 import { requisitionsHandlers } from "../../features/requisitions/mocks/requisitions-handlers";
 import { projectHandlers } from "@/features/projects/mocks/project-handlers";
 import { purchaseOrderHandlers } from "@/features/purchase-orders/mocks/purchase-order-handlers";
+import { purchaseOrderGoodsReceiptHandlers } from "@/features/purchase-orders/mocks/purchase-order-goods-receipt-handlers";
 import { vendorPortalHandlers } from "@/features/vendor-portal/mocks/vendor-portal-handlers";
 import { sourcingHandlers } from "@/features/sourcing/mocks/sourcing-handlers";
 import { rfqHandlers } from "@/features/sourcing/mocks/rfq-handlers";
@@ -28,6 +29,7 @@ export const handlers = [
   ...requisitionsHandlers,
   ...projectHandlers,
   ...purchaseOrderHandlers,
+  ...purchaseOrderGoodsReceiptHandlers,
   ...vendorPortalHandlers,
   ...sourcingHandlers,
   ...vendorHandlers,

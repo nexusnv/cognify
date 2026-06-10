@@ -35,6 +35,8 @@ use Domains\Quotation\Policies\RfqAwardRecommendationPolicy;
 use Domains\Quotation\Policies\RfqPolicy;
 use Domains\Quotation\Policies\RfqInvitationPolicy;
 use Domains\Quotation\Policies\SourcingIntakeReviewPolicy;
+use Domains\Receiving\Models\GoodsReceipt;
+use Domains\Receiving\Policies\GoodsReceiptPolicy;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Policies\RequisitionPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -73,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
         Gate::policy(ApprovalTask::class, ApprovalTaskPolicy::class);
+        Gate::policy(GoodsReceipt::class, GoodsReceiptPolicy::class);
 
         AuditSubject::registerType(ApprovalTask::class, 'approval_task');
     }
