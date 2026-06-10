@@ -45,9 +45,9 @@ For each remaining P1 feature, execute this exact sequence.
 
 ### 1. Sync main and create a feature branch
 
-- Checkout `main`.
-- Pull the latest remote `main`.
-- Create a new branch named `goal-feature/<feature-number-lowercase-and-short-slug>`.
+- Checkout `goal-feature-staging`.
+- Pull the latest remote `goal-feature-staging`.
+- Create a new branch named `goal-feature/<feature-number-lowercase-and-short-slug>` from `goal-feature-staging` branch.
 - Example: `goal-feature/p1-37-po-review-approval`.
 - Never carry unrelated uncommitted changes into the feature branch. If the worktree is dirty, inspect it and preserve user work.
 
@@ -63,7 +63,7 @@ For each remaining P1 feature, execute this exact sequence.
 
 ### 3. Write an implementation plan
 
-- Use the `superpowers:writing-plans` skill after the design is accepted by the agent's quality bar.
+- Use the `superpowers:writing-plans` skill after the design is accepted by the agent's quality bar. Write a high-fidelity, high-quality implementation plan. Ground your plan to the project architecture (ARCHITECTURE.md), and the project `docs/05-runbooks/feature-development.md` runbook.
 - Save the plan under `docs/superpowers/plans/YYYY-MM-DD-<feature-slug>.md`.
 - The plan must include:
   - workflow map
@@ -79,7 +79,7 @@ For each remaining P1 feature, execute this exact sequence.
 ### 4. Execute the plan sub-agently
 
 - Use the `superpowers:subagent-driven-development` skill. Make a commit after each implementation-plan task is completed.
-- Use subagents where tasks are independent and can be safely parallelized. If you have a problem spawning a sub-agent, stop your work and ask the user for clarification.
+- Use subagents where tasks are independent and can be safely parallelized. If you have a problem spawning a sub-agent, stop your work and ask the user for clarification or ways to move forward.
 - Keep all implementation work on the current `goal-feature/*` branch.
 - Use TDD or regression-first edits when fixing findings or changing existing behavior.
 - Respect repo boundaries:
@@ -121,8 +121,9 @@ For each remaining P1 feature, execute this exact sequence.
 
 - Use CodeRabbit AI through the available CodeRabbit / Coderabbit MCP or skill.
 - Wait for CodeRabbit to return all review comments before acting.
-- Do not start more than one CodeRabbit review within a 15-minute window.
-- Do not run more than two CodeRabbit review cycles for a single feature branch.
+- Do not start more than one CodeRabbit review within a 30-minute window.
+- Always acknowledge the user if you are waiting for the timed window to complete or to open a new window.
+- Do not run more than 1 CodeRabbit review cycle for a single feature branch.
 - Apply necessary fixes from CodeRabbit comments.
 - Re-run relevant verification after fixes.
 
@@ -146,16 +147,17 @@ For each remaining P1 feature, execute this exact sequence.
 
 ### 10. Merge and reset to main
 
-- When CI is green, CodeRabbit review is addressed, human/PR comments are resolved, and no blockers remain, merge the PR into `main` using the repo's expected merge strategy.
-- Checkout `main`.
-- Pull the latest remote `main`.
-- Confirm `main` includes the merged feature.
+- When CI is green, CodeRabbit review is addressed, human/PR comments are resolved, and no blockers remain, merge the PR into `goal-feature-staging` using the repo's expected merge strategy.
+- When merge is successful, delete the current `goal-feature/*` branch on remote.
+- Checkout `goal-feature-staging` and run `git fetch --prune` to remove all deleted branch.
+- Pull the latest remote `goal-feature-staging`.
+- Confirm `goal-feature-staging` includes the merged feature.
 - Update `docs/01-product/feature-roadmap.md` for the completed feature if the feature status, spec path, plan path, PR number, or notes changed.
 - If the roadmap update was not included in the PR, make a follow-up docs commit/PR before starting the next feature.
 
 ### 11. Continue to the next feature
 
-- Start the next feature only after `main` is updated with the previously merged PR.
+- Start the next feature only after `goal-feature-staging` is updated with the previously merged PR.
 - Repeat the loop from branch creation.
 
 ## Definition of done for the overall goal
@@ -163,7 +165,7 @@ For each remaining P1 feature, execute this exact sequence.
 - Every P1 feature in `docs/01-product/feature-roadmap.md` is either:
   - fully implemented, verified, reviewed, merged, and marked "Fully Implemented" in the roadmap, or
   - explicitly documented as blocked with the blocker, evidence, and next required human/external action.
-- `main` is checked out and up to date with remote.
+- `goal-feature-staging` is checked out and up to date with remote.
 - No feature branch is left with unpushed completed work.
 - The final response lists completed P1 features, PRs, verification evidence, remaining blockers (if any), and any prerequisites that were missing during execution.
 
@@ -176,3 +178,5 @@ For each remaining P1 feature, execute this exact sequence.
 - Do not duplicate generated API response types in app code.
 - Do not use mock-only verification for completed production workflows.
 - Do not run destructive git commands unless explicitly approved.
+- run `pnpm dev:reset` to reset postgres database and reseed the tables and run the api and web server.
+- Complete web test suit will take quite lengthy to completely run all the test, so whenever posible, opt for narrowed test.
