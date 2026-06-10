@@ -3,23 +3,34 @@
 import {
   acknowledgePurchaseOrderSupplier as acknowledgePurchaseOrderSupplierEndpoint,
   cancelPurchaseOrder as cancelPurchaseOrderEndpoint,
+  cancelPurchaseOrderChangeOrder as cancelPurchaseOrderChangeOrderEndpoint,
   exportPurchaseOrderSupplierJson as exportPurchaseOrderSupplierJsonEndpoint,
   issuePurchaseOrderToSupplier as issuePurchaseOrderToSupplierEndpoint,
   listPurchaseOrders as listPurchaseOrdersEndpoint,
+  listPurchaseOrderChangeOrders as listPurchaseOrderChangeOrdersEndpoint,
   markPurchaseOrderReadyForReview as markPurchaseOrderReadyForReviewEndpoint,
   recordPurchaseOrderSupplierJsonExport as recordPurchaseOrderSupplierJsonExportEndpoint,
   showPurchaseOrder as showPurchaseOrderEndpoint,
+  showPurchaseOrderChangeOrder as showPurchaseOrderChangeOrderEndpoint,
+  savePurchaseOrderChangeOrder as savePurchaseOrderChangeOrderEndpoint,
+  submitPurchaseOrderChangeOrder as submitPurchaseOrderChangeOrderEndpoint,
   submitPurchaseOrderApproval as submitPurchaseOrderApprovalEndpoint,
+  updatePurchaseOrderChangeOrder as updatePurchaseOrderChangeOrderEndpoint,
   updatePurchaseOrder as updatePurchaseOrderEndpoint,
 } from "@cognify/api-client/endpoints";
 import type {
   AcknowledgePurchaseOrderRequest,
   CancelPurchaseOrderRequest,
+  CancelPurchaseOrderChangeOrderRequest,
   IssuedPurchaseOrderExport,
   IssuePurchaseOrderRequest,
   MarkPurchaseOrderReadyForReviewRequest,
+  PurchaseOrderChangeOrder,
+  PurchaseOrderChangeOrdersResponse,
   PurchaseOrder,
   PurchaseOrderListResponse,
+  SavePurchaseOrderChangeOrderRequest,
+  SubmitPurchaseOrderChangeOrderRequest,
   SubmitPurchaseOrderApprovalRequest,
   UpdatePurchaseOrderRequest,
 } from "@cognify/api-client/schemas";
@@ -70,6 +81,26 @@ export async function fetchPurchaseOrder(
   return unwrapOk(response) as PurchaseOrder;
 }
 
+export async function fetchPurchaseOrderChangeOrders(
+  purchaseOrderId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrderChangeOrder[]> {
+  const response = await listPurchaseOrderChangeOrdersEndpoint(purchaseOrderId, withActiveTenantHeader(tenantId));
+  if (response.status !== 200) {
+    throw response.data;
+  }
+
+  return (response.data as PurchaseOrderChangeOrdersResponse).data;
+}
+
+export async function fetchPurchaseOrderChangeOrder(
+  changeOrderId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrderChangeOrder> {
+  const response = await showPurchaseOrderChangeOrderEndpoint(changeOrderId, withActiveTenantHeader(tenantId));
+  return unwrapOk(response) as PurchaseOrderChangeOrder;
+}
+
 export async function savePurchaseOrder(
   purchaseOrderId: string,
   payload: UpdatePurchaseOrderRequest,
@@ -81,6 +112,58 @@ export async function savePurchaseOrder(
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
   return unwrapOk(response) as PurchaseOrder;
+}
+
+export async function createPurchaseOrderChangeOrder(
+  purchaseOrderId: string,
+  payload: SavePurchaseOrderChangeOrderRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrderChangeOrder> {
+  const response = await savePurchaseOrderChangeOrderEndpoint(
+    purchaseOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapOk(response, 201) as PurchaseOrderChangeOrder;
+}
+
+export async function updatePurchaseOrderChangeOrder(
+  changeOrderId: string,
+  payload: SavePurchaseOrderChangeOrderRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrderChangeOrder> {
+  const response = await updatePurchaseOrderChangeOrderEndpoint(
+    changeOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapOk(response) as PurchaseOrderChangeOrder;
+}
+
+export async function submitPurchaseOrderChangeOrder(
+  changeOrderId: string,
+  payload: SubmitPurchaseOrderChangeOrderRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrderChangeOrder> {
+  const response = await submitPurchaseOrderChangeOrderEndpoint(
+    changeOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapOk(response) as PurchaseOrderChangeOrder;
+}
+
+export async function cancelPurchaseOrderChangeOrder(
+  changeOrderId: string,
+  payload: CancelPurchaseOrderChangeOrderRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrderChangeOrder> {
+  const response = await cancelPurchaseOrderChangeOrderEndpoint(
+    changeOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapOk(response) as PurchaseOrderChangeOrder;
 }
 
 export async function readyPurchaseOrder(

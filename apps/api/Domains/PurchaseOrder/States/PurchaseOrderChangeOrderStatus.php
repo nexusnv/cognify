@@ -10,4 +10,9 @@ enum PurchaseOrderChangeOrderStatus: string
     case Approved = 'approved';
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
+
+    public function isActive(): bool
+    {
+        return in_array($this, [self::Draft, self::PendingApproval, self::ChangesRequested], true);
+    }
 }

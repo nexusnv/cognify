@@ -6,15 +6,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw/server";
 import {
   acknowledgedPurchaseOrderFixture,
+  appliedChangeOrderFixture,
   approvedPurchaseOrderFixture,
   changesRequestedPurchaseOrderFixture,
   inReviewPurchaseOrderFixture,
   issuedPurchaseOrderFixture,
+  issuedPurchaseOrderWithAppliedChangeOrderFixture,
+  issuedPurchaseOrderWithPendingChangeOrderFixture,
+  pendingPurchaseOrderChangeOrderFixture,
   purchaseOrderFixture,
   readyPurchaseOrderFixture,
   rejectedPurchaseOrderFixture,
 } from "../mocks/purchase-order-fixtures";
-import { resetPurchaseOrderMockState, setPurchaseOrderMockState } from "../mocks/purchase-order-handlers";
+import {
+  resetPurchaseOrderMockState,
+  setPurchaseOrderChangeOrdersMockState,
+  setPurchaseOrderMockState,
+} from "../mocks/purchase-order-handlers";
 import { PurchaseOrderListPage } from "../workflows/purchase-order-list-page";
 import { PurchaseOrderWorkspacePage } from "../workflows/purchase-order-workspace-page";
 
@@ -118,6 +126,7 @@ describe("purchase order workflow", () => {
     expect(await screen.findByRole("heading", { name: "PO-2026-000001" })).toBeInTheDocument();
     expect(screen.getByText("Northwind Traders")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Purchase order lines" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Purchase order change orders" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mark ready for review" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "Mark ready for review" }));
@@ -152,6 +161,36 @@ describe("purchase order workflow", () => {
     } finally {
       prompt.mockRestore();
     }
+  });
+
+  it("creates a purchase order change order and shows it in the workspace", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    await screen.findByRole("button", { name: "Create change order" });
+    const changeOrderRegion = screen.getByRole("region", { name: "Purchase order change orders" });
+    await user.selectOptions(within(changeOrderRegion).getByLabelText("Change type"), "amendment");
+    await user.clear(within(changeOrderRegion).getByLabelText("Reason"));
+    await user.type(within(changeOrderRegion).getByLabelText("Reason"), "Adjust payment terms for the supplier.");
+    await user.clear(within(changeOrderRegion).getByLabelText("Payment terms"));
+    await user.type(within(changeOrderRegion).getByLabelText("Payment terms"), "Net 45");
+    await user.clear(within(changeOrderRegion).getByLabelText("Pallet rack bay quantity"));
+    await user.type(within(changeOrderRegion).getByLabelText("Pallet rack bay quantity"), "8.0000");
+    await user.clear(within(changeOrderRegion).getByLabelText("Pallet rack bay unit price"));
+    await user.type(within(changeOrderRegion).getByLabelText("Pallet rack bay unit price"), "12500.0000");
+    await user.click(within(changeOrderRegion).getByRole("button", { name: "Create change order" }));
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("CO-PO-2026-000001-001", { selector: "td" })).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
+    expect(screen.getByText("Adjust payment terms for the supplier.", { selector: "td" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Pallet rack bay quantity")).toHaveValue("8.0000");
+    expect(screen.getByLabelText("Pallet rack bay unit price")).toHaveValue("12500.0000");
   });
 
   it("submits a ready purchase order for approval", async () => {
@@ -327,5 +366,23 @@ describe("purchase order workflow", () => {
     const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
     expect(within(supplierRegion).getByText("Supplier issue unlocks after approval.")).toBeInTheDocument();
     expect(within(supplierRegion).queryByRole("button", { name: "Issue to supplier" })).not.toBeInTheDocument();
+  });
+
+  it("shows change order history with approved and pending change orders", async () => {
+    setPurchaseOrderMockState([issuedPurchaseOrderWithAppliedChangeOrderFixture]);
+    setPurchaseOrderChangeOrdersMockState("po-applied", [appliedChangeOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-applied" />);
+
+    expect(await screen.findByText("approved")).toBeInTheDocument();
+    expect(await screen.findByText("amendment")).toBeInTheDocument();
+
+    cleanup();
+    setPurchaseOrderMockState([issuedPurchaseOrderWithPendingChangeOrderFixture]);
+    setPurchaseOrderChangeOrdersMockState("po-pending", [pendingPurchaseOrderChangeOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-pending" />);
+
+    expect(await screen.findByText("pending approval")).toBeInTheDocument();
   });
 });

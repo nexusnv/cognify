@@ -1,4 +1,26 @@
-import type { PurchaseOrder, PurchaseOrderListResponse } from "@cognify/api-client/schemas";
+import type {
+  PurchaseOrder,
+  PurchaseOrderChangeOrder,
+  PurchaseOrderChangeOrdersSummary,
+  PurchaseOrderListResponse,
+} from "@cognify/api-client/schemas";
+
+function emptyChangeOrdersSummary(): PurchaseOrderChangeOrdersSummary {
+  return {
+    currentChangeOrder: null,
+    latestChangeOrder: null,
+  };
+}
+
+function mergeChangeOrdersSummary(
+  base: PurchaseOrderChangeOrdersSummary,
+  overrides?: Partial<PurchaseOrderChangeOrdersSummary>,
+): PurchaseOrderChangeOrdersSummary {
+  return {
+    currentChangeOrder: overrides?.currentChangeOrder ?? base.currentChangeOrder,
+    latestChangeOrder: overrides?.latestChangeOrder ?? base.latestChangeOrder,
+  };
+}
 
 export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}): PurchaseOrder {
   const base: PurchaseOrder = {
@@ -61,6 +83,11 @@ export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}
       {
         id: "po-line-1",
         lineNumber: 1,
+        status: "open",
+        currentVersionNumber: 1,
+        cancelledByChangeOrderId: null,
+        cancelledAt: null,
+        cancelledReason: null,
         description: "Pallet rack bay",
         unit: "each",
         quantity: "10.0000",
@@ -80,7 +107,12 @@ export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}
       canIssueToSupplier: false,
       canExportSupplierVersion: false,
       canAcknowledgeSupplier: false,
+      canCreateChangeOrder: true,
+      canUpdateChangeOrder: false,
+      canSubmitChangeOrder: false,
+      canCancelChangeOrder: false,
     },
+    changeOrdersSummary: emptyChangeOrdersSummary(),
   };
 
   return {
@@ -89,6 +121,7 @@ export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}
     approval: { ...base.approval, ...overrides.approval },
     supplierIssue: { ...base.supplierIssue, ...overrides.supplierIssue },
     permissions: { ...base.permissions, ...overrides.permissions },
+    changeOrdersSummary: mergeChangeOrdersSummary(base.changeOrdersSummary, overrides.changeOrdersSummary),
   };
 }
 
@@ -105,6 +138,10 @@ export const readyPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFixtur
     canIssueToSupplier: false,
     canExportSupplierVersion: false,
     canAcknowledgeSupplier: false,
+    canCreateChangeOrder: true,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
   },
 });
 
@@ -120,6 +157,10 @@ export const inReviewPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFix
     canIssueToSupplier: false,
     canExportSupplierVersion: false,
     canAcknowledgeSupplier: false,
+    canCreateChangeOrder: false,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
   },
 });
 
@@ -143,6 +184,10 @@ export const changesRequestedPurchaseOrderFixture: PurchaseOrder = buildPurchase
     canIssueToSupplier: false,
     canExportSupplierVersion: false,
     canAcknowledgeSupplier: false,
+    canCreateChangeOrder: true,
+    canUpdateChangeOrder: true,
+    canSubmitChangeOrder: true,
+    canCancelChangeOrder: true,
   },
 });
 
@@ -165,6 +210,10 @@ export const approvedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFix
     canIssueToSupplier: true,
     canExportSupplierVersion: false,
     canAcknowledgeSupplier: false,
+    canCreateChangeOrder: false,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
   },
 });
 
@@ -204,6 +253,10 @@ export const issuedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFixtu
     canIssueToSupplier: false,
     canExportSupplierVersion: true,
     canAcknowledgeSupplier: true,
+    canCreateChangeOrder: true,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
   },
 });
 
@@ -230,6 +283,10 @@ export const acknowledgedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrde
     canIssueToSupplier: false,
     canExportSupplierVersion: true,
     canAcknowledgeSupplier: false,
+    canCreateChangeOrder: false,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
   },
 });
 
@@ -253,6 +310,165 @@ export const rejectedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFix
     canIssueToSupplier: false,
     canExportSupplierVersion: false,
     canAcknowledgeSupplier: false,
+    canCreateChangeOrder: false,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
+  },
+});
+
+export const purchaseOrderChangeOrderFixture: PurchaseOrderChangeOrder = {
+  id: "co-1",
+  purchaseOrderId: "po-1",
+  number: "CO-PO-2026-000001-001",
+  status: "draft",
+  changeType: "amendment",
+  reason: "Adjust commitment quantities and delivery dates.",
+  materialChange: true,
+  requiresApproval: true,
+  fromPurchaseOrderStatus: "issued",
+  toPurchaseOrderStatus: null,
+  before: {
+    paymentTerms: "Net 30",
+    deliveryTerms: "DAP",
+    expectedDeliveryDate: "2026-07-02",
+    subtotalAmount: "120000.00",
+    totalAmount: "131100.00",
+  },
+  after: {
+    paymentTerms: "Net 30",
+    deliveryTerms: "DAP",
+    expectedDeliveryDate: "2026-07-15",
+    subtotalAmount: "100000.00",
+    totalAmount: "100000.00",
+  },
+  delta: {
+    changedFields: ["expectedDeliveryDate", "subtotalAmount", "totalAmount"],
+    materialFields: ["quantity", "unitPrice"],
+    totalAmount: { before: "131100.00", after: "100000.00" },
+  },
+  supplierVersionNumber: null,
+  approvalInstanceId: null,
+  requestedAt: "2026-06-10T08:00:00.000Z",
+  submittedAt: null,
+  approvedAt: null,
+  rejectedAt: null,
+  cancelledAt: null,
+  lockVersion: 1,
+  lines: [],
+  purchaseOrder: null,
+};
+
+export const pendingPurchaseOrderChangeOrderFixture: PurchaseOrderChangeOrder = {
+  ...purchaseOrderChangeOrderFixture,
+  id: "co-2",
+  number: "CO-PO-2026-000001-002",
+  status: "pending_approval",
+  materialChange: true,
+  requiresApproval: true,
+  approvalInstanceId: "approval-co-1",
+  submittedAt: "2026-06-10T09:00:00.000Z",
+  lockVersion: 2,
+  lines: [
+    {
+      id: "co-line-1",
+      lineId: "po-line-1",
+      lineNumber: 1,
+      changeAction: "update",
+      quantityBefore: "10.0000",
+      quantityAfter: "8.0000",
+      unitPriceBefore: "12000.0000",
+      unitPriceAfter: "12500.0000",
+      subtotalAmountBefore: "120000.00",
+      subtotalAmountAfter: "100000.00",
+      totalAmountBefore: "120000.00",
+      totalAmountAfter: "100000.00",
+      expectedDeliveryDateBefore: "2026-07-02",
+      expectedDeliveryDateAfter: null,
+      deliveryLocationBefore: "Dock 4",
+      deliveryLocationAfter: null,
+      notesBefore: null,
+      notesAfter: "Reduced scope and revised supplier price.",
+      delta: {},
+    },
+  ],
+};
+
+export const appliedChangeOrderFixture: PurchaseOrderChangeOrder = {
+  ...purchaseOrderChangeOrderFixture,
+  id: "co-3",
+  number: "CO-PO-2026-000001-003",
+  status: "approved",
+  changeType: "amendment",
+  reason: "Supplier confirmed revised delivery dates.",
+  materialChange: false,
+  requiresApproval: false,
+  toPurchaseOrderStatus: "issued",
+  supplierVersionNumber: 2,
+  submittedAt: "2026-06-10T08:30:00.000Z",
+  approvedAt: "2026-06-10T08:30:01.000Z",
+  lockVersion: 3,
+};
+
+export const issuedPurchaseOrderWithAppliedChangeOrderFixture: PurchaseOrder = buildPurchaseOrderFixture({
+  ...issuedPurchaseOrderFixture,
+  id: "po-applied",
+  number: "PO-2026-000002",
+  lockVersion: 7,
+  supplierIssue: {
+    ...issuedPurchaseOrderFixture.supplierIssue,
+    supplierVersionNumber: 2,
+  },
+  permissions: {
+    ...issuedPurchaseOrderFixture.permissions,
+    canCreateChangeOrder: true,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
+  },
+  changeOrdersSummary: {
+    currentChangeOrder: null,
+    latestChangeOrder: {
+      id: appliedChangeOrderFixture.id,
+      number: appliedChangeOrderFixture.number,
+      status: appliedChangeOrderFixture.status,
+      changeType: appliedChangeOrderFixture.changeType,
+      materialChange: appliedChangeOrderFixture.materialChange,
+      requiresApproval: appliedChangeOrderFixture.requiresApproval,
+    },
+  },
+});
+
+export const issuedPurchaseOrderWithPendingChangeOrderFixture: PurchaseOrder = buildPurchaseOrderFixture({
+  ...issuedPurchaseOrderFixture,
+  id: "po-pending",
+  number: "PO-2026-000003",
+  status: "change_pending",
+  lockVersion: 7,
+  permissions: {
+    ...issuedPurchaseOrderFixture.permissions,
+    canCreateChangeOrder: false,
+    canUpdateChangeOrder: false,
+    canSubmitChangeOrder: false,
+    canCancelChangeOrder: false,
+  },
+  changeOrdersSummary: {
+    currentChangeOrder: {
+      id: pendingPurchaseOrderChangeOrderFixture.id,
+      number: pendingPurchaseOrderChangeOrderFixture.number,
+      status: pendingPurchaseOrderChangeOrderFixture.status,
+      changeType: pendingPurchaseOrderChangeOrderFixture.changeType,
+      materialChange: pendingPurchaseOrderChangeOrderFixture.materialChange,
+      requiresApproval: pendingPurchaseOrderChangeOrderFixture.requiresApproval,
+    },
+    latestChangeOrder: {
+      id: pendingPurchaseOrderChangeOrderFixture.id,
+      number: pendingPurchaseOrderChangeOrderFixture.number,
+      status: pendingPurchaseOrderChangeOrderFixture.status,
+      changeType: pendingPurchaseOrderChangeOrderFixture.changeType,
+      materialChange: pendingPurchaseOrderChangeOrderFixture.materialChange,
+      requiresApproval: pendingPurchaseOrderChangeOrderFixture.requiresApproval,
+    },
   },
 });
 

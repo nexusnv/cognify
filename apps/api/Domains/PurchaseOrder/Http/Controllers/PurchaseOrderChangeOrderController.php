@@ -61,6 +61,22 @@ class PurchaseOrderChangeOrderController extends Controller
         ], 201);
     }
 
+    public function update(
+        SavePurchaseOrderChangeOrderRequest $request,
+        CurrentTenant $currentTenant,
+        PurchaseOrderChangeOrder $changeOrder,
+        CreateOrUpdatePurchaseOrderChangeOrder $action,
+    ): JsonResponse {
+        $changeOrder = $this->findTenantChangeOrder($this->tenantOrAbort($currentTenant), $changeOrder);
+        $this->authorize('saveChangeOrder', $changeOrder->purchaseOrder);
+
+        $updated = $action->handle($changeOrder->purchaseOrder, $request->user(), $request->validated(), $changeOrder);
+
+        return response()->json([
+            'data' => (new PurchaseOrderChangeOrderResource($updated->load(['purchaseOrder.lines', 'purchaseOrder.currentChangeOrder', 'purchaseOrder.changeOrders', 'lines'])))->resolve($request),
+        ]);
+    }
+
     public function submit(
         SubmitPurchaseOrderChangeOrderRequest $request,
         CurrentTenant $currentTenant,

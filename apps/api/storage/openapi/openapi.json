@@ -7855,6 +7855,330 @@
           }
         }
       }
+    },
+    "/api/purchase-orders/{purchaseOrder}/change-orders": {
+      "get": {
+        "operationId": "listPurchaseOrderChangeOrders",
+        "summary": "List purchase order change orders",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase order change orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderChangeOrdersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "savePurchaseOrderChangeOrder",
+        "summary": "Create purchase order change order",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePurchaseOrderChangeOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Purchase order change order created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderChangeOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/purchase-order-change-orders/{changeOrder}": {
+      "get": {
+        "operationId": "showPurchaseOrderChangeOrder",
+        "summary": "Show purchase order change order",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "changeOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase order change order detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderChangeOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePurchaseOrderChangeOrder",
+        "summary": "Update purchase order change order",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "changeOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePurchaseOrderChangeOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Purchase order change order updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderChangeOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/purchase-order-change-orders/{changeOrder}/submit": {
+      "post": {
+        "operationId": "submitPurchaseOrderChangeOrder",
+        "summary": "Submit purchase order change order",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "changeOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPurchaseOrderChangeOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submitted purchase order change order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderChangeOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/purchase-order-change-orders/{changeOrder}/cancel": {
+      "post": {
+        "operationId": "cancelPurchaseOrderChangeOrder",
+        "summary": "Cancel purchase order change order",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "changeOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPurchaseOrderChangeOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancelled purchase order change order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderChangeOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -20130,6 +20454,7 @@
           "ready_for_review",
           "cancelled",
           "in_review",
+          "change_pending",
           "changes_requested",
           "approved",
           "rejected",
@@ -20146,7 +20471,11 @@
           "canSubmitForApproval",
           "canIssueToSupplier",
           "canExportSupplierVersion",
-          "canAcknowledgeSupplier"
+          "canAcknowledgeSupplier",
+          "canCreateChangeOrder",
+          "canUpdateChangeOrder",
+          "canSubmitChangeOrder",
+          "canCancelChangeOrder"
         ],
         "properties": {
           "canUpdate": {
@@ -20168,6 +20497,18 @@
             "type": "boolean"
           },
           "canAcknowledgeSupplier": {
+            "type": "boolean"
+          },
+          "canCreateChangeOrder": {
+            "type": "boolean"
+          },
+          "canUpdateChangeOrder": {
+            "type": "boolean"
+          },
+          "canSubmitChangeOrder": {
+            "type": "boolean"
+          },
+          "canCancelChangeOrder": {
             "type": "boolean"
           }
         }
@@ -20342,7 +20683,12 @@
           "unitPrice",
           "subtotalAmount",
           "totalAmount",
-          "currency"
+          "currency",
+          "status",
+          "currentVersionNumber",
+          "cancelledByChangeOrderId",
+          "cancelledAt",
+          "cancelledReason"
         ],
         "properties": {
           "id": {
@@ -20564,6 +20910,36 @@
                 ]
               }
             }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "cancelled"
+            ]
+          },
+          "currentVersionNumber": {
+            "type": "integer"
+          },
+          "cancelledByChangeOrderId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "cancelledAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cancelledReason": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -20582,7 +20958,8 @@
           "evidence",
           "lines",
           "lockVersion",
-          "permissions"
+          "permissions",
+          "changeOrdersSummary"
         ],
         "properties": {
           "id": {
@@ -20799,6 +21176,9 @@
           },
           "supplierIssue": {
             "$ref": "#/components/schemas/PurchaseOrderSupplierIssue"
+          },
+          "changeOrdersSummary": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrdersSummary"
           }
         }
       },
@@ -21379,6 +21759,665 @@
           }
         },
         "additionalProperties": false
+      },
+      "PurchaseOrderChangeOrderStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "pending_approval",
+          "changes_requested",
+          "approved",
+          "rejected",
+          "cancelled"
+        ]
+      },
+      "PurchaseOrderChangeOrderType": {
+        "type": "string",
+        "enum": [
+          "amendment",
+          "partial_cancellation",
+          "full_cancellation"
+        ]
+      },
+      "PurchaseOrderChangeOrderSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrderStatus"
+          },
+          "changeType": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrderType"
+          },
+          "materialChange": {
+            "type": "boolean"
+          },
+          "requiresApproval": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PurchaseOrderChangeOrdersSummary": {
+        "type": "object",
+        "required": [
+          "currentChangeOrder",
+          "latestChangeOrder"
+        ],
+        "properties": {
+          "currentChangeOrder": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderChangeOrderSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latestChangeOrder": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderChangeOrderSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PurchaseOrderChangeOrderLine": {
+        "type": "object",
+        "required": [
+          "id",
+          "lineId",
+          "lineNumber",
+          "changeAction"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "changeAction": {
+            "type": "string",
+            "enum": [
+              "update",
+              "cancel"
+            ]
+          },
+          "quantityBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPriceBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPriceAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subtotalAmountBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subtotalAmountAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmountBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxAmountAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmountBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "freightAmountAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmountBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountAmountAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmountBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalAmountAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expectedDeliveryDateBefore": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "expectedDeliveryDateAfter": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "deliveryLocationBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryLocationAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notesBefore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notesAfter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delta": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PurchaseOrderChangeOrder": {
+        "type": "object",
+        "required": [
+          "id",
+          "purchaseOrderId",
+          "number",
+          "status",
+          "changeType",
+          "reason",
+          "materialChange",
+          "requiresApproval",
+          "fromPurchaseOrderStatus",
+          "before",
+          "after",
+          "delta",
+          "lockVersion",
+          "lines"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purchaseOrderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrderStatus"
+          },
+          "changeType": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrderType"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "materialChange": {
+            "type": "boolean"
+          },
+          "requiresApproval": {
+            "type": "boolean"
+          },
+          "fromPurchaseOrderStatus": {
+            "$ref": "#/components/schemas/PurchaseOrderStatus"
+          },
+          "toPurchaseOrderStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "delta": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "supplierVersionNumber": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "approvalInstanceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "requestedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "rejectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cancelledAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lockVersion": {
+            "type": "integer"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderChangeOrderLine"
+            }
+          },
+          "purchaseOrder": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrder"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PurchaseOrderChangeOrdersResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderChangeOrder"
+            }
+          }
+        }
+      },
+      "PurchaseOrderChangeOrderResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrder"
+          }
+        }
+      },
+      "SavePurchaseOrderChangeOrderRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "reason",
+          "changeType"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000
+          },
+          "changeType": {
+            "$ref": "#/components/schemas/PurchaseOrderChangeOrderType"
+          },
+          "requestedPoDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "expectedDeliveryDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "billingName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "billingAddress": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "line1": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "line2": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "city": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "postalCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "shippingName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "shippingAddress": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "line1": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "line2": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "city": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "postalCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "deliveryAttention": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "paymentTerms": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "deliveryTerms": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "buyerNote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "financeNote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "lineId",
+                "action"
+              ],
+              "properties": {
+                "lineId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "update",
+                    "cancel"
+                  ]
+                },
+                "quantity": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "unitPrice": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "expectedDeliveryDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "deliveryLocation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 255
+                },
+                "notes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubmitPurchaseOrderChangeOrderRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "CancelPurchaseOrderChangeOrderRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "reason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000
+          }
+        }
       }
     }
   }

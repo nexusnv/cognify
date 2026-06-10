@@ -13,4 +13,8 @@ export interface PurchaseOrderPermissions {
   canIssueToSupplier: boolean;
   canExportSupplierVersion: boolean;
   canAcknowledgeSupplier: boolean;
+  canCreateChangeOrder: boolean;
+  canUpdateChangeOrder: boolean;
+  canSubmitChangeOrder: boolean;
+  canCancelChangeOrder: boolean;
 }

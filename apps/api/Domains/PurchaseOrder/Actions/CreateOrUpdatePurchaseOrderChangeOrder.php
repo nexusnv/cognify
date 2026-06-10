@@ -29,9 +29,9 @@ class CreateOrUpdatePurchaseOrderChangeOrder
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function handle(PurchaseOrder $purchaseOrder, User $actor, array $payload): PurchaseOrderChangeOrder
+    public function handle(PurchaseOrder $purchaseOrder, User $actor, array $payload, ?PurchaseOrderChangeOrder $existingChangeOrder = null): PurchaseOrderChangeOrder
     {
-        return DB::transaction(function () use ($purchaseOrder, $actor, $payload): PurchaseOrderChangeOrder {
+        return DB::transaction(function () use ($purchaseOrder, $actor, $payload, $existingChangeOrder): PurchaseOrderChangeOrder {
             $purchaseOrder = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
                 ->where('tenant_id', $purchaseOrder->tenant_id)
@@ -40,42 +40,86 @@ class CreateOrUpdatePurchaseOrderChangeOrder
                 ->firstOrFail();
 
             if (! in_array($purchaseOrder->statusState(), [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)) {
-                throw new ConflictHttpException('Only issued or acknowledged purchase orders can be changed.');
+                $isChangePendingWithChangesRequested = $purchaseOrder->statusState() === PurchaseOrderStatus::ChangePending
+                    && $existingChangeOrder instanceof PurchaseOrderChangeOrder
+                    && $existingChangeOrder->statusState() === PurchaseOrderChangeOrderStatus::ChangesRequested;
+
+                if ($existingChangeOrder === null || ! $isChangePendingWithChangesRequested) {
+                    throw new ConflictHttpException('Only issued or acknowledged purchase orders can be changed.');
+                }
             }
 
             $purchaseOrder->assertLockVersion((int) Arr::get($payload, 'lockVersion'));
 
-            if ($purchaseOrder->current_change_order_id !== null && $purchaseOrder->currentChangeOrder !== null) {
-                if (! in_array($purchaseOrder->currentChangeOrder->statusState(), [PurchaseOrderChangeOrderStatus::Cancelled, PurchaseOrderChangeOrderStatus::Rejected, PurchaseOrderChangeOrderStatus::Approved], true)) {
+            $activeChangeOrder = $existingChangeOrder ?? $purchaseOrder->currentChangeOrder;
+
+            if ($existingChangeOrder === null && $purchaseOrder->current_change_order_id !== null && $activeChangeOrder !== null) {
+                if (! in_array($activeChangeOrder->statusState(), [PurchaseOrderChangeOrderStatus::Cancelled, PurchaseOrderChangeOrderStatus::Rejected, PurchaseOrderChangeOrderStatus::Approved], true)) {
                     throw new ConflictHttpException('A purchase order already has an active change order.');
+                }
+            }
+
+            if ($existingChangeOrder !== null) {
+                $activeChangeOrder = PurchaseOrderChangeOrder::query()
+                    ->whereKey($existingChangeOrder->id)
+                    ->where('tenant_id', $purchaseOrder->tenant_id)
+                    ->lockForUpdate()
+                    ->with('lines')
+                    ->firstOrFail();
+
+                if (! in_array($activeChangeOrder->statusState(), [PurchaseOrderChangeOrderStatus::Draft, PurchaseOrderChangeOrderStatus::ChangesRequested], true)) {
+                    throw new ConflictHttpException('Only draft or changes-requested change orders can be updated.');
                 }
             }
 
             $calculated = $this->delta->calculate($purchaseOrder, $payload);
             $changeType = PurchaseOrderChangeOrderType::from($calculated['changeType']);
 
-            $changeOrder = PurchaseOrderChangeOrder::query()->create([
-                'tenant_id' => $purchaseOrder->tenant_id,
-                'purchase_order_id' => $purchaseOrder->id,
-                'number' => $this->numberGenerator->nextFor($purchaseOrder),
-                'status' => PurchaseOrderChangeOrderStatus::Draft,
-                'change_type' => $changeType,
-                'from_purchase_order_status' => $purchaseOrder->statusState()->value,
-                'to_purchase_order_status' => $changeType === PurchaseOrderChangeOrderType::FullCancellation
-                    ? PurchaseOrderStatus::Cancelled->value
-                    : $purchaseOrder->statusState()->value,
-                'reason' => (string) $payload['reason'],
-                'material_change' => (bool) $calculated['materialChange'],
-                'requires_approval' => (bool) $calculated['materialChange'],
-                'requested_by_user_id' => $actor->id,
-                'requested_at' => now(),
-                'before_snapshot' => $calculated['before'],
-                'after_snapshot' => $calculated['after'],
-                'delta_snapshot' => $calculated['delta'],
-                'lock_version' => 1,
-            ]);
+            if ($activeChangeOrder instanceof PurchaseOrderChangeOrder) {
+                $changeOrder = $activeChangeOrder;
+                $changeOrder->forceFill([
+                    'status' => PurchaseOrderChangeOrderStatus::Draft,
+                    'change_type' => $changeType,
+                    'from_purchase_order_status' => $purchaseOrder->statusState()->value,
+                    'to_purchase_order_status' => $changeType === PurchaseOrderChangeOrderType::FullCancellation
+                        ? PurchaseOrderStatus::Cancelled->value
+                        : $purchaseOrder->statusState()->value,
+                    'reason' => (string) $payload['reason'],
+                    'material_change' => (bool) $calculated['materialChange'],
+                    'requires_approval' => (bool) $calculated['materialChange'],
+                    'requested_by_user_id' => $actor->id,
+                    'requested_at' => $activeChangeOrder->requested_at ?? now(),
+                    'before_snapshot' => $calculated['before'],
+                    'after_snapshot' => $calculated['after'],
+                    'delta_snapshot' => $calculated['delta'],
+                    'lock_version' => $activeChangeOrder->lock_version + 1,
+                ])->save();
+            } else {
+                $changeOrder = PurchaseOrderChangeOrder::query()->create([
+                    'tenant_id' => $purchaseOrder->tenant_id,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'number' => $this->numberGenerator->nextFor($purchaseOrder),
+                    'status' => PurchaseOrderChangeOrderStatus::Draft,
+                    'change_type' => $changeType,
+                    'from_purchase_order_status' => $purchaseOrder->statusState()->value,
+                    'to_purchase_order_status' => $changeType === PurchaseOrderChangeOrderType::FullCancellation
+                        ? PurchaseOrderStatus::Cancelled->value
+                        : $purchaseOrder->statusState()->value,
+                    'reason' => (string) $payload['reason'],
+                    'material_change' => (bool) $calculated['materialChange'],
+                    'requires_approval' => (bool) $calculated['materialChange'],
+                    'requested_by_user_id' => $actor->id,
+                    'requested_at' => now(),
+                    'before_snapshot' => $calculated['before'],
+                    'after_snapshot' => $calculated['after'],
+                    'delta_snapshot' => $calculated['delta'],
+                    'lock_version' => 1,
+                ]);
+            }
 
-            foreach ($calculated['lineChanges'] as $index => $lineChange) {
+            $changeOrder->lines()->delete();
+
+            foreach ($calculated['lineChanges'] as $lineChange) {
                 $line = $purchaseOrder->lines->firstWhere('id', $lineChange['lineId']);
                 if (! $line instanceof \Domains\PurchaseOrder\Models\PurchaseOrderLine) {
                     continue;
@@ -111,15 +155,17 @@ class CreateOrUpdatePurchaseOrderChangeOrder
                 ]);
             }
 
-            $purchaseOrder->forceFill([
-                'current_change_order_id' => $changeOrder->id,
-                'change_order_count' => ((int) $purchaseOrder->change_order_count) + 1,
-            ])->save();
+            if ($existingChangeOrder === null) {
+                $purchaseOrder->forceFill([
+                    'current_change_order_id' => $changeOrder->id,
+                    'change_order_count' => ((int) $purchaseOrder->change_order_count) + 1,
+                ])->save();
+            }
 
             $this->auditRecorder->record(new AuditEventData(
                 tenant: $purchaseOrder->tenant,
                 actor: $actor,
-                action: 'purchase_order.change_order.drafted',
+                action: $existingChangeOrder === null ? 'purchase_order.change_order.drafted' : 'purchase_order.change_order.updated',
                 subject: $purchaseOrder,
                 metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
                     'changeOrderId' => (string) $changeOrder->id,

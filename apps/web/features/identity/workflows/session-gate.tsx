@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "../hooks/use-current-user";
+import { getStoredActiveTenantId, storeActiveTenantId } from "../api/identity-api";
 import { TenantSelection } from "../components/tenant-selection";
 import type React from "react";
 
@@ -69,6 +70,20 @@ function WorkspaceUnavailable() {
 
 export function SessionGate({ children }: { children: React.ReactNode }) {
   const { data, isLoading, error } = useCurrentUser();
+  const synced = useRef(false);
+
+  const context = data?.data;
+
+  useEffect(() => {
+    if (synced.current) return;
+    if (!context) return;
+
+    const tenantId = context.activeTenant?.id ?? (context.tenants.length === 1 ? context.tenants[0]?.id : null);
+    if (tenantId && !getStoredActiveTenantId()) {
+      storeActiveTenantId(tenantId);
+    }
+    synced.current = true;
+  }, [context]);
 
   if (isLoading) {
     return (
@@ -82,7 +97,6 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
     return isAuthError(error) ? <SignInRequired /> : <WorkspaceUnavailable />;
   }
 
-  const context = data?.data;
   if (!context) {
     return <SignInRequired />;
   }

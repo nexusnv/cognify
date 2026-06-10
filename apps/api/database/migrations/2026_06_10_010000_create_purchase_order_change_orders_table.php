@@ -13,7 +13,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignUuid('purchase_order_id')->constrained('purchase_orders')->cascadeOnDelete();
-            $table->foreignUuid('approval_instance_id')->nullable()->constrained('approval_instances')->nullOnDelete();
+            $table->foreignId('approval_instance_id')->nullable()->constrained('approval_instances')->nullOnDelete();
             $table->string('number');
             $table->string('status');
             $table->string('change_type');

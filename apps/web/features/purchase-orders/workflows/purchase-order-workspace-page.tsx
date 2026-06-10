@@ -3,6 +3,7 @@
 import { WorkflowStateLayout } from "@/components/ui/workflow-state/record-workflow-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@cognify/ui";
 import { PurchaseOrderActions } from "../components/purchase-order-actions";
+import { PurchaseOrderChangeOrderPanel } from "../components/purchase-order-change-order-panel";
 import { PurchaseOrderApprovalPanel } from "../components/purchase-order-approval-panel";
 import { PurchaseOrderDetailCard } from "../components/purchase-order-detail-card";
 import { PurchaseOrderLinesTable } from "../components/purchase-order-lines-table";
@@ -25,6 +26,8 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
     );
   }
 
+  const canShowChangeOrders = ["issued", "acknowledged", "change_pending", "cancelled"].includes(purchaseOrder.status);
+
   return (
     <WorkflowStateLayout
       backHref="/purchase-orders"
@@ -40,6 +43,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
       sections={[
         { id: "overview", label: "Overview" },
         { id: "lines", label: "Lines" },
+        ...(canShowChangeOrders ? [{ id: "change-orders", label: "Change orders" }] : []),
         { id: "draft-fields", label: "Draft fields" },
       ]}
       sidebar={
@@ -70,6 +74,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
     >
       <PurchaseOrderDetailCard purchaseOrder={purchaseOrder} />
       <PurchaseOrderLinesTable lines={purchaseOrder.lines} currency={purchaseOrder.currency} />
+      {canShowChangeOrders ? <PurchaseOrderChangeOrderPanel purchaseOrder={purchaseOrder} /> : null}
       <PurchaseOrderApprovalPanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderSupplierIssuePanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderActions purchaseOrder={purchaseOrder} />

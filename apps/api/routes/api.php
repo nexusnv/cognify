@@ -162,6 +162,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/purchase-orders/{purchaseOrder}/change-orders', [PurchaseOrderChangeOrderController::class, 'index']);
             Route::post('/purchase-orders/{purchaseOrder}/change-orders', [PurchaseOrderChangeOrderController::class, 'store']);
             Route::get('/purchase-order-change-orders/{changeOrder}', [PurchaseOrderChangeOrderController::class, 'show']);
+            Route::patch('/purchase-order-change-orders/{changeOrder}', [PurchaseOrderChangeOrderController::class, 'update']);
             Route::post('/purchase-order-change-orders/{changeOrder}/submit', [PurchaseOrderChangeOrderController::class, 'submit']);
             Route::post('/purchase-order-change-orders/{changeOrder}/cancel', [PurchaseOrderChangeOrderController::class, 'cancel']);
             Route::post('/purchase-orders/{purchaseOrder}/ready-for-review', [PurchaseOrderController::class, 'readyForReview']);

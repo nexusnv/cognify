@@ -15,7 +15,10 @@ use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Demo\Models\DemoSeedRun;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderStatus;
+use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Quotation\Models\Quotation;
@@ -298,7 +301,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(3, ProcurementProject::query()->count());
         $this->assertSame(5, Rfq::query()->count());
         $this->assertSame(5, Quotation::query()->count());
-        $this->assertSame(13, ApprovalTask::query()->count());
+        $this->assertSame(15, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
         $this->assertSame(2, Attachment::query()->count());
         $this->assertSame(5, NotificationRecord::query()->count());
@@ -307,7 +310,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(4, QuotationNormalization::query()->count());
         $this->assertSame(1, QuotationScoringTemplate::query()->count());
         $this->assertSame(1, RfqScorecard::query()->count());
-        $this->assertSame(10, RfqAwardRecommendation::query()->count());
+        $this->assertSame(12, RfqAwardRecommendation::query()->count());
         $this->assertSame(1, QuotationComparisonNote::query()->count());
         $this->assertSame(1, ApprovalDelegation::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
@@ -428,10 +431,42 @@ class DemoSeederTest extends TestCase
             'last_supplier_export_format' => 'json',
         ]);
         $this->assertDatabaseHas('purchase_orders', [
+            'number' => 'PO-2026-SUSTAIN-CO-PENDING',
+            'status' => PurchaseOrderStatus::ChangePending->value,
+            'supplier_version_number' => 1,
+            'last_supplier_export_format' => 'json',
+        ]);
+        $this->assertDatabaseHas('purchase_orders', [
+            'number' => 'PO-2026-SUSTAIN-CO-DELIVERY',
+            'status' => PurchaseOrderStatus::Issued->value,
+            'supplier_version_number' => 2,
+        ]);
+        $this->assertDatabaseHas('purchase_orders', [
             'number' => 'PO-2026-SUSTAIN-ACK',
             'status' => PurchaseOrderStatus::Acknowledged->value,
-            'supplier_version_number' => 1,
+            'supplier_version_number' => 2,
             'acknowledgement_reference' => 'ACK-PO-100',
+        ]);
+        $this->assertDatabaseHas('purchase_order_change_orders', [
+            'number' => 'PO-2026-SUSTAIN-ACK-CO-001',
+            'status' => PurchaseOrderChangeOrderStatus::Approved->value,
+            'change_type' => PurchaseOrderChangeOrderType::Amendment->value,
+            'material_change' => true,
+            'requires_approval' => true,
+            'supplier_version_number' => 2,
+        ]);
+        $this->assertDatabaseHas('purchase_order_change_orders', [
+            'number' => 'PO-2026-SUSTAIN-CO-PENDING-CO-001',
+            'status' => PurchaseOrderChangeOrderStatus::PendingApproval->value,
+            'material_change' => true,
+            'requires_approval' => true,
+        ]);
+        $this->assertDatabaseHas('purchase_order_change_orders', [
+            'number' => 'PO-2026-SUSTAIN-CO-DELIVERY-CO-001',
+            'status' => PurchaseOrderChangeOrderStatus::Approved->value,
+            'material_change' => false,
+            'requires_approval' => false,
+            'supplier_version_number' => 2,
         ]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-REJECTED', 'status' => PurchaseOrderStatus::Rejected->value]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-CANCELLED', 'status' => PurchaseOrderStatus::Cancelled->value]);
@@ -476,9 +511,11 @@ class DemoSeederTest extends TestCase
         $this->assertSame(9, DB::table('rfq_scorecard_entries')->count());
         $this->assertSame(2, CollaborationComment::query()->where('subject_type', Requisition::class)->whereHasMorph('subject', [Requisition::class], fn ($query) => $query->where('number', 'REQ-2026-SUSTAIN'))->count());
         $this->assertSame(2, ApprovalInstance::query()->where('subject_type', RfqAwardRecommendation::class)->count());
-        $this->assertSame(9, PurchaseOrderRequestHandoff::query()->count());
-        $this->assertSame(9, PurchaseOrder::query()->count());
-        $this->assertSame(27, DB::table('purchase_order_lines')->count());
+        $this->assertSame(11, PurchaseOrderRequestHandoff::query()->count());
+        $this->assertSame(11, PurchaseOrder::query()->count());
+        $this->assertSame(33, DB::table('purchase_order_lines')->count());
+        $this->assertSame(3, PurchaseOrderChangeOrder::query()->count());
+        $this->assertSame(3, DB::table('purchase_order_change_order_lines')->count());
 
         foreach (Attachment::query()->get() as $attachment) {
             $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
@@ -495,13 +532,13 @@ class DemoSeederTest extends TestCase
             'rfqs' => 5,
             'quotations' => 5,
             'sourcing_intake_reviews' => 6,
-            'approval_tasks' => 13,
+            'approval_tasks' => 14,
             'awards' => 2,
             'quotation_normalizations' => 4,
             'quotation_scoring_templates' => 1,
             'rfq_scorecards' => 1,
-            'purchase_order_request_handoffs' => 9,
-            'purchase_orders' => 9,
+            'purchase_order_request_handoffs' => 11,
+            'purchase_orders' => 11,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }

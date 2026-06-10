@@ -78,7 +78,8 @@ class ApplyPurchaseOrderChangeOrder
                 ])->save();
             }
 
-            $supplierVersionNumber = ((int) ($purchaseOrder->current_supplier_version_number ?? $purchaseOrder->supplier_version_number ?? 1)) + 1;
+            $priorSupplierVersion = (int) ($purchaseOrder->current_supplier_version_number ?? $purchaseOrder->supplier_version_number ?? 1);
+            $supplierVersionNumber = $priorSupplierVersion + 1;
             $purchaseOrder->forceFill([
                 'status' => $restoredStatus,
                 'subtotal_amount' => $after['subtotalAmount'] ?? $purchaseOrder->subtotal_amount,
@@ -124,6 +125,23 @@ class ApplyPurchaseOrderChangeOrder
                 'to_purchase_order_status' => $restoredStatus,
                 'lock_version' => $changeOrder->lock_version + 1,
             ])->save();
+
+            $this->auditRecorder->record(new AuditEventData(
+                tenant: $purchaseOrder->tenant,
+                actor: $actor,
+                action: 'purchase_order.supplier_version.superseded',
+                subject: $purchaseOrder,
+                metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
+                    'changeOrderId' => (string) $changeOrder->id,
+                    'changeOrderNumber' => $changeOrder->number,
+                    'priorSupplierVersionNumber' => $priorSupplierVersion,
+                    'newSupplierVersionNumber' => $supplierVersionNumber,
+                    'fromStatus' => $before['status'],
+                    'toStatus' => $restoredStatus,
+                ]),
+                before: $before,
+                after: $purchaseOrder->only(['status', 'subtotal_amount', 'tax_amount', 'freight_amount', 'discount_amount', 'total_amount', 'current_change_order_id', 'supplier_version_number', 'current_supplier_version_number', 'lock_version']),
+            ));
 
             $this->auditRecorder->record(new AuditEventData(
                 tenant: $purchaseOrder->tenant,

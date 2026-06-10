@@ -4,7 +4,13 @@ import type {
   CancelPurchaseOrderRequest,
   IssuePurchaseOrderRequest,
   MarkPurchaseOrderReadyForReviewRequest,
+  PurchaseOrderChangeOrder,
+  PurchaseOrderChangeOrderType,
   PurchaseOrder,
+  PurchaseOrderChangeOrdersResponse,
+  SavePurchaseOrderChangeOrderRequest,
+  SubmitPurchaseOrderChangeOrderRequest,
+  CancelPurchaseOrderChangeOrderRequest,
   SubmitPurchaseOrderApprovalRequest,
   UpdatePurchaseOrderRequest,
 } from "@cognify/api-client/schemas";
@@ -14,13 +20,24 @@ import {
 } from "./purchase-order-fixtures";
 
 let purchaseOrders: PurchaseOrder[] = [structuredClone(purchaseOrderFixture)];
+let purchaseOrderChangeOrders: Record<string, PurchaseOrderChangeOrder[]> = {};
 
 export function resetPurchaseOrderMockState() {
   purchaseOrders = [structuredClone(purchaseOrderFixture)];
+  purchaseOrderChangeOrders = {};
 }
 
 export function setPurchaseOrderMockState(nextPurchaseOrders: PurchaseOrder[]) {
   purchaseOrders = nextPurchaseOrders.map((purchaseOrder) => structuredClone(purchaseOrder));
+  purchaseOrderChangeOrders = {};
+}
+
+export function setPurchaseOrderChangeOrdersMockState(
+  purchaseOrderId: string,
+  nextChangeOrders: PurchaseOrderChangeOrder[],
+) {
+  purchaseOrderChangeOrders[purchaseOrderId] = nextChangeOrders.map((changeOrder) => structuredClone(changeOrder));
+  syncPurchaseOrderChangeOrderSummary(purchaseOrderId);
 }
 
 function findPurchaseOrder(purchaseOrderId: string) {
@@ -48,6 +65,188 @@ function conflictResponse() {
     { error: { code: "invalid_state", message: "The purchase order has changed. Reload and try again." } },
     { status: 409 },
   );
+}
+
+function changeOrderPurchaseOrderStatus(changeOrderType: PurchaseOrderChangeOrderType) {
+  return changeOrderType === "full_cancellation" ? "cancelled" : "change_pending";
+}
+
+function changeOrderSummary(changeOrder: PurchaseOrderChangeOrder) {
+  return {
+    id: changeOrder.id,
+    number: changeOrder.number,
+    status: changeOrder.status,
+    changeType: changeOrder.changeType,
+    materialChange: changeOrder.materialChange,
+    requiresApproval: changeOrder.requiresApproval,
+  };
+}
+
+function syncPurchaseOrderChangeOrderSummary(purchaseOrderId: string) {
+  const purchaseOrder = findPurchaseOrder(purchaseOrderId);
+  if (!purchaseOrder) return;
+
+  const changeOrders = purchaseOrderChangeOrders[purchaseOrderId] ?? [];
+  const activeChangeOrder = [...changeOrders].reverse().find((changeOrder) =>
+    ["draft", "changes_requested"].includes(changeOrder.status),
+  );
+  const latestChangeOrder = changeOrders[changeOrders.length - 1] ?? null;
+
+  const summary = {
+    currentChangeOrder: activeChangeOrder ? changeOrderSummary(activeChangeOrder) : null,
+    latestChangeOrder: latestChangeOrder ? changeOrderSummary(latestChangeOrder) : null,
+  };
+
+  purchaseOrders = purchaseOrders.map((item) =>
+    item.id === purchaseOrderId ? { ...item, changeOrdersSummary: summary } : item,
+  );
+}
+
+function setChangeOrders(purchaseOrderId: string, nextChangeOrders: PurchaseOrderChangeOrder[]) {
+  purchaseOrderChangeOrders[purchaseOrderId] = nextChangeOrders.map((changeOrder) => structuredClone(changeOrder));
+  syncPurchaseOrderChangeOrderSummary(purchaseOrderId);
+}
+
+function nextChangeOrderNumber(purchaseOrder: PurchaseOrder) {
+  const changeOrders = purchaseOrderChangeOrders[purchaseOrder.id] ?? [];
+  return `CO-${purchaseOrder.number}-${String(changeOrders.length + 1).padStart(3, "0")}`;
+}
+
+function changeOrderSnapshotFromPurchaseOrder(purchaseOrder: PurchaseOrder) {
+  return {
+    requestedPoDate: purchaseOrder.requestedPoDate,
+    expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
+    billingName: purchaseOrder.billingName,
+    billingAddress: purchaseOrder.billingAddress,
+    shippingName: purchaseOrder.shippingName,
+    shippingAddress: purchaseOrder.shippingAddress,
+    deliveryAttention: purchaseOrder.deliveryAttention,
+    paymentTerms: purchaseOrder.paymentTerms,
+    deliveryTerms: purchaseOrder.deliveryTerms,
+    buyerNote: purchaseOrder.buyerNote,
+    financeNote: purchaseOrder.financeNote,
+  };
+}
+
+function changeOrderSnapshotFromRequest(payload: SavePurchaseOrderChangeOrderRequest) {
+  return {
+    requestedPoDate: payload.requestedPoDate ?? null,
+    expectedDeliveryDate: payload.expectedDeliveryDate ?? null,
+    billingName: payload.billingName ?? null,
+    billingAddress: payload.billingAddress ?? null,
+    shippingName: payload.shippingName ?? null,
+    shippingAddress: payload.shippingAddress ?? null,
+    deliveryAttention: payload.deliveryAttention ?? null,
+    paymentTerms: payload.paymentTerms ?? null,
+    deliveryTerms: payload.deliveryTerms ?? null,
+    buyerNote: payload.buyerNote ?? null,
+    financeNote: payload.financeNote ?? null,
+  };
+}
+
+function buildChangeOrder(
+  purchaseOrder: PurchaseOrder,
+  payload: SavePurchaseOrderChangeOrderRequest,
+  existingChangeOrder?: PurchaseOrderChangeOrder,
+): PurchaseOrderChangeOrder {
+  const status = existingChangeOrder?.status ?? "draft";
+  const materialChange = payload.changeType !== "full_cancellation";
+  const number = existingChangeOrder?.number ?? nextChangeOrderNumber(purchaseOrder);
+  const lines = buildChangeOrderLines(purchaseOrder, payload);
+
+  return {
+    id: existingChangeOrder?.id ?? `change-order-${purchaseOrder.id}-${purchaseOrderChangeOrders[purchaseOrder.id]?.length ?? 0}`,
+    purchaseOrderId: purchaseOrder.id,
+    number,
+    status,
+    changeType: payload.changeType,
+    reason: payload.reason,
+    materialChange,
+    requiresApproval: materialChange,
+    fromPurchaseOrderStatus: purchaseOrder.status,
+    toPurchaseOrderStatus: changeOrderPurchaseOrderStatus(payload.changeType),
+    before: changeOrderSnapshotFromPurchaseOrder(purchaseOrder),
+    after: changeOrderSnapshotFromRequest(payload),
+    delta: { changeType: payload.changeType, reason: payload.reason },
+    supplierVersionNumber: 0,
+    approvalInstanceId: existingChangeOrder?.approvalInstanceId ?? null,
+    requestedAt: existingChangeOrder?.requestedAt ?? "2026-06-10T00:00:00.000Z",
+    submittedAt: existingChangeOrder?.submittedAt ?? null,
+    approvedAt: existingChangeOrder?.approvedAt ?? null,
+    rejectedAt: existingChangeOrder?.rejectedAt ?? null,
+    cancelledAt: existingChangeOrder?.cancelledAt ?? null,
+    lockVersion: existingChangeOrder ? existingChangeOrder.lockVersion + 1 : 1,
+    lines,
+  };
+}
+
+function buildChangeOrderLines(
+  purchaseOrder: PurchaseOrder,
+  payload: SavePurchaseOrderChangeOrderRequest,
+): PurchaseOrderChangeOrder["lines"] {
+  return (payload.lines ?? []).map((lineChange, index) => {
+    const line = findPurchaseOrderLine(purchaseOrder, lineChange.lineId);
+    const lineNumber = line?.lineNumber ?? index + 1;
+    const changeAction = lineChange.action;
+    const quantityAfter = changeAction === "cancel" ? null : stringValue(lineChange.quantity ?? line?.quantity ?? null);
+    const unitPriceAfter = changeAction === "cancel" ? null : stringValue(lineChange.unitPrice ?? line?.unitPrice ?? null);
+    const expectedDeliveryDateAfter = changeAction === "cancel" ? null : (lineChange.expectedDeliveryDate ?? line?.expectedDeliveryDate ?? null);
+    const deliveryLocationAfter = changeAction === "cancel" ? null : (lineChange.deliveryLocation ?? line?.deliveryLocation ?? null);
+    const notesAfter = changeAction === "cancel" ? null : (lineChange.notes ?? line?.notes ?? null);
+
+    return {
+      id: `change-line-${purchaseOrder.id}-${lineChange.lineId}`,
+      lineId: lineChange.lineId,
+      lineNumber,
+      changeAction,
+      quantityBefore: line?.quantity ?? null,
+      quantityAfter,
+      unitPriceBefore: line?.unitPrice ?? null,
+      unitPriceAfter,
+      subtotalAmountBefore: line?.subtotalAmount ?? null,
+      subtotalAmountAfter: quantityAfter && unitPriceAfter ? formatAmount(Number(quantityAfter) * Number(unitPriceAfter)) : null,
+      taxAmountBefore: line?.taxAmount ?? null,
+      taxAmountAfter: null,
+      freightAmountBefore: line?.freightAmount ?? null,
+      freightAmountAfter: null,
+      discountAmountBefore: line?.discountAmount ?? null,
+      discountAmountAfter: null,
+      totalAmountBefore: line?.totalAmount ?? null,
+      totalAmountAfter: quantityAfter && unitPriceAfter ? formatAmount(Number(quantityAfter) * Number(unitPriceAfter)) : null,
+      expectedDeliveryDateBefore: line?.expectedDeliveryDate ?? null,
+      expectedDeliveryDateAfter,
+      deliveryLocationBefore: line?.deliveryLocation ?? null,
+      deliveryLocationAfter,
+      notesBefore: line?.notes ?? null,
+      notesAfter,
+      delta: {},
+    };
+  });
+}
+
+function findPurchaseOrderLine(purchaseOrder: PurchaseOrder, lineId: string) {
+  return purchaseOrder.lines.find((line) => line.id === lineId);
+}
+
+function formatAmount(value: number) {
+  return Number.isFinite(value) ? value.toFixed(2) : "0.00";
+}
+
+function stringValue(value: string | number | null | undefined) {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return "";
+}
+
+function findChangeOrder(changeOrderId: string) {
+  for (const [purchaseOrderId, changeOrders] of Object.entries(purchaseOrderChangeOrders)) {
+    const changeOrder = changeOrders.find((item) => item.id === changeOrderId);
+    if (changeOrder) {
+      return { purchaseOrderId, changeOrder };
+    }
+  }
+
+  return null;
 }
 
 function supplierExportPayload(purchaseOrder: PurchaseOrder) {
@@ -272,6 +471,198 @@ export const purchaseOrderHandlers = [
     purchaseOrders = purchaseOrders.map((item) => (item.id === updated.id ? updated : item));
 
     return HttpResponse.json({ data: updated });
+  }),
+
+  http.get("/api/purchase-orders/:purchaseOrder/change-orders", ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const data = purchaseOrderChangeOrders[purchaseOrder.id] ?? [];
+    return HttpResponse.json({ data } satisfies PurchaseOrderChangeOrdersResponse);
+  }),
+
+  http.post("/api/purchase-orders/:purchaseOrder/change-orders", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as SavePurchaseOrderChangeOrderRequest;
+    if (payload.lockVersion !== purchaseOrder.lockVersion) {
+      return conflictResponse();
+    }
+
+    const nextChangeOrder = buildChangeOrder(purchaseOrder, payload);
+    const nextChangeOrders = [...(purchaseOrderChangeOrders[purchaseOrder.id] ?? []), nextChangeOrder];
+    setChangeOrders(purchaseOrder.id, nextChangeOrders);
+
+    const updatedPurchaseOrder: PurchaseOrder = {
+      ...purchaseOrder,
+      permissions: {
+        ...purchaseOrder.permissions,
+        canUpdateChangeOrder: true,
+        canSubmitChangeOrder: true,
+        canCancelChangeOrder: true,
+      },
+    };
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updatedPurchaseOrder.id ? updatedPurchaseOrder : item));
+
+    return HttpResponse.json({ data: nextChangeOrder }, { status: 201 });
+  }),
+
+  http.get("/api/purchase-order-change-orders/:changeOrder", ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const found = findChangeOrder(String(params.changeOrder));
+    if (!found) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    return HttpResponse.json({ data: found.changeOrder });
+  }),
+
+  http.patch("/api/purchase-order-change-orders/:changeOrder", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const found = findChangeOrder(String(params.changeOrder));
+    if (!found) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const purchaseOrder = findPurchaseOrder(found.purchaseOrderId);
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as SavePurchaseOrderChangeOrderRequest;
+    if (payload.lockVersion !== found.changeOrder.lockVersion) {
+      return conflictResponse();
+    }
+
+    const updated = buildChangeOrder(purchaseOrder, payload, found.changeOrder);
+    const nextChangeOrders = (purchaseOrderChangeOrders[found.purchaseOrderId] ?? []).map((item) =>
+      item.id === updated.id ? updated : item,
+    );
+    setChangeOrders(found.purchaseOrderId, nextChangeOrders);
+
+    const updatedPurchaseOrder: PurchaseOrder = {
+      ...purchaseOrder,
+      permissions: {
+        ...purchaseOrder.permissions,
+        canUpdateChangeOrder: true,
+        canSubmitChangeOrder: true,
+        canCancelChangeOrder: true,
+      },
+    };
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updatedPurchaseOrder.id ? updatedPurchaseOrder : item));
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.post("/api/purchase-order-change-orders/:changeOrder/submit", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const found = findChangeOrder(String(params.changeOrder));
+    if (!found) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as SubmitPurchaseOrderChangeOrderRequest;
+    if (payload.lockVersion !== found.changeOrder.lockVersion) {
+      return conflictResponse();
+    }
+
+    const purchaseOrder = findPurchaseOrder(found.purchaseOrderId);
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const updatedChangeOrder: PurchaseOrderChangeOrder = {
+      ...found.changeOrder,
+      status: "pending_approval",
+      submittedAt: "2026-06-10T04:00:00.000Z",
+      lockVersion: found.changeOrder.lockVersion + 1,
+    };
+
+    const nextChangeOrders = (purchaseOrderChangeOrders[found.purchaseOrderId] ?? []).map((item) =>
+      item.id === updatedChangeOrder.id ? updatedChangeOrder : item,
+    );
+    setChangeOrders(found.purchaseOrderId, nextChangeOrders);
+
+    const updatedPurchaseOrder: PurchaseOrder = {
+      ...purchaseOrder,
+      status: changeOrderPurchaseOrderStatus(updatedChangeOrder.changeType),
+      lockVersion: purchaseOrder.lockVersion + 1,
+      permissions: {
+        ...purchaseOrder.permissions,
+        canUpdateChangeOrder: false,
+        canSubmitChangeOrder: false,
+        canCancelChangeOrder: false,
+        canCreateChangeOrder: false,
+      },
+    };
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updatedPurchaseOrder.id ? updatedPurchaseOrder : item));
+
+    return HttpResponse.json({ data: updatedChangeOrder });
+  }),
+
+  http.post("/api/purchase-order-change-orders/:changeOrder/cancel", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const found = findChangeOrder(String(params.changeOrder));
+    if (!found) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as CancelPurchaseOrderChangeOrderRequest;
+    if (payload.lockVersion !== found.changeOrder.lockVersion) {
+      return conflictResponse();
+    }
+
+    const purchaseOrder = findPurchaseOrder(found.purchaseOrderId);
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const updatedChangeOrder: PurchaseOrderChangeOrder = {
+      ...found.changeOrder,
+      status: "cancelled",
+      cancelledAt: "2026-06-10T05:00:00.000Z",
+      lockVersion: found.changeOrder.lockVersion + 1,
+    };
+
+    const nextChangeOrders = (purchaseOrderChangeOrders[found.purchaseOrderId] ?? []).map((item) =>
+      item.id === updatedChangeOrder.id ? updatedChangeOrder : item,
+    );
+    setChangeOrders(found.purchaseOrderId, nextChangeOrders);
+
+    const updatedPurchaseOrder: PurchaseOrder = {
+      ...purchaseOrder,
+      status: purchaseOrder.status === "change_pending" ? "draft" : purchaseOrder.status,
+      lockVersion: purchaseOrder.lockVersion + 1,
+      permissions: {
+        ...purchaseOrder.permissions,
+        canUpdateChangeOrder: true,
+        canSubmitChangeOrder: true,
+        canCancelChangeOrder: true,
+        canCreateChangeOrder: true,
+      },
+    };
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updatedPurchaseOrder.id ? updatedPurchaseOrder : item));
+
+    return HttpResponse.json({ data: updatedChangeOrder });
   }),
 
   http.post("/api/purchase-orders/:purchaseOrder/issue", async ({ params, request }) => {
