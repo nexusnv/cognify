@@ -3,8 +3,8 @@ import type { PurchaseOrderLine } from "@cognify/api-client/schemas";
 
 export function PurchaseOrderLinesTable({ lines, currency }: { lines: PurchaseOrderLine[]; currency: string }) {
   return (
-    <section id="lines" className="rounded-md border">
-      <Table aria-label="Purchase order lines">
+    <section id="lines" className="overflow-x-auto rounded-md border">
+      <Table aria-label="Purchase order lines" className="min-w-[720px]">
         <TableCaption className="sr-only">Purchase order lines</TableCaption>
         <TableHeader className="bg-muted/30">
           <TableRow>

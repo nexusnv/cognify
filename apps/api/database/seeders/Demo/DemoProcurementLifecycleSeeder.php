@@ -1059,6 +1059,23 @@ class DemoProcurementLifecycleSeeder
             }
 
             $purchaseOrder = $this->seedPurchaseOrderApprovalRoute($context, $tenant, $purchaseOrder->refresh(), $policyVersion, $buyer, $finance);
+
+            if (in_array($purchaseOrder->statusState(), [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)) {
+                $approvedSnapshot = [
+                    'approvalInstanceId' => $purchaseOrder->approval_instance_id !== null ? (string) $purchaseOrder->approval_instance_id : null,
+                    'status' => 'approved',
+                    'finalDecision' => 'approved',
+                    'approvedAt' => $purchaseOrder->approved_at?->toJSON(),
+                    'approvedBy' => $finance->name,
+                    'stages' => [['stage' => 'Manager review', 'actor' => $finance->name, 'status' => 'approved']],
+                ];
+
+                $purchaseOrder->forceFill([
+                    'approval_snapshot' => $approvedSnapshot,
+                    'supplier_version' => $this->purchaseOrderSupplierVersion($record, $quotation, $lineSnapshot, $sourceSnapshot, $approvedSnapshot),
+                ])->save();
+            }
+
             $this->recordPurchaseOrderAudit($tenant, $buyer, $purchaseOrder->refresh());
             $context->purchaseOrderRequestHandoffs->put($record['handoffKey'], $handoff->refresh());
             $context->purchaseOrders->put($poKey, $purchaseOrder->refresh());
@@ -1169,7 +1186,9 @@ class DemoProcurementLifecycleSeeder
     ): PurchaseOrder {
         $status = $purchaseOrder->statusState();
 
-        if (! in_array($status, [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Rejected], true)) {
+        $approvedStatuses = [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged];
+
+        if (! in_array($status, [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, ...$approvedStatuses, PurchaseOrderStatus::Rejected], true)) {
             return $purchaseOrder;
         }
 
@@ -1180,13 +1199,13 @@ class DemoProcurementLifecycleSeeder
             assignee: $finance,
             title: "Review {$purchaseOrder->number}",
             instanceStatus: match ($status) {
-                PurchaseOrderStatus::Approved => ApprovalInstanceStatus::Approved,
+                PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged => ApprovalInstanceStatus::Approved,
                 PurchaseOrderStatus::ChangesRequested => ApprovalInstanceStatus::ChangesRequested,
                 PurchaseOrderStatus::Rejected => ApprovalInstanceStatus::Rejected,
                 default => ApprovalInstanceStatus::Active,
             },
             taskStatus: match ($status) {
-                PurchaseOrderStatus::Approved => ApprovalTaskStatus::Approved,
+                PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged => ApprovalTaskStatus::Approved,
                 PurchaseOrderStatus::ChangesRequested => ApprovalTaskStatus::ChangesRequested,
                 PurchaseOrderStatus::Rejected => ApprovalTaskStatus::Rejected,
                 default => ApprovalTaskStatus::Active,
@@ -1194,19 +1213,19 @@ class DemoProcurementLifecycleSeeder
             startedAt: '2026-06-09 08:00:00',
             dueAt: '2026-06-11 08:00:00',
             decidedAt: match ($status) {
-                PurchaseOrderStatus::Approved => '2026-06-09 12:00:00',
+                PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged => '2026-06-09 12:00:00',
                 PurchaseOrderStatus::ChangesRequested => '2026-06-09 10:00:00',
                 PurchaseOrderStatus::Rejected => '2026-06-09 12:30:00',
                 default => null,
             },
             decision: match ($status) {
-                PurchaseOrderStatus::Approved => 'approved',
+                PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged => 'approved',
                 PurchaseOrderStatus::ChangesRequested => 'changes_requested',
                 PurchaseOrderStatus::Rejected => 'rejected',
                 default => null,
             },
             decisionReason: match ($status) {
-                PurchaseOrderStatus::Approved => 'Approved for supplier issue demo.',
+                PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged => 'Approved for supplier issue demo.',
                 PurchaseOrderStatus::ChangesRequested => 'Payment terms and tax amount require correction.',
                 PurchaseOrderStatus::Rejected => 'Tax coding does not match the approved quotation.',
                 default => null,
@@ -1217,8 +1236,8 @@ class DemoProcurementLifecycleSeeder
             'approval_instance_id' => $task->approval_instance_id,
             'approval_submitted_by_user_id' => $buyer->id,
             'approval_submitted_at' => '2026-06-09 08:00:00',
-            'approved_by_user_id' => $status === PurchaseOrderStatus::Approved ? $finance->id : null,
-            'approved_at' => $status === PurchaseOrderStatus::Approved ? '2026-06-09 12:00:00' : null,
+            'approved_by_user_id' => in_array($status, $approvedStatuses, true) ? $finance->id : null,
+            'approved_at' => in_array($status, $approvedStatuses, true) ? '2026-06-09 12:00:00' : null,
             'rejected_by_user_id' => $status === PurchaseOrderStatus::Rejected ? $finance->id : null,
             'rejected_at' => $status === PurchaseOrderStatus::Rejected ? '2026-06-09 12:30:00' : null,
             'rejected_reason' => $status === PurchaseOrderStatus::Rejected ? 'Tax coding does not match the approved quotation.' : null,

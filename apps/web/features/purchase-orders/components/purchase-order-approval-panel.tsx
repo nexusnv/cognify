@@ -92,9 +92,12 @@ function approvalStateCopy(purchaseOrder: PurchaseOrder) {
         timestamp: approval.changesRequestedAt ?? null,
       };
     case "approved":
+    case "issued":
+    case "acknowledged":
       return {
         label: "Approved",
-        description: "This purchase order is approved for the future supplier issue workflow.",
+        description: "This purchase order is approved for supplier issue.",
+        // Issued and acknowledged are supplier states reached only after approval, so this panel keeps the approval decision timestamp.
         timestamp: approval.approvedAt ?? null,
       };
     case "rejected":

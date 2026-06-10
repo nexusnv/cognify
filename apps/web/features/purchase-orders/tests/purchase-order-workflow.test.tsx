@@ -220,7 +220,7 @@ describe("purchase order workflow", () => {
     renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
 
     expect(await screen.findByText("Approved")).toBeInTheDocument();
-    expect(screen.getByText("This purchase order is approved for the future supplier issue workflow.")).toBeInTheDocument();
+    expect(screen.getByText("This purchase order is approved for supplier issue.")).toBeInTheDocument();
 
     cleanup();
     setPurchaseOrderMockState([rejectedPurchaseOrderFixture]);
@@ -257,6 +257,10 @@ describe("purchase order workflow", () => {
 
     renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
 
+    const approvalRegion = await screen.findByRole("region", { name: "Purchase order approval" });
+    expect(within(approvalRegion).getByText("Approved")).toBeInTheDocument();
+    expect(within(approvalRegion).queryByText("Draft")).not.toBeInTheDocument();
+
     const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
     expect(within(supplierRegion).getByText("Issued to supplier")).toBeInTheDocument();
     expect(within(supplierRegion).getByRole("button", { name: "Preview JSON" })).toBeEnabled();
@@ -288,6 +292,10 @@ describe("purchase order workflow", () => {
     setPurchaseOrderMockState([acknowledgedPurchaseOrderFixture]);
 
     renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const approvalRegion = await screen.findByRole("region", { name: "Purchase order approval" });
+    expect(within(approvalRegion).getByText("Approved")).toBeInTheDocument();
+    expect(within(approvalRegion).queryByText("Draft")).not.toBeInTheDocument();
 
     const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
     expect(within(supplierRegion).getByText("Supplier acknowledged")).toBeInTheDocument();

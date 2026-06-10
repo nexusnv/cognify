@@ -298,7 +298,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(3, ProcurementProject::query()->count());
         $this->assertSame(5, Rfq::query()->count());
         $this->assertSame(5, Quotation::query()->count());
-        $this->assertSame(11, ApprovalTask::query()->count());
+        $this->assertSame(13, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
         $this->assertSame(2, Attachment::query()->count());
         $this->assertSame(5, NotificationRecord::query()->count());
@@ -400,6 +400,8 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-IN-REVIEW', 'status' => 'active']);
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-CHANGES', 'status' => 'changes_requested']);
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-APPROVED', 'status' => 'approved']);
+        $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-ISSUED', 'status' => 'approved']);
+        $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-ACK', 'status' => 'approved']);
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-REJECTED', 'status' => 'rejected']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-1001', 'status' => 'recommended']);
@@ -433,6 +435,14 @@ class DemoSeederTest extends TestCase
         ]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-REJECTED', 'status' => PurchaseOrderStatus::Rejected->value]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-CANCELLED', 'status' => PurchaseOrderStatus::Cancelled->value]);
+        $issuedPurchaseOrder = PurchaseOrder::query()->where('number', 'PO-2026-SUSTAIN-ISSUED')->firstOrFail();
+        $acknowledgedPurchaseOrder = PurchaseOrder::query()->where('number', 'PO-2026-SUSTAIN-ACK')->firstOrFail();
+        $this->assertNotNull($issuedPurchaseOrder->approval_instance_id);
+        $this->assertNotNull($acknowledgedPurchaseOrder->approval_instance_id);
+        $this->assertSame('approved', data_get($issuedPurchaseOrder->supplier_version, 'approval.status'));
+        $this->assertSame((string) $issuedPurchaseOrder->approval_instance_id, data_get($issuedPurchaseOrder->supplier_version, 'approval.approvalInstanceId'));
+        $this->assertSame('approved', data_get($acknowledgedPurchaseOrder->supplier_version, 'approval.status'));
+        $this->assertSame((string) $acknowledgedPurchaseOrder->approval_instance_id, data_get($acknowledgedPurchaseOrder->supplier_version, 'approval.approvalInstanceId'));
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
@@ -485,7 +495,7 @@ class DemoSeederTest extends TestCase
             'rfqs' => 5,
             'quotations' => 5,
             'sourcing_intake_reviews' => 6,
-            'approval_tasks' => 11,
+            'approval_tasks' => 13,
             'awards' => 2,
             'quotation_normalizations' => 4,
             'quotation_scoring_templates' => 1,
