@@ -156,6 +156,8 @@ class CreateOrUpdatePurchaseOrderChangeOrder
             }
 
             if ($existingChangeOrder === null) {
+                $beforeSnapshot = $purchaseOrder->only(['current_change_order_id', 'change_order_count', 'lock_version']);
+
                 $purchaseOrder->forceFill([
                     'current_change_order_id' => $changeOrder->id,
                     'change_order_count' => ((int) $purchaseOrder->change_order_count) + 1,
@@ -174,7 +176,7 @@ class CreateOrUpdatePurchaseOrderChangeOrder
                     'materialChange' => $changeOrder->material_change,
                     'requiresApproval' => $changeOrder->requires_approval,
                 ]),
-                before: $purchaseOrder->only(['current_change_order_id', 'change_order_count', 'lock_version']),
+                before: $existingChangeOrder === null ? $beforeSnapshot : $purchaseOrder->only(['current_change_order_id', 'change_order_count', 'lock_version']),
                 after: $purchaseOrder->only(['current_change_order_id', 'change_order_count', 'lock_version']),
             ));
 

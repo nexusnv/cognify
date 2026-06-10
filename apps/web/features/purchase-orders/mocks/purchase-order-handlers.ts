@@ -650,7 +650,7 @@ export const purchaseOrderHandlers = [
 
     const updatedPurchaseOrder: PurchaseOrder = {
       ...purchaseOrder,
-      status: purchaseOrder.status === "change_pending" ? "draft" : purchaseOrder.status,
+      status: purchaseOrder.status === "change_pending" ? found.changeOrder.fromPurchaseOrderStatus : purchaseOrder.status,
       lockVersion: purchaseOrder.lockVersion + 1,
       permissions: {
         ...purchaseOrder.permissions,

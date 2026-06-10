@@ -334,7 +334,7 @@ function PurchaseOrderChangeOrderPanelContent({
                         value={line.notes}
                         aria-label={`${sourceLine?.description ?? `Line ${index + 1}`} notes`}
                         onChange={(event) => updateDraftLine(index, "notes", event.target.value, setDraft)}
-                        disabled={!canEdit}
+                        disabled={!canEdit || line.action === "cancel"}
                       />
                     </td>
                   </tr>

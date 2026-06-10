@@ -39,6 +39,8 @@ class CancelPurchaseOrderChangeOrder
 
             $changeOrder->assertLockVersion($lockVersion);
 
+            $beforeSnapshot = $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']);
+
             $changeOrder->forceFill([
                 'status' => PurchaseOrderChangeOrderStatus::Cancelled,
                 'cancelled_by_user_id' => $actor->id,
@@ -65,7 +67,7 @@ class CancelPurchaseOrderChangeOrder
                     'fromStatus' => $changeOrder->from_purchase_order_status,
                     'toStatus' => $changeOrder->from_purchase_order_status,
                 ]),
-                before: $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']),
+                before: $beforeSnapshot,
                 after: $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']),
             ));
 

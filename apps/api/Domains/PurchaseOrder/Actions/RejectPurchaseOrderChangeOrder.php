@@ -33,6 +33,8 @@ class RejectPurchaseOrderChangeOrder
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $beforeSnapshot = $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']);
+
             $changeOrder->forceFill([
                 'status' => PurchaseOrderChangeOrderStatus::Rejected,
                 'approval_instance_id' => $instance->id,
@@ -61,7 +63,7 @@ class RejectPurchaseOrderChangeOrder
                     'fromStatus' => $changeOrder->from_purchase_order_status,
                     'toStatus' => $changeOrder->from_purchase_order_status,
                 ]),
-                before: $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']),
+                before: $beforeSnapshot,
                 after: $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']),
             ));
 

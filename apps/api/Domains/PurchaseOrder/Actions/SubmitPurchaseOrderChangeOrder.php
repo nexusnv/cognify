@@ -51,6 +51,9 @@ class SubmitPurchaseOrderChangeOrder
                 return $result;
             }
 
+            $beforeStatus = $purchaseOrder->statusState()->value;
+            $beforeSnapshot = $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']);
+
             $changeOrder->forceFill([
                 'status' => PurchaseOrderChangeOrderStatus::PendingApproval,
                 'submitted_by_user_id' => $actor->id,
@@ -79,10 +82,10 @@ class SubmitPurchaseOrderChangeOrder
                     'changeOrderId' => (string) $changeOrder->id,
                     'changeOrderNumber' => $changeOrder->number,
                     'approvalInstanceId' => (string) $instance->id,
-                    'fromStatus' => PurchaseOrderStatus::Issued->value,
+                    'fromStatus' => $beforeStatus,
                     'toStatus' => PurchaseOrderStatus::ChangePending->value,
                 ]),
-                before: $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']),
+                before: $beforeSnapshot,
                 after: $purchaseOrder->only(['status', 'current_change_order_id', 'lock_version']),
             ));
 

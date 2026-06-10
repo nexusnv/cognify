@@ -77,6 +77,18 @@ class PurchaseOrderChangeOrderDelta
                 continue;
             }
 
+            if ($lineAction === 'cancel') {
+                $afterLine['status'] = 'cancelled';
+                $afterLine['cancelledAt'] = now()->toISOString();
+
+                $lineChanges[] = [
+                    'lineId' => (string) $line->id,
+                    'action' => 'cancel',
+                    'before' => $this->copyLineSnapshot($line),
+                    'after' => $afterLine,
+                ];
+            }
+
             $afterLines->push($afterLine);
         }
 
