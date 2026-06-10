@@ -743,6 +743,8 @@ class DemoProcurementLifecycleSeeder
         $poInReview = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-in-review-source', $greenline, $greenlineVersion, $scorecard);
         $poChangesRequested = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-changes-requested-source', $greenline, $greenlineVersion, $scorecard);
         $poApproved = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-approved-source', $greenline, $greenlineVersion, $scorecard);
+        $poIssued = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-issued-source', $greenline, $greenlineVersion, $scorecard);
+        $poAcknowledged = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-acknowledged-source', $greenline, $greenlineVersion, $scorecard);
         $poRejected = $this->recommendationVariant($tenant, $rfqs->get('sustainable'), $buyer, RfqAwardRecommendationStatus::Approved, 'po-rejected-source', $greenline, $greenlineVersion, $scorecard);
 
         $routedTask = $this->seedApprovalRoute(
@@ -793,6 +795,8 @@ class DemoProcurementLifecycleSeeder
         $context->rfqAwardRecommendations->put('po-in-review-source', $poInReview->refresh());
         $context->rfqAwardRecommendations->put('po-changes-requested-source', $poChangesRequested->refresh());
         $context->rfqAwardRecommendations->put('po-approved-source', $poApproved->refresh());
+        $context->rfqAwardRecommendations->put('po-issued-source', $poIssued->refresh());
+        $context->rfqAwardRecommendations->put('po-acknowledged-source', $poAcknowledged->refresh());
         $context->rfqAwardRecommendations->put('po-rejected-source', $poRejected->refresh());
         $context->approvalTasks->put('award-routed', $routedTask->refresh());
         $context->approvalTasks->put('award-approved', $approvedTask->refresh());
@@ -852,6 +856,24 @@ class DemoProcurementLifecycleSeeder
                 'poStatus' => PurchaseOrderStatus::Approved,
                 'lockVersion' => 4,
             ],
+            'issued' => [
+                'handoffKey' => 'issued-source',
+                'recommendationKey' => 'po-issued-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-ISSUED',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-ISSUED',
+                'poStatus' => PurchaseOrderStatus::Issued,
+                'lockVersion' => 5,
+            ],
+            'acknowledged' => [
+                'handoffKey' => 'acknowledged-source',
+                'recommendationKey' => 'po-acknowledged-source',
+                'handoffNumber' => 'POH-2026-SUSTAIN-ACK',
+                'handoffStatus' => PurchaseOrderRequestHandoffStatus::Exported,
+                'poNumber' => 'PO-2026-SUSTAIN-ACK',
+                'poStatus' => PurchaseOrderStatus::Acknowledged,
+                'lockVersion' => 6,
+            ],
             'rejected' => [
                 'handoffKey' => 'rejected-source',
                 'recommendationKey' => 'po-rejected-source',
@@ -903,6 +925,9 @@ class DemoProcurementLifecycleSeeder
                 ])
                 ->values()
                 ->all();
+            $supplierVersion = in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)
+                ? $this->purchaseOrderSupplierVersion($record, $quotation, $lineSnapshot, $sourceSnapshot, $approvalSnapshot)
+                : null;
 
             $handoff = PurchaseOrderRequestHandoff::query()->updateOrCreate(
                 ['tenant_id' => $tenant->id, 'rfq_award_recommendation_id' => $recommendation->id],
@@ -980,10 +1005,10 @@ class DemoProcurementLifecycleSeeder
                     'cancelled_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? $buyer->id : null,
                     'cancelled_at' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? '2026-05-26 12:00:00' : null,
                     'cancelled_reason' => $record['poStatus'] === PurchaseOrderStatus::Cancelled ? 'Duplicate draft replaced by PO-2026-SUSTAIN-REVIEW.' : null,
-                    'approval_submitted_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Rejected], true) ? $buyer->id : null,
-                    'approval_submitted_at' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Rejected], true) ? '2026-06-09 08:00:00' : null,
-                    'approved_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Approved ? $finance->id : null,
-                    'approved_at' => $record['poStatus'] === PurchaseOrderStatus::Approved ? '2026-06-09 12:00:00' : null,
+                    'approval_submitted_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::Rejected], true) ? $buyer->id : null,
+                    'approval_submitted_at' => in_array($record['poStatus'], [PurchaseOrderStatus::InReview, PurchaseOrderStatus::ChangesRequested, PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::Rejected], true) ? '2026-06-09 08:00:00' : null,
+                    'approved_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? $finance->id : null,
+                    'approved_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? '2026-06-09 12:00:00' : null,
                     'rejected_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? $finance->id : null,
                     'rejected_at' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? '2026-06-09 12:30:00' : null,
                     'rejected_reason' => $record['poStatus'] === PurchaseOrderStatus::Rejected ? 'Tax coding does not match the approved quotation.' : null,
@@ -991,6 +1016,22 @@ class DemoProcurementLifecycleSeeder
                     'changes_requested_at' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? '2026-06-09 10:00:00' : null,
                     'changes_requested_reason' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? 'Payment terms and tax amount require correction.' : null,
                     'changes_requested_fields' => $record['poStatus'] === PurchaseOrderStatus::ChangesRequested ? ['taxAmount', 'paymentTerms'] : [],
+                    'issued_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? $buyer->id : null,
+                    'issued_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? '2026-06-10 10:00:00' : null,
+                    'issue_method' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'manual_email' : null,
+                    'supplier_contact_name' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'Priya Supplier' : null,
+                    'supplier_contact_email' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'priya.supplier@example.com' : null,
+                    'issue_message' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'Please confirm receipt and planned delivery date.' : null,
+                    'supplier_version' => $supplierVersion,
+                    'supplier_version_number' => $supplierVersion !== null ? 1 : 0,
+                    'last_supplier_exported_by_user_id' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? $buyer->id : null,
+                    'last_supplier_exported_at' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? '2026-06-10 10:05:00' : null,
+                    'last_supplier_export_format' => in_array($record['poStatus'], [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true) ? 'json' : null,
+                    'acknowledged_by_user_id' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? $buyer->id : null,
+                    'acknowledged_at' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? '2026-06-10 11:00:00' : null,
+                    'acknowledged_contact_name' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? 'Priya Supplier' : null,
+                    'acknowledgement_reference' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? 'ACK-PO-100' : null,
+                    'acknowledgement_note' => $record['poStatus'] === PurchaseOrderStatus::Acknowledged ? 'Supplier confirmed delivery in week 29.' : null,
                     'lock_version' => $record['lockVersion'],
                 ],
             );
@@ -1047,6 +1088,53 @@ class DemoProcurementLifecycleSeeder
         ])->values()->all();
     }
 
+    /**
+     * @param  array<string, mixed>  $record
+     * @param  list<array<string, mixed>>  $lineSnapshot
+     * @param  array<string, mixed>  $sourceSnapshot
+     * @param  array<string, mixed>  $approvalSnapshot
+     * @return array<string, mixed>
+     */
+    private function purchaseOrderSupplierVersion(
+        array $record,
+        Quotation $quotation,
+        array $lineSnapshot,
+        array $sourceSnapshot,
+        array $approvalSnapshot,
+    ): array {
+        return [
+            'versionNumber' => 1,
+            'issuedAt' => '2026-06-10T02:00:00.000000Z',
+            'issueMethod' => 'manual_email',
+            'supplierContactName' => 'Priya Supplier',
+            'supplierContactEmail' => 'priya.supplier@example.com',
+            'message' => 'Please confirm receipt and planned delivery date.',
+            'purchaseOrder' => [
+                'number' => $record['poNumber'],
+                'currency' => $quotation->currency,
+                'subtotalAmount' => (string) $quotation->subtotal_amount,
+                'taxAmount' => $quotation->tax_amount !== null ? (string) $quotation->tax_amount : null,
+                'freightAmount' => $quotation->freight_amount !== null ? (string) $quotation->freight_amount : null,
+                'discountAmount' => $quotation->discount_amount !== null ? (string) $quotation->discount_amount : null,
+                'totalAmount' => (string) $quotation->total_amount,
+                'requestedPoDate' => '2026-06-03',
+                'expectedDeliveryDate' => '2026-07-15',
+                'billingName' => 'Acme Procurement Finance',
+                'shippingName' => 'HQ East Wing Facilities',
+                'deliveryAttention' => 'Facilities receiving dock',
+                'paymentTerms' => 'Net 30',
+                'deliveryTerms' => 'Delivered duty paid',
+            ],
+            'vendor' => $sourceSnapshot['vendor'],
+            'lines' => $lineSnapshot,
+            'source' => [
+                'rfqId' => $sourceSnapshot['rfq']['id'],
+                'recommendationId' => $sourceSnapshot['award']['recommendationId'],
+            ],
+            'approval' => $approvalSnapshot,
+        ];
+    }
+
     private function recordPurchaseOrderAudit(Tenant $tenant, User $buyer, PurchaseOrder $purchaseOrder): void
     {
         $action = match ($purchaseOrder->statusState()) {
@@ -1055,6 +1143,8 @@ class DemoProcurementLifecycleSeeder
             PurchaseOrderStatus::InReview => 'purchase_order.approval_submitted',
             PurchaseOrderStatus::ChangesRequested => 'purchase_order.changes_requested',
             PurchaseOrderStatus::Approved => 'purchase_order.approved',
+            PurchaseOrderStatus::Issued => 'purchase_order.issued',
+            PurchaseOrderStatus::Acknowledged => 'purchase_order.acknowledged',
             PurchaseOrderStatus::Rejected => 'purchase_order.rejected',
             PurchaseOrderStatus::Cancelled => 'purchase_order.cancelled',
         };
