@@ -39,6 +39,11 @@ class PurchaseOrderLineResource extends JsonResource
             'deliveryLocation' => $line->delivery_location,
             'notes' => $line->notes,
             'source' => $line->source_snapshot ?? [],
+            'status' => $line->status ?? 'open',
+            'currentVersionNumber' => $line->current_version_number ?? 1,
+            'cancelledByChangeOrderId' => $line->cancelled_by_change_order_id !== null ? (string) $line->cancelled_by_change_order_id : null,
+            'cancelledAt' => $line->cancelled_at?->toISOString(),
+            'cancelledReason' => $line->cancelled_reason,
         ];
     }
 }

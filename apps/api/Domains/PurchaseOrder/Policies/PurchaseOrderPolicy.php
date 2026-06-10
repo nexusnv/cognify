@@ -30,6 +30,26 @@ class PurchaseOrderPolicy
         return $this->view($user, $purchaseOrder);
     }
 
+    public function viewChangeOrder(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
+    public function saveChangeOrder(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
+    public function submitChangeOrder(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
+    public function cancelChangeOrder(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
     public function markReadyForReview(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $this->view($user, $purchaseOrder);

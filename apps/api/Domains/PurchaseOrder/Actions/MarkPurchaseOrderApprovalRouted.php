@@ -25,9 +25,12 @@ class MarkPurchaseOrderApprovalRouted
                 ->firstOrFail();
 
             $before = $purchaseOrder->only(['status', 'approval_instance_id', 'approval_submitted_by_user_id', 'approval_submitted_at', 'lock_version']);
+            $routedStatus = $purchaseOrder->current_change_order_id !== null
+                ? PurchaseOrderStatus::ChangePending
+                : PurchaseOrderStatus::InReview;
 
             $purchaseOrder->forceFill([
-                'status' => PurchaseOrderStatus::InReview,
+                'status' => $routedStatus,
                 'approval_instance_id' => $instance->id,
                 'approval_submitted_by_user_id' => $actor->id,
                 'approval_submitted_at' => now(),
@@ -42,7 +45,7 @@ class MarkPurchaseOrderApprovalRouted
                 metadata: PurchaseOrderAuditMetadata::for($purchaseOrder, extra: [
                     'approvalInstanceId' => (string) $instance->id,
                     'fromStatus' => $before['status'] instanceof PurchaseOrderStatus ? $before['status']->value : (string) $before['status'],
-                    'toStatus' => PurchaseOrderStatus::InReview->value,
+                    'toStatus' => $routedStatus->value,
                 ]),
                 before: $before,
                 after: $purchaseOrder->only(['status', 'approval_instance_id', 'approval_submitted_by_user_id', 'approval_submitted_at', 'lock_version']),

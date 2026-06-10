@@ -13,6 +13,7 @@ use Domains\PurchaseOrder\Actions\MarkPurchaseOrderApproved;
 use Domains\PurchaseOrder\Actions\MarkPurchaseOrderRejected;
 use Domains\PurchaseOrder\Actions\RequestPurchaseOrderChanges;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -38,15 +39,22 @@ final class PurchaseOrderApprovalSubjectHandler implements ApprovalSubjectHandle
     public function buildContext(Model $subject): ApprovalContextData
     {
         assert($subject instanceof PurchaseOrder);
-        $subject->loadMissing(['vendor', 'lines', 'handoff']);
+        $subject->loadMissing(['vendor', 'lines', 'handoff', 'currentChangeOrder.lines']);
+        $changeOrder = $subject->currentChangeOrder;
+        $effectiveAmount = $changeOrder instanceof PurchaseOrderChangeOrder && $subject->statusState()->value === 'change_pending'
+            ? (float) data_get($changeOrder->after_snapshot, 'totalAmount', $subject->total_amount)
+            : (float) $subject->total_amount;
+        $effectiveCurrency = $changeOrder instanceof PurchaseOrderChangeOrder && $subject->statusState()->value === 'change_pending'
+            ? data_get($changeOrder->after_snapshot, 'currency', $subject->currency)
+            : $subject->currency;
 
         return new ApprovalContextData(
             tenantId: (string) $subject->tenant_id,
             subjectType: 'purchase_order',
             requisitionId: $subject->requisition_id !== null ? (string) $subject->requisition_id : null,
             requesterId: $subject->handoff?->requested_by_user_id !== null ? (string) $subject->handoff->requested_by_user_id : null,
-            amount: (float) $subject->total_amount,
-            currency: $subject->currency,
+            amount: $effectiveAmount,
+            currency: $effectiveCurrency,
             department: data_get($subject->source_snapshot, 'requisition.department'),
             costCenter: data_get($subject->source_snapshot, 'requisition.costCenter'),
             projectId: $subject->project_id !== null ? (string) $subject->project_id : null,
@@ -60,8 +68,8 @@ final class PurchaseOrderApprovalSubjectHandler implements ApprovalSubjectHandle
             recommendedVendorName: $subject->vendor?->name ?? data_get($subject->source_snapshot, 'vendor.name'),
             recommendedQuotationId: $subject->quotation_id !== null ? (string) $subject->quotation_id : null,
             recommendedQuotationVersionId: $subject->quotation_version_id !== null ? (string) $subject->quotation_version_id : null,
-            recommendedAmount: (float) $subject->total_amount,
-            recommendedCurrency: $subject->currency,
+            recommendedAmount: $effectiveAmount,
+            recommendedCurrency: $effectiveCurrency,
             scorecardId: data_get($subject->approval_snapshot, 'scorecardId'),
             scorecardWeightedTotal: is_numeric(data_get($subject->approval_snapshot, 'scorecardWeightedTotal'))
                 ? (float) data_get($subject->approval_snapshot, 'scorecardWeightedTotal')
@@ -74,17 +82,21 @@ final class PurchaseOrderApprovalSubjectHandler implements ApprovalSubjectHandle
     public function taskSubjectSummary(Model $subject): ApprovalSubjectSummary
     {
         assert($subject instanceof PurchaseOrder);
-        $subject->loadMissing(['vendor']);
+        $subject->loadMissing(['vendor', 'currentChangeOrder']);
+        $changeOrder = $subject->currentChangeOrder;
+        $isChangePending = $subject->statusState()->value === 'change_pending' && $changeOrder instanceof PurchaseOrderChangeOrder;
 
         return new ApprovalSubjectSummary(
             type: 'purchase_order',
             id: (string) $subject->id,
             number: $subject->number,
-            title: 'Purchase order '.$subject->number,
+            title: $isChangePending
+                ? 'Review change order '.$changeOrder->number.' for purchase order '.$subject->number
+                : 'Purchase order '.$subject->number,
             status: $subject->statusState()->value,
             primaryParty: $subject->vendor?->name ?? data_get($subject->source_snapshot, 'vendor.name'),
-            amount: (float) $subject->total_amount,
-            currency: $subject->currency,
+            amount: $isChangePending ? (float) data_get($changeOrder->after_snapshot, 'totalAmount', $subject->total_amount) : (float) $subject->total_amount,
+            currency: $isChangePending ? (string) data_get($changeOrder->after_snapshot, 'currency', $subject->currency) : $subject->currency,
             href: "/purchase-orders/{$subject->id}",
             metadata: [
                 'purchaseOrderId' => (string) $subject->id,
@@ -95,6 +107,14 @@ final class PurchaseOrderApprovalSubjectHandler implements ApprovalSubjectHandle
                 'rfqNumber' => data_get($subject->source_snapshot, 'rfq.number'),
                 'paymentTerms' => $subject->payment_terms,
                 'deliveryTerms' => $subject->delivery_terms,
+                ...($isChangePending ? [
+                    'changeOrderId' => (string) $changeOrder->id,
+                    'changeOrderNumber' => $changeOrder->number,
+                    'changeType' => $changeOrder->typeState()->value,
+                    'materialChange' => $changeOrder->material_change,
+                    'totalDelta' => data_get($changeOrder->delta_snapshot, 'totalAmount'),
+                    'reason' => $changeOrder->reason,
+                ] : []),
             ],
         );
     }
@@ -102,6 +122,11 @@ final class PurchaseOrderApprovalSubjectHandler implements ApprovalSubjectHandle
     public function taskTitle(Model $subject): string
     {
         assert($subject instanceof PurchaseOrder);
+        $subject->loadMissing('currentChangeOrder');
+
+        if ($subject->statusState()->value === 'change_pending' && $subject->currentChangeOrder instanceof PurchaseOrderChangeOrder) {
+            return 'Review change order '.$subject->currentChangeOrder->number.' for purchase order '.$subject->number;
+        }
 
         return 'Review purchase order '.$subject->number;
     }

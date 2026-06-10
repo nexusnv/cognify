@@ -258,7 +258,7 @@ class PurchaseOrderController extends Controller
         $tenantPurchaseOrder = PurchaseOrder::query()
             ->where('tenant_id', $tenant->id)
             ->whereKey($purchaseOrder->id)
-            ->with('lines')
+            ->with(['lines', 'currentChangeOrder', 'changeOrders'])
             ->first();
 
         if ($tenantPurchaseOrder === null) {
