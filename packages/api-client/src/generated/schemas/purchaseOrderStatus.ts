@@ -16,4 +16,6 @@ export const PurchaseOrderStatus = {
   changes_requested: "changes_requested",
   approved: "approved",
   rejected: "rejected",
+  issued: "issued",
+  acknowledged: "acknowledged",
 } as const;

@@ -40,6 +40,21 @@ class PurchaseOrderPolicy
         return $this->view($user, $purchaseOrder);
     }
 
+    public function issueToSupplier(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
+    public function exportSupplierVersion(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
+    public function acknowledgeSupplier(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder);
+    }
+
     public function cancel(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $this->view($user, $purchaseOrder);

@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  AcknowledgePurchaseOrderRequest,
   AmbiguousTenantResponse,
   ApplyRequisitionTemplateRequest,
   ApprovalDelegationCandidateListResponse,
@@ -42,6 +43,8 @@ import type {
   ForgotPasswordRequest,
   HealthResponse,
   InvalidStateResponse,
+  IssuePurchaseOrderRequest,
+  IssuedPurchaseOrderExport,
   LinkProjectRequisitionRequest,
   ListApprovalTasksParams,
   ListAuditEventsParams,
@@ -9494,6 +9497,456 @@ export const submitPurchaseOrderApproval = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(submitPurchaseOrderApprovalRequest),
+    },
+  );
+};
+
+/**
+ * @summary Issue purchase order to supplier
+ */
+export type issuePurchaseOrderToSupplierResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type issuePurchaseOrderToSupplierResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type issuePurchaseOrderToSupplierResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type issuePurchaseOrderToSupplierResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type issuePurchaseOrderToSupplierResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type issuePurchaseOrderToSupplierResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type issuePurchaseOrderToSupplierResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type issuePurchaseOrderToSupplierResponseSuccess =
+  issuePurchaseOrderToSupplierResponse200 & {
+    headers: Headers;
+  };
+export type issuePurchaseOrderToSupplierResponseError = (
+  | issuePurchaseOrderToSupplierResponse400
+  | issuePurchaseOrderToSupplierResponse401
+  | issuePurchaseOrderToSupplierResponse403
+  | issuePurchaseOrderToSupplierResponse404
+  | issuePurchaseOrderToSupplierResponse409
+  | issuePurchaseOrderToSupplierResponse422
+) & {
+  headers: Headers;
+};
+
+export type issuePurchaseOrderToSupplierResponse =
+  | issuePurchaseOrderToSupplierResponseSuccess
+  | issuePurchaseOrderToSupplierResponseError;
+
+export const getIssuePurchaseOrderToSupplierUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/issue`;
+};
+
+export const issuePurchaseOrderToSupplier = async (
+  purchaseOrder: string,
+  issuePurchaseOrderRequest: IssuePurchaseOrderRequest,
+  options?: RequestInit,
+): Promise<issuePurchaseOrderToSupplierResponse> => {
+  return cognifyFetch<issuePurchaseOrderToSupplierResponse>(
+    getIssuePurchaseOrderToSupplierUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(issuePurchaseOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary Export issued purchase order supplier JSON
+ */
+export type exportPurchaseOrderSupplierJsonResponse200 = {
+  data: IssuedPurchaseOrderExport;
+  status: 200;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type exportPurchaseOrderSupplierJsonResponseSuccess =
+  exportPurchaseOrderSupplierJsonResponse200 & {
+    headers: Headers;
+  };
+export type exportPurchaseOrderSupplierJsonResponseError = (
+  | exportPurchaseOrderSupplierJsonResponse400
+  | exportPurchaseOrderSupplierJsonResponse401
+  | exportPurchaseOrderSupplierJsonResponse403
+  | exportPurchaseOrderSupplierJsonResponse404
+  | exportPurchaseOrderSupplierJsonResponse409
+  | exportPurchaseOrderSupplierJsonResponse422
+) & {
+  headers: Headers;
+};
+
+export type exportPurchaseOrderSupplierJsonResponse =
+  | exportPurchaseOrderSupplierJsonResponseSuccess
+  | exportPurchaseOrderSupplierJsonResponseError;
+
+export const getExportPurchaseOrderSupplierJsonUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/supplier-export.json`;
+};
+
+export const exportPurchaseOrderSupplierJson = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<exportPurchaseOrderSupplierJsonResponse> => {
+  return cognifyFetch<exportPurchaseOrderSupplierJsonResponse>(
+    getExportPurchaseOrderSupplierJsonUrl(purchaseOrder),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Record issued purchase order supplier JSON export
+ */
+export type recordPurchaseOrderSupplierJsonExportResponse200 = {
+  data: IssuedPurchaseOrderExport;
+  status: 200;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponseSuccess =
+  recordPurchaseOrderSupplierJsonExportResponse200 & {
+    headers: Headers;
+  };
+export type recordPurchaseOrderSupplierJsonExportResponseError = (
+  | recordPurchaseOrderSupplierJsonExportResponse400
+  | recordPurchaseOrderSupplierJsonExportResponse401
+  | recordPurchaseOrderSupplierJsonExportResponse403
+  | recordPurchaseOrderSupplierJsonExportResponse404
+  | recordPurchaseOrderSupplierJsonExportResponse409
+  | recordPurchaseOrderSupplierJsonExportResponse422
+) & {
+  headers: Headers;
+};
+
+export type recordPurchaseOrderSupplierJsonExportResponse =
+  | recordPurchaseOrderSupplierJsonExportResponseSuccess
+  | recordPurchaseOrderSupplierJsonExportResponseError;
+
+export const getRecordPurchaseOrderSupplierJsonExportUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/supplier-export.json`;
+};
+
+export const recordPurchaseOrderSupplierJsonExport = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<recordPurchaseOrderSupplierJsonExportResponse> => {
+  return cognifyFetch<recordPurchaseOrderSupplierJsonExportResponse>(
+    getRecordPurchaseOrderSupplierJsonExportUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Export issued purchase order supplier CSV
+ */
+export type exportPurchaseOrderSupplierCsvResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type exportPurchaseOrderSupplierCsvResponseSuccess =
+  exportPurchaseOrderSupplierCsvResponse200 & {
+    headers: Headers;
+  };
+export type exportPurchaseOrderSupplierCsvResponseError = (
+  | exportPurchaseOrderSupplierCsvResponse400
+  | exportPurchaseOrderSupplierCsvResponse401
+  | exportPurchaseOrderSupplierCsvResponse403
+  | exportPurchaseOrderSupplierCsvResponse404
+  | exportPurchaseOrderSupplierCsvResponse409
+  | exportPurchaseOrderSupplierCsvResponse422
+) & {
+  headers: Headers;
+};
+
+export type exportPurchaseOrderSupplierCsvResponse =
+  | exportPurchaseOrderSupplierCsvResponseSuccess
+  | exportPurchaseOrderSupplierCsvResponseError;
+
+export const getExportPurchaseOrderSupplierCsvUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/supplier-export.csv`;
+};
+
+export const exportPurchaseOrderSupplierCsv = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<exportPurchaseOrderSupplierCsvResponse> => {
+  return cognifyFetch<exportPurchaseOrderSupplierCsvResponse>(
+    getExportPurchaseOrderSupplierCsvUrl(purchaseOrder),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Record issued purchase order supplier CSV export
+ */
+export type recordPurchaseOrderSupplierCsvExportResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponseSuccess =
+  recordPurchaseOrderSupplierCsvExportResponse200 & {
+    headers: Headers;
+  };
+export type recordPurchaseOrderSupplierCsvExportResponseError = (
+  | recordPurchaseOrderSupplierCsvExportResponse400
+  | recordPurchaseOrderSupplierCsvExportResponse401
+  | recordPurchaseOrderSupplierCsvExportResponse403
+  | recordPurchaseOrderSupplierCsvExportResponse404
+  | recordPurchaseOrderSupplierCsvExportResponse409
+  | recordPurchaseOrderSupplierCsvExportResponse422
+) & {
+  headers: Headers;
+};
+
+export type recordPurchaseOrderSupplierCsvExportResponse =
+  | recordPurchaseOrderSupplierCsvExportResponseSuccess
+  | recordPurchaseOrderSupplierCsvExportResponseError;
+
+export const getRecordPurchaseOrderSupplierCsvExportUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/supplier-export.csv`;
+};
+
+export const recordPurchaseOrderSupplierCsvExport = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<recordPurchaseOrderSupplierCsvExportResponse> => {
+  return cognifyFetch<recordPurchaseOrderSupplierCsvExportResponse>(
+    getRecordPurchaseOrderSupplierCsvExportUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Record supplier acknowledgement for purchase order
+ */
+export type acknowledgePurchaseOrderSupplierResponse200 = {
+  data: PurchaseOrderResponse;
+  status: 200;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse409 = {
+  data: InvalidStateResponse;
+  status: 409;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type acknowledgePurchaseOrderSupplierResponseSuccess =
+  acknowledgePurchaseOrderSupplierResponse200 & {
+    headers: Headers;
+  };
+export type acknowledgePurchaseOrderSupplierResponseError = (
+  | acknowledgePurchaseOrderSupplierResponse400
+  | acknowledgePurchaseOrderSupplierResponse401
+  | acknowledgePurchaseOrderSupplierResponse403
+  | acknowledgePurchaseOrderSupplierResponse404
+  | acknowledgePurchaseOrderSupplierResponse409
+  | acknowledgePurchaseOrderSupplierResponse422
+) & {
+  headers: Headers;
+};
+
+export type acknowledgePurchaseOrderSupplierResponse =
+  | acknowledgePurchaseOrderSupplierResponseSuccess
+  | acknowledgePurchaseOrderSupplierResponseError;
+
+export const getAcknowledgePurchaseOrderSupplierUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/acknowledge`;
+};
+
+export const acknowledgePurchaseOrderSupplier = async (
+  purchaseOrder: string,
+  acknowledgePurchaseOrderRequest: AcknowledgePurchaseOrderRequest,
+  options?: RequestInit,
+): Promise<acknowledgePurchaseOrderSupplierResponse> => {
+  return cognifyFetch<acknowledgePurchaseOrderSupplierResponse>(
+    getAcknowledgePurchaseOrderSupplierUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(acknowledgePurchaseOrderRequest),
     },
   );
 };

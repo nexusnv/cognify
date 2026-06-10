@@ -6,6 +6,7 @@ import { PurchaseOrderActions } from "../components/purchase-order-actions";
 import { PurchaseOrderApprovalPanel } from "../components/purchase-order-approval-panel";
 import { PurchaseOrderDetailCard } from "../components/purchase-order-detail-card";
 import { PurchaseOrderLinesTable } from "../components/purchase-order-lines-table";
+import { PurchaseOrderSupplierIssuePanel } from "../components/purchase-order-supplier-issue-panel";
 import { usePurchaseOrder } from "../hooks/use-purchase-order";
 
 export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderId: string }) {
@@ -70,6 +71,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
       <PurchaseOrderDetailCard purchaseOrder={purchaseOrder} />
       <PurchaseOrderLinesTable lines={purchaseOrder.lines} currency={purchaseOrder.currency} />
       <PurchaseOrderApprovalPanel purchaseOrder={purchaseOrder} />
+      <PurchaseOrderSupplierIssuePanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderActions purchaseOrder={purchaseOrder} />
     </WorkflowStateLayout>
   );

@@ -9,11 +9,13 @@ enum PurchaseOrderStatus: string
     case InReview = 'in_review';
     case ChangesRequested = 'changes_requested';
     case Approved = 'approved';
+    case Issued = 'issued';
+    case Acknowledged = 'acknowledged';
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
 
     public function isTerminal(): bool
     {
-        return in_array($this, [self::Approved, self::Rejected, self::Cancelled], true);
+        return in_array($this, [self::Approved, self::Issued, self::Acknowledged, self::Rejected, self::Cancelled], true);
     }
 }

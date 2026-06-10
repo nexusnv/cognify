@@ -7,10 +7,15 @@ use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\PurchaseOrder\Actions\CancelPurchaseOrder;
 use Domains\PurchaseOrder\Actions\CreatePurchaseOrderFromHandoff;
+use Domains\PurchaseOrder\Actions\AcknowledgeIssuedPurchaseOrder;
+use Domains\PurchaseOrder\Actions\ExportIssuedPurchaseOrder;
+use Domains\PurchaseOrder\Actions\IssuePurchaseOrderToSupplier;
 use Domains\PurchaseOrder\Actions\MarkPurchaseOrderReadyForReview;
 use Domains\PurchaseOrder\Actions\SubmitPurchaseOrderForApproval;
 use Domains\PurchaseOrder\Actions\UpdatePurchaseOrder;
+use Domains\PurchaseOrder\Http\Requests\AcknowledgePurchaseOrderRequest;
 use Domains\PurchaseOrder\Http\Requests\CancelPurchaseOrderRequest;
+use Domains\PurchaseOrder\Http\Requests\IssuePurchaseOrderRequest;
 use Domains\PurchaseOrder\Http\Requests\MarkPurchaseOrderReadyForReviewRequest;
 use Domains\PurchaseOrder\Http\Requests\SubmitPurchaseOrderApprovalRequest;
 use Domains\PurchaseOrder\Http\Requests\UpdatePurchaseOrderRequest;
@@ -20,6 +25,7 @@ use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -165,6 +171,86 @@ class PurchaseOrderController extends Controller
                 (string) $request->validated('reason'),
             ),
         );
+    }
+
+    public function issue(
+        IssuePurchaseOrderRequest $request,
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        IssuePurchaseOrderToSupplier $action,
+    ): JsonResponse {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('issueToSupplier', $purchaseOrder);
+
+        return $this->resourceResponse($request, $action->handle($purchaseOrder, $request->user(), $request->validated()));
+    }
+
+    public function exportSupplierJson(
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        ExportIssuedPurchaseOrder $action,
+    ): JsonResponse {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('exportSupplierVersion', $purchaseOrder);
+
+        return response()->json($action->handle($purchaseOrder, request()->user(), 'json', recordExport: false));
+    }
+
+    public function recordSupplierExportJson(
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        ExportIssuedPurchaseOrder $action,
+    ): JsonResponse {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('exportSupplierVersion', $purchaseOrder);
+
+        return response()->json($action->handle($purchaseOrder, request()->user(), 'json'));
+    }
+
+    public function exportSupplierCsv(
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        ExportIssuedPurchaseOrder $action,
+    ): Response {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('exportSupplierVersion', $purchaseOrder);
+
+        $csv = $action->handle($purchaseOrder, request()->user(), 'csv', recordExport: false);
+
+        return $this->csvResponse($purchaseOrder, $csv);
+    }
+
+    public function recordSupplierExportCsv(
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        ExportIssuedPurchaseOrder $action,
+    ): Response {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('exportSupplierVersion', $purchaseOrder);
+
+        $csv = $action->handle($purchaseOrder, request()->user(), 'csv');
+
+        return $this->csvResponse($purchaseOrder, $csv);
+    }
+
+    public function acknowledge(
+        AcknowledgePurchaseOrderRequest $request,
+        CurrentTenant $currentTenant,
+        PurchaseOrder $purchaseOrder,
+        AcknowledgeIssuedPurchaseOrder $action,
+    ): JsonResponse {
+        $purchaseOrder = $this->findTenantPurchaseOrder($this->tenantOrAbort($currentTenant), $purchaseOrder);
+        $this->authorize('acknowledgeSupplier', $purchaseOrder);
+
+        return $this->resourceResponse($request, $action->handle($purchaseOrder, $request->user(), $request->validated()));
+    }
+
+    private function csvResponse(PurchaseOrder $purchaseOrder, string $csv): Response
+    {
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$purchaseOrder->number.'-supplier.csv"',
+        ]);
     }
 
     private function findTenantPurchaseOrder(Tenant $tenant, PurchaseOrder $purchaseOrder): PurchaseOrder

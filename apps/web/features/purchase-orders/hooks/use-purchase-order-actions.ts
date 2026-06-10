@@ -2,7 +2,9 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
+  AcknowledgePurchaseOrderRequest,
   CancelPurchaseOrderRequest,
+  IssuePurchaseOrderRequest,
   MarkPurchaseOrderReadyForReviewRequest,
   SubmitPurchaseOrderApprovalRequest,
   UpdatePurchaseOrderRequest,
@@ -10,7 +12,11 @@ import type {
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   cancelDraftPurchaseOrder,
+  acknowledgePurchaseOrderSupplier,
+  exportPurchaseOrderSupplierJson,
+  issuePurchaseOrderToSupplier,
   readyPurchaseOrder,
+  recordPurchaseOrderSupplierJsonExport,
   savePurchaseOrder,
   submitPurchaseOrderApproval,
 } from "../api/purchase-order-api";
@@ -93,5 +99,69 @@ export function useCancelPurchaseOrder(purchaseOrderId: string) {
         }),
       ]);
     },
+  });
+}
+
+export function useIssuePurchaseOrderToSupplier(purchaseOrderId: string) {
+  const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
+  const queryTenantId = queryTenantIdOrFallback();
+
+  return useMutation({
+    mutationFn: (payload: IssuePurchaseOrderRequest) =>
+      issuePurchaseOrderToSupplier(purchaseOrderId, payload, tenantId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: purchaseOrderKeys.list(queryTenantId) }),
+        queryClient.invalidateQueries({
+          queryKey: purchaseOrderKeys.detail(queryTenantId, purchaseOrderId),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useAcknowledgePurchaseOrderSupplier(purchaseOrderId: string) {
+  const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
+  const queryTenantId = queryTenantIdOrFallback();
+
+  return useMutation({
+    mutationFn: (payload: AcknowledgePurchaseOrderRequest) =>
+      acknowledgePurchaseOrderSupplier(purchaseOrderId, payload, tenantId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: purchaseOrderKeys.list(queryTenantId) }),
+        queryClient.invalidateQueries({
+          queryKey: purchaseOrderKeys.detail(queryTenantId, purchaseOrderId),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useRecordPurchaseOrderSupplierJsonExport(purchaseOrderId: string) {
+  const queryClient = useQueryClient();
+  const tenantId = getStoredActiveTenantId();
+  const queryTenantId = queryTenantIdOrFallback();
+
+  return useMutation({
+    mutationFn: () => recordPurchaseOrderSupplierJsonExport(purchaseOrderId, tenantId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: purchaseOrderKeys.list(queryTenantId) }),
+        queryClient.invalidateQueries({
+          queryKey: purchaseOrderKeys.detail(queryTenantId, purchaseOrderId),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useExportPurchaseOrderSupplierJson(purchaseOrderId: string) {
+  const tenantId = getStoredActiveTenantId();
+
+  return useMutation({
+    mutationFn: () => exportPurchaseOrderSupplierJson(purchaseOrderId, tenantId),
   });
 }

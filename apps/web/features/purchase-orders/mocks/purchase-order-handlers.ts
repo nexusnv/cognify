@@ -1,6 +1,8 @@
 import { http, HttpResponse } from "msw";
 import type {
+  AcknowledgePurchaseOrderRequest,
   CancelPurchaseOrderRequest,
+  IssuePurchaseOrderRequest,
   MarkPurchaseOrderReadyForReviewRequest,
   PurchaseOrder,
   SubmitPurchaseOrderApprovalRequest,
@@ -46,6 +48,33 @@ function conflictResponse() {
     { error: { code: "invalid_state", message: "The purchase order has changed. Reload and try again." } },
     { status: 409 },
   );
+}
+
+function supplierExportPayload(purchaseOrder: PurchaseOrder) {
+  return {
+    format: "json" as const,
+    exportedAt: "2026-06-10T02:10:00.000Z",
+    purchaseOrder: {
+      id: purchaseOrder.id,
+      number: purchaseOrder.number,
+      currency: purchaseOrder.currency,
+      totalAmount: purchaseOrder.totalAmount,
+      paymentTerms: purchaseOrder.paymentTerms,
+      deliveryTerms: purchaseOrder.deliveryTerms,
+    },
+    vendor: purchaseOrder.vendor,
+    lines: purchaseOrder.lines,
+    source: purchaseOrder.source,
+    approval: purchaseOrder.approval,
+    issue: {
+      versionNumber: purchaseOrder.supplierIssue.supplierVersionNumber,
+      issuedAt: purchaseOrder.supplierIssue.issuedAt,
+      issueMethod: purchaseOrder.supplierIssue.issueMethod,
+      supplierContactName: purchaseOrder.supplierIssue.supplierContactName,
+      supplierContactEmail: purchaseOrder.supplierIssue.supplierContactEmail,
+      message: purchaseOrder.supplierIssue.message,
+    },
+  };
 }
 
 function validationFailedResponse(message: string, fields: Record<string, string[]>) {
@@ -237,6 +266,143 @@ export const purchaseOrderHandlers = [
         canMarkReadyForReview: false,
         canCancel: false,
         canSubmitForApproval: false,
+      },
+    };
+
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updated.id ? updated : item));
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.post("/api/purchase-orders/:purchaseOrder/issue", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as IssuePurchaseOrderRequest;
+    if (payload.lockVersion !== purchaseOrder.lockVersion) {
+      return conflictResponse();
+    }
+    if (purchaseOrder.status !== "approved") {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Only approved purchase orders can be issued to suppliers." } },
+        { status: 409 },
+      );
+    }
+
+    const updated: PurchaseOrder = {
+      ...purchaseOrder,
+      status: "issued",
+      lockVersion: purchaseOrder.lockVersion + 1,
+      supplierIssue: {
+        ...purchaseOrder.supplierIssue,
+        issuedByUserId: "buyer-1",
+        issuedAt: "2026-06-10T02:00:00.000Z",
+        issueMethod: payload.method,
+        supplierContactName: payload.supplierContactName ?? null,
+        supplierContactEmail: payload.supplierContactEmail ?? null,
+        message: payload.message ?? null,
+        supplierVersionNumber: 1,
+      },
+      permissions: {
+        ...purchaseOrder.permissions,
+        canIssueToSupplier: false,
+        canExportSupplierVersion: true,
+        canAcknowledgeSupplier: true,
+      },
+    };
+
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updated.id ? updated : item));
+
+    return HttpResponse.json({ data: updated });
+  }),
+
+  http.get("/api/purchase-orders/:purchaseOrder/supplier-export.json", ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    return HttpResponse.json(supplierExportPayload(purchaseOrder));
+  }),
+
+  http.post("/api/purchase-orders/:purchaseOrder/supplier-export.json", ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const updated: PurchaseOrder = {
+      ...purchaseOrder,
+      lockVersion: purchaseOrder.lockVersion + 1,
+      supplierIssue: {
+        ...purchaseOrder.supplierIssue,
+        lastExportedByUserId: "buyer-1",
+        lastExportedAt: "2026-06-10T02:10:00.000Z",
+        lastExportFormat: "json",
+      },
+    };
+    purchaseOrders = purchaseOrders.map((item) => (item.id === updated.id ? updated : item));
+
+    return HttpResponse.json(supplierExportPayload(updated));
+  }),
+
+  http.post("/api/purchase-orders/:purchaseOrder/acknowledge", async ({ params, request }) => {
+    const missingTenant = missingTenantResponse(request);
+    if (missingTenant) return missingTenant;
+
+    const purchaseOrder = findPurchaseOrder(String(params.purchaseOrder));
+    if (!purchaseOrder) {
+      return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as AcknowledgePurchaseOrderRequest;
+    if (payload.lockVersion !== purchaseOrder.lockVersion) {
+      return conflictResponse();
+    }
+    if (purchaseOrder.status !== "issued") {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Only issued purchase orders can be acknowledged by suppliers." } },
+        { status: 409 },
+      );
+    }
+    const hasEvidence = [
+      payload.acknowledgedContactName,
+      payload.acknowledgementReference,
+      payload.acknowledgementNote,
+    ].some((value) => typeof value === "string" && value.trim() !== "");
+
+    if (!hasEvidence) {
+      return validationFailedResponse("At least one acknowledgement evidence field is required.", {
+        acknowledgementReference: ["At least one acknowledgement evidence field is required."],
+      });
+    }
+
+    const updated: PurchaseOrder = {
+      ...purchaseOrder,
+      status: "acknowledged",
+      lockVersion: purchaseOrder.lockVersion + 1,
+      supplierIssue: {
+        ...purchaseOrder.supplierIssue,
+        acknowledgedByUserId: "buyer-1",
+        acknowledgedAt: "2026-06-10T03:00:00.000Z",
+        acknowledgedContactName: payload.acknowledgedContactName ?? null,
+        acknowledgementReference: payload.acknowledgementReference ?? null,
+        acknowledgementNote: payload.acknowledgementNote ?? null,
+      },
+      permissions: {
+        ...purchaseOrder.permissions,
+        canAcknowledgeSupplier: false,
       },
     };
 

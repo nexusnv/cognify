@@ -1,15 +1,22 @@
 "use client";
 
 import {
+  acknowledgePurchaseOrderSupplier as acknowledgePurchaseOrderSupplierEndpoint,
   cancelPurchaseOrder as cancelPurchaseOrderEndpoint,
+  exportPurchaseOrderSupplierJson as exportPurchaseOrderSupplierJsonEndpoint,
+  issuePurchaseOrderToSupplier as issuePurchaseOrderToSupplierEndpoint,
   listPurchaseOrders as listPurchaseOrdersEndpoint,
   markPurchaseOrderReadyForReview as markPurchaseOrderReadyForReviewEndpoint,
+  recordPurchaseOrderSupplierJsonExport as recordPurchaseOrderSupplierJsonExportEndpoint,
   showPurchaseOrder as showPurchaseOrderEndpoint,
   submitPurchaseOrderApproval as submitPurchaseOrderApprovalEndpoint,
   updatePurchaseOrder as updatePurchaseOrderEndpoint,
 } from "@cognify/api-client/endpoints";
 import type {
+  AcknowledgePurchaseOrderRequest,
   CancelPurchaseOrderRequest,
+  IssuedPurchaseOrderExport,
+  IssuePurchaseOrderRequest,
   MarkPurchaseOrderReadyForReviewRequest,
   PurchaseOrder,
   PurchaseOrderListResponse,
@@ -113,4 +120,60 @@ export async function cancelDraftPurchaseOrder(
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
   return unwrapOk(response) as PurchaseOrder;
+}
+
+export async function issuePurchaseOrderToSupplier(
+  purchaseOrderId: string,
+  payload: IssuePurchaseOrderRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrder> {
+  const response = await issuePurchaseOrderToSupplierEndpoint(
+    purchaseOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapOk(response) as PurchaseOrder;
+}
+
+export async function acknowledgePurchaseOrderSupplier(
+  purchaseOrderId: string,
+  payload: AcknowledgePurchaseOrderRequest,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<PurchaseOrder> {
+  const response = await acknowledgePurchaseOrderSupplierEndpoint(
+    purchaseOrderId,
+    payload,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapOk(response) as PurchaseOrder;
+}
+
+export async function exportPurchaseOrderSupplierJson(
+  purchaseOrderId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<IssuedPurchaseOrderExport> {
+  const response = await exportPurchaseOrderSupplierJsonEndpoint(
+    purchaseOrderId,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  if (response.status !== 200) {
+    throw response.data;
+  }
+
+  return response.data;
+}
+
+export async function recordPurchaseOrderSupplierJsonExport(
+  purchaseOrderId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<IssuedPurchaseOrderExport> {
+  const response = await recordPurchaseOrderSupplierJsonExportEndpoint(
+    purchaseOrderId,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  if (response.status !== 200) {
+    throw response.data;
+  }
+
+  return response.data;
 }

@@ -7539,6 +7539,322 @@
           }
         }
       }
+    },
+    "/api/purchase-orders/{purchaseOrder}/issue": {
+      "post": {
+        "operationId": "issuePurchaseOrderToSupplier",
+        "summary": "Issue purchase order to supplier",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssuePurchaseOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Issued purchase order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/purchase-orders/{purchaseOrder}/supplier-export.json": {
+      "get": {
+        "operationId": "exportPurchaseOrderSupplierJson",
+        "summary": "Export issued purchase order supplier JSON",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedPurchaseOrderExport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recordPurchaseOrderSupplierJsonExport",
+        "summary": "Record issued purchase order supplier JSON export",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded supplier JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedPurchaseOrderExport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/purchase-orders/{purchaseOrder}/supplier-export.csv": {
+      "get": {
+        "operationId": "exportPurchaseOrderSupplierCsv",
+        "summary": "Export issued purchase order supplier CSV",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recordPurchaseOrderSupplierCsvExport",
+        "summary": "Record issued purchase order supplier CSV export",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded supplier CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/purchase-orders/{purchaseOrder}/acknowledge": {
+      "post": {
+        "operationId": "acknowledgePurchaseOrderSupplier",
+        "summary": "Record supplier acknowledgement for purchase order",
+        "tags": [
+          "purchase-order"
+        ],
+        "parameters": [
+          {
+            "name": "purchaseOrder",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgePurchaseOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged purchase order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/InvalidState"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -19816,7 +20132,9 @@
           "in_review",
           "changes_requested",
           "approved",
-          "rejected"
+          "rejected",
+          "issued",
+          "acknowledged"
         ]
       },
       "PurchaseOrderPermissions": {
@@ -19825,7 +20143,10 @@
           "canUpdate",
           "canMarkReadyForReview",
           "canCancel",
-          "canSubmitForApproval"
+          "canSubmitForApproval",
+          "canIssueToSupplier",
+          "canExportSupplierVersion",
+          "canAcknowledgeSupplier"
         ],
         "properties": {
           "canUpdate": {
@@ -19838,6 +20159,15 @@
             "type": "boolean"
           },
           "canSubmitForApproval": {
+            "type": "boolean"
+          },
+          "canIssueToSupplier": {
+            "type": "boolean"
+          },
+          "canExportSupplierVersion": {
+            "type": "boolean"
+          },
+          "canAcknowledgeSupplier": {
             "type": "boolean"
           }
         }
@@ -20248,6 +20578,7 @@
           "source",
           "vendor",
           "approval",
+          "supplierIssue",
           "evidence",
           "lines",
           "lockVersion",
@@ -20465,6 +20796,9 @@
           },
           "permissions": {
             "$ref": "#/components/schemas/PurchaseOrderPermissions"
+          },
+          "supplierIssue": {
+            "$ref": "#/components/schemas/PurchaseOrderSupplierIssue"
           }
         }
       },
@@ -20751,6 +21085,300 @@
           }
         },
         "additionalProperties": true
+      },
+      "PurchaseOrderSupplierIssue": {
+        "type": "object",
+        "required": [
+          "issuedByUserId",
+          "issuedAt",
+          "issueMethod",
+          "supplierContactName",
+          "supplierContactEmail",
+          "message",
+          "supplierVersionNumber",
+          "lastExportedByUserId",
+          "lastExportedAt",
+          "lastExportFormat",
+          "acknowledgedByUserId",
+          "acknowledgedAt",
+          "acknowledgedContactName",
+          "acknowledgementReference",
+          "acknowledgementNote"
+        ],
+        "properties": {
+          "issuedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issuedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "issueMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "manual_email",
+              "portal_upload",
+              "external_system",
+              "manual_export",
+              null
+            ]
+          },
+          "supplierContactName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplierContactEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplierVersionNumber": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastExportedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastExportedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastExportFormat": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "json",
+              "csv",
+              null
+            ]
+          },
+          "acknowledgedByUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "acknowledgedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "acknowledgedContactName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "acknowledgementReference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "acknowledgementNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssuePurchaseOrderRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "method"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "manual_email",
+              "portal_upload",
+              "external_system",
+              "manual_export"
+            ]
+          },
+          "supplierContactName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 160
+          },
+          "supplierContactEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "maxLength": 255
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        },
+        "additionalProperties": false
+      },
+      "AcknowledgePurchaseOrderRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "acknowledgedContactName"
+            ],
+            "properties": {
+              "acknowledgedContactName": {
+                "type": "string",
+                "pattern": ".*\\S.*"
+              }
+            }
+          },
+          {
+            "required": [
+              "acknowledgementReference"
+            ],
+            "properties": {
+              "acknowledgementReference": {
+                "type": "string",
+                "pattern": ".*\\S.*"
+              }
+            }
+          },
+          {
+            "required": [
+              "acknowledgementNote"
+            ],
+            "properties": {
+              "acknowledgementNote": {
+                "type": "string",
+                "pattern": ".*\\S.*"
+              }
+            }
+          }
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "acknowledgedContactName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 160
+          },
+          "acknowledgementReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 160
+          },
+          "acknowledgementNote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssuedPurchaseOrderExport": {
+        "type": "object",
+        "required": [
+          "format",
+          "exportedAt",
+          "purchaseOrder",
+          "vendor",
+          "lines",
+          "source",
+          "approval",
+          "issue"
+        ],
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "json"
+            ]
+          },
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "purchaseOrder": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "vendor": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "approval": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "issue": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
       }
     }
   }

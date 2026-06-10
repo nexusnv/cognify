@@ -83,6 +83,23 @@ class PurchaseOrderResource extends JsonResource
                 'changesRequestedFields' => $purchaseOrder->changes_requested_fields ?? [],
                 'snapshot' => $purchaseOrder->approval_snapshot ?? [],
             ],
+            'supplierIssue' => [
+                'issuedByUserId' => $purchaseOrder->issued_by_user_id !== null ? (string) $purchaseOrder->issued_by_user_id : null,
+                'issuedAt' => $purchaseOrder->issued_at?->toISOString(),
+                'issueMethod' => $purchaseOrder->issue_method,
+                'supplierContactName' => $purchaseOrder->supplier_contact_name,
+                'supplierContactEmail' => $purchaseOrder->supplier_contact_email,
+                'message' => $purchaseOrder->issue_message,
+                'supplierVersionNumber' => $purchaseOrder->supplier_version_number,
+                'lastExportedByUserId' => $purchaseOrder->last_supplier_exported_by_user_id !== null ? (string) $purchaseOrder->last_supplier_exported_by_user_id : null,
+                'lastExportedAt' => $purchaseOrder->last_supplier_exported_at?->toISOString(),
+                'lastExportFormat' => $purchaseOrder->last_supplier_export_format,
+                'acknowledgedByUserId' => $purchaseOrder->acknowledged_by_user_id !== null ? (string) $purchaseOrder->acknowledged_by_user_id : null,
+                'acknowledgedAt' => $purchaseOrder->acknowledged_at?->toISOString(),
+                'acknowledgedContactName' => $purchaseOrder->acknowledged_contact_name,
+                'acknowledgementReference' => $purchaseOrder->acknowledgement_reference,
+                'acknowledgementNote' => $purchaseOrder->acknowledgement_note,
+            ],
             'evidence' => $purchaseOrder->evidence_snapshot ?? [],
             'lines' => $purchaseOrder->relationLoaded('lines')
                 ? PurchaseOrderLineResource::collection($purchaseOrder->lines)->resolve()
@@ -101,6 +118,15 @@ class PurchaseOrderResource extends JsonResource
                 'canSubmitForApproval' => in_array($status, [PurchaseOrderStatus::ReadyForReview, PurchaseOrderStatus::ChangesRequested], true)
                     && $user !== null
                     && Gate::forUser($user)->check('submitApproval', $purchaseOrder),
+                'canIssueToSupplier' => $status === PurchaseOrderStatus::Approved
+                    && $user !== null
+                    && Gate::forUser($user)->check('issueToSupplier', $purchaseOrder),
+                'canExportSupplierVersion' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged], true)
+                    && $user !== null
+                    && Gate::forUser($user)->check('exportSupplierVersion', $purchaseOrder),
+                'canAcknowledgeSupplier' => $status === PurchaseOrderStatus::Issued
+                    && $user !== null
+                    && Gate::forUser($user)->check('acknowledgeSupplier', $purchaseOrder),
             ],
         ];
     }

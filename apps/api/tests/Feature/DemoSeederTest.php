@@ -298,7 +298,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(3, ProcurementProject::query()->count());
         $this->assertSame(5, Rfq::query()->count());
         $this->assertSame(5, Quotation::query()->count());
-        $this->assertSame(11, ApprovalTask::query()->count());
+        $this->assertSame(13, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
         $this->assertSame(2, Attachment::query()->count());
         $this->assertSame(5, NotificationRecord::query()->count());
@@ -307,7 +307,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(4, QuotationNormalization::query()->count());
         $this->assertSame(1, QuotationScoringTemplate::query()->count());
         $this->assertSame(1, RfqScorecard::query()->count());
-        $this->assertSame(8, RfqAwardRecommendation::query()->count());
+        $this->assertSame(10, RfqAwardRecommendation::query()->count());
         $this->assertSame(1, QuotationComparisonNote::query()->count());
         $this->assertSame(1, ApprovalDelegation::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
@@ -400,6 +400,8 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-IN-REVIEW', 'status' => 'active']);
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-CHANGES', 'status' => 'changes_requested']);
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-APPROVED', 'status' => 'approved']);
+        $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-ISSUED', 'status' => 'approved']);
+        $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-ACK', 'status' => 'approved']);
         $this->assertDatabaseHas('approval_tasks', ['tenant_id' => $acme->id, 'title' => 'Review PO-2026-SUSTAIN-REJECTED', 'status' => 'rejected']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-0001', 'status' => 'recommended']);
         $this->assertDatabaseHas('awards', ['number' => 'AWD-2026-1001', 'status' => 'recommended']);
@@ -419,8 +421,28 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-IN-REVIEW', 'status' => PurchaseOrderStatus::InReview->value]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-CHANGES', 'status' => PurchaseOrderStatus::ChangesRequested->value]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-APPROVED', 'status' => PurchaseOrderStatus::Approved->value]);
+        $this->assertDatabaseHas('purchase_orders', [
+            'number' => 'PO-2026-SUSTAIN-ISSUED',
+            'status' => PurchaseOrderStatus::Issued->value,
+            'supplier_version_number' => 1,
+            'last_supplier_export_format' => 'json',
+        ]);
+        $this->assertDatabaseHas('purchase_orders', [
+            'number' => 'PO-2026-SUSTAIN-ACK',
+            'status' => PurchaseOrderStatus::Acknowledged->value,
+            'supplier_version_number' => 1,
+            'acknowledgement_reference' => 'ACK-PO-100',
+        ]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-REJECTED', 'status' => PurchaseOrderStatus::Rejected->value]);
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-CANCELLED', 'status' => PurchaseOrderStatus::Cancelled->value]);
+        $issuedPurchaseOrder = PurchaseOrder::query()->where('number', 'PO-2026-SUSTAIN-ISSUED')->firstOrFail();
+        $acknowledgedPurchaseOrder = PurchaseOrder::query()->where('number', 'PO-2026-SUSTAIN-ACK')->firstOrFail();
+        $this->assertNotNull($issuedPurchaseOrder->approval_instance_id);
+        $this->assertNotNull($acknowledgedPurchaseOrder->approval_instance_id);
+        $this->assertSame('approved', data_get($issuedPurchaseOrder->supplier_version, 'approval.status'));
+        $this->assertSame((string) $issuedPurchaseOrder->approval_instance_id, data_get($issuedPurchaseOrder->supplier_version, 'approval.approvalInstanceId'));
+        $this->assertSame('approved', data_get($acknowledgedPurchaseOrder->supplier_version, 'approval.status'));
+        $this->assertSame((string) $acknowledgedPurchaseOrder->approval_instance_id, data_get($acknowledgedPurchaseOrder->supplier_version, 'approval.approvalInstanceId'));
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
@@ -454,9 +476,9 @@ class DemoSeederTest extends TestCase
         $this->assertSame(9, DB::table('rfq_scorecard_entries')->count());
         $this->assertSame(2, CollaborationComment::query()->where('subject_type', Requisition::class)->whereHasMorph('subject', [Requisition::class], fn ($query) => $query->where('number', 'REQ-2026-SUSTAIN'))->count());
         $this->assertSame(2, ApprovalInstance::query()->where('subject_type', RfqAwardRecommendation::class)->count());
-        $this->assertSame(7, PurchaseOrderRequestHandoff::query()->count());
-        $this->assertSame(7, PurchaseOrder::query()->count());
-        $this->assertSame(21, DB::table('purchase_order_lines')->count());
+        $this->assertSame(9, PurchaseOrderRequestHandoff::query()->count());
+        $this->assertSame(9, PurchaseOrder::query()->count());
+        $this->assertSame(27, DB::table('purchase_order_lines')->count());
 
         foreach (Attachment::query()->get() as $attachment) {
             $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
@@ -473,13 +495,13 @@ class DemoSeederTest extends TestCase
             'rfqs' => 5,
             'quotations' => 5,
             'sourcing_intake_reviews' => 6,
-            'approval_tasks' => 11,
+            'approval_tasks' => 13,
             'awards' => 2,
             'quotation_normalizations' => 4,
             'quotation_scoring_templates' => 1,
             'rfq_scorecards' => 1,
-            'purchase_order_request_handoffs' => 7,
-            'purchase_orders' => 7,
+            'purchase_order_request_handoffs' => 9,
+            'purchase_orders' => 9,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }
