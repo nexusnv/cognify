@@ -75,6 +75,22 @@ class PurchaseOrder extends Model
         'changes_requested_at',
         'changes_requested_reason',
         'changes_requested_fields',
+        'issued_by_user_id',
+        'issued_at',
+        'issue_method',
+        'supplier_contact_name',
+        'supplier_contact_email',
+        'issue_message',
+        'supplier_version',
+        'supplier_version_number',
+        'last_supplier_exported_by_user_id',
+        'last_supplier_exported_at',
+        'last_supplier_export_format',
+        'acknowledged_by_user_id',
+        'acknowledged_at',
+        'acknowledged_contact_name',
+        'acknowledgement_reference',
+        'acknowledgement_note',
         'cancelled_by_user_id',
         'cancelled_at',
         'cancelled_reason',
@@ -103,6 +119,11 @@ class PurchaseOrder extends Model
             'rejected_at' => 'datetime',
             'changes_requested_at' => 'datetime',
             'changes_requested_fields' => 'array',
+            'issued_at' => 'datetime',
+            'supplier_version' => 'array',
+            'supplier_version_number' => 'integer',
+            'last_supplier_exported_at' => 'datetime',
+            'acknowledged_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'lock_version' => 'integer',
         ];
@@ -208,6 +229,21 @@ class PurchaseOrder extends Model
                 userKey: 'changes_requested_by_user_id',
                 dirtyMessage: ['changes_requested_by_user_id', 'tenant_id'],
                 error: 'Purchase order changes requester must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'issued_by_user_id',
+                dirtyMessage: ['issued_by_user_id', 'tenant_id'],
+                error: 'Purchase order issuer must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'last_supplier_exported_by_user_id',
+                dirtyMessage: ['last_supplier_exported_by_user_id', 'tenant_id'],
+                error: 'Purchase order supplier export actor must belong to the same tenant.',
+            );
+            $purchaseOrder->assertUserBelongsToTenant(
+                userKey: 'acknowledged_by_user_id',
+                dirtyMessage: ['acknowledged_by_user_id', 'tenant_id'],
+                error: 'Purchase order acknowledgement actor must belong to the same tenant.',
             );
             $purchaseOrder->assertUserBelongsToTenant(
                 userKey: 'cancelled_by_user_id',
@@ -343,6 +379,30 @@ class PurchaseOrder extends Model
     public function changesRequestedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'changes_requested_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function issuedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'issued_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function lastSupplierExportedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_supplier_exported_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function acknowledgedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by_user_id');
     }
 
     /**

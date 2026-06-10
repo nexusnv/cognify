@@ -161,6 +161,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/purchase-orders/{purchaseOrder}/ready-for-review', [PurchaseOrderController::class, 'readyForReview']);
             Route::post('/purchase-orders/{purchaseOrder}/submit-approval', [PurchaseOrderController::class, 'submitApproval']);
             Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
+            Route::post('/purchase-orders/{purchaseOrder}/issue', [PurchaseOrderController::class, 'issue']);
+            Route::get('/purchase-orders/{purchaseOrder}/supplier-export.json', [PurchaseOrderController::class, 'exportSupplierJson']);
+            Route::post('/purchase-orders/{purchaseOrder}/supplier-export.json', [PurchaseOrderController::class, 'recordSupplierExportJson']);
+            Route::get('/purchase-orders/{purchaseOrder}/supplier-export.csv', [PurchaseOrderController::class, 'exportSupplierCsv']);
+            Route::post('/purchase-orders/{purchaseOrder}/supplier-export.csv', [PurchaseOrderController::class, 'recordSupplierExportCsv']);
+            Route::post('/purchase-orders/{purchaseOrder}/acknowledge', [PurchaseOrderController::class, 'acknowledge']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);
