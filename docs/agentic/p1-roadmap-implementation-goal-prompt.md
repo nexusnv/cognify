@@ -74,6 +74,7 @@ For each remaining P1 feature, execute this exact sequence.
   - PR completion checklist
 
 4. Execute the plan sub-agently
+- Use the superpower's subagent-driven-development skill. Make a commit after each implementation plan's task completion.
 - Use subagents where tasks are independent and can be safely parallelized. If you have problem spawning sub-agent, stop your work and ask clarification from user.
 - Keep all implementation work on the current goal-feature/* branch.
 - Use TDD or regression-first edits when fixing findings or changing existing behavior.
@@ -92,6 +93,8 @@ For each remaining P1 feature, execute this exact sequence.
 - For API contract changes, run API generation and contract checks.
 - Use real route middleware tests for Sanctum/session-sensitive behavior.
 - Do not claim completion until verification commands have been run and their outputs are reviewed.
+- Spawn subagent to run a strit spec compliance review, comparing the implementation against the implementation plan's specification document that it relates to. The resulting review results must be verified and addressed accordingly before moving on.
+- Spawn subagent to run a strict code quality review. This review ensure that the implementation plan has been carried out fully and the output code are well structured, in accordance to the project architechture (ARCHITECTURE.md) and feature development runbook (docs/05-runbooks/feature-development.md). The resulting review results must be verified and addressed accordingly before moving on.
 
 6. Visual inspection gate
 - If the feature adds new screens or makes substantial UI/UX changes to existing screens, visual inspection is mandatory before completion.
@@ -105,7 +108,7 @@ For each remaining P1 feature, execute this exact sequence.
   - whether it is user-friendly, accessible, keyboard-aware, and responsive
   - whether it matches Cognify's enterprise procurement aspirations
   - whether it avoids decorative or marketing-style UI where an operational work surface is needed
-- Use the ui-ux-pro-max skill for constructive screenshot critique when available.
+- Use the ui-ux-pro-max skill for constructive screenshot critique when available. If the current coding model does not have the visual capability, resort to screen asset descriptive critique with ui-ux-pro-max skill. 
 - Address relevant critique feedback before moving on.
 
 7. Independent CodeRabbit review
