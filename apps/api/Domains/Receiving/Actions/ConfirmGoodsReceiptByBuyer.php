@@ -25,8 +25,8 @@ class ConfirmGoodsReceiptByBuyer
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($receipt->statusState() !== GoodsReceiptStatus::RequesterConfirmed) {
-                throw new InvalidArgumentException('Only requester-confirmed receipts can be confirmed by the buyer.');
+            if (! in_array($receipt->statusState(), [GoodsReceiptStatus::Completed, GoodsReceiptStatus::RequesterConfirmed], true)) {
+                throw new InvalidArgumentException('Only completed or requester-confirmed receipts can be confirmed by the buyer.');
             }
 
             $receipt->forceFill([

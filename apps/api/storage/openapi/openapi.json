@@ -20932,7 +20932,11 @@
           "currentVersionNumber",
           "cancelledByChangeOrderId",
           "cancelledAt",
-          "cancelledReason"
+          "cancelledReason",
+          "cumulativeQuantityReceived",
+          "cumulativeQuantityAccepted",
+          "overReceiptTolerancePercent",
+          "lastReceiptAt"
         ],
         "properties": {
           "id": {
@@ -21184,6 +21188,25 @@
               "string",
               "null"
             ]
+          },
+          "cumulativeQuantityReceived": {
+            "type": "string",
+            "pattern": "^[-]?[0-9]+(\\.[0-9]{1,4})?$"
+          },
+          "cumulativeQuantityAccepted": {
+            "type": "string",
+            "pattern": "^[-]?[0-9]+(\\.[0-9]{1,4})?$"
+          },
+          "overReceiptTolerancePercent": {
+            "type": "string",
+            "pattern": "^[-]?[0-9]+(\\.[0-9]{1,2})?$"
+          },
+          "lastReceiptAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },

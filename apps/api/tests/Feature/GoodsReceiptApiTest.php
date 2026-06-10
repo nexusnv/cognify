@@ -18,6 +18,7 @@ use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
+use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -194,6 +195,48 @@ class GoodsReceiptApiTest extends TestCase
             ->assertJsonPath('data.status', 'buyer_confirmed');
     }
 
+    public function test_requisition_requester_can_confirm_receipt(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->first();
+
+        $requester = User::factory()->create(['password' => Hash::make('secret123')]);
+        $tenant->users()->attach($requester->id, ['role' => TenantRole::Requester->value]);
+
+        $requisition = Requisition::query()->create([
+            'tenant_id' => $tenant->id,
+            'requester_id' => $requester->id,
+            'number' => 'REQ-2026-TEST',
+            'title' => 'Test requisition',
+            'currency' => 'MYR',
+            'status' => 'approved',
+            'lock_version' => 1,
+        ]);
+
+        $po->forceFill(['requisition_id' => $requisition->id])->save();
+
+        $response = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/goods-receipts", [
+                'lockVersion' => $po->lock_version,
+                'receiptDate' => Carbon::today()->toDateString(),
+                'lines' => [[
+                    'purchaseOrderLineId' => (string) $line->id,
+                    'quantityReceived' => '10.0000',
+                    'quantityAccepted' => '10.0000',
+                ]],
+            ]);
+
+        $receiptId = $response->json('data.id');
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/goods-receipts/{$receiptId}/confirm-requester", [
+                'lockVersion' => 1,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'requester_confirmed');
+    }
+
     public function test_lock_version_conflict_on_stale_receipt(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
@@ -240,7 +283,8 @@ class GoodsReceiptApiTest extends TestCase
         $po = $this->issuedPurchaseOrder($tenant, $buyer);
         $line = $po->lines->first();
 
-        [$otherTenant, $requester] = $this->tenantUserPair(TenantRole::Requester->value);
+        $requester = User::factory()->create(['password' => Hash::make('secret123')]);
+        $tenant->users()->attach($requester->id, ['role' => TenantRole::Requester->value]);
 
         $this->actingAsTenant($tenant, $requester)
             ->postJson("/api/purchase-orders/{$po->id}/goods-receipts", [

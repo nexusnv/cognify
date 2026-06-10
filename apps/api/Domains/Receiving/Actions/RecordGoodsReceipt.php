@@ -73,20 +73,21 @@ class RecordGoodsReceipt
                     throw new InvalidArgumentException("Line {$poLine->line_number} is cancelled and cannot receive goods.");
                 }
 
-                $quantityReceived = (float) $linePayload['quantityReceived'];
-                $quantityAccepted = isset($linePayload['quantityAccepted']) ? (float) $linePayload['quantityAccepted'] : $quantityReceived;
-                $newCumulativeReceived = round((float) $poLine->cumulative_quantity_received + $quantityReceived, 4);
-                $orderedQuantity = (float) $poLine->quantity;
-                $tolerancePercent = (float) $poLine->over_receipt_tolerance_percent;
-                $maxReceivable = round($orderedQuantity + ($orderedQuantity * ($tolerancePercent / 100)), 4);
+                $quantityReceived = $linePayload['quantityReceived'];
+                $quantityAccepted = $linePayload['quantityAccepted'] ?? $quantityReceived;
+                $newCumulativeReceived = bcadd($poLine->cumulative_quantity_received, $quantityReceived, 4);
+                $orderedQuantity = $poLine->quantity;
+                $tolerancePercent = $poLine->over_receipt_tolerance_percent;
+                $toleranceFactor = bcdiv($tolerancePercent, '100', 4);
+                $maxReceivable = bcadd($orderedQuantity, bcmul($orderedQuantity, $toleranceFactor, 4), 4);
 
-                if ($newCumulativeReceived > $maxReceivable) {
+                if (bccomp($newCumulativeReceived, $maxReceivable, 4) > 0) {
                     throw new InvalidArgumentException(
                         "Line {$poLine->line_number}: cumulative received quantity {$newCumulativeReceived} exceeds tolerance limit of {$maxReceivable}."
                     );
                 }
 
-                $newCumulativeAccepted = round((float) $poLine->cumulative_quantity_accepted + $quantityAccepted, 4);
+                $newCumulativeAccepted = bcadd($poLine->cumulative_quantity_accepted, $quantityAccepted, 4);
 
                 $linesData[] = [
                     'tenant_id' => $po->tenant_id,

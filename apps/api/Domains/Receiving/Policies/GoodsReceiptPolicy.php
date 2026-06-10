@@ -9,10 +9,29 @@ use Domains\Receiving\Models\GoodsReceipt;
 
 class GoodsReceiptPolicy
 {
-    public function confirmRequester(User $user, GoodsReceipt $goodsReceipt): bool
+    public function view(User $user, GoodsReceipt $goodsReceipt): bool
     {
         return $this->isTenantScoped($goodsReceipt->tenant_id)
             && $this->roleIs($user, TenantRole::Buyer, TenantRole::Admin);
+    }
+
+    public function confirmRequester(User $user, GoodsReceipt $goodsReceipt): bool
+    {
+        if (! $this->isTenantScoped($goodsReceipt->tenant_id)) {
+            return false;
+        }
+
+        $po = $goodsReceipt->purchaseOrder;
+
+        if ($po !== null && $po->requisition_id !== null) {
+            $requisition = $po->requisition;
+
+            if ($requisition !== null && $requisition->requester_id === $user->id) {
+                return true;
+            }
+        }
+
+        return $this->roleIs($user, TenantRole::Buyer, TenantRole::Admin);
     }
 
     public function confirmBuyer(User $user, GoodsReceipt $goodsReceipt): bool

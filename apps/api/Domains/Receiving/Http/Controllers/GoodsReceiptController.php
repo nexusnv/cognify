@@ -57,6 +57,8 @@ class GoodsReceiptController
 
     public function show(GoodsReceipt $goodsReceipt): GoodsReceiptResource
     {
+        $this->authorize('view', $goodsReceipt);
+
         $goodsReceipt->load('lines');
 
         return new GoodsReceiptResource($goodsReceipt);
