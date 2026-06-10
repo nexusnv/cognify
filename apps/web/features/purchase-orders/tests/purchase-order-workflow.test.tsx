@@ -5,9 +5,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw/server";
 import {
+  acknowledgedPurchaseOrderFixture,
   approvedPurchaseOrderFixture,
   changesRequestedPurchaseOrderFixture,
   inReviewPurchaseOrderFixture,
+  issuedPurchaseOrderFixture,
   purchaseOrderFixture,
   readyPurchaseOrderFixture,
   rejectedPurchaseOrderFixture,
@@ -228,5 +230,78 @@ describe("purchase order workflow", () => {
     const rejectedApprovalRegion = await screen.findByRole("region", { name: "Purchase order approval" });
     expect(within(rejectedApprovalRegion).getAllByText("Rejected").length).toBeGreaterThan(0);
     expect(screen.getByText("Tax coding does not match the approved quotation.")).toBeInTheDocument();
+  });
+
+  it("issues an approved purchase order to a supplier", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([approvedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
+    expect(within(supplierRegion).getByRole("button", { name: "Issue to supplier" })).toBeEnabled();
+
+    await user.clear(within(supplierRegion).getByLabelText("Supplier contact"));
+    await user.type(within(supplierRegion).getByLabelText("Supplier contact"), "Priya Supplier");
+    await user.clear(within(supplierRegion).getByLabelText("Supplier email"));
+    await user.type(within(supplierRegion).getByLabelText("Supplier email"), "priya.supplier@example.com");
+    await user.click(within(supplierRegion).getByRole("button", { name: "Issue to supplier" }));
+
+    expect(await screen.findByText("Issued to supplier")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record acknowledgement" })).toBeEnabled();
+  });
+
+  it("shows export and acknowledgement controls for issued purchase orders", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
+    expect(within(supplierRegion).getByText("Issued to supplier")).toBeInTheDocument();
+    expect(within(supplierRegion).getByRole("button", { name: "Preview JSON" })).toBeEnabled();
+    expect(within(supplierRegion).getByRole("button", { name: "Record JSON export" })).toBeEnabled();
+    expect(within(supplierRegion).getByRole("button", { name: "Record acknowledgement" })).toBeEnabled();
+
+    await user.click(within(supplierRegion).getByRole("button", { name: "Preview JSON" }));
+
+    expect(await screen.findByText("Prepared supplier export for PO-2026-000001.")).toBeInTheDocument();
+  });
+
+  it("records supplier acknowledgement", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
+    await user.type(within(supplierRegion).getByLabelText("Acknowledgement reference"), "ACK-PO-100");
+    await user.type(within(supplierRegion).getByLabelText("Acknowledgement note"), "Supplier confirmed delivery in week 29.");
+    await user.click(within(supplierRegion).getByRole("button", { name: "Record acknowledgement" }));
+
+    expect(await screen.findByText("Supplier acknowledged")).toBeInTheDocument();
+    expect(screen.getByText(/ACK-PO-100/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Record acknowledgement" })).not.toBeInTheDocument();
+  });
+
+  it("shows acknowledged supplier issue facts", async () => {
+    setPurchaseOrderMockState([acknowledgedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
+    expect(within(supplierRegion).getByText("Supplier acknowledged")).toBeInTheDocument();
+    expect(within(supplierRegion).getByText(/ACK-PO-100/)).toBeInTheDocument();
+    expect(within(supplierRegion).queryByRole("button", { name: "Record acknowledgement" })).not.toBeInTheDocument();
+  });
+
+  it("blocks supplier issue before approval", async () => {
+    setPurchaseOrderMockState([readyPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
+    expect(within(supplierRegion).getByText("Supplier issue unlocks after approval.")).toBeInTheDocument();
+    expect(within(supplierRegion).queryByRole("button", { name: "Issue to supplier" })).not.toBeInTheDocument();
   });
 });
