@@ -25,6 +25,7 @@ import type { PurchaseOrderApproval } from "./purchaseOrderApproval";
 import type { PurchaseOrderEvidenceItem } from "./purchaseOrderEvidenceItem";
 import type { PurchaseOrderLine } from "./purchaseOrderLine";
 import type { PurchaseOrderPermissions } from "./purchaseOrderPermissions";
+import type { PurchaseOrderSupplierIssue } from "./purchaseOrderSupplierIssue";
 
 export interface PurchaseOrder {
   id: string;
@@ -59,4 +60,5 @@ export interface PurchaseOrder {
   /** @minimum 1 */
   lockVersion: number;
   permissions: PurchaseOrderPermissions;
+  supplierIssue: PurchaseOrderSupplierIssue;
 }
