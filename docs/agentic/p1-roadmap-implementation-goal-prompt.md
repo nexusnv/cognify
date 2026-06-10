@@ -121,9 +121,10 @@ For each remaining P1 feature, execute this exact sequence.
 - Push the goal-feature/* branch.
 - Open a GitHub PR in ready-for-review state, not draft.
 - Include the design spec, implementation plan, tests run, visual inspection evidence if applicable, and CodeRabbit review/fix summary in the PR description.
+- Include accessible and testable url to guide user to the right url to review
 
 9. Wait for human/PR review
-- Wait 10-15 minutes for review comments after opening the PR. If the diff is large or checks are still running, wait longer.
+- Wait 30-45 minutes for review comments after opening the PR. If the diff is large or checks are still running, wait longer.
 - Retrieve all unresolved PR review comments and inline threads.
 - Apply necessary fixes where the comments are valid and relevant.
 - If a comment is technically questionable, use the superpowers:receiving-code-review skill before changing code.
