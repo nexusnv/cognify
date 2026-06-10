@@ -3,6 +3,7 @@
 import { Button } from "@cognify/ui";
 import type { PurchaseOrder } from "@cognify/api-client/schemas";
 import { useSubmitPurchaseOrderApproval } from "../hooks/use-purchase-order-actions";
+import { errorToMessage } from "../utils/error-helpers";
 
 export function PurchaseOrderApprovalPanel({ purchaseOrder }: { purchaseOrder: PurchaseOrder }) {
   const submitMutation = useSubmitPurchaseOrderApproval(purchaseOrder.id);
@@ -113,13 +114,4 @@ function approvalStateCopy(purchaseOrder: PurchaseOrder) {
         timestamp: null,
       };
   }
-}
-
-function errorToMessage(error: unknown) {
-  if (error && typeof error === "object") {
-    const message = (error as { error?: { message?: string }; message?: string }).error?.message ?? (error as { message?: string }).message;
-    if (message) return message;
-  }
-
-  return null;
 }

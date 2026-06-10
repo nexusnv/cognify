@@ -21,7 +21,7 @@ class AcknowledgePurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lockVersion' => ['required', 'integer', 'min:0'],
+            'lockVersion' => ['required', 'integer', 'min:1'],
             'acknowledgedContactName' => ['sometimes', 'nullable', 'string', 'max:160'],
             'acknowledgementReference' => ['sometimes', 'nullable', 'string', 'max:160'],
             'acknowledgementNote' => ['sometimes', 'nullable', 'string', 'max:2000'],

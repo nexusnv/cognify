@@ -10,7 +10,7 @@ import type { IssuePurchaseOrderRequestSupplierContactEmail } from "./issuePurch
 import type { IssuePurchaseOrderRequestMessage } from "./issuePurchaseOrderRequestMessage";
 
 export interface IssuePurchaseOrderRequest {
-  /** @minimum 0 */
+  /** @minimum 1 */
   lockVersion: number;
   method: IssuePurchaseOrderRequestMethod;
   /** @maxLength 160 */

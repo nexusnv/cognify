@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Input, Textarea } from "@cognify/ui";
-import type { PurchaseOrder } from "@cognify/api-client/schemas";
+import type { AcknowledgePurchaseOrderRequest, PurchaseOrder } from "@cognify/api-client/schemas";
 import {
   useAcknowledgePurchaseOrderSupplier,
   useExportPurchaseOrderSupplierJson,
   useIssuePurchaseOrderToSupplier,
   useRecordPurchaseOrderSupplierJsonExport,
 } from "../hooks/use-purchase-order-actions";
+import { errorToMessage } from "../utils/error-helpers";
 
 type IssueMethod = "manual_email" | "portal_upload" | "external_system" | "manual_export";
 
@@ -28,12 +29,37 @@ export function PurchaseOrderSupplierIssuePanel({ purchaseOrder }: { purchaseOrd
     purchaseOrder.supplierIssue.acknowledgementReference ?? "",
   );
   const [acknowledgementNote, setAcknowledgementNote] = useState(purchaseOrder.supplierIssue.acknowledgementNote ?? "");
+  const [acknowledgementValidationError, setAcknowledgementValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIssueMethod((purchaseOrder.supplierIssue.issueMethod ?? "manual_email") as IssueMethod);
+    setSupplierContactName(purchaseOrder.supplierIssue.supplierContactName ?? "");
+    setSupplierContactEmail(purchaseOrder.supplierIssue.supplierContactEmail ?? "");
+    setMessage(purchaseOrder.supplierIssue.message ?? "");
+    setAcknowledgedContactName(
+      purchaseOrder.supplierIssue.acknowledgedContactName ?? purchaseOrder.supplierIssue.supplierContactName ?? "",
+    );
+    setAcknowledgementReference(purchaseOrder.supplierIssue.acknowledgementReference ?? "");
+    setAcknowledgementNote(purchaseOrder.supplierIssue.acknowledgementNote ?? "");
+    setAcknowledgementValidationError(null);
+  }, [
+    purchaseOrder.id,
+    purchaseOrder.supplierIssue.issueMethod,
+    purchaseOrder.supplierIssue.supplierContactName,
+    purchaseOrder.supplierIssue.supplierContactEmail,
+    purchaseOrder.supplierIssue.message,
+    purchaseOrder.supplierIssue.acknowledgedContactName,
+    purchaseOrder.supplierIssue.acknowledgementReference,
+    purchaseOrder.supplierIssue.acknowledgementNote,
+  ]);
+
   const canIssue = purchaseOrder.permissions.canIssueToSupplier && !issueMutation.isPending;
   const canAcknowledge = purchaseOrder.permissions.canAcknowledgeSupplier && !acknowledgeMutation.isPending;
   const errorMessage =
     errorToMessage(issueMutation.error) ??
     errorToMessage(recordExportMutation.error) ??
     errorToMessage(exportMutation.error) ??
+    acknowledgementValidationError ??
     errorToMessage(acknowledgeMutation.error);
 
   return (
@@ -158,14 +184,22 @@ export function PurchaseOrderSupplierIssuePanel({ purchaseOrder }: { purchaseOrd
             className="mt-3"
             type="button"
             disabled={!canAcknowledge}
-            onClick={() =>
-              acknowledgeMutation.mutate({
+            onClick={() => {
+              const payload = acknowledgementPayload({
                 lockVersion: purchaseOrder.lockVersion,
-                acknowledgedContactName: acknowledgedContactName || null,
-                acknowledgementReference: acknowledgementReference || null,
-                acknowledgementNote: acknowledgementNote || null,
-              })
-            }
+                acknowledgedContactName,
+                acknowledgementReference,
+                acknowledgementNote,
+              });
+
+              if (!payload) {
+                setAcknowledgementValidationError("At least one acknowledgement evidence field is required.");
+                return;
+              }
+
+              setAcknowledgementValidationError(null);
+              acknowledgeMutation.mutate(payload);
+            }}
           >
             {acknowledgeMutation.isPending ? "Recording" : "Record acknowledgement"}
           </Button>
@@ -232,10 +266,43 @@ function exportPurchaseOrderNumber(exportData: { purchaseOrder: Record<string, u
   return typeof number === "string" ? number : "purchase order";
 }
 
-function errorToMessage(error: unknown) {
-  if (error && typeof error === "object") {
-    const message = (error as { error?: { message?: string }; message?: string }).error?.message ?? (error as { message?: string }).message;
-    if (message) return message;
+function acknowledgementPayload({
+  lockVersion,
+  acknowledgedContactName,
+  acknowledgementReference,
+  acknowledgementNote,
+}: {
+  lockVersion: number;
+  acknowledgedContactName: string;
+  acknowledgementReference: string;
+  acknowledgementNote: string;
+}): AcknowledgePurchaseOrderRequest | null {
+  const contactName = acknowledgedContactName.trim();
+  const reference = acknowledgementReference.trim();
+  const note = acknowledgementNote.trim();
+
+  if (contactName) {
+    return {
+      lockVersion,
+      acknowledgedContactName: contactName,
+      acknowledgementReference: reference || null,
+      acknowledgementNote: note || null,
+    };
+  }
+
+  if (reference) {
+    return {
+      lockVersion,
+      acknowledgementReference: reference,
+      acknowledgementNote: note || null,
+    };
+  }
+
+  if (note) {
+    return {
+      lockVersion,
+      acknowledgementNote: note,
+    };
   }
 
   return null;

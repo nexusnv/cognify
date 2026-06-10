@@ -22,7 +22,7 @@ class IssuePurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lockVersion' => ['required', 'integer', 'min:0'],
+            'lockVersion' => ['required', 'integer', 'min:1'],
             'method' => ['required', Rule::in(['manual_email', 'portal_upload', 'external_system', 'manual_export'])],
             'supplierContactName' => ['sometimes', 'nullable', 'string', 'max:160'],
             'supplierContactEmail' => ['sometimes', 'nullable', 'email', 'max:255'],

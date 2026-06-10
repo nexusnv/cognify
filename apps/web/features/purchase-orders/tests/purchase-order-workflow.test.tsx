@@ -288,6 +288,22 @@ describe("purchase order workflow", () => {
     expect(screen.queryByRole("button", { name: "Record acknowledgement" })).not.toBeInTheDocument();
   });
 
+  it("rejects supplier acknowledgement without evidence", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const supplierRegion = await screen.findByRole("region", { name: "Supplier issue" });
+    await user.clear(within(supplierRegion).getByLabelText("Acknowledged contact"));
+    await user.clear(within(supplierRegion).getByLabelText("Acknowledgement reference"));
+    await user.clear(within(supplierRegion).getByLabelText("Acknowledgement note"));
+    await user.click(within(supplierRegion).getByRole("button", { name: "Record acknowledgement" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/evidence.*required/i);
+    expect(within(supplierRegion).getByRole("button", { name: "Record acknowledgement" })).toBeInTheDocument();
+  });
+
   it("shows acknowledged supplier issue facts", async () => {
     setPurchaseOrderMockState([acknowledgedPurchaseOrderFixture]);
 

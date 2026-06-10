@@ -376,6 +376,17 @@ export const purchaseOrderHandlers = [
         { status: 409 },
       );
     }
+    const hasEvidence = [
+      payload.acknowledgedContactName,
+      payload.acknowledgementReference,
+      payload.acknowledgementNote,
+    ].some((value) => typeof value === "string" && value.trim() !== "");
+
+    if (!hasEvidence) {
+      return validationFailedResponse("At least one acknowledgement evidence field is required.", {
+        acknowledgementReference: ["At least one acknowledgement evidence field is required."],
+      });
+    }
 
     const updated: PurchaseOrder = {
       ...purchaseOrder,

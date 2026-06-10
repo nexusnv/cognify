@@ -4,17 +4,41 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
+import type { AcknowledgePurchaseOrderRequestAnyOf } from "./acknowledgePurchaseOrderRequestAnyOf";
+import type { AcknowledgePurchaseOrderRequestAnyOfTwo } from "./acknowledgePurchaseOrderRequestAnyOfTwo";
+import type { AcknowledgePurchaseOrderRequestAnyOfThree } from "./acknowledgePurchaseOrderRequestAnyOfThree";
 import type { AcknowledgePurchaseOrderRequestAcknowledgedContactName } from "./acknowledgePurchaseOrderRequestAcknowledgedContactName";
 import type { AcknowledgePurchaseOrderRequestAcknowledgementReference } from "./acknowledgePurchaseOrderRequestAcknowledgementReference";
 import type { AcknowledgePurchaseOrderRequestAcknowledgementNote } from "./acknowledgePurchaseOrderRequestAcknowledgementNote";
 
-export interface AcknowledgePurchaseOrderRequest {
-  /** @minimum 0 */
-  lockVersion: number;
-  /** @maxLength 160 */
-  acknowledgedContactName?: AcknowledgePurchaseOrderRequestAcknowledgedContactName;
-  /** @maxLength 160 */
-  acknowledgementReference?: AcknowledgePurchaseOrderRequestAcknowledgementReference;
-  /** @maxLength 2000 */
-  acknowledgementNote?: AcknowledgePurchaseOrderRequestAcknowledgementNote;
-}
+export type AcknowledgePurchaseOrderRequest =
+  | (AcknowledgePurchaseOrderRequestAnyOf & {
+      /** @minimum 1 */
+      lockVersion: number;
+      /** @maxLength 160 */
+      acknowledgedContactName?: AcknowledgePurchaseOrderRequestAcknowledgedContactName;
+      /** @maxLength 160 */
+      acknowledgementReference?: AcknowledgePurchaseOrderRequestAcknowledgementReference;
+      /** @maxLength 2000 */
+      acknowledgementNote?: AcknowledgePurchaseOrderRequestAcknowledgementNote;
+    })
+  | (AcknowledgePurchaseOrderRequestAnyOfTwo & {
+      /** @minimum 1 */
+      lockVersion: number;
+      /** @maxLength 160 */
+      acknowledgedContactName?: AcknowledgePurchaseOrderRequestAcknowledgedContactName;
+      /** @maxLength 160 */
+      acknowledgementReference?: AcknowledgePurchaseOrderRequestAcknowledgementReference;
+      /** @maxLength 2000 */
+      acknowledgementNote?: AcknowledgePurchaseOrderRequestAcknowledgementNote;
+    })
+  | (AcknowledgePurchaseOrderRequestAnyOfThree & {
+      /** @minimum 1 */
+      lockVersion: number;
+      /** @maxLength 160 */
+      acknowledgedContactName?: AcknowledgePurchaseOrderRequestAcknowledgedContactName;
+      /** @maxLength 160 */
+      acknowledgementReference?: AcknowledgePurchaseOrderRequestAcknowledgementReference;
+      /** @maxLength 2000 */
+      acknowledgementNote?: AcknowledgePurchaseOrderRequestAcknowledgementNote;
+    });

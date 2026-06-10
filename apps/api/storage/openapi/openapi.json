@@ -21222,7 +21222,7 @@
         "properties": {
           "lockVersion": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 1
           },
           "method": {
             "type": "string",
@@ -21263,10 +21263,45 @@
         "required": [
           "lockVersion"
         ],
+        "anyOf": [
+          {
+            "required": [
+              "acknowledgedContactName"
+            ],
+            "properties": {
+              "acknowledgedContactName": {
+                "type": "string",
+                "pattern": ".*\\S.*"
+              }
+            }
+          },
+          {
+            "required": [
+              "acknowledgementReference"
+            ],
+            "properties": {
+              "acknowledgementReference": {
+                "type": "string",
+                "pattern": ".*\\S.*"
+              }
+            }
+          },
+          {
+            "required": [
+              "acknowledgementNote"
+            ],
+            "properties": {
+              "acknowledgementNote": {
+                "type": "string",
+                "pattern": ".*\\S.*"
+              }
+            }
+          }
+        ],
         "properties": {
           "lockVersion": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 1
           },
           "acknowledgedContactName": {
             "type": [
