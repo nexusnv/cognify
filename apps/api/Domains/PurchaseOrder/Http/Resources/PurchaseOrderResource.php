@@ -168,6 +168,9 @@ class PurchaseOrderResource extends JsonResource
                 'canCancelChangeOrder' => $purchaseOrder->current_change_order_id !== null
                     && $user !== null
                     && Gate::forUser($user)->check('cancelChangeOrder', $purchaseOrder),
+                'canCreateShipment' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
+                    && $user !== null
+                    && Gate::forUser($user)->check('createShipment', $purchaseOrder),
                 'canRecordGoodsReceipt' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
                     && $user !== null
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),

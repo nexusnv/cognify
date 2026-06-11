@@ -176,9 +176,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/purchase-orders/{purchaseOrder}/acknowledge', [PurchaseOrderController::class, 'acknowledge']);
             Route::get('/purchase-orders/{purchaseOrder}/goods-receipts', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'index']);
             Route::post('/purchase-orders/{purchaseOrder}/goods-receipts', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'store']);
+            Route::get('/purchase-orders/{purchaseOrder}/fulfillment', [\Domains\Fulfillment\Http\Controllers\FulfillmentStatusController::class, 'show']);
+            Route::get('/purchase-orders/{purchaseOrder}/shipments', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'index']);
+            Route::post('/purchase-orders/{purchaseOrder}/shipments', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'store']);
             Route::get('/goods-receipts/{goodsReceipt}', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'show']);
             Route::post('/goods-receipts/{goodsReceipt}/confirm-requester', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'confirmRequester']);
             Route::post('/goods-receipts/{goodsReceipt}/confirm-buyer', [\Domains\Receiving\Http\Controllers\GoodsReceiptController::class, 'confirmBuyer']);
+            Route::get('/shipments/{shipment}', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'show']);
+            Route::patch('/shipments/{shipment}', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'update']);
+            Route::delete('/shipments/{shipment}', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'destroy']);
+            Route::get('/shipments/{shipment}/tracking-events', [\Domains\Fulfillment\Http\Controllers\FulfillmentTrackingEventController::class, 'index']);
+            Route::post('/shipments/{shipment}/tracking-events', [\Domains\Fulfillment\Http\Controllers\FulfillmentTrackingEventController::class, 'store']);
+            Route::patch('/shipments/{shipment}/lines/{line}/backorder', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'updateBackorder']);
         });
         Route::get('/rfqs/{rfq}', [RfqController::class, 'show']);
         Route::patch('/rfqs/{rfq}', [RfqController::class, 'update']);

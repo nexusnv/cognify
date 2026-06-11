@@ -50,3 +50,4 @@ Thumbs.db
 # CLI tool artifacts
 .antigravitycli/
 .playwright-cli/
+.codegraph/daemon.pid

@@ -8024,6 +8024,102 @@
         }
       }
     },
+    "/api/purchase-orders/{purchaseOrder}/fulfillment": {
+      "get": {
+        "operationId": "showPurchaseOrderFulfillment",
+        "tags": ["Purchase Orders"],
+        "summary": "Show fulfillment status for a purchase order",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fulfillment status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/FulfillmentStatus" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/purchase-orders/{purchaseOrder}/shipments": {
+      "get": {
+        "operationId": "listPurchaseOrderShipments",
+        "tags": ["Purchase Orders"],
+        "summary": "List shipments for a purchase order",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shipments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Shipment" }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "createPurchaseOrderShipment",
+        "tags": ["Purchase Orders"],
+        "summary": "Create a shipment for a purchase order",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateShipmentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Shipment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Shipment" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
     "/api/goods-receipts/{goodsReceipt}": {
       "get": {
         "operationId": "showGoodsReceipt",
@@ -8055,6 +8151,256 @@
             }
           },
           "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/shipments/{shipment}": {
+      "get": {
+        "operationId": "showShipment",
+        "tags": ["Purchase Orders"],
+        "summary": "Show shipment detail",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "shipment",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shipment detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Shipment" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "operationId": "updateShipment",
+        "tags": ["Purchase Orders"],
+        "summary": "Update shipment details",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "shipment",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateShipmentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shipment updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Shipment" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      },
+      "delete": {
+        "operationId": "cancelShipment",
+        "tags": ["Purchase Orders"],
+        "summary": "Cancel a shipment",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "shipment",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateShipmentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shipment cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Shipment" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/shipments/{shipment}/tracking-events": {
+      "get": {
+        "operationId": "listShipmentTrackingEvents",
+        "tags": ["Purchase Orders"],
+        "summary": "List tracking events for a shipment",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "shipment",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tracking events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/FulfillmentTrackingEvent" }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "createShipmentTrackingEvent",
+        "tags": ["Purchase Orders"],
+        "summary": "Create a shipment tracking event",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "shipment",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddFulfillmentTrackingEventRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tracking event created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/FulfillmentTrackingEvent" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/shipments/{shipment}/lines/{line}/backorder": {
+      "patch": {
+        "operationId": "updateShipmentLineBackorder",
+        "tags": ["Purchase Orders"],
+        "summary": "Update shipment line backorder details",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "shipment",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment UUID"
+          },
+          {
+            "name": "line",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Shipment line UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateShipmentBackorderRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shipment line backorder updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/ShipmentLine" }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
         }
       }
     },
@@ -20727,6 +21073,7 @@
           "canUpdateChangeOrder",
           "canSubmitChangeOrder",
           "canCancelChangeOrder",
+          "canCreateShipment",
           "canRecordGoodsReceipt",
           "canConfirmGoodsReceipt"
         ],
@@ -20762,6 +21109,9 @@
             "type": "boolean"
           },
           "canCancelChangeOrder": {
+            "type": "boolean"
+          },
+          "canCreateShipment": {
             "type": "boolean"
           },
           "canRecordGoodsReceipt": {
@@ -22797,6 +23147,161 @@
           "lockVersion": { "type": "integer", "minimum": 1 }
         },
         "required": ["lockVersion"]
+      },
+      "ShipmentStatus": {
+        "type": "string",
+        "enum": ["pending", "confirmed", "in_transit", "partially_delivered", "delivered", "delayed", "cancelled"]
+      },
+      "FulfillmentTrackingEventStatus": {
+        "type": "string",
+        "enum": ["created", "shipped", "in_transit", "customs", "arrived", "out_for_delivery", "delivered", "delayed", "exception"]
+      },
+      "Shipment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "purchaseOrderId": { "type": "string", "format": "uuid" },
+          "number": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/ShipmentStatus" },
+          "carrierName": { "type": ["string", "null"] },
+          "trackingReference": { "type": ["string", "null"] },
+          "shipmentDate": { "type": "string", "format": "date" },
+          "estimatedArrivalDate": { "type": ["string", "null"], "format": "date" },
+          "actualDeliveryDate": { "type": ["string", "null"], "format": "date" },
+          "notes": { "type": ["string", "null"] },
+          "createdByUserId": { "type": ["string", "null"], "format": "uuid" },
+          "lines": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ShipmentLine" }
+          },
+          "lockVersion": { "type": "integer", "minimum": 1 }
+        },
+        "required": ["id", "purchaseOrderId", "number", "status", "shipmentDate", "lines", "lockVersion"]
+      },
+      "ShipmentLine": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
+          "lineNumber": { "type": "integer" },
+          "quantityShipped": { "type": "string" },
+          "quantityDelivered": { "type": "string" },
+          "backorderQuantity": { "type": "string" },
+          "backorderExpectedAt": { "type": ["string", "null"], "format": "date" },
+          "notes": { "type": ["string", "null"] }
+        },
+        "required": ["id", "purchaseOrderLineId", "lineNumber", "quantityShipped", "quantityDelivered", "backorderQuantity"]
+      },
+      "FulfillmentTrackingEvent": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "status": { "$ref": "#/components/schemas/FulfillmentTrackingEventStatus" },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "location": { "type": ["string", "null"] },
+          "notes": { "type": ["string", "null"] },
+          "createdByUserId": { "type": ["string", "null"], "format": "uuid" }
+        },
+        "required": ["id", "shipmentId", "status", "occurredAt"]
+      },
+      "FulfillmentLineSummary": {
+        "type": "object",
+        "properties": {
+          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
+          "lineNumber": { "type": "integer" },
+          "orderedQuantity": { "type": "string" },
+          "receivedQuantity": { "type": "string" },
+          "backorderQuantity": { "type": "string" },
+          "expectedDeliveryDate": { "type": ["string", "null"], "format": "date" },
+          "status": {
+            "type": "string",
+            "enum": ["pending_shipment", "awaiting_delivery", "backordered", "delayed", "delivered"]
+          },
+          "isDelayed": { "type": "boolean" }
+        },
+        "required": ["purchaseOrderLineId", "lineNumber", "orderedQuantity", "receivedQuantity", "backorderQuantity", "status", "isDelayed"]
+      },
+      "FulfillmentStatus": {
+        "type": "object",
+        "properties": {
+          "purchaseOrderId": { "type": "string", "format": "uuid" },
+          "overallStatus": {
+            "type": "string",
+            "enum": ["pending_shipment", "awaiting_delivery", "partial", "delivered", "delayed", "backordered"]
+          },
+          "isDelayed": { "type": "boolean" },
+          "lateDeliveryCount": { "type": "integer" },
+          "totalLineCount": { "type": "integer" },
+          "deliveredLineCount": { "type": "integer" },
+          "shipmentCount": { "type": "integer" },
+          "lineSummaries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FulfillmentLineSummary" }
+          }
+        },
+        "required": ["purchaseOrderId", "overallStatus", "isDelayed", "lateDeliveryCount", "totalLineCount", "deliveredLineCount", "shipmentCount", "lineSummaries"]
+      },
+      "CreateShipmentLineItem": {
+        "type": "object",
+        "properties": {
+          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
+          "quantityShipped": { "type": "string" },
+          "backorderQuantity": { "type": ["string", "null"] },
+          "backorderExpectedAt": { "type": ["string", "null"], "format": "date" },
+          "notes": { "type": ["string", "null"] }
+        },
+        "required": ["purchaseOrderLineId", "quantityShipped"]
+      },
+      "CreateShipmentRequest": {
+        "type": "object",
+        "properties": {
+          "lockVersion": { "type": "integer", "minimum": 1 },
+          "carrierName": { "type": ["string", "null"], "maxLength": 200 },
+          "trackingReference": { "type": ["string", "null"], "maxLength": 200 },
+          "shipmentDate": { "type": "string", "format": "date" },
+          "estimatedArrivalDate": { "type": ["string", "null"], "format": "date" },
+          "notes": { "type": ["string", "null"], "maxLength": 2000 },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": { "$ref": "#/components/schemas/CreateShipmentLineItem" }
+          }
+        },
+        "required": ["lockVersion", "shipmentDate", "lines"]
+      },
+      "UpdateShipmentRequest": {
+        "type": "object",
+        "properties": {
+          "lockVersion": { "type": "integer", "minimum": 1 },
+          "carrierName": { "type": ["string", "null"], "maxLength": 200 },
+          "trackingReference": { "type": ["string", "null"], "maxLength": 200 },
+          "shipmentDate": { "type": "string", "format": "date" },
+          "estimatedArrivalDate": { "type": ["string", "null"], "format": "date" },
+          "actualDeliveryDate": { "type": ["string", "null"], "format": "date" },
+          "notes": { "type": ["string", "null"], "maxLength": 2000 }
+        },
+        "required": ["lockVersion"]
+      },
+      "AddFulfillmentTrackingEventRequest": {
+        "type": "object",
+        "properties": {
+          "status": { "$ref": "#/components/schemas/FulfillmentTrackingEventStatus" },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "location": { "type": ["string", "null"], "maxLength": 200 },
+          "notes": { "type": ["string", "null"], "maxLength": 2000 }
+        },
+        "required": ["status", "occurredAt"]
+      },
+      "UpdateShipmentBackorderRequest": {
+        "type": "object",
+        "properties": {
+          "backorderQuantity": { "type": "string" },
+          "backorderExpectedAt": { "type": ["string", "null"], "format": "date" },
+          "notes": { "type": ["string", "null"], "maxLength": 2000 }
+        },
+        "required": ["backorderQuantity"]
       }
     }
   }

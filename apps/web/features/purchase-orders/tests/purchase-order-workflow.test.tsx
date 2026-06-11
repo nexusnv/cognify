@@ -5,10 +5,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw/server";
 import {
+  buildPurchaseOrderFixture,
   acknowledgedPurchaseOrderFixture,
-  appliedChangeOrderFixture,
   approvedPurchaseOrderFixture,
   changesRequestedPurchaseOrderFixture,
+  appliedChangeOrderFixture,
   inReviewPurchaseOrderFixture,
   issuedPurchaseOrderFixture,
   issuedPurchaseOrderWithAppliedChangeOrderFixture,
@@ -23,6 +24,7 @@ import {
   setPurchaseOrderChangeOrdersMockState,
   setPurchaseOrderMockState,
 } from "../mocks/purchase-order-handlers";
+import { resetFulfillmentMockState } from "../mocks/purchase-order-fulfillment-handlers";
 import { PurchaseOrderListPage } from "../workflows/purchase-order-list-page";
 import { PurchaseOrderWorkspacePage } from "../workflows/purchase-order-workspace-page";
 
@@ -39,6 +41,7 @@ function renderWithProviders(ui: React.ReactElement) {
 
 beforeEach(() => {
   resetPurchaseOrderMockState();
+  resetFulfillmentMockState();
   window.localStorage.clear();
   window.localStorage.setItem("cognify.activeTenantId", "1");
 });
@@ -209,6 +212,199 @@ describe("purchase order workflow", () => {
       expect(screen.getByText("In review")).toBeInTheDocument();
     });
     expect(screen.getByRole("group", { name: "Purchase order draft fields" })).toBeDisabled();
+  });
+
+  it("renders fulfillment tracking for issued purchase orders and records a shipment", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const fulfillmentRegion = await screen.findByRole("region", { name: "Fulfillment tracking" });
+    expect(within(fulfillmentRegion).getByText("pending shipment")).toBeInTheDocument();
+    expect(await within(fulfillmentRegion).findByText("0 shipment(s) recorded")).toBeInTheDocument();
+
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Record shipment" }));
+    await user.type(within(fulfillmentRegion).getByLabelText("Carrier"), "DHL Supply Chain");
+    await user.type(within(fulfillmentRegion).getByLabelText("Tracking reference"), "TRACK-001");
+    await user.clear(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"));
+    await user.type(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"), "4.0000");
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save shipment" }));
+
+    await waitFor(() => {
+      expect(within(fulfillmentRegion).getByText("SH-2026-000001")).toBeInTheDocument();
+    });
+    expect(within(fulfillmentRegion).getByText("awaiting delivery")).toBeInTheDocument();
+    expect(within(fulfillmentRegion).getByText("1 shipment(s) recorded")).toBeInTheDocument();
+  });
+
+  it("shows line-by-line shipment inputs for every purchase order line", async () => {
+    const twoLineIssuedPurchaseOrderFixture = buildPurchaseOrderFixture({
+      status: "issued",
+      lockVersion: 2,
+      permissions: {
+        canUpdate: false,
+        canMarkReadyForReview: false,
+        canCancel: false,
+        canSubmitForApproval: false,
+        canIssueToSupplier: false,
+        canExportSupplierVersion: false,
+        canAcknowledgeSupplier: false,
+        canCreateChangeOrder: true,
+        canUpdateChangeOrder: false,
+        canSubmitChangeOrder: false,
+        canCancelChangeOrder: false,
+        canCreateShipment: true,
+        canRecordGoodsReceipt: true,
+        canConfirmGoodsReceipt: true,
+      },
+      lines: [
+        {
+          id: "po-line-1",
+          lineNumber: 1,
+          status: "open",
+          currentVersionNumber: 1,
+          cancelledByChangeOrderId: null,
+          cancelledAt: null,
+          cancelledReason: null,
+          description: "Pallet rack bay",
+          unit: "each",
+          quantity: "10.0000",
+          unitPrice: "12000.00",
+          subtotalAmount: "120000.00",
+          totalAmount: "120000.00",
+          currency: "MYR",
+          source: {},
+          cumulativeQuantityReceived: "0.0000",
+          cumulativeQuantityAccepted: "0.0000",
+          overReceiptTolerancePercent: "0.00",
+          lastReceiptAt: null,
+        },
+        {
+          id: "po-line-2",
+          lineNumber: 2,
+          status: "open",
+          currentVersionNumber: 1,
+          cancelledByChangeOrderId: null,
+          cancelledAt: null,
+          cancelledReason: null,
+          description: "Racking accessories",
+          unit: "set",
+          quantity: "4.0000",
+          unitPrice: "3500.00",
+          subtotalAmount: "14000.00",
+          totalAmount: "14000.00",
+          currency: "MYR",
+          source: {},
+          cumulativeQuantityReceived: "0.0000",
+          cumulativeQuantityAccepted: "0.0000",
+          overReceiptTolerancePercent: "0.00",
+          lastReceiptAt: null,
+        },
+      ],
+    });
+    setPurchaseOrderMockState([twoLineIssuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const fulfillmentRegion = await screen.findByRole("region", { name: "Fulfillment tracking" });
+    await userEvent.setup().click(within(fulfillmentRegion).getByRole("button", { name: "Record shipment" }));
+
+    expect(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped")).toBeInTheDocument();
+    expect(within(fulfillmentRegion).getByLabelText("Line 1 backorder quantity")).toBeInTheDocument();
+    expect(within(fulfillmentRegion).getByLabelText("Line 2 quantity shipped")).toBeInTheDocument();
+    expect(within(fulfillmentRegion).getByLabelText("Line 2 backorder quantity")).toBeInTheDocument();
+  });
+
+  it("adds a tracking event to an existing shipment from the fulfillment panel", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const fulfillmentRegion = await screen.findByRole("region", { name: "Fulfillment tracking" });
+
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Record shipment" }));
+    await user.type(within(fulfillmentRegion).getByLabelText("Carrier"), "DHL Supply Chain");
+    await user.type(within(fulfillmentRegion).getByLabelText("Tracking reference"), "TRACK-001");
+    await user.clear(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"));
+    await user.type(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"), "4.0000");
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save shipment" }));
+
+    await waitFor(() => {
+      expect(within(fulfillmentRegion).getByText("SH-2026-000001")).toBeInTheDocument();
+    });
+
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Add tracking event" }));
+    await user.selectOptions(within(fulfillmentRegion).getByLabelText("Tracking status"), "in_transit");
+    await user.type(within(fulfillmentRegion).getByLabelText("Tracking location"), "Port Klang");
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save tracking event" }));
+
+    expect(within(fulfillmentRegion).getByText("in transit", { selector: "span.rounded-full" })).toBeInTheDocument();
+    expect(within(fulfillmentRegion).getByText("Port Klang")).toBeInTheDocument();
+  });
+
+  it("updates backorder details for a shipment line from the fulfillment panel", async () => {
+    const user = userEvent.setup();
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+    const fulfillmentRegion = await screen.findByRole("region", { name: "Fulfillment tracking" });
+
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Record shipment" }));
+    await user.type(within(fulfillmentRegion).getByLabelText("Carrier"), "DHL Supply Chain");
+    await user.type(within(fulfillmentRegion).getByLabelText("Tracking reference"), "TRACK-001");
+    await user.clear(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"));
+    await user.type(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"), "4.0000");
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save shipment" }));
+
+    await waitFor(() => {
+      expect(within(fulfillmentRegion).getByText("SH-2026-000001")).toBeInTheDocument();
+    });
+
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Update backorder" }));
+    await user.clear(within(fulfillmentRegion).getByLabelText("Line 1 backorder quantity"));
+    await user.type(within(fulfillmentRegion).getByLabelText("Line 1 backorder quantity"), "2.0000");
+    await user.type(within(fulfillmentRegion).getByLabelText("Line 1 backorder expected at"), "2026-07-20");
+    await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save backorder" }));
+
+    expect(await within(fulfillmentRegion).findByText(/Backorder:\s*2/)).toBeInTheDocument();
+    expect(within(fulfillmentRegion).getByText("Expected backorder delivery: 2026-07-20")).toBeInTheDocument();
+  });
+
+  it("edits and cancels an existing shipment", async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    setPurchaseOrderMockState([issuedPurchaseOrderFixture]);
+
+    try {
+      renderWithProviders(<PurchaseOrderWorkspacePage purchaseOrderId="po-1" />);
+
+      const fulfillmentRegion = await screen.findByRole("region", { name: "Fulfillment tracking" });
+
+      await user.click(within(fulfillmentRegion).getByRole("button", { name: "Record shipment" }));
+      await user.type(within(fulfillmentRegion).getByLabelText("Line 1 quantity shipped"), "4.0000");
+      await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save shipment" }));
+
+      await waitFor(() => {
+        expect(within(fulfillmentRegion).getByText("SH-2026-000001")).toBeInTheDocument();
+      });
+
+      await user.click(within(fulfillmentRegion).getByRole("button", { name: "Edit" }));
+      await user.clear(within(fulfillmentRegion).getByLabelText("Carrier"));
+      await user.type(within(fulfillmentRegion).getByLabelText("Carrier"), "Harbor Logistics");
+      await user.click(within(fulfillmentRegion).getByRole("button", { name: "Save shipment" }));
+
+      expect(await within(fulfillmentRegion).findByText("Harbor Logistics")).toBeInTheDocument();
+
+      await user.click(within(fulfillmentRegion).getByRole("button", { name: "Cancel shipment" }));
+
+      expect(confirm).toHaveBeenCalledWith("Cancel this shipment?");
+      expect(await within(fulfillmentRegion).findByText("cancelled")).toBeInTheDocument();
+    } finally {
+      confirm.mockRestore();
+    }
   });
 
   it("shows submit approval conflicts inline", async () => {
