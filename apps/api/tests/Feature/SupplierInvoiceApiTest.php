@@ -56,15 +56,123 @@ class SupplierInvoiceApiTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('data.purchaseOrderId', (string) $po->id)
+            ->assertJsonPath('data.number', 'INV-2026-000001')
             ->assertJsonPath('data.invoiceNumber', 'INV-10001')
             ->assertJsonPath('data.invoiceDate', '2026-06-12')
             ->assertJsonPath('data.dueDate', '2026-07-12')
-            ->assertJsonPath('data.taxAmount', '7200.00')
-            ->assertJsonPath('data.freightAmount', '3900.00')
-            ->assertJsonPath('data.totalAmount', '131100.00')
+            ->assertJsonPath('data.taxAmount', '7200.0000')
+            ->assertJsonPath('data.freightAmount', '3900.0000')
+            ->assertJsonPath('data.totalAmount', '131100.0000')
+            ->assertJsonPath('data.lines.0.descriptionSnapshot', 'Pallet rack bay')
             ->assertJsonPath('data.lines.0.purchaseOrderLineId', (string) $line->id)
             ->assertJsonPath('data.lines.0.quantityInvoiced', '10.0000')
-            ->assertJsonPath('data.lines.0.unitPrice', '12000.0000');
+            ->assertJsonPath('data.lines.0.unitPrice', '12000.0000')
+            ->assertJsonPath('data.lines.0.lineSubtotal', '120000.0000');
+    }
+
+    public function test_supplier_invoice_due_date_can_be_null(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line, [
+                'invoiceNumber' => 'INV-DUE-NULL',
+                'dueDate' => null,
+            ]))
+            ->assertCreated()
+            ->assertJsonPath('data.dueDate', null);
+    }
+
+    public function test_supplier_invoice_number_increments_within_tenant(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $firstPo = $this->issuedPurchaseOrder($tenant, $buyer, 1, 'Northwind Traders', 'SEQ1');
+        $secondPo = $this->issuedPurchaseOrder($tenant, $buyer, 1, 'Northwind Traders Two', 'SEQ2');
+
+        $firstLine = $firstPo->lines->firstOrFail();
+        $secondLine = $secondPo->lines->firstOrFail();
+
+        $firstResponse = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$firstPo->id}/supplier-invoices", $this->capturePayload($firstPo, $firstLine, [
+                'invoiceNumber' => 'INV-SEQ-001',
+            ]))
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$secondPo->id}/supplier-invoices", $this->capturePayload($secondPo, $secondLine, [
+                'invoiceNumber' => 'INV-SEQ-002',
+            ]))
+            ->assertCreated()
+            ->assertJsonPath('data.number', 'INV-2026-000002');
+
+        $this->assertSame('INV-2026-000001', $firstResponse->json('data.number'));
+    }
+
+    public function test_supplier_invoice_capture_rejects_scientific_notation_amounts(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line, [
+                'invoiceNumber' => 'INV-SCI-001',
+                'taxAmount' => '1e3',
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['taxAmount']);
+    }
+
+    public function test_supplier_invoice_capture_rejects_oversized_amounts(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line, [
+                'invoiceNumber' => 'INV-OVERSIZED-001',
+                'taxAmount' => '999999999999999.9999',
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['taxAmount']);
+    }
+
+    public function test_supplier_invoice_capture_rejects_derived_amount_overflow(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line, [
+                'invoiceNumber' => 'INV-OVERFLOW-001',
+                'lines' => [[
+                    'purchaseOrderLineId' => (string) $line->id,
+                    'quantityInvoiced' => '99999999999999.9999',
+                    'unitPrice' => '99999999999999.9999',
+                    'notes' => 'Overflow test.',
+                ]],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonPath('error.details.fields.lines.0', 'Line 1: invoice line subtotal exceeds supported precision.');
+    }
+
+    public function test_supplier_invoice_capture_rejects_punctuation_only_invoice_numbers(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line, [
+                'invoiceNumber' => '---',
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['invoiceNumber']);
     }
 
     public function test_duplicate_supplier_invoice_returns_conflict(): void
@@ -87,7 +195,9 @@ class SupplierInvoiceApiTest extends TestCase
                 'lockVersion' => $po->fresh()->lock_version,
             ])
             ->assertStatus(409)
-            ->assertJsonPath('error.code', 'conflict');
+            ->assertJsonPath('error.code', 'conflict')
+            ->assertJsonPath('error.details.matchingInvoice.number', 'INV-2026-000001')
+            ->assertJsonPath('error.details.matchingInvoice.invoiceNumber', 'INV-DUP-001');
     }
 
     public function test_invoice_capture_is_tenant_scoped(): void
@@ -108,13 +218,9 @@ class SupplierInvoiceApiTest extends TestCase
             ]))
             ->assertCreated();
 
-        $invoiceId = Attachment::query()->count(); // sentinel to keep a second request from becoming a false positive on empty state
-
         $this->actingAsTenant($otherTenant, $otherBuyer)
             ->getJson("/api/purchase-orders/{$po->id}/supplier-invoices")
             ->assertForbidden();
-
-        $this->assertSame(0, $invoiceId);
     }
 
     public function test_invoice_capture_rejects_lock_version_conflict(): void
@@ -149,12 +255,14 @@ class SupplierInvoiceApiTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $invoiceId)
             ->assertJsonPath('data.0.invoiceNumber', 'INV-10001')
-            ->assertJsonPath('data.0.totalAmount', '131100.00');
+            ->assertJsonPath('data.0.number', 'INV-2026-000001')
+            ->assertJsonPath('data.0.totalAmount', '131100.0000');
 
         $this->actingAsTenant($tenant, $buyer)
             ->getJson("/api/supplier-invoices/{$invoiceId}")
             ->assertOk()
             ->assertJsonPath('data.id', $invoiceId)
+            ->assertJsonPath('data.number', 'INV-2026-000001')
             ->assertJsonPath('data.lines.0.purchaseOrderLineId', (string) $line->id);
 
         $this->actingAsTenant($tenant, $buyer)
@@ -163,7 +271,7 @@ class SupplierInvoiceApiTest extends TestCase
             ->assertJsonPath('data.permissions.canCaptureInvoice', true)
             ->assertJsonPath('data.invoiceSummary.totalInvoiceCount', 1)
             ->assertJsonPath('data.invoiceSummary.latestInvoiceDate', '2026-06-12')
-            ->assertJsonPath('data.invoiceSummary.totalInvoicedAmount', '131100.00')
+            ->assertJsonPath('data.invoiceSummary.totalInvoicedAmount', '131100.0000')
             ->assertJsonPath('data.invoiceSummary.currency', 'MYR');
     }
 
@@ -246,9 +354,15 @@ class SupplierInvoiceApiTest extends TestCase
         ];
     }
 
-    private function issuedPurchaseOrder(Tenant $tenant, User $buyer, int $lockVersion = 1): PurchaseOrder
+    private function issuedPurchaseOrder(
+        Tenant $tenant,
+        User $buyer,
+        int $lockVersion = 1,
+        string $vendorName = 'Northwind Traders',
+        string $referenceSuffix = 'POC',
+    ): PurchaseOrder
     {
-        $po = $this->purchaseOrder($tenant, $buyer, 'issued', $lockVersion);
+        $po = $this->purchaseOrder($tenant, $buyer, 'issued', $lockVersion, $vendorName, $referenceSuffix);
 
         $po->forceFill([
             'issued_by_user_id' => $buyer->id,
@@ -263,16 +377,23 @@ class SupplierInvoiceApiTest extends TestCase
         return $po->fresh('lines');
     }
 
-    private function purchaseOrder(Tenant $tenant, User $buyer, string $status = 'draft', int $lockVersion = 1): PurchaseOrder
+    private function purchaseOrder(
+        Tenant $tenant,
+        User $buyer,
+        string $status = 'draft',
+        int $lockVersion = 1,
+        string $vendorName = 'Northwind Traders',
+        string $referenceSuffix = 'POC',
+    ): PurchaseOrder
     {
         $vendor = Vendor::query()->create([
             'tenant_id' => $tenant->id,
-            'name' => 'Northwind Traders',
+            'name' => $vendorName,
             'status' => 'active',
         ]);
         $rfq = Rfq::query()->create([
             'tenant_id' => $tenant->id,
-            'number' => 'RFQ-2026-POC',
+            'number' => 'RFQ-2026-'.$referenceSuffix,
             'title' => 'Warehouse racking',
             'status' => RfqStatus::Draft->value,
             'response_due_at' => now()->addDays(7),
@@ -350,7 +471,7 @@ class SupplierInvoiceApiTest extends TestCase
             'vendor_id' => $vendor->id,
             'quotation_id' => $quotation->id,
             'quotation_version_id' => $version->id,
-            'number' => 'POH-2026-POC',
+            'number' => 'POH-2026-'.$referenceSuffix,
             'status' => PurchaseOrderRequestHandoffStatus::Ready,
             'currency' => 'MYR',
             'subtotal_amount' => '131100.00',
@@ -374,7 +495,7 @@ class SupplierInvoiceApiTest extends TestCase
             'vendor_id' => $vendor->id,
             'quotation_id' => $quotation->id,
             'quotation_version_id' => $version->id,
-            'number' => 'PO-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'PO-2026-'.$referenceSuffix,
             'status' => $status,
             'currency' => 'MYR',
             'subtotal_amount' => '120000.00',

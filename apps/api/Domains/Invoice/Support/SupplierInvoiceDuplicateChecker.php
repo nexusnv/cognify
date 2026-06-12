@@ -2,9 +2,9 @@
 
 namespace Domains\Invoice\Support;
 
+use Domains\Invoice\Exceptions\DuplicateSupplierInvoiceException;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class SupplierInvoiceDuplicateChecker
 {
@@ -12,14 +12,18 @@ class SupplierInvoiceDuplicateChecker
     {
         $normalizedNumber = SupplierInvoiceNumber::normalize($invoiceNumber);
 
-        $exists = SupplierInvoice::query()
+        $matchingInvoice = SupplierInvoice::query()
             ->where('tenant_id', $purchaseOrder->tenant_id)
             ->where('purchase_order_id', $purchaseOrder->id)
             ->where('invoice_number_normalized', $normalizedNumber)
-            ->exists();
+            ->first(['id', 'number', 'invoice_number']);
 
-        if ($exists) {
-            throw new ConflictHttpException('A supplier invoice with this number already exists for the purchase order.');
+        if ($matchingInvoice !== null) {
+            throw new DuplicateSupplierInvoiceException([
+                'id' => (string) $matchingInvoice->id,
+                'number' => $matchingInvoice->number,
+                'invoiceNumber' => $matchingInvoice->invoice_number,
+            ]);
         }
     }
 }

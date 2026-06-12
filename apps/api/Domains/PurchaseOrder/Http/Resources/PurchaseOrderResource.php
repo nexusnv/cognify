@@ -121,8 +121,14 @@ class PurchaseOrderResource extends JsonResource
                     ? $purchaseOrder->supplierInvoices->max(fn ($invoice) => $invoice->invoice_date?->toDateString())
                     : null,
                 'totalInvoicedAmount' => $purchaseOrder->relationLoaded('supplierInvoices')
-                    ? number_format((float) $purchaseOrder->supplierInvoices->sum('total_amount'), 2, '.', '')
-                    : '0.00',
+                    ? array_reduce(
+                        $purchaseOrder->supplierInvoices->pluck('total_amount')->all(),
+                        static fn (string $carry, string|int|float|null $value): string => $value === null
+                            ? $carry
+                            : bcadd($carry, (string) $value, 4),
+                        '0.0000',
+                    )
+                    : '0.0000',
                 'currency' => $purchaseOrder->currency,
             ],
             'changeOrdersSummary' => [

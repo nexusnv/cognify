@@ -20,10 +20,11 @@ class SupplierInvoiceLineResource extends JsonResource
             'id' => (string) $this->id,
             'purchaseOrderLineId' => (string) $this->purchase_order_line_id,
             'lineNumber' => $this->line_number,
+            'descriptionSnapshot' => $this->description_snapshot,
             'quantityOrdered' => (string) $this->quantity_ordered,
             'quantityInvoiced' => (string) $this->quantity_invoiced,
             'unitPrice' => (string) $this->unit_price,
-            'lineSubtotalAmount' => (string) $this->line_subtotal_amount,
+            'lineSubtotal' => (string) $this->line_subtotal,
             'notes' => $this->notes,
         ];
     }

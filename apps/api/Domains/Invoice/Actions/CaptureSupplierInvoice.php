@@ -19,6 +19,8 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CaptureSupplierInvoice
 {
+    private const MAX_DECIMAL_18_4 = '99999999999999.9999';
+
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly SupplierInvoiceDuplicateChecker $duplicateChecker,
@@ -75,7 +77,7 @@ class CaptureSupplierInvoice
                 ->keyBy('id');
 
             $invoiceLines = [];
-            $subtotalAmount = '0.00';
+            $subtotalAmount = '0.0000';
 
             foreach ($lines as $linePayload) {
                 $poLine = $poLines->get($linePayload['purchaseOrderLineId']);
@@ -99,29 +101,44 @@ class CaptureSupplierInvoice
                     throw new InvalidArgumentException("Line {$poLine->line_number}: unit price cannot be negative.");
                 }
 
-                $lineSubtotalAmount = bcmul($quantityInvoiced, $unitPrice, 2);
-                $subtotalAmount = bcadd($subtotalAmount, $lineSubtotalAmount, 2);
+                $lineSubtotalAmount = bcmul($quantityInvoiced, $unitPrice, 4);
+
+                if (bccomp($lineSubtotalAmount, self::MAX_DECIMAL_18_4, 4) > 0) {
+                    throw new InvalidArgumentException("Line {$poLine->line_number}: invoice line subtotal exceeds supported precision.");
+                }
+
+                $subtotalAmount = bcadd($subtotalAmount, $lineSubtotalAmount, 4);
+
+                if (bccomp($subtotalAmount, self::MAX_DECIMAL_18_4, 4) > 0) {
+                    throw new InvalidArgumentException("Invoice subtotal exceeds supported precision.");
+                }
 
                 $invoiceLines[] = [
                     'tenant_id' => $po->tenant_id,
                     'purchase_order_line_id' => $poLine->id,
                     'line_number' => $poLine->line_number,
+                    'description_snapshot' => $poLine->description,
                     'quantity_ordered' => (string) $poLine->quantity,
                     'quantity_invoiced' => $quantityInvoiced,
                     'unit_price' => $unitPrice,
-                    'line_subtotal_amount' => $lineSubtotalAmount,
+                    'line_subtotal' => $lineSubtotalAmount,
                     'notes' => $linePayload['notes'] ?? null,
                 ];
             }
 
-            $taxAmount = isset($payload['taxAmount']) ? number_format((float) $payload['taxAmount'], 2, '.', '') : '0.00';
-            $freightAmount = isset($payload['freightAmount']) ? number_format((float) $payload['freightAmount'], 2, '.', '') : '0.00';
-            $totalAmount = bcadd(bcadd($subtotalAmount, $taxAmount, 2), $freightAmount, 2);
+            $taxAmount = isset($payload['taxAmount']) ? bcadd((string) $payload['taxAmount'], '0', 4) : '0.0000';
+            $freightAmount = isset($payload['freightAmount']) ? bcadd((string) $payload['freightAmount'], '0', 4) : '0.0000';
+            $totalAmount = bcadd(bcadd($subtotalAmount, $taxAmount, 4), $freightAmount, 4);
+
+            if (bccomp($totalAmount, self::MAX_DECIMAL_18_4, 4) > 0) {
+                throw new InvalidArgumentException('Invoice total exceeds supported precision.');
+            }
 
             $invoice = SupplierInvoice::query()->create([
                 'tenant_id' => $po->tenant_id,
                 'purchase_order_id' => $po->id,
                 'vendor_id' => $po->vendor_id,
+                'number' => SupplierInvoiceNumber::nextForTenant($po->tenant_id),
                 'invoice_number' => $payload['invoiceNumber'],
                 'invoice_number_normalized' => SupplierInvoiceNumber::normalize((string) $payload['invoiceNumber']),
                 'status' => SupplierInvoiceStatus::Captured,

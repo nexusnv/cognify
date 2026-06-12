@@ -20,6 +20,7 @@ class SupplierInvoiceResource extends JsonResource
             'id' => (string) $this->id,
             'purchaseOrderId' => (string) $this->purchase_order_id,
             'vendorId' => $this->vendor_id !== null ? (string) $this->vendor_id : null,
+            'number' => $this->number,
             'invoiceNumber' => $this->invoice_number,
             'status' => $this->statusState()->value,
             'invoiceDate' => $this->invoice_date?->toDateString(),

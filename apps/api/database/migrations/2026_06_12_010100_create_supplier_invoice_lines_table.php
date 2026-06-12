@@ -14,10 +14,11 @@ return new class extends Migration
             $table->foreignUuid('supplier_invoice_id')->constrained('supplier_invoices')->cascadeOnDelete();
             $table->foreignUuid('purchase_order_line_id')->constrained('purchase_order_lines')->cascadeOnDelete();
             $table->unsignedInteger('line_number');
+            $table->string('description_snapshot')->nullable();
             $table->decimal('quantity_ordered', 18, 4);
             $table->decimal('quantity_invoiced', 18, 4);
-            $table->decimal('unit_price', 14, 4);
-            $table->decimal('line_subtotal_amount', 14, 2);
+            $table->decimal('unit_price', 18, 4);
+            $table->decimal('line_subtotal', 18, 4);
             $table->text('notes')->nullable();
             $table->timestamps();
 

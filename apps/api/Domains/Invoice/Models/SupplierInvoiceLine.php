@@ -22,10 +22,11 @@ class SupplierInvoiceLine extends Model
         'supplier_invoice_id',
         'purchase_order_line_id',
         'line_number',
+        'description_snapshot',
         'quantity_ordered',
         'quantity_invoiced',
         'unit_price',
-        'line_subtotal_amount',
+        'line_subtotal',
         'notes',
     ];
 
@@ -35,7 +36,7 @@ class SupplierInvoiceLine extends Model
             'quantity_ordered' => 'decimal:4',
             'quantity_invoiced' => 'decimal:4',
             'unit_price' => 'decimal:4',
-            'line_subtotal_amount' => 'decimal:2',
+            'line_subtotal' => 'decimal:4',
         ];
     }
 
