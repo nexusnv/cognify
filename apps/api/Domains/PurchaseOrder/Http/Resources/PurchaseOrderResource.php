@@ -113,6 +113,18 @@ class PurchaseOrderResource extends JsonResource
                     ? $purchaseOrder->lines->max('last_receipt_at')?->toDateString()
                     : null,
             ],
+            'invoiceSummary' => [
+                'totalInvoiceCount' => $purchaseOrder->relationLoaded('supplierInvoices')
+                    ? $purchaseOrder->supplierInvoices->count()
+                    : 0,
+                'latestInvoiceDate' => $purchaseOrder->relationLoaded('supplierInvoices')
+                    ? $purchaseOrder->supplierInvoices->max(fn ($invoice) => $invoice->invoice_date?->toDateString())
+                    : null,
+                'totalInvoicedAmount' => $purchaseOrder->relationLoaded('supplierInvoices')
+                    ? number_format((float) $purchaseOrder->supplierInvoices->sum('total_amount'), 2, '.', '')
+                    : '0.00',
+                'currency' => $purchaseOrder->currency,
+            ],
             'changeOrdersSummary' => [
                 'currentChangeOrder' => $purchaseOrder->relationLoaded('currentChangeOrder') && $purchaseOrder->currentChangeOrder instanceof PurchaseOrderChangeOrder
                     ? [
@@ -171,6 +183,9 @@ class PurchaseOrderResource extends JsonResource
                 'canRecordGoodsReceipt' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
                     && $user !== null
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
+                'canCaptureInvoice' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
+                    && $user !== null
+                    && Gate::forUser($user)->check('captureInvoice', $purchaseOrder),
                 'canConfirmGoodsReceipt' => $user !== null
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
             ],

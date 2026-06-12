@@ -5,6 +5,7 @@ namespace Domains\Attachment\Policies;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Quotation\Models\Quotation;
 use Domains\Requisition\Models\Requisition;
 
@@ -26,6 +27,10 @@ class AttachmentPolicy
 
         if ($parent instanceof Quotation) {
             return $parent->rfq !== null && $user->can('view', $parent->rfq);
+        }
+
+        if ($parent instanceof SupplierInvoice) {
+            return $user->can('view', $parent);
         }
 
         return false;
@@ -55,6 +60,10 @@ class AttachmentPolicy
 
         if ($parent instanceof Quotation) {
             return $parent->rfq !== null && $user->can('update', $parent->rfq);
+        }
+
+        if ($parent instanceof SupplierInvoice) {
+            return $parent->purchaseOrder !== null && $user->can('captureInvoice', $parent->purchaseOrder);
         }
 
         return false;
