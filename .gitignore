@@ -46,6 +46,7 @@ Thumbs.db
 
 # Local agent/editor runtime state
 .kilo/agent-manager.json
+.codegraph/daemon.pid
 
 # CLI tool artifacts
 .antigravitycli/
