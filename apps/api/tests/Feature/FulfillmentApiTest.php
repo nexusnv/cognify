@@ -124,6 +124,22 @@ class FulfillmentApiTest extends TestCase
         ]);
     }
 
+    public function test_created_tracking_event_status_matches_contract(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $shipmentId = $this->createShipment($tenant, $buyer, $po);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/shipments/{$shipmentId}/tracking-events", [
+                'status' => 'created',
+                'occurredAt' => now()->toISOString(),
+                'notes' => 'Supplier created tracking record.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'created');
+    }
+
     public function test_delivered_tracking_event_updates_shipment_status(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
@@ -177,6 +193,22 @@ class FulfillmentApiTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'cancelled');
+    }
+
+    public function test_cancel_shipment_preserves_notes_from_contract_payload(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $shipmentId = $this->createShipment($tenant, $buyer, $po);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->deleteJson("/api/shipments/{$shipmentId}", [
+                'lockVersion' => 1,
+                'notes' => 'Supplier merged into consolidated shipment.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'cancelled')
+            ->assertJsonPath('data.notes', 'Supplier merged into consolidated shipment.');
     }
 
     public function test_fulfillment_status_computed_correctly(): void

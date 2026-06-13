@@ -32,6 +32,8 @@ class FulfillmentTrackingEventController
 
     public function store(AddTrackingEventRequest $request, Shipment $shipment): JsonResponse
     {
+        $this->authorize('addTrackingEvent', $shipment);
+
         $event = $this->addTrackingEvent->handle($shipment, $request->user(), $request->validated());
 
         return (new FulfillmentTrackingEventResource($event))->response()->setStatusCode(201);

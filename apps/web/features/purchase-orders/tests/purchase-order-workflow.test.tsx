@@ -25,6 +25,7 @@ import {
   setPurchaseOrderMockState,
 } from "../mocks/purchase-order-handlers";
 import { resetFulfillmentMockState } from "../mocks/purchase-order-fulfillment-handlers";
+import { recordGoodsReceipt } from "../api/purchase-order-goods-receipt-api";
 import { PurchaseOrderListPage } from "../workflows/purchase-order-list-page";
 import { PurchaseOrderWorkspacePage } from "../workflows/purchase-order-workspace-page";
 
@@ -314,6 +315,25 @@ describe("purchase order workflow", () => {
     expect(within(fulfillmentRegion).getByLabelText("Line 1 backorder quantity")).toBeInTheDocument();
     expect(within(fulfillmentRegion).getByLabelText("Line 2 quantity shipped")).toBeInTheDocument();
     expect(within(fulfillmentRegion).getByLabelText("Line 2 backorder quantity")).toBeInTheDocument();
+  });
+
+  it("returns sequential goods receipt line numbers from the mock API", async () => {
+    const receipt = await recordGoodsReceipt("po-1", {
+      lockVersion: 1,
+      receiptDate: "2026-06-13",
+      lines: [
+        {
+          purchaseOrderLineId: "po-line-1",
+          quantityReceived: "1.0000",
+        },
+        {
+          purchaseOrderLineId: "po-line-2",
+          quantityReceived: "2.0000",
+        },
+      ],
+    });
+
+    expect(receipt.lines.map((line) => line.lineNumber)).toEqual([1, 2]);
   });
 
   it("adds a tracking event to an existing shipment from the fulfillment panel", async () => {

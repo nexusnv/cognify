@@ -34,7 +34,7 @@ class CancelShipment
 
             $shipment->forceFill([
                 'status' => ShipmentStatus::Cancelled,
-                'notes' => $payload['reason'] ?? $shipment->notes,
+                'notes' => $payload['notes'] ?? $shipment->notes,
                 'lock_version' => $shipment->lock_version + 1,
             ])->save();
 
@@ -46,7 +46,7 @@ class CancelShipment
                 metadata: [
                     'shipmentId' => (string) $shipment->id,
                     'shipmentNumber' => $shipment->number,
-                    'reason' => $payload['reason'] ?? null,
+                    'notes' => $payload['notes'] ?? null,
                 ],
             ));
 
