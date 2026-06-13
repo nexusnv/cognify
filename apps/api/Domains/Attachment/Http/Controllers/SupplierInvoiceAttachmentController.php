@@ -37,6 +37,8 @@ class SupplierInvoiceAttachmentController extends Controller
     ) {
         $supplierInvoice = $this->findTenantSupplierInvoice($currentTenant, $supplierInvoice);
 
+        $this->authorize('upload', $supplierInvoice);
+
         $attachment = $storeAttachment->handle(
             $currentTenant->get(),
             $request->user(),

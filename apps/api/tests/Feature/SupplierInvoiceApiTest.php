@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Auth\TenantRole;
 use App\Models\User;
-use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
@@ -555,7 +554,6 @@ class SupplierInvoiceApiTest extends TestCase
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
-        app(CurrentTenant::class)->set($tenant);
         $this->withHeader('X-Tenant-Id', (string) $tenant->id);
 
         return $this;

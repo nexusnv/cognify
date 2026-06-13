@@ -12,8 +12,8 @@ use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Throwable;
 
 class StoreSupplierInvoiceAttachment
 {
@@ -25,7 +25,11 @@ class StoreSupplierInvoiceAttachment
 
     public function handle(Tenant $tenant, User $actor, SupplierInvoice $supplierInvoice, UploadedFile $file): Attachment
     {
-        if (! $actor->can('view', $supplierInvoice)) {
+        if ((int) $supplierInvoice->tenant_id !== (int) $tenant->id) {
+            throw new AccessDeniedHttpException('You are not allowed to perform this action.');
+        }
+
+        if (! $actor->can('upload', $supplierInvoice)) {
             throw new AccessDeniedHttpException('You are not allowed to perform this action.');
         }
 

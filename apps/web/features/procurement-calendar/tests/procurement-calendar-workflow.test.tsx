@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw/server";
 import { getProcurementCalendarFixture } from "../mocks/procurement-calendar-fixtures";
 import { procurementCalendarHandlers } from "../mocks/procurement-calendar-handlers";
@@ -24,9 +24,15 @@ function renderPage() {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-06-10T00:00:00.000Z"));
   window.localStorage.clear();
   window.localStorage.setItem("cognify.activeTenantId", "tenant-1");
   server.use(...procurementCalendarHandlers);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("procurement calendar workflow", () => {

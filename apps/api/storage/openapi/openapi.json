@@ -8139,7 +8139,7 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -8246,7 +8246,7 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -8295,7 +8295,7 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -8304,7 +8304,7 @@
             "$ref": "#/components/responses/Conflict"
           },
           "422": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -8343,12 +8343,15 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "tags": [
+          "Purchase Orders"
+        ]
       },
       "post": {
         "operationId": "uploadSupplierInvoiceAttachment",
@@ -8393,15 +8396,18 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
           "422": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "tags": [
+          "Purchase Orders"
+        ]
       }
     },
     "/api/goods-receipts/{goodsReceipt}/confirm-buyer": {

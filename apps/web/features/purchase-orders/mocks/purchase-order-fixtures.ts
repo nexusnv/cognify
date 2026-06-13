@@ -19,12 +19,12 @@ function emptyReceivingSummary() {
   };
 }
 
-function emptyInvoiceSummary() {
+function emptyInvoiceSummary(currency: PurchaseOrder["currency"] = "MYR") {
   return {
     totalInvoiceCount: 0,
     latestInvoiceDate: null,
     totalInvoicedAmount: "0.00",
-    currency: "MYR",
+    currency,
   };
 }
 
@@ -149,7 +149,7 @@ export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}
     permissions: { ...base.permissions, ...overrides.permissions },
     changeOrdersSummary: mergeChangeOrdersSummary(base.changeOrdersSummary, overrides.changeOrdersSummary),
     receivingSummary: overrides.receivingSummary ?? base.receivingSummary,
-    invoiceSummary: overrides.invoiceSummary ?? base.invoiceSummary,
+    invoiceSummary: overrides.invoiceSummary ?? emptyInvoiceSummary(overrides.currency ?? base.currency),
   };
 }
 

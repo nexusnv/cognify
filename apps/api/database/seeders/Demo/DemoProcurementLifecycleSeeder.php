@@ -1817,7 +1817,7 @@ class DemoProcurementLifecycleSeeder
         Storage::disk('local')->put($attachmentPath, $attachmentContents);
 
         $attachment = Attachment::withTrashed()->updateOrCreate(
-            ['storage_disk' => 'local', 'storage_path' => $attachmentPath],
+            ['tenant_id' => $tenant->id, 'storage_disk' => 'local', 'storage_path' => $attachmentPath],
             [
                 'tenant_id' => $tenant->id,
                 'attachable_type' => SupplierInvoice::class,

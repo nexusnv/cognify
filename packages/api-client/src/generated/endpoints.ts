@@ -10264,7 +10264,7 @@ export type showSupplierInvoiceResponse401 = {
 };
 
 export type showSupplierInvoiceResponse403 = {
-  data: UnauthorizedResponse;
+  data: ForbiddenResponse;
   status: 403;
 };
 
@@ -10387,7 +10387,7 @@ export type listSupplierInvoicesResponse401 = {
 };
 
 export type listSupplierInvoicesResponse403 = {
-  data: UnauthorizedResponse;
+  data: ForbiddenResponse;
   status: 403;
 };
 
@@ -10445,7 +10445,7 @@ export type createSupplierInvoiceResponse401 = {
 };
 
 export type createSupplierInvoiceResponse403 = {
-  data: UnauthorizedResponse;
+  data: ForbiddenResponse;
   status: 403;
 };
 
@@ -10460,7 +10460,7 @@ export type createSupplierInvoiceResponse409 = {
 };
 
 export type createSupplierInvoiceResponse422 = {
-  data: ValidationFailedResponse;
+  data: ValidationErrorResponse;
   status: 422;
 };
 
@@ -10513,7 +10513,7 @@ export type listSupplierInvoiceAttachmentsResponse401 = {
 };
 
 export type listSupplierInvoiceAttachmentsResponse403 = {
-  data: UnauthorizedResponse;
+  data: ForbiddenResponse;
   status: 403;
 };
 
@@ -10569,7 +10569,7 @@ export type uploadSupplierInvoiceAttachmentResponse401 = {
 };
 
 export type uploadSupplierInvoiceAttachmentResponse403 = {
-  data: UnauthorizedResponse;
+  data: ForbiddenResponse;
   status: 403;
 };
 
@@ -10579,7 +10579,7 @@ export type uploadSupplierInvoiceAttachmentResponse404 = {
 };
 
 export type uploadSupplierInvoiceAttachmentResponse422 = {
-  data: ValidationFailedResponse;
+  data: ValidationErrorResponse;
   status: 422;
 };
 
