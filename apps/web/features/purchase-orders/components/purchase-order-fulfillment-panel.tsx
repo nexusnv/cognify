@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Input, Textarea } from "@cognify/ui";
 import type {
   AddFulfillmentTrackingEventRequest,
@@ -150,7 +150,7 @@ export function PurchaseOrderFulfillmentPanel({ purchaseOrder }: { purchaseOrder
               </p>
             </div>
             <div className="space-y-3">
-              {purchaseOrder.lines.map((line, index) => {
+              {purchaseOrder.lines.map((line) => {
                 const draft = lineDrafts.find((item) => item.purchaseOrderLineId === line.id) ?? createEmptyLineDraft(line.id);
 
                 return (
@@ -550,14 +550,11 @@ function ShipmentLineCard({
   const [backorderExpectedAt, setBackorderExpectedAt] = useState(line.backorderExpectedAt ?? "");
   const backorderErrorMessage = errorToMessage(updateBackorderMutation.error);
 
-  useEffect(() => {
-    if (!showBackorderForm) {
-      return;
-    }
-
+  function handleShowBackorderForm() {
     setBackorderQuantity(line.backorderQuantity);
     setBackorderExpectedAt(line.backorderExpectedAt ?? "");
-  }, [line.backorderExpectedAt, line.backorderQuantity, showBackorderForm]);
+    setShowBackorderForm(true);
+  }
 
   function handleSaveBackorder() {
     const payload: UpdateShipmentBackorderRequest = {
@@ -583,7 +580,7 @@ function ShipmentLineCard({
           {line.backorderExpectedAt ? <p>Expected backorder delivery: {line.backorderExpectedAt}</p> : null}
         </div>
         {!showBackorderForm ? (
-          <Button type="button" variant="outline" size="sm" onClick={() => setShowBackorderForm(true)}>
+          <Button type="button" variant="outline" size="sm" onClick={handleShowBackorderForm}>
             Update backorder
           </Button>
         ) : null}

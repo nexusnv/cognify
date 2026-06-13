@@ -25,6 +25,10 @@ class ConfirmGoodsReceiptByRequester
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if (! $actor->can('confirmRequester', $receipt)) {
+                abort(403);
+            }
+
             if ($receipt->statusState() !== GoodsReceiptStatus::Completed) {
                 throw new InvalidArgumentException('Only completed receipts can be confirmed by the requester.');
             }

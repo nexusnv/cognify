@@ -4,8 +4,9 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { ConflictResponseError } from "./conflictResponseError";
+import type { ApiError } from "./apiError";
 
-export type ConflictResponse = {
-  error?: ConflictResponseError;
-};
+/**
+ * Conflict
+ */
+export type ConflictResponse = ApiError;

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->unique(['shipment_id', 'purchase_order_line_id'], 'shipment_lines_unique');
+            $table->unique(['tenant_id', 'shipment_id', 'purchase_order_line_id'], 'shipment_lines_unique');
             $table->index(['tenant_id', 'purchase_order_line_id'], 'shipment_lines_tenant_po_line_idx');
         });
     }

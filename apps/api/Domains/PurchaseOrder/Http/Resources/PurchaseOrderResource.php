@@ -175,6 +175,7 @@ class PurchaseOrderResource extends JsonResource
                     && $user !== null
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
                 'canConfirmGoodsReceipt' => $user !== null
+                    // Receipt-specific policies still decide whether the current actor can confirm each receipt.
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
             ],
         ];

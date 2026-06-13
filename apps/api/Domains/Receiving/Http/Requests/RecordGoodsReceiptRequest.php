@@ -13,7 +13,7 @@ class RecordGoodsReceiptRequest extends FormRequest
 
         return $user !== null
             && $purchaseOrder !== null
-            && $user->can('recordGoodsReceipt', [$purchaseOrder]);
+            && $user->can('recordGoodsReceipt', $purchaseOrder);
     }
 
     /**

@@ -46,7 +46,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->unique(['goods_receipt_id', 'purchase_order_line_id'], 'goods_receipt_line_unique');
+            $table->unique(['tenant_id', 'goods_receipt_id', 'purchase_order_line_id'], 'goods_receipt_line_unique');
             $table->index(['tenant_id', 'purchase_order_line_id'], 'goods_receipt_lines_tenant_line_idx');
         });
     }

@@ -25,9 +25,13 @@ import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit | undefined {
   if (!tenantId) return undefined;
 
+  const xsrfToken = getXsrfToken();
+
   return {
+    credentials: "include",
     headers: {
       "X-Tenant-Id": tenantId,
+      ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
     },
   };
 }
@@ -46,10 +50,38 @@ function unwrapOk(response: { status: number; data: unknown }, expectedStatus = 
 
 function throwResponseData(error: unknown): never {
   if (typeof error === "object" && error !== null && "data" in error) {
-    throw (error as { data: unknown }).data;
+    throw normalizeErrorData((error as { data: unknown }).data);
   }
 
   throw error;
+}
+
+function normalizeErrorData(data: unknown): { message: string; code?: string } {
+  if (typeof data === "object" && data !== null) {
+    const payload = data as { message?: unknown; code?: unknown };
+    const message =
+      typeof payload.message === "string"
+        ? payload.message
+        : JSON.stringify(data);
+
+    return {
+      message,
+      ...(typeof payload.code === "string" ? { code: payload.code } : {}),
+    };
+  }
+
+  return { message: String(data) };
+}
+
+function getXsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+
+  const token = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith("XSRF-TOKEN="))
+    ?.split("=")[1];
+
+  return token ? decodeURIComponent(token) : null;
 }
 
 export async function fetchPurchaseOrderFulfillment(

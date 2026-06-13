@@ -7961,11 +7961,17 @@
     "/api/purchase-orders/{purchaseOrder}/goods-receipts": {
       "get": {
         "operationId": "listGoodsReceipts",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "List goods receipts for a purchase order",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
-          { "$ref": "#/components/parameters/PurchaseOrderId" }
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/PurchaseOrderId"
+          }
         ],
         "responses": {
           "200": {
@@ -7977,30 +7983,53 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/GoodsReceipt" }
+                      "items": {
+                        "$ref": "#/components/schemas/GoodsReceipt"
+                      }
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "post": {
         "operationId": "recordGoodsReceipt",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Record a goods receipt",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
-          { "$ref": "#/components/parameters/PurchaseOrderId" }
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/PurchaseOrderId"
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/RecordGoodsReceiptRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/RecordGoodsReceiptRequest"
+              }
             }
           }
         },
@@ -8012,26 +8041,49 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                    "data": {
+                      "$ref": "#/components/schemas/GoodsReceipt"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
     "/api/purchase-orders/{purchaseOrder}/fulfillment": {
       "get": {
         "operationId": "showPurchaseOrderFulfillment",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Show fulfillment status for a purchase order",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
-          { "$ref": "#/components/parameters/PurchaseOrderId" }
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/PurchaseOrderId"
+          }
         ],
         "responses": {
           "200": {
@@ -8041,25 +8093,46 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/FulfillmentStatus" }
+                    "data": {
+                      "$ref": "#/components/schemas/FulfillmentStatus"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
     "/api/purchase-orders/{purchaseOrder}/shipments": {
       "get": {
         "operationId": "listPurchaseOrderShipments",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "List shipments for a purchase order",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
-          { "$ref": "#/components/parameters/PurchaseOrderId" }
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/PurchaseOrderId"
+          }
         ],
         "responses": {
           "200": {
@@ -8071,30 +8144,53 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Shipment" }
+                      "items": {
+                        "$ref": "#/components/schemas/Shipment"
+                      }
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "post": {
         "operationId": "createPurchaseOrderShipment",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Create a shipment for a purchase order",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
-          { "$ref": "#/components/parameters/PurchaseOrderId" }
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/PurchaseOrderId"
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateShipmentRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/CreateShipmentRequest"
+              }
             }
           }
         },
@@ -8106,32 +8202,57 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/Shipment" }
+                    "data": {
+                      "$ref": "#/components/schemas/Shipment"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
     "/api/goods-receipts/{goodsReceipt}": {
       "get": {
         "operationId": "showGoodsReceipt",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Show a goods receipt",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "goodsReceipt",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Goods receipt UUID"
           }
         ],
@@ -8143,29 +8264,51 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                    "data": {
+                      "$ref": "#/components/schemas/GoodsReceipt"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
     "/api/shipments/{shipment}": {
       "get": {
         "operationId": "showShipment",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Show shipment detail",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "shipment",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment UUID"
           }
         ],
@@ -8177,27 +8320,49 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/Shipment" }
+                    "data": {
+                      "$ref": "#/components/schemas/Shipment"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "patch": {
         "operationId": "updateShipment",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Update shipment details",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "shipment",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment UUID"
           }
         ],
@@ -8205,7 +8370,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UpdateShipmentRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShipmentRequest"
+              }
             }
           }
         },
@@ -8217,30 +8384,55 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/Shipment" }
+                    "data": {
+                      "$ref": "#/components/schemas/Shipment"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       },
       "delete": {
         "operationId": "cancelShipment",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Cancel a shipment",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "shipment",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment UUID"
           }
         ],
@@ -8248,7 +8440,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UpdateShipmentRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShipmentRequest"
+              }
             }
           }
         },
@@ -8260,32 +8454,57 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/Shipment" }
+                    "data": {
+                      "$ref": "#/components/schemas/Shipment"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
     "/api/shipments/{shipment}/tracking-events": {
       "get": {
         "operationId": "listShipmentTrackingEvents",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "List tracking events for a shipment",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "shipment",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment UUID"
           }
         ],
@@ -8299,28 +8518,50 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/FulfillmentTrackingEvent" }
+                      "items": {
+                        "$ref": "#/components/schemas/FulfillmentTrackingEvent"
+                      }
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "post": {
         "operationId": "createShipmentTrackingEvent",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Create a shipment tracking event",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "shipment",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment UUID"
           }
         ],
@@ -8328,7 +8569,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AddFulfillmentTrackingEventRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AddFulfillmentTrackingEventRequest"
+              }
             }
           }
         },
@@ -8340,38 +8583,64 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/FulfillmentTrackingEvent" }
+                    "data": {
+                      "$ref": "#/components/schemas/FulfillmentTrackingEvent"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
     "/api/shipments/{shipment}/lines/{line}/backorder": {
       "patch": {
         "operationId": "updateShipmentLineBackorder",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Update shipment line backorder details",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "shipment",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment UUID"
           },
           {
             "name": "line",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Shipment line UUID"
           }
         ],
@@ -8379,7 +8648,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UpdateShipmentBackorderRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShipmentBackorderRequest"
+              }
             }
           }
         },
@@ -8391,31 +8662,54 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/ShipmentLine" }
+                    "data": {
+                      "$ref": "#/components/schemas/ShipmentLine"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
     "/api/goods-receipts/{goodsReceipt}/confirm-requester": {
       "post": {
         "operationId": "confirmGoodsReceiptRequester",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Confirm goods receipt as requester",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "goodsReceipt",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Goods receipt UUID"
           }
         ],
@@ -8423,7 +8717,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ConfirmGoodsReceiptRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmGoodsReceiptRequest"
+              }
             }
           }
         },
@@ -8435,32 +8731,57 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                    "data": {
+                      "$ref": "#/components/schemas/GoodsReceipt"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
     "/api/goods-receipts/{goodsReceipt}/confirm-buyer": {
       "post": {
         "operationId": "confirmGoodsReceiptBuyer",
-        "tags": ["Purchase Orders"],
+        "tags": [
+          "Purchase Orders"
+        ],
         "summary": "Confirm goods receipt as buyer",
         "parameters": [
-          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
           {
             "name": "goodsReceipt",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Goods receipt UUID"
           }
         ],
@@ -8468,7 +8789,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ConfirmGoodsReceiptRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmGoodsReceiptRequest"
+              }
             }
           }
         },
@@ -8480,17 +8803,35 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "$ref": "#/components/schemas/GoodsReceipt" }
+                    "data": {
+                      "$ref": "#/components/schemas/GoodsReceipt"
+                    }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "422": { "$ref": "#/components/responses/ValidationError" }
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
         }
       }
     },
@@ -8838,42 +9179,21 @@
         }
       },
       "ValidationError": {
-        "description": "Validation error",
+        "description": "Validation failure",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "object",
-                  "properties": {
-                    "code": { "type": "string" },
-                    "message": { "type": "string" },
-                    "details": { "type": "object" },
-                    "requestId": { "type": "string" }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/ValidationError"
             }
           }
         }
       },
       "Conflict": {
-        "description": "Conflict (e.g. stale lock version)",
+        "description": "Conflict",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "object",
-                  "properties": {
-                    "code": { "type": "string" },
-                    "message": { "type": "string" },
-                    "requestId": { "type": "string" }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/ApiError"
             }
           }
         }
@@ -22487,7 +22807,10 @@
             "description": "Total number of goods receipts recorded"
           },
           "latestReceiptDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date",
             "description": "Date of the most recent goods receipt (null if none)"
           }
@@ -23077,48 +23400,163 @@
       "GoodsReceipt": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid", "description": "Goods receipt UUID" },
-          "purchaseOrderId": { "type": "string", "format": "uuid", "description": "Purchase order UUID" },
-          "number": { "type": "string", "description": "Goods receipt number (GR-YYYY-NNNNNN)" },
-          "status": { "type": "string", "enum": ["completed", "requester_confirmed", "buyer_confirmed"], "description": "Receipt status" },
-          "receiptDate": { "type": "string", "format": "date", "description": "Date goods were received" },
-          "receiptReference": { "type": "string", "nullable": true, "description": "External reference (e.g. delivery order number)" },
-          "notes": { "type": "string", "nullable": true, "description": "Receipt notes" },
-          "recordedByUserId": { "type": "string", "format": "uuid", "description": "User who recorded the receipt" },
-          "recordedAt": { "type": "string", "format": "date-time", "description": "When the receipt was recorded" },
-          "requesterConfirmedByUserId": { "type": "string", "format": "uuid", "nullable": true },
-          "requesterConfirmedAt": { "type": "string", "format": "date-time", "nullable": true },
-          "buyerConfirmedByUserId": { "type": "string", "format": "uuid", "nullable": true },
-          "buyerConfirmedAt": { "type": "string", "format": "date-time", "nullable": true },
-          "lockVersion": { "type": "integer", "description": "Optimistic lock version" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Goods receipt UUID"
+          },
+          "purchaseOrderId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Purchase order UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Goods receipt number (GR-YYYY-NNNNNN)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "requester_confirmed",
+              "buyer_confirmed"
+            ],
+            "description": "Receipt status"
+          },
+          "receiptDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date goods were received"
+          },
+          "receiptReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "External reference (e.g. delivery order number)"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Receipt notes"
+          },
+          "recordedByUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User who recorded the receipt"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the receipt was recorded"
+          },
+          "requesterConfirmedByUserId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "requesterConfirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "buyerConfirmedByUserId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "buyerConfirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lockVersion": {
+            "type": "integer",
+            "description": "Optimistic lock version"
+          },
           "lines": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/GoodsReceiptLine" }
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptLine"
+            }
           }
         },
-        "required": ["id", "purchaseOrderId", "number", "status", "receiptDate", "recordedByUserId", "recordedAt", "lockVersion", "lines"]
+        "required": [
+          "id",
+          "purchaseOrderId",
+          "number",
+          "status",
+          "receiptDate",
+          "recordedByUserId",
+          "recordedAt",
+          "lockVersion",
+          "lines"
+        ]
       },
       "GoodsReceiptLine": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
-          "lineNumber": { "type": "integer" },
-          "quantityOrdered": { "type": "string", "description": "Ordered quantity (decimal string)" },
-          "quantityReceived": { "type": "string", "description": "Quantity received (decimal string)" },
-          "quantityAccepted": { "type": "string", "description": "Quantity accepted (decimal string)" },
-          "rejectionReason": { "type": "string", "nullable": true },
-          "notes": { "type": "string", "nullable": true }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purchaseOrderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "quantityOrdered": {
+            "type": "string",
+            "description": "Ordered quantity (decimal string)"
+          },
+          "quantityReceived": {
+            "type": "string",
+            "description": "Quantity received (decimal string)"
+          },
+          "quantityAccepted": {
+            "type": "string",
+            "description": "Quantity accepted (decimal string)"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
         },
-        "required": ["id", "purchaseOrderLineId", "lineNumber", "quantityOrdered", "quantityReceived", "quantityAccepted"]
+        "required": [
+          "id",
+          "purchaseOrderLineId",
+          "lineNumber",
+          "quantityOrdered",
+          "quantityReceived",
+          "quantityAccepted"
+        ]
       },
       "RecordGoodsReceiptRequest": {
         "type": "object",
         "properties": {
-          "lockVersion": { "type": "integer", "minimum": 1 },
-          "receiptDate": { "type": "string", "format": "date", "description": "Date goods were received" },
-          "receiptReference": { "type": "string", "nullable": true, "maxLength": 100 },
-          "notes": { "type": "string", "nullable": true, "maxLength": 2000 },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "receiptDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date goods were received"
+          },
+          "receiptReference": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          },
           "lines": {
             "type": "array",
             "minItems": 1,
@@ -23128,180 +23566,549 @@
             }
           }
         },
-        "required": ["lockVersion", "receiptDate", "lines"]
+        "required": [
+          "lockVersion",
+          "receiptDate",
+          "lines"
+        ]
       },
       "RecordGoodsReceiptLineItem": {
         "type": "object",
         "properties": {
-          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
-          "quantityReceived": { "type": "string", "description": "Quantity received (decimal string)" },
-          "quantityAccepted": { "type": "string", "nullable": true, "description": "Quantity accepted (decimal string, defaults to received)" },
-          "rejectionReason": { "type": "string", "nullable": true, "maxLength": 1000 },
-          "notes": { "type": "string", "nullable": true, "maxLength": 2000 }
+          "purchaseOrderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantityReceived": {
+            "type": "string",
+            "description": "Quantity received (decimal string)"
+          },
+          "quantityAccepted": {
+            "type": "string",
+            "nullable": true,
+            "description": "Quantity accepted (decimal string, defaults to received)"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          }
         },
-        "required": ["purchaseOrderLineId", "quantityReceived"]
+        "required": [
+          "purchaseOrderLineId",
+          "quantityReceived"
+        ]
       },
       "ConfirmGoodsReceiptRequest": {
         "type": "object",
         "properties": {
-          "lockVersion": { "type": "integer", "minimum": 1 }
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
         },
-        "required": ["lockVersion"]
+        "required": [
+          "lockVersion"
+        ]
       },
       "ShipmentStatus": {
         "type": "string",
-        "enum": ["pending", "confirmed", "in_transit", "partially_delivered", "delivered", "delayed", "cancelled"]
+        "enum": [
+          "pending",
+          "confirmed",
+          "in_transit",
+          "partially_delivered",
+          "delivered",
+          "delayed",
+          "cancelled"
+        ]
       },
       "FulfillmentTrackingEventStatus": {
         "type": "string",
-        "enum": ["created", "shipped", "in_transit", "customs", "arrived", "out_for_delivery", "delivered", "delayed", "exception"]
+        "enum": [
+          "created",
+          "shipped",
+          "in_transit",
+          "customs",
+          "arrived",
+          "out_for_delivery",
+          "delivered",
+          "delayed",
+          "exception"
+        ]
       },
       "Shipment": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "purchaseOrderId": { "type": "string", "format": "uuid" },
-          "number": { "type": "string" },
-          "status": { "$ref": "#/components/schemas/ShipmentStatus" },
-          "carrierName": { "type": ["string", "null"] },
-          "trackingReference": { "type": ["string", "null"] },
-          "shipmentDate": { "type": "string", "format": "date" },
-          "estimatedArrivalDate": { "type": ["string", "null"], "format": "date" },
-          "actualDeliveryDate": { "type": ["string", "null"], "format": "date" },
-          "notes": { "type": ["string", "null"] },
-          "createdByUserId": { "type": ["string", "null"], "format": "uuid" },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purchaseOrderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShipmentStatus"
+          },
+          "carrierName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trackingReference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shipmentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "estimatedArrivalDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "actualDeliveryDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdByUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "lines": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/ShipmentLine" }
+            "items": {
+              "$ref": "#/components/schemas/ShipmentLine"
+            }
           },
-          "lockVersion": { "type": "integer", "minimum": 1 }
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
         },
-        "required": ["id", "purchaseOrderId", "number", "status", "shipmentDate", "lines", "lockVersion"]
+        "required": [
+          "id",
+          "purchaseOrderId",
+          "number",
+          "status",
+          "shipmentDate",
+          "lines",
+          "lockVersion"
+        ]
       },
       "ShipmentLine": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
-          "lineNumber": { "type": "integer" },
-          "quantityShipped": { "type": "string" },
-          "quantityDelivered": { "type": "string" },
-          "backorderQuantity": { "type": "string" },
-          "backorderExpectedAt": { "type": ["string", "null"], "format": "date" },
-          "notes": { "type": ["string", "null"] }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purchaseOrderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "quantityShipped": {
+            "type": "string"
+          },
+          "quantityDelivered": {
+            "type": "string"
+          },
+          "backorderQuantity": {
+            "type": "string"
+          },
+          "backorderExpectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         },
-        "required": ["id", "purchaseOrderLineId", "lineNumber", "quantityShipped", "quantityDelivered", "backorderQuantity"]
+        "required": [
+          "id",
+          "purchaseOrderLineId",
+          "lineNumber",
+          "quantityShipped",
+          "quantityDelivered",
+          "backorderQuantity"
+        ]
       },
       "FulfillmentTrackingEvent": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "shipmentId": { "type": "string", "format": "uuid" },
-          "status": { "$ref": "#/components/schemas/FulfillmentTrackingEventStatus" },
-          "occurredAt": { "type": "string", "format": "date-time" },
-          "location": { "type": ["string", "null"] },
-          "notes": { "type": ["string", "null"] },
-          "createdByUserId": { "type": ["string", "null"], "format": "uuid" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FulfillmentTrackingEventStatus"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdByUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
         },
-        "required": ["id", "shipmentId", "status", "occurredAt"]
+        "required": [
+          "id",
+          "shipmentId",
+          "status",
+          "occurredAt"
+        ]
       },
       "FulfillmentLineSummary": {
         "type": "object",
         "properties": {
-          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
-          "lineNumber": { "type": "integer" },
-          "orderedQuantity": { "type": "string" },
-          "receivedQuantity": { "type": "string" },
-          "backorderQuantity": { "type": "string" },
-          "expectedDeliveryDate": { "type": ["string", "null"], "format": "date" },
+          "purchaseOrderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "orderedQuantity": {
+            "type": "string"
+          },
+          "receivedQuantity": {
+            "type": "string"
+          },
+          "backorderQuantity": {
+            "type": "string"
+          },
+          "expectedDeliveryDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
           "status": {
             "type": "string",
-            "enum": ["pending_shipment", "awaiting_delivery", "backordered", "delayed", "delivered"]
+            "enum": [
+              "pending_shipment",
+              "awaiting_delivery",
+              "backordered",
+              "delayed",
+              "delivered"
+            ]
           },
-          "isDelayed": { "type": "boolean" }
+          "isDelayed": {
+            "type": "boolean"
+          }
         },
-        "required": ["purchaseOrderLineId", "lineNumber", "orderedQuantity", "receivedQuantity", "backorderQuantity", "status", "isDelayed"]
+        "required": [
+          "purchaseOrderLineId",
+          "lineNumber",
+          "orderedQuantity",
+          "receivedQuantity",
+          "backorderQuantity",
+          "status",
+          "isDelayed"
+        ]
       },
       "FulfillmentStatus": {
         "type": "object",
         "properties": {
-          "purchaseOrderId": { "type": "string", "format": "uuid" },
+          "purchaseOrderId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "overallStatus": {
             "type": "string",
-            "enum": ["pending_shipment", "awaiting_delivery", "partial", "delivered", "delayed", "backordered"]
+            "enum": [
+              "pending_shipment",
+              "awaiting_delivery",
+              "partial",
+              "delivered",
+              "delayed",
+              "backordered"
+            ]
           },
-          "isDelayed": { "type": "boolean" },
-          "lateDeliveryCount": { "type": "integer" },
-          "totalLineCount": { "type": "integer" },
-          "deliveredLineCount": { "type": "integer" },
-          "shipmentCount": { "type": "integer" },
+          "isDelayed": {
+            "type": "boolean"
+          },
+          "lateDeliveryCount": {
+            "type": "integer"
+          },
+          "totalLineCount": {
+            "type": "integer"
+          },
+          "deliveredLineCount": {
+            "type": "integer"
+          },
+          "shipmentCount": {
+            "type": "integer"
+          },
           "lineSummaries": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/FulfillmentLineSummary" }
+            "items": {
+              "$ref": "#/components/schemas/FulfillmentLineSummary"
+            }
           }
         },
-        "required": ["purchaseOrderId", "overallStatus", "isDelayed", "lateDeliveryCount", "totalLineCount", "deliveredLineCount", "shipmentCount", "lineSummaries"]
+        "required": [
+          "purchaseOrderId",
+          "overallStatus",
+          "isDelayed",
+          "lateDeliveryCount",
+          "totalLineCount",
+          "deliveredLineCount",
+          "shipmentCount",
+          "lineSummaries"
+        ]
       },
       "CreateShipmentLineItem": {
         "type": "object",
         "properties": {
-          "purchaseOrderLineId": { "type": "string", "format": "uuid" },
-          "quantityShipped": { "type": "string" },
-          "backorderQuantity": { "type": ["string", "null"] },
-          "backorderExpectedAt": { "type": ["string", "null"], "format": "date" },
-          "notes": { "type": ["string", "null"] }
+          "purchaseOrderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantityShipped": {
+            "type": "string"
+          },
+          "backorderQuantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "backorderExpectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         },
-        "required": ["purchaseOrderLineId", "quantityShipped"]
+        "required": [
+          "purchaseOrderLineId",
+          "quantityShipped"
+        ]
       },
       "CreateShipmentRequest": {
         "type": "object",
         "properties": {
-          "lockVersion": { "type": "integer", "minimum": 1 },
-          "carrierName": { "type": ["string", "null"], "maxLength": 200 },
-          "trackingReference": { "type": ["string", "null"], "maxLength": 200 },
-          "shipmentDate": { "type": "string", "format": "date" },
-          "estimatedArrivalDate": { "type": ["string", "null"], "format": "date" },
-          "notes": { "type": ["string", "null"], "maxLength": 2000 },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "carrierName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "trackingReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "shipmentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "estimatedArrivalDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
           "lines": {
             "type": "array",
             "minItems": 1,
             "maxItems": 100,
-            "items": { "$ref": "#/components/schemas/CreateShipmentLineItem" }
+            "items": {
+              "$ref": "#/components/schemas/CreateShipmentLineItem"
+            }
           }
         },
-        "required": ["lockVersion", "shipmentDate", "lines"]
+        "required": [
+          "lockVersion",
+          "shipmentDate",
+          "lines"
+        ]
       },
       "UpdateShipmentRequest": {
         "type": "object",
         "properties": {
-          "lockVersion": { "type": "integer", "minimum": 1 },
-          "carrierName": { "type": ["string", "null"], "maxLength": 200 },
-          "trackingReference": { "type": ["string", "null"], "maxLength": 200 },
-          "shipmentDate": { "type": "string", "format": "date" },
-          "estimatedArrivalDate": { "type": ["string", "null"], "format": "date" },
-          "actualDeliveryDate": { "type": ["string", "null"], "format": "date" },
-          "notes": { "type": ["string", "null"], "maxLength": 2000 }
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "carrierName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "trackingReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "shipmentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "estimatedArrivalDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "actualDeliveryDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
         },
-        "required": ["lockVersion"]
+        "required": [
+          "lockVersion"
+        ]
       },
       "AddFulfillmentTrackingEventRequest": {
         "type": "object",
         "properties": {
-          "status": { "$ref": "#/components/schemas/FulfillmentTrackingEventStatus" },
-          "occurredAt": { "type": "string", "format": "date-time" },
-          "location": { "type": ["string", "null"], "maxLength": 200 },
-          "notes": { "type": ["string", "null"], "maxLength": 2000 }
+          "status": {
+            "$ref": "#/components/schemas/FulfillmentTrackingEventStatus"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
         },
-        "required": ["status", "occurredAt"]
+        "required": [
+          "status",
+          "occurredAt"
+        ]
       },
       "UpdateShipmentBackorderRequest": {
         "type": "object",
         "properties": {
-          "backorderQuantity": { "type": "string" },
-          "backorderExpectedAt": { "type": ["string", "null"], "format": "date" },
-          "notes": { "type": ["string", "null"], "maxLength": 2000 }
+          "backorderQuantity": {
+            "type": "string"
+          },
+          "backorderExpectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
         },
-        "required": ["backorderQuantity"]
+        "required": [
+          "backorderQuantity"
+        ]
       }
     }
   }

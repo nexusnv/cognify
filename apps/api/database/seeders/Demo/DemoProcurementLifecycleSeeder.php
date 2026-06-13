@@ -1684,9 +1684,10 @@ class DemoProcurementLifecycleSeeder
 
                 foreach ($po->lines as $line) {
                     $remaining = bcsub($line->quantity, $line->cumulative_quantity_received, 4);
+                    $newCumulative = bcadd($line->cumulative_quantity_received, $remaining, 4);
 
                     $linesData2[] = $this->demoReceiptLineData($receipt2, $line, $remaining, $remaining);
-                    $this->updateDemoLineCumulatives($line, $remaining, $remaining, '2026-06-14');
+                    $this->updateDemoLineCumulatives($line, $newCumulative, $newCumulative, '2026-06-14');
                 }
 
                 $this->createDemoReceiptLines($linesData2);

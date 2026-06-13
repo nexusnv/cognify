@@ -10125,6 +10125,21 @@ export type listGoodsReceiptsResponse200 = {
   status: 200;
 };
 
+export type listGoodsReceiptsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listGoodsReceiptsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listGoodsReceiptsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type listGoodsReceiptsResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10133,7 +10148,12 @@ export type listGoodsReceiptsResponse404 = {
 export type listGoodsReceiptsResponseSuccess = listGoodsReceiptsResponse200 & {
   headers: Headers;
 };
-export type listGoodsReceiptsResponseError = listGoodsReceiptsResponse404 & {
+export type listGoodsReceiptsResponseError = (
+  | listGoodsReceiptsResponse400
+  | listGoodsReceiptsResponse401
+  | listGoodsReceiptsResponse403
+  | listGoodsReceiptsResponse404
+) & {
   headers: Headers;
 };
 
@@ -10163,6 +10183,21 @@ export type recordGoodsReceiptResponse201 = {
   status: 201;
 };
 
+export type recordGoodsReceiptResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type recordGoodsReceiptResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordGoodsReceiptResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type recordGoodsReceiptResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10177,6 +10212,9 @@ export type recordGoodsReceiptResponseSuccess = recordGoodsReceiptResponse201 & 
   headers: Headers;
 };
 export type recordGoodsReceiptResponseError = (
+  | recordGoodsReceiptResponse400
+  | recordGoodsReceiptResponse401
+  | recordGoodsReceiptResponse403
   | recordGoodsReceiptResponse404
   | recordGoodsReceiptResponse422
 ) & {
@@ -10212,6 +10250,21 @@ export type showPurchaseOrderFulfillmentResponse200 = {
   status: 200;
 };
 
+export type showPurchaseOrderFulfillmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showPurchaseOrderFulfillmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showPurchaseOrderFulfillmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type showPurchaseOrderFulfillmentResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10221,7 +10274,12 @@ export type showPurchaseOrderFulfillmentResponseSuccess =
   showPurchaseOrderFulfillmentResponse200 & {
     headers: Headers;
   };
-export type showPurchaseOrderFulfillmentResponseError = showPurchaseOrderFulfillmentResponse404 & {
+export type showPurchaseOrderFulfillmentResponseError = (
+  | showPurchaseOrderFulfillmentResponse400
+  | showPurchaseOrderFulfillmentResponse401
+  | showPurchaseOrderFulfillmentResponse403
+  | showPurchaseOrderFulfillmentResponse404
+) & {
   headers: Headers;
 };
 
@@ -10254,6 +10312,21 @@ export type listPurchaseOrderShipmentsResponse200 = {
   status: 200;
 };
 
+export type listPurchaseOrderShipmentsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listPurchaseOrderShipmentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listPurchaseOrderShipmentsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type listPurchaseOrderShipmentsResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10262,7 +10335,12 @@ export type listPurchaseOrderShipmentsResponse404 = {
 export type listPurchaseOrderShipmentsResponseSuccess = listPurchaseOrderShipmentsResponse200 & {
   headers: Headers;
 };
-export type listPurchaseOrderShipmentsResponseError = listPurchaseOrderShipmentsResponse404 & {
+export type listPurchaseOrderShipmentsResponseError = (
+  | listPurchaseOrderShipmentsResponse400
+  | listPurchaseOrderShipmentsResponse401
+  | listPurchaseOrderShipmentsResponse403
+  | listPurchaseOrderShipmentsResponse404
+) & {
   headers: Headers;
 };
 
@@ -10295,6 +10373,16 @@ export type createPurchaseOrderShipmentResponse201 = {
   status: 201;
 };
 
+export type createPurchaseOrderShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type createPurchaseOrderShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type createPurchaseOrderShipmentResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10319,6 +10407,8 @@ export type createPurchaseOrderShipmentResponseSuccess = createPurchaseOrderShip
   headers: Headers;
 };
 export type createPurchaseOrderShipmentResponseError = (
+  | createPurchaseOrderShipmentResponse400
+  | createPurchaseOrderShipmentResponse401
   | createPurchaseOrderShipmentResponse403
   | createPurchaseOrderShipmentResponse404
   | createPurchaseOrderShipmentResponse409
@@ -10359,6 +10449,21 @@ export type showGoodsReceiptResponse200 = {
   status: 200;
 };
 
+export type showGoodsReceiptResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showGoodsReceiptResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showGoodsReceiptResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type showGoodsReceiptResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10367,7 +10472,12 @@ export type showGoodsReceiptResponse404 = {
 export type showGoodsReceiptResponseSuccess = showGoodsReceiptResponse200 & {
   headers: Headers;
 };
-export type showGoodsReceiptResponseError = showGoodsReceiptResponse404 & {
+export type showGoodsReceiptResponseError = (
+  | showGoodsReceiptResponse400
+  | showGoodsReceiptResponse401
+  | showGoodsReceiptResponse403
+  | showGoodsReceiptResponse404
+) & {
   headers: Headers;
 };
 
@@ -10397,6 +10507,21 @@ export type showShipmentResponse200 = {
   status: 200;
 };
 
+export type showShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showShipmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type showShipmentResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10405,7 +10530,12 @@ export type showShipmentResponse404 = {
 export type showShipmentResponseSuccess = showShipmentResponse200 & {
   headers: Headers;
 };
-export type showShipmentResponseError = showShipmentResponse404 & {
+export type showShipmentResponseError = (
+  | showShipmentResponse400
+  | showShipmentResponse401
+  | showShipmentResponse403
+  | showShipmentResponse404
+) & {
   headers: Headers;
 };
 
@@ -10433,6 +10563,16 @@ export type updateShipmentResponse200 = {
   status: 200;
 };
 
+export type updateShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updateShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type updateShipmentResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10457,6 +10597,8 @@ export type updateShipmentResponseSuccess = updateShipmentResponse200 & {
   headers: Headers;
 };
 export type updateShipmentResponseError = (
+  | updateShipmentResponse400
+  | updateShipmentResponse401
   | updateShipmentResponse403
   | updateShipmentResponse404
   | updateShipmentResponse409
@@ -10492,6 +10634,16 @@ export type cancelShipmentResponse200 = {
   status: 200;
 };
 
+export type cancelShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type cancelShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type cancelShipmentResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10516,6 +10668,8 @@ export type cancelShipmentResponseSuccess = cancelShipmentResponse200 & {
   headers: Headers;
 };
 export type cancelShipmentResponseError = (
+  | cancelShipmentResponse400
+  | cancelShipmentResponse401
   | cancelShipmentResponse403
   | cancelShipmentResponse404
   | cancelShipmentResponse409
@@ -10551,6 +10705,21 @@ export type listShipmentTrackingEventsResponse200 = {
   status: 200;
 };
 
+export type listShipmentTrackingEventsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listShipmentTrackingEventsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listShipmentTrackingEventsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
 export type listShipmentTrackingEventsResponse404 = {
   data: NotFoundResponse;
   status: 404;
@@ -10559,7 +10728,12 @@ export type listShipmentTrackingEventsResponse404 = {
 export type listShipmentTrackingEventsResponseSuccess = listShipmentTrackingEventsResponse200 & {
   headers: Headers;
 };
-export type listShipmentTrackingEventsResponseError = listShipmentTrackingEventsResponse404 & {
+export type listShipmentTrackingEventsResponseError = (
+  | listShipmentTrackingEventsResponse400
+  | listShipmentTrackingEventsResponse401
+  | listShipmentTrackingEventsResponse403
+  | listShipmentTrackingEventsResponse404
+) & {
   headers: Headers;
 };
 
@@ -10592,6 +10766,16 @@ export type createShipmentTrackingEventResponse201 = {
   status: 201;
 };
 
+export type createShipmentTrackingEventResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type createShipmentTrackingEventResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type createShipmentTrackingEventResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10611,6 +10795,8 @@ export type createShipmentTrackingEventResponseSuccess = createShipmentTrackingE
   headers: Headers;
 };
 export type createShipmentTrackingEventResponseError = (
+  | createShipmentTrackingEventResponse400
+  | createShipmentTrackingEventResponse401
   | createShipmentTrackingEventResponse403
   | createShipmentTrackingEventResponse404
   | createShipmentTrackingEventResponse422
@@ -10650,6 +10836,16 @@ export type updateShipmentLineBackorderResponse200 = {
   status: 200;
 };
 
+export type updateShipmentLineBackorderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updateShipmentLineBackorderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type updateShipmentLineBackorderResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10669,6 +10865,8 @@ export type updateShipmentLineBackorderResponseSuccess = updateShipmentLineBacko
   headers: Headers;
 };
 export type updateShipmentLineBackorderResponseError = (
+  | updateShipmentLineBackorderResponse400
+  | updateShipmentLineBackorderResponse401
   | updateShipmentLineBackorderResponse403
   | updateShipmentLineBackorderResponse404
   | updateShipmentLineBackorderResponse422
@@ -10709,6 +10907,16 @@ export type confirmGoodsReceiptRequesterResponse200 = {
   status: 200;
 };
 
+export type confirmGoodsReceiptRequesterResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type confirmGoodsReceiptRequesterResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type confirmGoodsReceiptRequesterResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10734,6 +10942,8 @@ export type confirmGoodsReceiptRequesterResponseSuccess =
     headers: Headers;
   };
 export type confirmGoodsReceiptRequesterResponseError = (
+  | confirmGoodsReceiptRequesterResponse400
+  | confirmGoodsReceiptRequesterResponse401
   | confirmGoodsReceiptRequesterResponse403
   | confirmGoodsReceiptRequesterResponse404
   | confirmGoodsReceiptRequesterResponse409
@@ -10774,6 +10984,16 @@ export type confirmGoodsReceiptBuyerResponse200 = {
   status: 200;
 };
 
+export type confirmGoodsReceiptBuyerResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type confirmGoodsReceiptBuyerResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
 export type confirmGoodsReceiptBuyerResponse403 = {
   data: ForbiddenResponse;
   status: 403;
@@ -10798,6 +11018,8 @@ export type confirmGoodsReceiptBuyerResponseSuccess = confirmGoodsReceiptBuyerRe
   headers: Headers;
 };
 export type confirmGoodsReceiptBuyerResponseError = (
+  | confirmGoodsReceiptBuyerResponse400
+  | confirmGoodsReceiptBuyerResponse401
   | confirmGoodsReceiptBuyerResponse403
   | confirmGoodsReceiptBuyerResponse404
   | confirmGoodsReceiptBuyerResponse409

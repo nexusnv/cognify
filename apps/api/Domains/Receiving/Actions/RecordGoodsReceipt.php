@@ -81,6 +81,8 @@ class RecordGoodsReceipt
                 ->get()
                 ->keyBy('id');
 
+            $linesData = [];
+
             foreach ($lines as $linePayload) {
                 $poLine = $poLines->get($linePayload['purchaseOrderLineId']);
 

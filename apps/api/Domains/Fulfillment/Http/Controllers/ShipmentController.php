@@ -6,6 +6,7 @@ use Domains\Fulfillment\Actions\CancelShipment;
 use Domains\Fulfillment\Actions\CreateShipment;
 use Domains\Fulfillment\Actions\UpdateBackorder;
 use Domains\Fulfillment\Actions\UpdateShipment;
+use Domains\Fulfillment\Http\Requests\CancelShipmentRequest;
 use Domains\Fulfillment\Http\Requests\CreateShipmentRequest;
 use Domains\Fulfillment\Http\Requests\UpdateBackorderRequest;
 use Domains\Fulfillment\Http\Requests\UpdateShipmentRequest;
@@ -70,13 +71,17 @@ class ShipmentController
 
     public function update(UpdateShipmentRequest $request, Shipment $shipment): ShipmentResource
     {
+        $this->authorize('updateShipment', $shipment);
+
         $shipment = $this->updateShipment->handle($shipment, $request->user(), $request->validated());
 
         return new ShipmentResource($shipment);
     }
 
-    public function destroy(UpdateShipmentRequest $request, Shipment $shipment): ShipmentResource
+    public function destroy(CancelShipmentRequest $request, Shipment $shipment): ShipmentResource
     {
+        $this->authorize('cancel', $shipment);
+
         try {
             $shipment = $this->cancelShipment->handle($shipment, $request->user(), $request->validated());
         } catch (InvalidArgumentException $exception) {

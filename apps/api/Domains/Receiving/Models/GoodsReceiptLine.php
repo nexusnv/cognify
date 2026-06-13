@@ -48,6 +48,10 @@ class GoodsReceiptLine extends Model
                         ->value('tenant_id');
                 }
 
+                if ($line->purchase_order_line_id === null) {
+                    throw new InvalidArgumentException('Goods receipt line must reference a purchase order line.');
+                }
+
                 $belongsToTenant = PurchaseOrderLine::query()
                     ->whereKey($line->purchase_order_line_id)
                     ->where('tenant_id', $line->tenant_id)
