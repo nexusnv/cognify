@@ -87,14 +87,21 @@ export function PurchaseOrderSupplierInvoicePanel({ purchaseOrder }: { purchaseO
       </div>
 
       {showForm ? (
-        <PurchaseOrderSupplierInvoiceForm
-          purchaseOrder={purchaseOrder}
-          values={formValues}
-          isSubmitting={createMutation.isPending}
-          onChange={setFormValues}
-          onCancel={() => setShowForm(false)}
-          onSubmit={() => void handleSubmit()}
-        />
+        <>
+          <PurchaseOrderSupplierInvoiceForm
+            purchaseOrder={purchaseOrder}
+            values={formValues}
+            isSubmitting={createMutation.isPending}
+            onChange={setFormValues}
+            onCancel={() => setShowForm(false)}
+            onSubmit={() => void handleSubmit()}
+          />
+          {createMutation.isError ? (
+            <div role="alert" className="mt-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+              {errorToMessage(createMutation.error)}
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       {invoicesQuery.isError ? (
@@ -121,11 +128,6 @@ export function PurchaseOrderSupplierInvoicePanel({ purchaseOrder }: { purchaseO
         </div>
       ) : null}
 
-      {createMutation.isError ? (
-        <div role="alert" className="mt-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-          {errorToMessage(createMutation.error)}
-        </div>
-      ) : null}
     </section>
   );
 }

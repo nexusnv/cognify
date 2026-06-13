@@ -13,6 +13,7 @@ use Database\Seeders\Demo\DemoSeedContext;
 use Database\Seeders\Demo\DemoTenantSeeder;
 use Database\Seeders\Demo\DemoUserSeeder;
 use Domains\Demo\Models\DemoSeedRun;
+use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -55,6 +56,7 @@ class DatabaseSeeder extends Seeder
                         'rfq_scorecards' => $context->rfqScorecards->count(),
                         'purchase_order_request_handoffs' => $context->purchaseOrderRequestHandoffs->count(),
                         'purchase_orders' => $context->purchaseOrders->count(),
+                        'supplier_invoices' => SupplierInvoice::query()->count(),
                     ],
                 ],
             );

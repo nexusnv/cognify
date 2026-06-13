@@ -21,6 +21,8 @@ use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Models\SupplierInvoiceLine;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -42,6 +44,7 @@ use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Tests\TestCase;
@@ -303,7 +306,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(5, Quotation::query()->count());
         $this->assertSame(15, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
-        $this->assertSame(2, Attachment::query()->count());
+        $this->assertSame(3, Attachment::query()->count());
         $this->assertSame(5, NotificationRecord::query()->count());
         $this->assertSame(6, RfqInvitation::query()->count());
         $this->assertSame(4, QuotationVersion::query()->count());
@@ -447,6 +450,20 @@ class DemoSeederTest extends TestCase
             'supplier_version_number' => 2,
             'acknowledgement_reference' => 'ACK-PO-100',
         ]);
+        $this->assertDatabaseHas('supplier_invoices', [
+            'number' => 'INV-2026-SUSTAIN-001',
+            'status' => 'captured',
+        ]);
+        $this->assertDatabaseHas('supplier_invoice_lines', [
+            'line_number' => 1,
+            'quantity_invoiced' => 50,
+            'unit_price' => 400,
+        ]);
+        $this->assertDatabaseHas('supplier_invoice_lines', [
+            'line_number' => 2,
+            'quantity_invoiced' => 50,
+            'unit_price' => 900,
+        ]);
         $this->assertDatabaseHas('purchase_order_change_orders', [
             'number' => 'PO-2026-SUSTAIN-ACK-CO-001',
             'status' => PurchaseOrderChangeOrderStatus::Approved->value,
@@ -472,14 +489,30 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('purchase_orders', ['number' => 'PO-2026-SUSTAIN-CANCELLED', 'status' => PurchaseOrderStatus::Cancelled->value]);
         $issuedPurchaseOrder = PurchaseOrder::query()->where('number', 'PO-2026-SUSTAIN-ISSUED')->firstOrFail();
         $acknowledgedPurchaseOrder = PurchaseOrder::query()->where('number', 'PO-2026-SUSTAIN-ACK')->firstOrFail();
+        $supplierInvoice = SupplierInvoice::query()->where('number', 'INV-2026-SUSTAIN-001')->firstOrFail();
+        $supplierInvoiceLines = SupplierInvoiceLine::query()->where('supplier_invoice_id', $supplierInvoice->id)->orderBy('line_number')->get();
+        $invoiceAttachment = Attachment::query()->where('attachable_type', SupplierInvoice::class)->where('attachable_id', $supplierInvoice->id)->firstOrFail();
         $this->assertNotNull($issuedPurchaseOrder->approval_instance_id);
         $this->assertNotNull($acknowledgedPurchaseOrder->approval_instance_id);
+        $this->assertSame($acme->id, $supplierInvoice->tenant_id);
+        $this->assertSame($acme->id, $supplierInvoiceLines->firstOrFail()->tenant_id);
+        $this->assertSame('captured', $supplierInvoice->statusState()->value);
+        $this->assertSame('INV2026SUSTAIN001', $supplierInvoice->invoice_number_normalized);
+        $this->assertSame('65000.0000', $supplierInvoice->total_amount);
+        $this->assertSame('50.0000', $supplierInvoiceLines->first()->quantity_invoiced);
+        $this->assertSame('400.0000', $supplierInvoiceLines->first()->unit_price);
+        $this->assertSame('900.0000', $supplierInvoiceLines->get(1)->unit_price);
+        $this->assertSame('application/pdf', $invoiceAttachment->mime_type);
+        $this->assertSame('inv-2026-sustain-001.pdf', $invoiceAttachment->original_filename);
+        $this->assertSame($acme->id, $invoiceAttachment->tenant_id);
         $this->assertSame('approved', data_get($issuedPurchaseOrder->supplier_version, 'approval.status'));
         $this->assertSame((string) $issuedPurchaseOrder->approval_instance_id, data_get($issuedPurchaseOrder->supplier_version, 'approval.approvalInstanceId'));
         $this->assertSame('approved', data_get($acknowledgedPurchaseOrder->supplier_version, 'approval.status'));
         $this->assertSame((string) $acknowledgedPurchaseOrder->approval_instance_id, data_get($acknowledgedPurchaseOrder->supplier_version, 'approval.approvalInstanceId'));
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'office-refresh-brief.txt']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
+        $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'inv-2026-sustain-001.pdf', 'mime_type' => 'application/pdf', 'previewable' => 0]);
+        $this->assertSame('varchar', Schema::getColumnType('attachments', 'attachable_id'));
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
         $this->assertDatabaseHas('notifications', ['title' => 'Local demo data is ready']);
         $this->assertDatabaseHas('demo_seed_runs', ['name' => 'local-demo']);
@@ -539,6 +572,7 @@ class DemoSeederTest extends TestCase
             'rfq_scorecards' => 1,
             'purchase_order_request_handoffs' => 11,
             'purchase_orders' => 11,
+            'supplier_invoices' => 1,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }
