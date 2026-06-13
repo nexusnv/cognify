@@ -32,6 +32,21 @@ export function setPurchaseOrderMockState(nextPurchaseOrders: PurchaseOrder[]) {
   purchaseOrderChangeOrders = {};
 }
 
+export function getPurchaseOrderMockState(purchaseOrderId: string) {
+  const purchaseOrder = findPurchaseOrder(purchaseOrderId);
+
+  return purchaseOrder ? structuredClone(purchaseOrder) : null;
+}
+
+export function updatePurchaseOrderMockState(
+  purchaseOrderId: string,
+  updater: (purchaseOrder: PurchaseOrder) => PurchaseOrder,
+) {
+  purchaseOrders = purchaseOrders.map((purchaseOrder) =>
+    purchaseOrder.id === purchaseOrderId ? updater(structuredClone(purchaseOrder)) : purchaseOrder,
+  );
+}
+
 export function setPurchaseOrderChangeOrdersMockState(
   purchaseOrderId: string,
   nextChangeOrders: PurchaseOrderChangeOrder[],

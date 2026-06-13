@@ -8,6 +8,7 @@ import { PurchaseOrderApprovalPanel } from "../components/purchase-order-approva
 import { PurchaseOrderDetailCard } from "../components/purchase-order-detail-card";
 import { PurchaseOrderGoodsReceiptPanel } from "../components/purchase-order-goods-receipt-panel";
 import { PurchaseOrderLinesTable } from "../components/purchase-order-lines-table";
+import { PurchaseOrderSupplierInvoicePanel } from "../components/purchase-order-supplier-invoice-panel";
 import { PurchaseOrderSupplierIssuePanel } from "../components/purchase-order-supplier-issue-panel";
 import { usePurchaseOrder } from "../hooks/use-purchase-order";
 
@@ -29,6 +30,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
 
   const canShowChangeOrders = ["issued", "acknowledged", "change_pending", "cancelled"].includes(purchaseOrder.status);
   const canShowGoodsReceipts = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
+  const canShowSupplierInvoices = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
 
   return (
     <WorkflowStateLayout
@@ -47,6 +49,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
         { id: "lines", label: "Lines" },
         ...(canShowChangeOrders ? [{ id: "change-orders", label: "Change orders" }] : []),
         ...(canShowGoodsReceipts ? [{ id: "goods-receipts", label: "Goods receipt" }] : []),
+        ...(canShowSupplierInvoices ? [{ id: "supplier-invoices", label: "Supplier invoices" }] : []),
         { id: "draft-fields", label: "Draft fields" },
       ]}
       sidebar={
@@ -79,6 +82,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
       <PurchaseOrderLinesTable lines={purchaseOrder.lines} currency={purchaseOrder.currency} />
       {canShowChangeOrders ? <PurchaseOrderChangeOrderPanel purchaseOrder={purchaseOrder} /> : null}
       {canShowGoodsReceipts ? <PurchaseOrderGoodsReceiptPanel purchaseOrder={purchaseOrder} /> : null}
+      {canShowSupplierInvoices ? <PurchaseOrderSupplierInvoicePanel purchaseOrder={purchaseOrder} /> : null}
       <PurchaseOrderApprovalPanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderSupplierIssuePanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderActions purchaseOrder={purchaseOrder} />

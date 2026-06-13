@@ -19,6 +19,15 @@ function emptyReceivingSummary() {
   };
 }
 
+function emptyInvoiceSummary() {
+  return {
+    totalInvoiceCount: 0,
+    latestInvoiceDate: null,
+    totalInvoicedAmount: "0.00",
+    currency: "MYR",
+  };
+}
+
 function mergeChangeOrdersSummary(
   base: PurchaseOrderChangeOrdersSummary,
   overrides?: Partial<PurchaseOrderChangeOrdersSummary>,
@@ -124,9 +133,11 @@ export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}
       canCancelChangeOrder: false,
       canRecordGoodsReceipt: false,
       canConfirmGoodsReceipt: false,
+      canCaptureInvoice: false,
     },
     changeOrdersSummary: emptyChangeOrdersSummary(),
     receivingSummary: emptyReceivingSummary(),
+    invoiceSummary: emptyInvoiceSummary(),
   };
 
   return {
@@ -137,6 +148,7 @@ export function buildPurchaseOrderFixture(overrides: Partial<PurchaseOrder> = {}
     permissions: { ...base.permissions, ...overrides.permissions },
     changeOrdersSummary: mergeChangeOrdersSummary(base.changeOrdersSummary, overrides.changeOrdersSummary),
     receivingSummary: overrides.receivingSummary ?? base.receivingSummary,
+    invoiceSummary: overrides.invoiceSummary ?? base.invoiceSummary,
   };
 }
 
@@ -159,6 +171,7 @@ export const readyPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFixtur
     canCancelChangeOrder: false,
     canRecordGoodsReceipt: false,
     canConfirmGoodsReceipt: false,
+    canCaptureInvoice: false,
   },
 });
 
@@ -180,6 +193,7 @@ export const inReviewPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFix
     canCancelChangeOrder: false,
     canRecordGoodsReceipt: false,
     canConfirmGoodsReceipt: false,
+    canCaptureInvoice: false,
   },
 });
 
@@ -209,6 +223,7 @@ export const changesRequestedPurchaseOrderFixture: PurchaseOrder = buildPurchase
     canCancelChangeOrder: true,
     canRecordGoodsReceipt: false,
     canConfirmGoodsReceipt: false,
+    canCaptureInvoice: false,
   },
 });
 
@@ -237,6 +252,7 @@ export const approvedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFix
     canCancelChangeOrder: false,
     canRecordGoodsReceipt: true,
     canConfirmGoodsReceipt: false,
+    canCaptureInvoice: true,
   },
 });
 
@@ -282,6 +298,7 @@ export const issuedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFixtu
     canCancelChangeOrder: false,
     canRecordGoodsReceipt: true,
     canConfirmGoodsReceipt: true,
+    canCaptureInvoice: true,
   },
 });
 
@@ -314,6 +331,7 @@ export const acknowledgedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrde
     canCancelChangeOrder: false,
     canRecordGoodsReceipt: true,
     canConfirmGoodsReceipt: false,
+    canCaptureInvoice: true,
   },
 });
 
@@ -343,6 +361,7 @@ export const rejectedPurchaseOrderFixture: PurchaseOrder = buildPurchaseOrderFix
     canCancelChangeOrder: false,
     canRecordGoodsReceipt: false,
     canConfirmGoodsReceipt: false,
+    canCaptureInvoice: false,
   },
 });
 
