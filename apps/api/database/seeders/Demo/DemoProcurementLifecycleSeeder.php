@@ -19,6 +19,11 @@ use Domains\Approval\States\ApprovalTaskStatus;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use Domains\Collaboration\Models\CollaborationComment;
+use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
+use Domains\Fulfillment\Models\Shipment;
+use Domains\Fulfillment\Models\ShipmentLine;
+use Domains\Fulfillment\States\FulfillmentTrackingEventStatus;
+use Domains\Fulfillment\States\ShipmentStatus;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -31,6 +36,10 @@ use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Domains\PurchaseOrder\Support\PurchaseOrderChangeOrderDelta;
+use Domains\Receiving\Models\GoodsReceipt;
+use Domains\Receiving\Models\GoodsReceiptLine;
+use Domains\Receiving\States\GoodsReceiptStatus;
+use Domains\Receiving\Support\ReceivingNumber;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -112,6 +121,9 @@ class DemoProcurementLifecycleSeeder
         );
         $purchaseOrderPolicy = $this->approvalPolicy($tenant, $finance, 'purchase_order', 'Demo purchase order approval policy');
         $this->seedPurchaseOrders($context, $tenant, $buyer, $finance, $purchaseOrderPolicy);
+
+        $this->seedGoodsReceipts($context, $tenant, $buyer);
+        $this->seedFulfillment($context, $tenant, $buyer);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -1605,5 +1617,379 @@ class DemoProcurementLifecycleSeeder
                 'metadata' => ['demo' => true],
             ],
         );
+    }
+
+    private function seedGoodsReceipts(DemoSeedContext $context, Tenant $tenant, User $buyer): void
+    {
+        $receivableStatuses = [
+            PurchaseOrderStatus::Issued,
+            PurchaseOrderStatus::Acknowledged,
+            PurchaseOrderStatus::ChangePending,
+        ];
+
+        $receivablePOs = [];
+
+        foreach ($context->purchaseOrders as $purchaseOrder) {
+            $po = $purchaseOrder->fresh()->load('lines');
+
+            if (in_array($po->statusState(), $receivableStatuses, true)) {
+                $receivablePOs[] = $po;
+            }
+        }
+
+        $existingCount = GoodsReceipt::query()
+            ->whereIn('purchase_order_id', array_map(fn ($po) => $po->id, $receivablePOs))
+            ->count();
+
+        if ($existingCount > 0) {
+            return;
+        }
+
+        foreach ($receivablePOs as $i => $po) {
+            $linesData = [];
+            $receiptDate = '2026-06-12';
+
+            if ($i === 0) {
+                // Full quantity receipt
+                $receipt = $this->createDemoReceipt($tenant, $po, $buyer, $receiptDate, GoodsReceiptStatus::Completed, 'GR-REF-FULL');
+
+                foreach ($po->lines as $line) {
+                    $quantity = $line->quantity;
+                    $newCumulative = bcadd($line->cumulative_quantity_received, $quantity, 4);
+
+                    $linesData[] = $this->demoReceiptLineData($receipt, $line, $quantity, $quantity);
+                    $this->updateDemoLineCumulatives($line, $newCumulative, $newCumulative, $receiptDate);
+                }
+
+                $this->createDemoReceiptLines($linesData);
+                $this->recordDemoReceiptAudit($tenant, $buyer, $receipt, $po, $linesData, $receiptDate);
+            } elseif ($i === 1) {
+                // Two partial receipts: 40% then 60%
+                $receipt1 = $this->createDemoReceipt($tenant, $po, $buyer, $receiptDate, GoodsReceiptStatus::Completed, 'GR-REF-PARTIAL-1');
+
+                foreach ($po->lines as $line) {
+                    $halfQty = bcdiv($line->quantity, '2', 4);
+                    $halfQtyClamped = bcdiv($line->quantity, '2', 4);
+
+                    $linesData[] = $this->demoReceiptLineData($receipt1, $line, $halfQtyClamped, $halfQtyClamped);
+                    $this->updateDemoLineCumulatives($line, $halfQtyClamped, $halfQtyClamped, $receiptDate);
+                }
+
+                $this->createDemoReceiptLines($linesData);
+                $this->recordDemoReceiptAudit($tenant, $buyer, $receipt1, $po, $linesData, $receiptDate);
+
+                // Second partial to reach full
+                $linesData2 = [];
+                $receipt2 = $this->createDemoReceipt($tenant, $po, $buyer, '2026-06-14', GoodsReceiptStatus::Completed, 'GR-REF-PARTIAL-2');
+
+                foreach ($po->lines as $line) {
+                    $remaining = bcsub($line->quantity, $line->cumulative_quantity_received, 4);
+                    $newCumulative = bcadd($line->cumulative_quantity_received, $remaining, 4);
+
+                    $linesData2[] = $this->demoReceiptLineData($receipt2, $line, $remaining, $remaining);
+                    $this->updateDemoLineCumulatives($line, $newCumulative, $newCumulative, '2026-06-14');
+                }
+
+                $this->createDemoReceiptLines($linesData2);
+                $this->recordDemoReceiptAudit($tenant, $buyer, $receipt2, $po, $linesData2, '2026-06-14');
+            } elseif ($i === 2) {
+                // Partial receipt with rejected quantity (accept < receive)
+                $receipt = $this->createDemoReceipt($tenant, $po, $buyer, $receiptDate, GoodsReceiptStatus::Completed, 'GR-REF-REJECTED');
+
+                foreach ($po->lines as $line) {
+                    $received = $line->quantity;
+                    $accepted = bcdiv($line->quantity, '2', 4);
+
+                    $linesData[] = $this->demoReceiptLineData($receipt, $line, $received, $accepted, 'Damaged during transit');
+                    $this->updateDemoLineCumulatives($line, $received, $accepted, $receiptDate);
+                }
+
+                $this->createDemoReceiptLines($linesData);
+                $this->recordDemoReceiptAudit($tenant, $buyer, $receipt, $po, $linesData, $receiptDate);
+            } else {
+                // Full receipt with requester confirmation
+                $receipt = $this->createDemoReceipt($tenant, $po, $buyer, $receiptDate, GoodsReceiptStatus::RequesterConfirmed, 'GR-REF-CONFIRMED');
+
+                foreach ($po->lines as $line) {
+                    $quantity = $line->quantity;
+                    $newCumulative = bcadd($line->cumulative_quantity_received, $quantity, 4);
+
+                    $linesData[] = $this->demoReceiptLineData($receipt, $line, $quantity, $quantity);
+                    $this->updateDemoLineCumulatives($line, $newCumulative, $newCumulative, $receiptDate);
+                }
+
+                $this->createDemoReceiptLines($linesData);
+                $this->recordDemoReceiptAudit($tenant, $buyer, $receipt, $po, $linesData, $receiptDate);
+
+                $receipt->forceFill([
+                    'status' => GoodsReceiptStatus::RequesterConfirmed,
+                    'requester_confirmed_by_user_id' => $buyer->id,
+                    'requester_confirmed_at' => '2026-06-13 09:00:00',
+                    'lock_version' => 2,
+                ])->save();
+
+                $this->auditRecorder->record(new AuditEventData(
+                    tenant: $tenant,
+                    actor: $buyer,
+                    action: 'goods_receipt.requester_confirmed',
+                    subject: $receipt,
+                    metadata: [
+                        'purchaseOrderId' => (string) $po->id,
+                        'receiptNumber' => $receipt->number,
+                    ],
+                ));
+            }
+        }
+    }
+
+    private function seedFulfillment(DemoSeedContext $context, Tenant $tenant, User $buyer): void
+    {
+        $scenarios = [
+            [
+                'poKey' => 'issued',
+                'shipmentNumber' => 'SH-2026-000001',
+                'status' => ShipmentStatus::Delivered,
+                'carrier' => 'DHL Supply Chain',
+                'trackingReference' => 'DHL-PO-ISSUED-001',
+                'shipmentDate' => '2026-06-10',
+                'estimatedArrivalDate' => '2026-06-12',
+                'actualDeliveryDate' => '2026-06-12',
+                'backorderQuantity' => '0.0000',
+                'backorderExpectedAt' => null,
+                'events' => [
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Shipped,
+                        'occurredAt' => '2026-06-10 08:00:00',
+                        'location' => 'Shah Alam consolidation hub',
+                        'notes' => 'Shipment loaded for final dispatch.',
+                    ],
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Delivered,
+                        'occurredAt' => '2026-06-12 10:00:00',
+                        'location' => 'Acme receiving dock',
+                        'notes' => 'Delivered and signed by facilities receiving.',
+                    ],
+                ],
+            ],
+            [
+                'poKey' => 'issued-pending-change',
+                'shipmentNumber' => 'SH-2026-000002',
+                'status' => ShipmentStatus::InTransit,
+                'carrier' => 'Ninja Van Freight',
+                'trackingReference' => 'NV-PO-CHANGE-002',
+                'shipmentDate' => '2026-06-12',
+                'estimatedArrivalDate' => '2026-06-15',
+                'actualDeliveryDate' => null,
+                'backorderQuantity' => '4.0000',
+                'backorderExpectedAt' => '2026-07-18',
+                'events' => [
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Shipped,
+                        'occurredAt' => '2026-06-12 09:00:00',
+                        'location' => 'Supplier export yard',
+                        'notes' => 'Partial release approved after change-order routing.',
+                    ],
+                    [
+                        'status' => FulfillmentTrackingEventStatus::InTransit,
+                        'occurredAt' => '2026-06-13 18:30:00',
+                        'location' => 'Port Klang',
+                        'notes' => 'Container transferred to domestic haulage.',
+                    ],
+                ],
+            ],
+            [
+                'poKey' => 'issued-delivery-change',
+                'shipmentNumber' => 'SH-2026-000003',
+                'status' => ShipmentStatus::Delayed,
+                'carrier' => 'Harbor Logistics',
+                'trackingReference' => 'HB-PO-DELAY-003',
+                'shipmentDate' => '2026-06-11',
+                'estimatedArrivalDate' => '2026-06-13',
+                'actualDeliveryDate' => null,
+                'backorderQuantity' => '0.0000',
+                'backorderExpectedAt' => null,
+                'events' => [
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Delayed,
+                        'occurredAt' => '2026-06-14 14:15:00',
+                        'location' => 'Johor distribution hub',
+                        'notes' => 'Weather-related ferry delay pushed delivery by 48 hours.',
+                    ],
+                ],
+            ],
+            [
+                'poKey' => 'acknowledged',
+                'shipmentNumber' => 'SH-2026-000004',
+                'status' => ShipmentStatus::Confirmed,
+                'carrier' => 'Greenline Fleet',
+                'trackingReference' => 'GL-PO-ACK-004',
+                'shipmentDate' => '2026-06-13',
+                'estimatedArrivalDate' => '2026-06-16',
+                'actualDeliveryDate' => null,
+                'backorderQuantity' => '0.0000',
+                'backorderExpectedAt' => null,
+                'events' => [],
+            ],
+        ];
+
+        foreach ($scenarios as $scenario) {
+            $purchaseOrder = $context->purchaseOrders->get($scenario['poKey'])?->fresh()->load('lines');
+
+            if (! $purchaseOrder instanceof PurchaseOrder) {
+                continue;
+            }
+
+            $line = $purchaseOrder->lines()->orderBy('line_number')->first();
+
+            if (! $line instanceof PurchaseOrderLine) {
+                continue;
+            }
+
+            $quantityDelivered = match ($scenario['poKey']) {
+                'issued' => (string) $line->quantity,
+                'issued-pending-change', 'acknowledged' => (string) $line->cumulative_quantity_received,
+                default => '0.0000',
+            };
+
+            $shipment = Shipment::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'number' => $scenario['shipmentNumber']],
+                [
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'status' => $scenario['status'],
+                    'carrier_name' => $scenario['carrier'],
+                    'tracking_reference' => $scenario['trackingReference'],
+                    'shipment_date' => $scenario['shipmentDate'],
+                    'estimated_arrival_date' => $scenario['estimatedArrivalDate'],
+                    'actual_delivery_date' => $scenario['actualDeliveryDate'],
+                    'notes' => 'Seeded fulfillment shipment for demo.',
+                    'created_by_user_id' => $buyer->id,
+                    'lock_version' => 1,
+                ],
+            );
+
+            ShipmentLine::query()->updateOrCreate(
+                ['shipment_id' => $shipment->id, 'purchase_order_line_id' => $line->id],
+                [
+                    'tenant_id' => $tenant->id,
+                    'line_number' => $line->line_number,
+                    'quantity_shipped' => (string) $line->quantity,
+                    'quantity_delivered' => $quantityDelivered,
+                    'backorder_quantity' => $scenario['backorderQuantity'],
+                    'backorder_expected_at' => $scenario['backorderExpectedAt'],
+                    'notes' => $scenario['backorderQuantity'] !== '0.0000'
+                        ? 'Backorder seeded for fulfillment demo.'
+                        : 'Seeded shipment line for fulfillment demo.',
+                ],
+            );
+
+            foreach ($scenario['events'] as $eventData) {
+                FulfillmentTrackingEvent::query()->updateOrCreate(
+                    [
+                        'shipment_id' => $shipment->id,
+                        'status' => $eventData['status'],
+                        'occurred_at' => $eventData['occurredAt'],
+                    ],
+                    [
+                        'tenant_id' => $tenant->id,
+                        'location' => $eventData['location'],
+                        'notes' => $eventData['notes'],
+                        'created_by_user_id' => $buyer->id,
+                    ],
+                );
+            }
+        }
+    }
+
+    private function createDemoReceipt(Tenant $tenant, PurchaseOrder $po, User $buyer, string $date, GoodsReceiptStatus $status, string $reference): GoodsReceipt
+    {
+        $existing = GoodsReceipt::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('purchase_order_id', $po->id)
+            ->where('receipt_reference', $reference)
+            ->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $receiptNumber = ReceivingNumber::nextFor($po);
+
+        return GoodsReceipt::query()->create([
+            'tenant_id' => $tenant->id,
+            'purchase_order_id' => $po->id,
+            'number' => $receiptNumber,
+            'status' => $status,
+            'receipt_date' => $date,
+            'receipt_reference' => $reference,
+            'notes' => 'Seeded goods receipt for demo.',
+            'recorded_by_user_id' => $buyer->id,
+            'recorded_at' => $date.' 10:00:00',
+            'lock_version' => 1,
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function demoReceiptLineData(GoodsReceipt $receipt, PurchaseOrderLine $line, string $received, string $accepted, ?string $rejectionReason = null): array
+    {
+        return [
+            'tenant_id' => $receipt->tenant_id,
+            'goods_receipt_id' => $receipt->id,
+            'purchase_order_line_id' => $line->id,
+            'line_number' => $line->line_number,
+            'quantity_ordered' => $line->quantity,
+            'quantity_received' => $received,
+            'quantity_accepted' => $accepted,
+            'rejection_reason' => $rejectionReason,
+            'notes' => 'Seeded goods receipt line for demo.',
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $linesData
+     */
+    private function createDemoReceiptLines(array $linesData): void
+    {
+        foreach ($linesData as $lineData) {
+            GoodsReceiptLine::query()->firstOrCreate(
+                ['goods_receipt_id' => $lineData['goods_receipt_id'], 'purchase_order_line_id' => $lineData['purchase_order_line_id']],
+                $lineData,
+            );
+        }
+    }
+
+    private function updateDemoLineCumulatives(PurchaseOrderLine $line, string $cumulativeReceived, string $cumulativeAccepted, string $date): void
+    {
+        $line->forceFill([
+            'cumulative_quantity_received' => $cumulativeReceived,
+            'cumulative_quantity_accepted' => $cumulativeAccepted,
+            'last_receipt_at' => $date.' 10:00:00',
+        ])->save();
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $linesData
+     */
+    private function recordDemoReceiptAudit(Tenant $tenant, User $buyer, GoodsReceipt $receipt, PurchaseOrder $po, array $linesData, string $date): void
+    {
+        $totalQty = '0';
+        foreach ($linesData as $ld) {
+            $totalQty = bcadd($totalQty, $ld['quantity_received'], 4);
+        }
+
+        $this->auditRecorder->record(new AuditEventData(
+            tenant: $tenant,
+            actor: $buyer,
+            action: 'goods_receipt.recorded',
+            subject: $receipt,
+            metadata: [
+                'purchaseOrderId' => (string) $po->id,
+                'purchaseOrderNumber' => $po->number,
+                'receiptNumber' => $receipt->number,
+                'lineCount' => count($linesData),
+                'totalQuantityReceived' => $totalQty,
+            ],
+        ));
     }
 }

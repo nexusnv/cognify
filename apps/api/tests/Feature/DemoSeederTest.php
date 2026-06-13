@@ -13,6 +13,8 @@ use Domains\Attachment\Models\Attachment;
 use Domains\Award\Models\Award;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Demo\Models\DemoSeedRun;
+use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
+use Domains\Fulfillment\Models\Shipment;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -516,6 +518,15 @@ class DemoSeederTest extends TestCase
         $this->assertSame(33, DB::table('purchase_order_lines')->count());
         $this->assertSame(3, PurchaseOrderChangeOrder::query()->count());
         $this->assertSame(3, DB::table('purchase_order_change_order_lines')->count());
+        $this->assertSame(4, Shipment::query()->count());
+        $this->assertSame(4, DB::table('shipment_lines')->count());
+        $this->assertSame(5, FulfillmentTrackingEvent::query()->count());
+        $this->assertDatabaseHas('shipments', ['number' => 'SH-2026-000001', 'status' => 'delivered']);
+        $this->assertDatabaseHas('shipments', ['number' => 'SH-2026-000002', 'status' => 'in_transit']);
+        $this->assertDatabaseHas('shipments', ['number' => 'SH-2026-000003', 'status' => 'delayed']);
+        $this->assertDatabaseHas('shipments', ['number' => 'SH-2026-000004', 'status' => 'confirmed']);
+        $this->assertDatabaseHas('fulfillment_tracking_events', ['status' => 'delivered', 'location' => 'Acme receiving dock']);
+        $this->assertDatabaseHas('fulfillment_tracking_events', ['status' => 'delayed', 'location' => 'Johor distribution hub']);
 
         foreach (Attachment::query()->get() as $attachment) {
             $this->assertTrue(Storage::disk($attachment->storage_disk)->exists($attachment->storage_path));
@@ -539,6 +550,8 @@ class DemoSeederTest extends TestCase
             'rfq_scorecards' => 1,
             'purchase_order_request_handoffs' => 11,
             'purchase_orders' => 11,
+            'shipments' => 4,
+            'fulfillment_tracking_events' => 5,
         ], $run->metadata);
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }

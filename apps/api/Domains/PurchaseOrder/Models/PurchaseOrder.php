@@ -5,9 +5,11 @@ namespace Domains\PurchaseOrder\Models;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\Fulfillment\Models\Shipment;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\Receiving\Models\GoodsReceipt;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
@@ -434,11 +436,27 @@ class PurchaseOrder extends Model
     }
 
     /**
+     * @return HasMany<Shipment, $this>
+     */
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class)->orderByDesc('shipment_date')->orderByDesc('id');
+    }
+
+    /**
      * @return HasMany<PurchaseOrderChangeOrder, $this>
      */
     public function changeOrders(): HasMany
     {
         return $this->hasMany(PurchaseOrderChangeOrder::class)->orderByDesc('created_at')->orderByDesc('id');
+    }
+
+    /**
+     * @return HasMany<GoodsReceipt, $this>
+     */
+    public function goodsReceipts(): HasMany
+    {
+        return $this->hasMany(GoodsReceipt::class);
     }
 
     /**

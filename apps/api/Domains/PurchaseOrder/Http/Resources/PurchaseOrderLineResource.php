@@ -44,6 +44,10 @@ class PurchaseOrderLineResource extends JsonResource
             'cancelledByChangeOrderId' => $line->cancelled_by_change_order_id !== null ? (string) $line->cancelled_by_change_order_id : null,
             'cancelledAt' => $line->cancelled_at?->toISOString(),
             'cancelledReason' => $line->cancelled_reason,
+            'cumulativeQuantityReceived' => (string) ($line->cumulative_quantity_received ?? '0'),
+            'cumulativeQuantityAccepted' => (string) ($line->cumulative_quantity_accepted ?? '0'),
+            'overReceiptTolerancePercent' => (string) ($line->over_receipt_tolerance_percent ?? '10.00'),
+            'lastReceiptAt' => $line->last_receipt_at?->toISOString(),
         ];
     }
 }

@@ -6,6 +6,7 @@
  */
 import type {
   AcknowledgePurchaseOrderRequest,
+  AddFulfillmentTrackingEventRequest,
   AmbiguousTenantResponse,
   ApplyRequisitionTemplateRequest,
   ApprovalDelegationCandidateListResponse,
@@ -30,14 +31,22 @@ import type {
   CancelPurchaseOrderRequest,
   CancelPurchaseOrderRequestHandoffRequest,
   CancelRfqInvitationRequest,
+  CancelShipment200,
   CollaborationCommentListResponse,
   CollaborationCommentResponse,
   CollaborationMentionCandidateListResponse,
+  ConfirmGoodsReceiptBuyer200,
+  ConfirmGoodsReceiptRequest,
+  ConfirmGoodsReceiptRequester200,
+  ConflictResponse,
   CreateCollaborationCommentRequest,
+  CreatePurchaseOrderShipment201,
   CreateQuotationRevisionRequest,
   CreateRequisitionRequest,
   CreateRfqInvitationsRequest,
   CreateRfqScorecardRequest,
+  CreateShipmentRequest,
+  CreateShipmentTrackingEvent201,
   CurrentUserResponse,
   DelegateApprovalTaskRequest,
   ForbiddenResponse,
@@ -50,14 +59,17 @@ import type {
   ListApprovalTasksParams,
   ListAuditEventsParams,
   ListGlobalSearchParams,
+  ListGoodsReceipts200,
   ListNotificationsParams,
   ListProcurementCalendarEventsParams,
   ListProjectsParams,
+  ListPurchaseOrderShipments200,
   ListPurchaseOrdersParams,
   ListQuotationNormalizationsParams,
   ListRequisitionActivity200,
   ListRequisitionLineItemSuggestionsParams,
   ListRequisitionsParams,
+  ListShipmentTrackingEvents200,
   ListSourcingIntakeReviewsParams,
   ListVendorsParams,
   LoginRequest,
@@ -93,6 +105,8 @@ import type {
   QuotationVersionListResponse,
   QuotationVersionResponse,
   ReasonedRequisitionActionRequest,
+  RecordGoodsReceipt201,
+  RecordGoodsReceiptRequest,
   RejectApprovalTaskRequest,
   RequestApprovalChangesRequest,
   RequestRequisitionChangesRequest,
@@ -123,6 +137,9 @@ import type {
   SaveRfqAwardRecommendationRequest,
   SearchResponse,
   SetCurrentTenantRequest,
+  ShowGoodsReceipt200,
+  ShowPurchaseOrderFulfillment200,
+  ShowShipment200,
   SourcingIntakeReviewCloseRequest,
   SourcingIntakeReviewDecisionRequest,
   SourcingIntakeReviewListResponse,
@@ -150,6 +167,11 @@ import type {
   UpdateRequisitionRequest,
   UpdateRfqInvitationStatusRequest,
   UpdateRfqScorecardScoresRequest,
+  UpdateShipment200,
+  UpdateShipmentBackorderRequest,
+  UpdateShipmentLineBackorder200,
+  UpdateShipmentRequest,
+  ValidationErrorResponse,
   ValidationFailedResponse,
   VendorCreateQuotationRevisionRequest,
   VendorPickerListResponse,
@@ -10091,6 +10113,941 @@ export const savePurchaseOrderChangeOrder = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(savePurchaseOrderChangeOrderRequest),
+    },
+  );
+};
+
+/**
+ * @summary List goods receipts for a purchase order
+ */
+export type listGoodsReceiptsResponse200 = {
+  data: ListGoodsReceipts200;
+  status: 200;
+};
+
+export type listGoodsReceiptsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listGoodsReceiptsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listGoodsReceiptsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listGoodsReceiptsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listGoodsReceiptsResponseSuccess = listGoodsReceiptsResponse200 & {
+  headers: Headers;
+};
+export type listGoodsReceiptsResponseError = (
+  | listGoodsReceiptsResponse400
+  | listGoodsReceiptsResponse401
+  | listGoodsReceiptsResponse403
+  | listGoodsReceiptsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listGoodsReceiptsResponse =
+  | listGoodsReceiptsResponseSuccess
+  | listGoodsReceiptsResponseError;
+
+export const getListGoodsReceiptsUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/goods-receipts`;
+};
+
+export const listGoodsReceipts = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<listGoodsReceiptsResponse> => {
+  return cognifyFetch<listGoodsReceiptsResponse>(getListGoodsReceiptsUrl(purchaseOrder), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Record a goods receipt
+ */
+export type recordGoodsReceiptResponse201 = {
+  data: RecordGoodsReceipt201;
+  status: 201;
+};
+
+export type recordGoodsReceiptResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type recordGoodsReceiptResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordGoodsReceiptResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type recordGoodsReceiptResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type recordGoodsReceiptResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type recordGoodsReceiptResponseSuccess = recordGoodsReceiptResponse201 & {
+  headers: Headers;
+};
+export type recordGoodsReceiptResponseError = (
+  | recordGoodsReceiptResponse400
+  | recordGoodsReceiptResponse401
+  | recordGoodsReceiptResponse403
+  | recordGoodsReceiptResponse404
+  | recordGoodsReceiptResponse422
+) & {
+  headers: Headers;
+};
+
+export type recordGoodsReceiptResponse =
+  | recordGoodsReceiptResponseSuccess
+  | recordGoodsReceiptResponseError;
+
+export const getRecordGoodsReceiptUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/goods-receipts`;
+};
+
+export const recordGoodsReceipt = async (
+  purchaseOrder: string,
+  recordGoodsReceiptRequest: RecordGoodsReceiptRequest,
+  options?: RequestInit,
+): Promise<recordGoodsReceiptResponse> => {
+  return cognifyFetch<recordGoodsReceiptResponse>(getRecordGoodsReceiptUrl(purchaseOrder), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(recordGoodsReceiptRequest),
+  });
+};
+
+/**
+ * @summary Show fulfillment status for a purchase order
+ */
+export type showPurchaseOrderFulfillmentResponse200 = {
+  data: ShowPurchaseOrderFulfillment200;
+  status: 200;
+};
+
+export type showPurchaseOrderFulfillmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showPurchaseOrderFulfillmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showPurchaseOrderFulfillmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showPurchaseOrderFulfillmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showPurchaseOrderFulfillmentResponseSuccess =
+  showPurchaseOrderFulfillmentResponse200 & {
+    headers: Headers;
+  };
+export type showPurchaseOrderFulfillmentResponseError = (
+  | showPurchaseOrderFulfillmentResponse400
+  | showPurchaseOrderFulfillmentResponse401
+  | showPurchaseOrderFulfillmentResponse403
+  | showPurchaseOrderFulfillmentResponse404
+) & {
+  headers: Headers;
+};
+
+export type showPurchaseOrderFulfillmentResponse =
+  | showPurchaseOrderFulfillmentResponseSuccess
+  | showPurchaseOrderFulfillmentResponseError;
+
+export const getShowPurchaseOrderFulfillmentUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/fulfillment`;
+};
+
+export const showPurchaseOrderFulfillment = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<showPurchaseOrderFulfillmentResponse> => {
+  return cognifyFetch<showPurchaseOrderFulfillmentResponse>(
+    getShowPurchaseOrderFulfillmentUrl(purchaseOrder),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary List shipments for a purchase order
+ */
+export type listPurchaseOrderShipmentsResponse200 = {
+  data: ListPurchaseOrderShipments200;
+  status: 200;
+};
+
+export type listPurchaseOrderShipmentsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listPurchaseOrderShipmentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listPurchaseOrderShipmentsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listPurchaseOrderShipmentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listPurchaseOrderShipmentsResponseSuccess = listPurchaseOrderShipmentsResponse200 & {
+  headers: Headers;
+};
+export type listPurchaseOrderShipmentsResponseError = (
+  | listPurchaseOrderShipmentsResponse400
+  | listPurchaseOrderShipmentsResponse401
+  | listPurchaseOrderShipmentsResponse403
+  | listPurchaseOrderShipmentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listPurchaseOrderShipmentsResponse =
+  | listPurchaseOrderShipmentsResponseSuccess
+  | listPurchaseOrderShipmentsResponseError;
+
+export const getListPurchaseOrderShipmentsUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/shipments`;
+};
+
+export const listPurchaseOrderShipments = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<listPurchaseOrderShipmentsResponse> => {
+  return cognifyFetch<listPurchaseOrderShipmentsResponse>(
+    getListPurchaseOrderShipmentsUrl(purchaseOrder),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create a shipment for a purchase order
+ */
+export type createPurchaseOrderShipmentResponse201 = {
+  data: CreatePurchaseOrderShipment201;
+  status: 201;
+};
+
+export type createPurchaseOrderShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type createPurchaseOrderShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createPurchaseOrderShipmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createPurchaseOrderShipmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createPurchaseOrderShipmentResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type createPurchaseOrderShipmentResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type createPurchaseOrderShipmentResponseSuccess = createPurchaseOrderShipmentResponse201 & {
+  headers: Headers;
+};
+export type createPurchaseOrderShipmentResponseError = (
+  | createPurchaseOrderShipmentResponse400
+  | createPurchaseOrderShipmentResponse401
+  | createPurchaseOrderShipmentResponse403
+  | createPurchaseOrderShipmentResponse404
+  | createPurchaseOrderShipmentResponse409
+  | createPurchaseOrderShipmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type createPurchaseOrderShipmentResponse =
+  | createPurchaseOrderShipmentResponseSuccess
+  | createPurchaseOrderShipmentResponseError;
+
+export const getCreatePurchaseOrderShipmentUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/shipments`;
+};
+
+export const createPurchaseOrderShipment = async (
+  purchaseOrder: string,
+  createShipmentRequest: CreateShipmentRequest,
+  options?: RequestInit,
+): Promise<createPurchaseOrderShipmentResponse> => {
+  return cognifyFetch<createPurchaseOrderShipmentResponse>(
+    getCreatePurchaseOrderShipmentUrl(purchaseOrder),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createShipmentRequest),
+    },
+  );
+};
+
+/**
+ * @summary Show a goods receipt
+ */
+export type showGoodsReceiptResponse200 = {
+  data: ShowGoodsReceipt200;
+  status: 200;
+};
+
+export type showGoodsReceiptResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showGoodsReceiptResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showGoodsReceiptResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showGoodsReceiptResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showGoodsReceiptResponseSuccess = showGoodsReceiptResponse200 & {
+  headers: Headers;
+};
+export type showGoodsReceiptResponseError = (
+  | showGoodsReceiptResponse400
+  | showGoodsReceiptResponse401
+  | showGoodsReceiptResponse403
+  | showGoodsReceiptResponse404
+) & {
+  headers: Headers;
+};
+
+export type showGoodsReceiptResponse =
+  | showGoodsReceiptResponseSuccess
+  | showGoodsReceiptResponseError;
+
+export const getShowGoodsReceiptUrl = (goodsReceipt: string) => {
+  return `/api/goods-receipts/${goodsReceipt}`;
+};
+
+export const showGoodsReceipt = async (
+  goodsReceipt: string,
+  options?: RequestInit,
+): Promise<showGoodsReceiptResponse> => {
+  return cognifyFetch<showGoodsReceiptResponse>(getShowGoodsReceiptUrl(goodsReceipt), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Show shipment detail
+ */
+export type showShipmentResponse200 = {
+  data: ShowShipment200;
+  status: 200;
+};
+
+export type showShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showShipmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type showShipmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showShipmentResponseSuccess = showShipmentResponse200 & {
+  headers: Headers;
+};
+export type showShipmentResponseError = (
+  | showShipmentResponse400
+  | showShipmentResponse401
+  | showShipmentResponse403
+  | showShipmentResponse404
+) & {
+  headers: Headers;
+};
+
+export type showShipmentResponse = showShipmentResponseSuccess | showShipmentResponseError;
+
+export const getShowShipmentUrl = (shipment: string) => {
+  return `/api/shipments/${shipment}`;
+};
+
+export const showShipment = async (
+  shipment: string,
+  options?: RequestInit,
+): Promise<showShipmentResponse> => {
+  return cognifyFetch<showShipmentResponse>(getShowShipmentUrl(shipment), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update shipment details
+ */
+export type updateShipmentResponse200 = {
+  data: UpdateShipment200;
+  status: 200;
+};
+
+export type updateShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updateShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateShipmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateShipmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateShipmentResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type updateShipmentResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type updateShipmentResponseSuccess = updateShipmentResponse200 & {
+  headers: Headers;
+};
+export type updateShipmentResponseError = (
+  | updateShipmentResponse400
+  | updateShipmentResponse401
+  | updateShipmentResponse403
+  | updateShipmentResponse404
+  | updateShipmentResponse409
+  | updateShipmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateShipmentResponse = updateShipmentResponseSuccess | updateShipmentResponseError;
+
+export const getUpdateShipmentUrl = (shipment: string) => {
+  return `/api/shipments/${shipment}`;
+};
+
+export const updateShipment = async (
+  shipment: string,
+  updateShipmentRequest: UpdateShipmentRequest,
+  options?: RequestInit,
+): Promise<updateShipmentResponse> => {
+  return cognifyFetch<updateShipmentResponse>(getUpdateShipmentUrl(shipment), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateShipmentRequest),
+  });
+};
+
+/**
+ * @summary Cancel a shipment
+ */
+export type cancelShipmentResponse200 = {
+  data: CancelShipment200;
+  status: 200;
+};
+
+export type cancelShipmentResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type cancelShipmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelShipmentResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type cancelShipmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type cancelShipmentResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type cancelShipmentResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type cancelShipmentResponseSuccess = cancelShipmentResponse200 & {
+  headers: Headers;
+};
+export type cancelShipmentResponseError = (
+  | cancelShipmentResponse400
+  | cancelShipmentResponse401
+  | cancelShipmentResponse403
+  | cancelShipmentResponse404
+  | cancelShipmentResponse409
+  | cancelShipmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelShipmentResponse = cancelShipmentResponseSuccess | cancelShipmentResponseError;
+
+export const getCancelShipmentUrl = (shipment: string) => {
+  return `/api/shipments/${shipment}`;
+};
+
+export const cancelShipment = async (
+  shipment: string,
+  updateShipmentRequest: UpdateShipmentRequest,
+  options?: RequestInit,
+): Promise<cancelShipmentResponse> => {
+  return cognifyFetch<cancelShipmentResponse>(getCancelShipmentUrl(shipment), {
+    ...options,
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateShipmentRequest),
+  });
+};
+
+/**
+ * @summary List tracking events for a shipment
+ */
+export type listShipmentTrackingEventsResponse200 = {
+  data: ListShipmentTrackingEvents200;
+  status: 200;
+};
+
+export type listShipmentTrackingEventsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listShipmentTrackingEventsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listShipmentTrackingEventsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listShipmentTrackingEventsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listShipmentTrackingEventsResponseSuccess = listShipmentTrackingEventsResponse200 & {
+  headers: Headers;
+};
+export type listShipmentTrackingEventsResponseError = (
+  | listShipmentTrackingEventsResponse400
+  | listShipmentTrackingEventsResponse401
+  | listShipmentTrackingEventsResponse403
+  | listShipmentTrackingEventsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listShipmentTrackingEventsResponse =
+  | listShipmentTrackingEventsResponseSuccess
+  | listShipmentTrackingEventsResponseError;
+
+export const getListShipmentTrackingEventsUrl = (shipment: string) => {
+  return `/api/shipments/${shipment}/tracking-events`;
+};
+
+export const listShipmentTrackingEvents = async (
+  shipment: string,
+  options?: RequestInit,
+): Promise<listShipmentTrackingEventsResponse> => {
+  return cognifyFetch<listShipmentTrackingEventsResponse>(
+    getListShipmentTrackingEventsUrl(shipment),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Create a shipment tracking event
+ */
+export type createShipmentTrackingEventResponse201 = {
+  data: CreateShipmentTrackingEvent201;
+  status: 201;
+};
+
+export type createShipmentTrackingEventResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type createShipmentTrackingEventResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createShipmentTrackingEventResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type createShipmentTrackingEventResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createShipmentTrackingEventResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type createShipmentTrackingEventResponseSuccess = createShipmentTrackingEventResponse201 & {
+  headers: Headers;
+};
+export type createShipmentTrackingEventResponseError = (
+  | createShipmentTrackingEventResponse400
+  | createShipmentTrackingEventResponse401
+  | createShipmentTrackingEventResponse403
+  | createShipmentTrackingEventResponse404
+  | createShipmentTrackingEventResponse422
+) & {
+  headers: Headers;
+};
+
+export type createShipmentTrackingEventResponse =
+  | createShipmentTrackingEventResponseSuccess
+  | createShipmentTrackingEventResponseError;
+
+export const getCreateShipmentTrackingEventUrl = (shipment: string) => {
+  return `/api/shipments/${shipment}/tracking-events`;
+};
+
+export const createShipmentTrackingEvent = async (
+  shipment: string,
+  addFulfillmentTrackingEventRequest: AddFulfillmentTrackingEventRequest,
+  options?: RequestInit,
+): Promise<createShipmentTrackingEventResponse> => {
+  return cognifyFetch<createShipmentTrackingEventResponse>(
+    getCreateShipmentTrackingEventUrl(shipment),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(addFulfillmentTrackingEventRequest),
+    },
+  );
+};
+
+/**
+ * @summary Update shipment line backorder details
+ */
+export type updateShipmentLineBackorderResponse200 = {
+  data: UpdateShipmentLineBackorder200;
+  status: 200;
+};
+
+export type updateShipmentLineBackorderResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type updateShipmentLineBackorderResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateShipmentLineBackorderResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type updateShipmentLineBackorderResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type updateShipmentLineBackorderResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type updateShipmentLineBackorderResponseSuccess = updateShipmentLineBackorderResponse200 & {
+  headers: Headers;
+};
+export type updateShipmentLineBackorderResponseError = (
+  | updateShipmentLineBackorderResponse400
+  | updateShipmentLineBackorderResponse401
+  | updateShipmentLineBackorderResponse403
+  | updateShipmentLineBackorderResponse404
+  | updateShipmentLineBackorderResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateShipmentLineBackorderResponse =
+  | updateShipmentLineBackorderResponseSuccess
+  | updateShipmentLineBackorderResponseError;
+
+export const getUpdateShipmentLineBackorderUrl = (shipment: string, line: string) => {
+  return `/api/shipments/${shipment}/lines/${line}/backorder`;
+};
+
+export const updateShipmentLineBackorder = async (
+  shipment: string,
+  line: string,
+  updateShipmentBackorderRequest: UpdateShipmentBackorderRequest,
+  options?: RequestInit,
+): Promise<updateShipmentLineBackorderResponse> => {
+  return cognifyFetch<updateShipmentLineBackorderResponse>(
+    getUpdateShipmentLineBackorderUrl(shipment, line),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateShipmentBackorderRequest),
+    },
+  );
+};
+
+/**
+ * @summary Confirm goods receipt as requester
+ */
+export type confirmGoodsReceiptRequesterResponse200 = {
+  data: ConfirmGoodsReceiptRequester200;
+  status: 200;
+};
+
+export type confirmGoodsReceiptRequesterResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type confirmGoodsReceiptRequesterResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type confirmGoodsReceiptRequesterResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type confirmGoodsReceiptRequesterResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type confirmGoodsReceiptRequesterResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type confirmGoodsReceiptRequesterResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type confirmGoodsReceiptRequesterResponseSuccess =
+  confirmGoodsReceiptRequesterResponse200 & {
+    headers: Headers;
+  };
+export type confirmGoodsReceiptRequesterResponseError = (
+  | confirmGoodsReceiptRequesterResponse400
+  | confirmGoodsReceiptRequesterResponse401
+  | confirmGoodsReceiptRequesterResponse403
+  | confirmGoodsReceiptRequesterResponse404
+  | confirmGoodsReceiptRequesterResponse409
+  | confirmGoodsReceiptRequesterResponse422
+) & {
+  headers: Headers;
+};
+
+export type confirmGoodsReceiptRequesterResponse =
+  | confirmGoodsReceiptRequesterResponseSuccess
+  | confirmGoodsReceiptRequesterResponseError;
+
+export const getConfirmGoodsReceiptRequesterUrl = (goodsReceipt: string) => {
+  return `/api/goods-receipts/${goodsReceipt}/confirm-requester`;
+};
+
+export const confirmGoodsReceiptRequester = async (
+  goodsReceipt: string,
+  confirmGoodsReceiptRequest: ConfirmGoodsReceiptRequest,
+  options?: RequestInit,
+): Promise<confirmGoodsReceiptRequesterResponse> => {
+  return cognifyFetch<confirmGoodsReceiptRequesterResponse>(
+    getConfirmGoodsReceiptRequesterUrl(goodsReceipt),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(confirmGoodsReceiptRequest),
+    },
+  );
+};
+
+/**
+ * @summary Confirm goods receipt as buyer
+ */
+export type confirmGoodsReceiptBuyerResponse200 = {
+  data: ConfirmGoodsReceiptBuyer200;
+  status: 200;
+};
+
+export type confirmGoodsReceiptBuyerResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type confirmGoodsReceiptBuyerResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type confirmGoodsReceiptBuyerResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type confirmGoodsReceiptBuyerResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type confirmGoodsReceiptBuyerResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type confirmGoodsReceiptBuyerResponse422 = {
+  data: ValidationErrorResponse;
+  status: 422;
+};
+
+export type confirmGoodsReceiptBuyerResponseSuccess = confirmGoodsReceiptBuyerResponse200 & {
+  headers: Headers;
+};
+export type confirmGoodsReceiptBuyerResponseError = (
+  | confirmGoodsReceiptBuyerResponse400
+  | confirmGoodsReceiptBuyerResponse401
+  | confirmGoodsReceiptBuyerResponse403
+  | confirmGoodsReceiptBuyerResponse404
+  | confirmGoodsReceiptBuyerResponse409
+  | confirmGoodsReceiptBuyerResponse422
+) & {
+  headers: Headers;
+};
+
+export type confirmGoodsReceiptBuyerResponse =
+  | confirmGoodsReceiptBuyerResponseSuccess
+  | confirmGoodsReceiptBuyerResponseError;
+
+export const getConfirmGoodsReceiptBuyerUrl = (goodsReceipt: string) => {
+  return `/api/goods-receipts/${goodsReceipt}/confirm-buyer`;
+};
+
+export const confirmGoodsReceiptBuyer = async (
+  goodsReceipt: string,
+  confirmGoodsReceiptRequest: ConfirmGoodsReceiptRequest,
+  options?: RequestInit,
+): Promise<confirmGoodsReceiptBuyerResponse> => {
+  return cognifyFetch<confirmGoodsReceiptBuyerResponse>(
+    getConfirmGoodsReceiptBuyerUrl(goodsReceipt),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(confirmGoodsReceiptRequest),
     },
   );
 };

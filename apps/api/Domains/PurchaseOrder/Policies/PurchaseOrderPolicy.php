@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
+use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 
 class PurchaseOrderPolicy
 {
@@ -18,6 +19,12 @@ class PurchaseOrderPolicy
     public function view(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $this->isTenantScoped($purchaseOrder->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function viewFulfillment(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder)
+            || $this->isRequesterForPurchaseOrder($user, $purchaseOrder);
     }
 
     public function createFromHandoff(User $user, PurchaseOrderRequestHandoff $handoff): bool
@@ -80,11 +87,47 @@ class PurchaseOrderPolicy
         return $this->view($user, $purchaseOrder);
     }
 
+    public function recordGoodsReceipt(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->isTenantScoped($purchaseOrder->tenant_id)
+            && in_array($purchaseOrder->statusState(), [
+                PurchaseOrderStatus::Issued,
+                PurchaseOrderStatus::Acknowledged,
+                PurchaseOrderStatus::ChangePending,
+            ], true)
+            && $this->buyerOrAdmin($user);
+    }
+
+    public function createShipment(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->isTenantScoped($purchaseOrder->tenant_id)
+            && in_array($purchaseOrder->statusState(), [
+                PurchaseOrderStatus::Issued,
+                PurchaseOrderStatus::Acknowledged,
+                PurchaseOrderStatus::ChangePending,
+            ], true)
+            && $this->buyerOrAdmin($user);
+    }
+
     private function buyerOrAdmin(User $user): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);
 
         return in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true);
+    }
+
+    private function isRequesterForPurchaseOrder(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        if (! $this->isTenantScoped($purchaseOrder->tenant_id)) {
+            return false;
+        }
+
+        $role = app(CurrentTenant::class)->roleFor($user);
+        if ($role !== TenantRole::Requester->value || $purchaseOrder->requisition_id === null) {
+            return false;
+        }
+
+        return (int) ($purchaseOrder->requisition?->requester_id) === (int) $user->id;
     }
 
     private function isTenantScoped(int|string $tenantId): bool
