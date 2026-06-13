@@ -34,7 +34,7 @@ class ShipmentController
 
     public function index(PurchaseOrder $purchaseOrder): ResourceCollection
     {
-        $this->authorize('view', $purchaseOrder);
+        $this->authorize('viewFulfillment', $purchaseOrder);
 
         $shipments = Shipment::query()
             ->where('tenant_id', $purchaseOrder->tenant_id)

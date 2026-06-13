@@ -15,7 +15,7 @@ class FulfillmentStatusController
 
     public function show(PurchaseOrder $purchaseOrder): FulfillmentStatusResource
     {
-        $this->authorize('view', $purchaseOrder);
+        $this->authorize('viewFulfillment', $purchaseOrder);
 
         return new FulfillmentStatusResource($this->deliveryStatusCalculator->calculate($purchaseOrder));
     }

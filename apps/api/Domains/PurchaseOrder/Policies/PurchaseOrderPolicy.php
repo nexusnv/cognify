@@ -21,6 +21,12 @@ class PurchaseOrderPolicy
         return $this->isTenantScoped($purchaseOrder->tenant_id) && $this->buyerOrAdmin($user);
     }
 
+    public function viewFulfillment(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->view($user, $purchaseOrder)
+            || $this->isRequesterForPurchaseOrder($user, $purchaseOrder);
+    }
+
     public function createFromHandoff(User $user, PurchaseOrderRequestHandoff $handoff): bool
     {
         return $this->isTenantScoped($handoff->tenant_id) && $this->buyerOrAdmin($user);
@@ -108,6 +114,20 @@ class PurchaseOrderPolicy
         $role = app(CurrentTenant::class)->roleFor($user);
 
         return in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true);
+    }
+
+    private function isRequesterForPurchaseOrder(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        if (! $this->isTenantScoped($purchaseOrder->tenant_id)) {
+            return false;
+        }
+
+        $role = app(CurrentTenant::class)->roleFor($user);
+        if ($role !== TenantRole::Requester->value || $purchaseOrder->requisition_id === null) {
+            return false;
+        }
+
+        return (int) ($purchaseOrder->requisition?->requester_id) === (int) $user->id;
     }
 
     private function isTenantScoped(int|string $tenantId): bool

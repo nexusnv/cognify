@@ -19,6 +19,7 @@ use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
+use Domains\Requisition\Models\Requisition;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -237,6 +238,70 @@ class FulfillmentApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_requisition_requester_can_read_fulfillment_status_shipments_and_tracking_events(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $requester = $this->attachRequesterToPurchaseOrder($tenant, $po);
+        $shipmentId = $this->createShipment($tenant, $buyer, $po);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/shipments/{$shipmentId}/tracking-events", [
+                'status' => 'in_transit',
+                'occurredAt' => now()->toISOString(),
+            ])
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/purchase-orders/{$po->id}/fulfillment")
+            ->assertOk()
+            ->assertJsonPath('data.overallStatus', 'awaiting_delivery');
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/purchase-orders/{$po->id}/shipments")
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $this->actingAsTenant($tenant, $requester)
+            ->getJson("/api/shipments/{$shipmentId}/tracking-events")
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_requisition_requester_cannot_mutate_fulfillment(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $requester = $this->attachRequesterToPurchaseOrder($tenant, $po);
+        [$shipmentId, $shipmentLineId] = $this->createShipmentWithLine($tenant, $buyer, $po);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->patchJson("/api/shipments/{$shipmentId}", [
+                'lockVersion' => 1,
+                'notes' => 'Requester cannot edit shipment notes.',
+            ])
+            ->assertForbidden();
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/shipments/{$shipmentId}/tracking-events", [
+                'status' => 'in_transit',
+                'occurredAt' => now()->toISOString(),
+            ])
+            ->assertForbidden();
+
+        $this->actingAsTenant($tenant, $requester)
+            ->patchJson("/api/shipments/{$shipmentId}/lines/{$shipmentLineId}/backorder", [
+                'backorderQuantity' => '1.0000',
+            ])
+            ->assertForbidden();
+
+        $this->actingAsTenant($tenant, $requester)
+            ->deleteJson("/api/shipments/{$shipmentId}", [
+                'lockVersion' => 1,
+            ])
+            ->assertForbidden();
+    }
+
     public function test_cancel_delivered_shipment_is_rejected(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
@@ -346,6 +411,32 @@ class FulfillmentApiTest extends TestCase
         ])->save();
 
         return $po->fresh('lines');
+    }
+
+    private function attachRequesterToPurchaseOrder(Tenant $tenant, PurchaseOrder $po): User
+    {
+        $requester = User::factory()->create(['password' => Hash::make('secret123')]);
+        $tenant->users()->attach($requester->id, ['role' => TenantRole::Requester->value]);
+
+        $requisition = Requisition::query()->create([
+            'tenant_id' => $tenant->id,
+            'requester_id' => $requester->id,
+            'number' => 'REQ-2026-'.Str::upper(Str::random(6)),
+            'title' => 'Requester-owned warehouse racking',
+            'business_justification' => 'Needed for warehouse capacity.',
+            'needed_by_date' => Carbon::today()->addWeeks(2)->toDateString(),
+            'department' => 'Operations',
+            'currency' => 'MYR',
+            'status' => 'approved',
+            'submitted_at' => now(),
+            'approved_at' => now(),
+            'approved_by_id' => $po->approved_by_user_id,
+        ]);
+
+        $po->forceFill(['requisition_id' => $requisition->id])->save();
+        $po->handoff?->forceFill(['requisition_id' => $requisition->id])->save();
+
+        return $requester;
     }
 
     private function purchaseOrder(Tenant $tenant, User $buyer, string $status = 'draft', int $lockVersion = 1): PurchaseOrder
