@@ -23,6 +23,8 @@ class ReceivingNumber
                     'tenant_id' => $purchaseOrder->tenant_id,
                     'year' => $year,
                     'last_sequence' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
 
                 return 1;
@@ -32,7 +34,10 @@ class ReceivingNumber
 
             DB::table('goods_receipt_sequences')
                 ->where('id', $sequence->id)
-                ->update(['last_sequence' => $nextSeq]);
+                ->update([
+                    'last_sequence' => $nextSeq,
+                    'updated_at' => now(),
+                ]);
 
             return $nextSeq;
         });

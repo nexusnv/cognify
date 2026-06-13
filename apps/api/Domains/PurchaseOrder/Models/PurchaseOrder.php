@@ -5,6 +5,7 @@ namespace Domains\PurchaseOrder\Models;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\Fulfillment\Models\Shipment;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
@@ -433,6 +434,14 @@ class PurchaseOrder extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(PurchaseOrderLine::class)->orderBy('line_number');
+    }
+
+    /**
+     * @return HasMany<Shipment, $this>
+     */
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class)->orderByDesc('shipment_date')->orderByDesc('id');
     }
 
     /**

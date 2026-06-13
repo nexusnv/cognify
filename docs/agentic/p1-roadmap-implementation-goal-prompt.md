@@ -179,4 +179,4 @@ For each remaining P1 feature, execute this exact sequence.
 - Do not use mock-only verification for completed production workflows.
 - Do not run destructive git commands unless explicitly approved.
 - run `pnpm dev:reset` to reset postgres database and reseed the tables and run the api and web server.
-- Complete web test suit will take quite lengthy to completely run all the test, so whenever posible, opt for narrowed test.
+- Complete web test suite will take quite lengthy to completely run all the tests, so whenever possible, opt for narrowed tests.

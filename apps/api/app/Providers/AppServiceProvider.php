@@ -14,6 +14,8 @@ use Domains\Approval\SubjectHandlers\RequisitionApprovalSubjectHandler;
 use Domains\Approval\SubjectHandlers\RfqAwardRecommendationApprovalSubjectHandler;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
+use Domains\Fulfillment\Models\Shipment;
+use Domains\Fulfillment\Policies\ShipmentPolicy;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Policies\SupplierInvoicePolicy;
 use Domains\Project\Models\ProcurementProject;
@@ -79,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ApprovalTask::class, ApprovalTaskPolicy::class);
         Gate::policy(GoodsReceipt::class, GoodsReceiptPolicy::class);
         Gate::policy(SupplierInvoice::class, SupplierInvoicePolicy::class);
+        Gate::policy(Shipment::class, ShipmentPolicy::class);
 
         AuditSubject::registerType(ApprovalTask::class, 'approval_task');
         AuditSubject::registerType(SupplierInvoice::class, 'supplier_invoice');

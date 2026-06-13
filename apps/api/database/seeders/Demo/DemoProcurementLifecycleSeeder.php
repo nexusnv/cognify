@@ -20,6 +20,11 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use Domains\Attachment\Models\Attachment;
 use Domains\Collaboration\Models\CollaborationComment;
+use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
+use Domains\Fulfillment\Models\Shipment;
+use Domains\Fulfillment\Models\ShipmentLine;
+use Domains\Fulfillment\States\FulfillmentTrackingEventStatus;
+use Domains\Fulfillment\States\ShipmentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceLine;
 use Domains\Invoice\States\SupplierInvoiceStatus;
@@ -125,6 +130,7 @@ class DemoProcurementLifecycleSeeder
 
         $this->seedGoodsReceipts($context, $tenant, $buyer);
         $this->seedSupplierInvoices($tenant, $buyer);
+        $this->seedFulfillment($context, $tenant, $buyer);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -1685,9 +1691,10 @@ class DemoProcurementLifecycleSeeder
 
                 foreach ($po->lines as $line) {
                     $remaining = bcsub($line->quantity, $line->cumulative_quantity_received, 4);
+                    $newCumulative = bcadd($line->cumulative_quantity_received, $remaining, 4);
 
                     $linesData2[] = $this->demoReceiptLineData($receipt2, $line, $remaining, $remaining);
-                    $this->updateDemoLineCumulatives($line, $remaining, $remaining, '2026-06-14');
+                    $this->updateDemoLineCumulatives($line, $newCumulative, $newCumulative, '2026-06-14');
                 }
 
                 $this->createDemoReceiptLines($linesData2);
@@ -1829,6 +1836,164 @@ class DemoProcurementLifecycleSeeder
 
         if ($attachment->trashed()) {
             $attachment->restore();
+        }
+    }
+
+    private function seedFulfillment(DemoSeedContext $context, Tenant $tenant, User $buyer): void
+    {
+        $scenarios = [
+            [
+                'poKey' => 'issued',
+                'shipmentNumber' => 'SH-2026-000001',
+                'status' => ShipmentStatus::Delivered,
+                'carrier' => 'DHL Supply Chain',
+                'trackingReference' => 'DHL-PO-ISSUED-001',
+                'shipmentDate' => '2026-06-10',
+                'estimatedArrivalDate' => '2026-06-12',
+                'actualDeliveryDate' => '2026-06-12',
+                'backorderQuantity' => '0.0000',
+                'backorderExpectedAt' => null,
+                'events' => [
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Shipped,
+                        'occurredAt' => '2026-06-10 08:00:00',
+                        'location' => 'Shah Alam consolidation hub',
+                        'notes' => 'Shipment loaded for final dispatch.',
+                    ],
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Delivered,
+                        'occurredAt' => '2026-06-12 10:00:00',
+                        'location' => 'Acme receiving dock',
+                        'notes' => 'Delivered and signed by facilities receiving.',
+                    ],
+                ],
+            ],
+            [
+                'poKey' => 'issued-pending-change',
+                'shipmentNumber' => 'SH-2026-000002',
+                'status' => ShipmentStatus::InTransit,
+                'carrier' => 'Ninja Van Freight',
+                'trackingReference' => 'NV-PO-CHANGE-002',
+                'shipmentDate' => '2026-06-12',
+                'estimatedArrivalDate' => '2026-06-15',
+                'actualDeliveryDate' => null,
+                'backorderQuantity' => '4.0000',
+                'backorderExpectedAt' => '2026-07-18',
+                'events' => [
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Shipped,
+                        'occurredAt' => '2026-06-12 09:00:00',
+                        'location' => 'Supplier export yard',
+                        'notes' => 'Partial release approved after change-order routing.',
+                    ],
+                    [
+                        'status' => FulfillmentTrackingEventStatus::InTransit,
+                        'occurredAt' => '2026-06-13 18:30:00',
+                        'location' => 'Port Klang',
+                        'notes' => 'Container transferred to domestic haulage.',
+                    ],
+                ],
+            ],
+            [
+                'poKey' => 'issued-delivery-change',
+                'shipmentNumber' => 'SH-2026-000003',
+                'status' => ShipmentStatus::Delayed,
+                'carrier' => 'Harbor Logistics',
+                'trackingReference' => 'HB-PO-DELAY-003',
+                'shipmentDate' => '2026-06-11',
+                'estimatedArrivalDate' => '2026-06-13',
+                'actualDeliveryDate' => null,
+                'backorderQuantity' => '0.0000',
+                'backorderExpectedAt' => null,
+                'events' => [
+                    [
+                        'status' => FulfillmentTrackingEventStatus::Delayed,
+                        'occurredAt' => '2026-06-14 14:15:00',
+                        'location' => 'Johor distribution hub',
+                        'notes' => 'Weather-related ferry delay pushed delivery by 48 hours.',
+                    ],
+                ],
+            ],
+            [
+                'poKey' => 'acknowledged',
+                'shipmentNumber' => 'SH-2026-000004',
+                'status' => ShipmentStatus::Confirmed,
+                'carrier' => 'Greenline Fleet',
+                'trackingReference' => 'GL-PO-ACK-004',
+                'shipmentDate' => '2026-06-13',
+                'estimatedArrivalDate' => '2026-06-16',
+                'actualDeliveryDate' => null,
+                'backorderQuantity' => '0.0000',
+                'backorderExpectedAt' => null,
+                'events' => [],
+            ],
+        ];
+
+        foreach ($scenarios as $scenario) {
+            $purchaseOrder = $context->purchaseOrders->get($scenario['poKey'])?->fresh()->load('lines');
+
+            if (! $purchaseOrder instanceof PurchaseOrder) {
+                continue;
+            }
+
+            $line = $purchaseOrder->lines()->orderBy('line_number')->first();
+
+            if (! $line instanceof PurchaseOrderLine) {
+                continue;
+            }
+
+            $quantityDelivered = match ($scenario['poKey']) {
+                'issued' => (string) $line->quantity,
+                'issued-pending-change', 'acknowledged' => (string) $line->cumulative_quantity_received,
+                default => '0.0000',
+            };
+
+            $shipment = Shipment::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'number' => $scenario['shipmentNumber']],
+                [
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'status' => $scenario['status'],
+                    'carrier_name' => $scenario['carrier'],
+                    'tracking_reference' => $scenario['trackingReference'],
+                    'shipment_date' => $scenario['shipmentDate'],
+                    'estimated_arrival_date' => $scenario['estimatedArrivalDate'],
+                    'actual_delivery_date' => $scenario['actualDeliveryDate'],
+                    'notes' => 'Seeded fulfillment shipment for demo.',
+                    'created_by_user_id' => $buyer->id,
+                    'lock_version' => 1,
+                ],
+            );
+
+            ShipmentLine::query()->updateOrCreate(
+                ['shipment_id' => $shipment->id, 'purchase_order_line_id' => $line->id],
+                [
+                    'tenant_id' => $tenant->id,
+                    'line_number' => $line->line_number,
+                    'quantity_shipped' => (string) $line->quantity,
+                    'quantity_delivered' => $quantityDelivered,
+                    'backorder_quantity' => $scenario['backorderQuantity'],
+                    'backorder_expected_at' => $scenario['backorderExpectedAt'],
+                    'notes' => $scenario['backorderQuantity'] !== '0.0000'
+                        ? 'Backorder seeded for fulfillment demo.'
+                        : 'Seeded shipment line for fulfillment demo.',
+                ],
+            );
+
+            foreach ($scenario['events'] as $eventData) {
+                FulfillmentTrackingEvent::query()->updateOrCreate(
+                    [
+                        'shipment_id' => $shipment->id,
+                        'status' => $eventData['status'],
+                        'occurred_at' => $eventData['occurredAt'],
+                    ],
+                    [
+                        'tenant_id' => $tenant->id,
+                        'location' => $eventData['location'],
+                        'notes' => $eventData['notes'],
+                        'created_by_user_id' => $buyer->id,
+                    ],
+                );
+            }
         }
     }
 

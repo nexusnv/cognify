@@ -52,10 +52,10 @@ export const purchaseOrderGoodsReceiptHandlers = [
       buyerConfirmedByUserId: null,
       buyerConfirmedAt: null,
       lockVersion: 1,
-      lines: body.lines.map((line) => ({
+      lines: body.lines.map((line, index) => ({
         id: `gr-line-${goodsReceiptLineIdCounter++}`,
         purchaseOrderLineId: line.purchaseOrderLineId,
-        lineNumber: 1,
+        lineNumber: index + 1,
         quantityOrdered: "10.0000",
         quantityReceived: line.quantityReceived,
         quantityAccepted: line.quantityAccepted ?? line.quantityReceived,

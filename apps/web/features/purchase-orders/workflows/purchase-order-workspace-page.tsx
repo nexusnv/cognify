@@ -6,6 +6,7 @@ import { PurchaseOrderActions } from "../components/purchase-order-actions";
 import { PurchaseOrderChangeOrderPanel } from "../components/purchase-order-change-order-panel";
 import { PurchaseOrderApprovalPanel } from "../components/purchase-order-approval-panel";
 import { PurchaseOrderDetailCard } from "../components/purchase-order-detail-card";
+import { PurchaseOrderFulfillmentPanel } from "../components/purchase-order-fulfillment-panel";
 import { PurchaseOrderGoodsReceiptPanel } from "../components/purchase-order-goods-receipt-panel";
 import { PurchaseOrderLinesTable } from "../components/purchase-order-lines-table";
 import { PurchaseOrderSupplierInvoicePanel } from "../components/purchase-order-supplier-invoice-panel";
@@ -29,6 +30,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
   }
 
   const canShowChangeOrders = ["issued", "acknowledged", "change_pending", "cancelled"].includes(purchaseOrder.status);
+  const canShowFulfillment = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
   const canShowGoodsReceipts = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
   const canShowSupplierInvoices = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
 
@@ -48,6 +50,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
         { id: "overview", label: "Overview" },
         { id: "lines", label: "Lines" },
         ...(canShowChangeOrders ? [{ id: "change-orders", label: "Change orders" }] : []),
+        ...(canShowFulfillment ? [{ id: "fulfillment", label: "Fulfillment" }] : []),
         ...(canShowGoodsReceipts ? [{ id: "goods-receipts", label: "Goods receipt" }] : []),
         ...(canShowSupplierInvoices ? [{ id: "supplier-invoices", label: "Supplier invoices" }] : []),
         { id: "draft-fields", label: "Draft fields" },
@@ -81,6 +84,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
       <PurchaseOrderDetailCard purchaseOrder={purchaseOrder} />
       <PurchaseOrderLinesTable lines={purchaseOrder.lines} currency={purchaseOrder.currency} />
       {canShowChangeOrders ? <PurchaseOrderChangeOrderPanel purchaseOrder={purchaseOrder} /> : null}
+      {canShowFulfillment ? <PurchaseOrderFulfillmentPanel purchaseOrder={purchaseOrder} /> : null}
       {canShowGoodsReceipts ? <PurchaseOrderGoodsReceiptPanel purchaseOrder={purchaseOrder} /> : null}
       {canShowSupplierInvoices ? <PurchaseOrderSupplierInvoicePanel purchaseOrder={purchaseOrder} /> : null}
       <PurchaseOrderApprovalPanel purchaseOrder={purchaseOrder} />

@@ -28,6 +28,8 @@ class GoodsReceiptController
 
     public function index(PurchaseOrder $purchaseOrder): ResourceCollection
     {
+        $this->authorize('view', $purchaseOrder);
+
         $receipts = GoodsReceipt::query()
             ->where('tenant_id', $purchaseOrder->tenant_id)
             ->where('purchase_order_id', $purchaseOrder->id)
@@ -40,6 +42,8 @@ class GoodsReceiptController
 
     public function store(RecordGoodsReceiptRequest $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
+        $this->authorize('recordGoodsReceipt', $purchaseOrder);
+
         try {
             $receipt = $this->recordGoodsReceipt->handle(
                 purchaseOrder: $purchaseOrder,

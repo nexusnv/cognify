@@ -20,4 +20,5 @@ export interface PurchaseOrderPermissions {
   canRecordGoodsReceipt: boolean;
   canConfirmGoodsReceipt: boolean;
   canCaptureInvoice: boolean;
+  canCreateShipment: boolean;
 }
