@@ -8058,6 +8058,39 @@
         }
       }
     },
+    "/api/supplier-invoices/{supplierInvoice}": {
+      "get": {
+        "operationId": "showSupplierInvoice",
+        "tags": ["Purchase Orders"],
+        "summary": "Show a supplier invoice",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier invoice detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/api/goods-receipts/{goodsReceipt}/confirm-requester": {
       "post": {
         "operationId": "confirmGoodsReceiptRequester",
@@ -8100,6 +8133,139 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/purchase-orders/{purchaseOrder}/supplier-invoices": {
+      "get": {
+        "operationId": "listSupplierInvoices",
+        "tags": ["Purchase Orders"],
+        "summary": "List supplier invoices for a purchase order",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of supplier invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceListResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "createSupplierInvoice",
+        "tags": ["Purchase Orders"],
+        "summary": "Capture a supplier invoice",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "$ref": "#/components/parameters/PurchaseOrderId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CaptureSupplierInvoiceRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Supplier invoice captured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/attachments": {
+      "get": {
+        "operationId": "listSupplierInvoiceAttachments",
+        "summary": "List supplier invoice attachments",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier invoice attachments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "uploadSupplierInvoiceAttachment",
+        "summary": "Upload a supplier invoice attachment",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Supplier invoice attachment uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
         }
       }
     },
@@ -9216,7 +9382,8 @@
             "type": "string",
             "enum": [
               "requisition",
-              "quotation"
+              "quotation",
+              "supplier_invoice"
             ]
           },
           "parentId": {
@@ -20728,7 +20895,8 @@
           "canSubmitChangeOrder",
           "canCancelChangeOrder",
           "canRecordGoodsReceipt",
-          "canConfirmGoodsReceipt"
+          "canConfirmGoodsReceipt",
+          "canCaptureInvoice"
         ],
         "properties": {
           "canUpdate": {
@@ -20768,6 +20936,9 @@
             "type": "boolean"
           },
           "canConfirmGoodsReceipt": {
+            "type": "boolean"
+          },
+          "canCaptureInvoice": {
             "type": "boolean"
           }
         }
@@ -21242,7 +21413,8 @@
           "lockVersion",
           "permissions",
           "changeOrdersSummary",
-          "receivingSummary"
+          "receivingSummary",
+          "invoiceSummary"
         ],
         "properties": {
           "id": {
@@ -21465,6 +21637,9 @@
           },
           "receivingSummary": {
             "$ref": "#/components/schemas/PurchaseOrderReceivingSummary"
+          },
+          "invoiceSummary": {
+            "$ref": "#/components/schemas/PurchaseOrderInvoiceSummary"
           }
         }
       },
@@ -21494,6 +21669,336 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/PurchaseOrder"
+          }
+        }
+      },
+      "PurchaseOrderInvoiceSummary": {
+        "type": "object",
+        "required": [
+          "totalInvoiceCount",
+          "latestInvoiceDate",
+          "totalInvoicedAmount",
+          "currency"
+        ],
+        "properties": {
+          "totalInvoiceCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "latestInvoiceDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "totalInvoicedAmount": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          }
+        }
+      },
+      "SupplierInvoice": {
+        "type": "object",
+        "required": [
+          "id",
+          "purchaseOrderId",
+          "vendorId",
+          "number",
+          "invoiceNumber",
+          "status",
+          "invoiceDate",
+          "dueDate",
+          "currency",
+          "subtotalAmount",
+          "taxAmount",
+          "freightAmount",
+          "totalAmount",
+          "notes",
+          "capturedByUserId",
+          "capturedAt",
+          "lines",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purchaseOrderId": {
+            "type": "string"
+          },
+          "vendorId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "number": {
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "captured"
+            ]
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "subtotalAmount": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "freightAmount": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capturedByUserId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capturedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierInvoiceLine"
+            }
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "SupplierInvoiceLine": {
+        "type": "object",
+        "required": [
+          "id",
+          "purchaseOrderLineId",
+          "lineNumber",
+          "descriptionSnapshot",
+          "quantityOrdered",
+          "quantityInvoiced",
+          "unitPrice",
+          "lineSubtotal",
+          "notes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purchaseOrderLineId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "descriptionSnapshot": {
+            "type": "string"
+          },
+          "quantityOrdered": {
+            "type": "string"
+          },
+          "quantityInvoiced": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "lineSubtotal": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SupplierInvoiceListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierInvoice"
+            }
+          }
+        }
+      },
+      "SupplierInvoiceResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SupplierInvoice"
+          }
+        }
+      },
+      "CaptureSupplierInvoiceRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "invoiceNumber",
+          "invoiceDate",
+          "lines"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9\\-_.\\/ ]{0,99}$"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "taxAmount": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,14}(?:\\.\\d{1,4})?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "freightAmount": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,14}(?:\\.\\d{1,4})?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "purchaseOrderLineId",
+                "quantityInvoiced",
+                "unitPrice"
+              ],
+              "properties": {
+                "purchaseOrderLineId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantityInvoiced": {
+                  "type": "string",
+                  "pattern": "^(?=.*[1-9])\\d{1,14}(?:\\.\\d{1,4})?$"
+                },
+                "unitPrice": {
+                  "type": "string",
+                  "pattern": "^\\d{1,14}(?:\\.\\d{1,4})?$"
+                },
+                "notes": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       },

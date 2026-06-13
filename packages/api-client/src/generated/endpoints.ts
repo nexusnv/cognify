@@ -30,6 +30,7 @@ import type {
   CancelPurchaseOrderRequest,
   CancelPurchaseOrderRequestHandoffRequest,
   CancelRfqInvitationRequest,
+  CaptureSupplierInvoiceRequest,
   CollaborationCommentListResponse,
   CollaborationCommentResponse,
   CollaborationMentionCandidateListResponse,
@@ -145,6 +146,8 @@ import type {
   SubmitPurchaseOrderChangeOrderRequest,
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
+  SupplierInvoiceListResponse,
+  SupplierInvoiceResponse,
   SystemStatusResponse,
   TooManyRequestsResponse,
   TransitionProcurementProjectRequest,
@@ -10230,6 +10233,64 @@ export const showGoodsReceipt = async (
 };
 
 /**
+ * @summary Show a supplier invoice
+ */
+export type showSupplierInvoiceResponse200 = {
+  data: SupplierInvoiceResponse;
+  status: 200;
+};
+
+export type showSupplierInvoiceResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type showSupplierInvoiceResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showSupplierInvoiceResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type showSupplierInvoiceResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type showSupplierInvoiceResponseSuccess = showSupplierInvoiceResponse200 & {
+  headers: Headers;
+};
+export type showSupplierInvoiceResponseError = (
+  | showSupplierInvoiceResponse400
+  | showSupplierInvoiceResponse401
+  | showSupplierInvoiceResponse403
+  | showSupplierInvoiceResponse404
+) & {
+  headers: Headers;
+};
+
+export type showSupplierInvoiceResponse =
+  | showSupplierInvoiceResponseSuccess
+  | showSupplierInvoiceResponseError;
+
+export const getShowSupplierInvoiceUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}`;
+};
+
+export const showSupplierInvoice = async (
+  supplierInvoice: string,
+  options?: RequestInit,
+): Promise<showSupplierInvoiceResponse> => {
+  return cognifyFetch<showSupplierInvoiceResponse>(getShowSupplierInvoiceUrl(supplierInvoice), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
  * @summary Confirm goods receipt as requester
  */
 export type confirmGoodsReceiptRequesterResponse200 = {
@@ -10290,6 +10351,258 @@ export const confirmGoodsReceiptRequester = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(confirmGoodsReceiptRequest),
+    },
+  );
+};
+
+/**
+ * @summary List supplier invoices for a purchase order
+ */
+export type listSupplierInvoicesResponse200 = {
+  data: SupplierInvoiceListResponse;
+  status: 200;
+};
+
+export type listSupplierInvoicesResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listSupplierInvoicesResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listSupplierInvoicesResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listSupplierInvoicesResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listSupplierInvoicesResponseSuccess = listSupplierInvoicesResponse200 & {
+  headers: Headers;
+};
+export type listSupplierInvoicesResponseError = (
+  | listSupplierInvoicesResponse400
+  | listSupplierInvoicesResponse401
+  | listSupplierInvoicesResponse403
+  | listSupplierInvoicesResponse404
+) & {
+  headers: Headers;
+};
+
+export type listSupplierInvoicesResponse =
+  | listSupplierInvoicesResponseSuccess
+  | listSupplierInvoicesResponseError;
+
+export const getListSupplierInvoicesUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/supplier-invoices`;
+};
+
+export const listSupplierInvoices = async (
+  purchaseOrder: string,
+  options?: RequestInit,
+): Promise<listSupplierInvoicesResponse> => {
+  return cognifyFetch<listSupplierInvoicesResponse>(getListSupplierInvoicesUrl(purchaseOrder), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Capture a supplier invoice
+ */
+export type createSupplierInvoiceResponse201 = {
+  data: SupplierInvoiceResponse;
+  status: 201;
+};
+
+export type createSupplierInvoiceResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type createSupplierInvoiceResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createSupplierInvoiceResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createSupplierInvoiceResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type createSupplierInvoiceResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type createSupplierInvoiceResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createSupplierInvoiceResponseSuccess = createSupplierInvoiceResponse201 & {
+  headers: Headers;
+};
+export type createSupplierInvoiceResponseError = (
+  | createSupplierInvoiceResponse400
+  | createSupplierInvoiceResponse401
+  | createSupplierInvoiceResponse403
+  | createSupplierInvoiceResponse404
+  | createSupplierInvoiceResponse409
+  | createSupplierInvoiceResponse422
+) & {
+  headers: Headers;
+};
+
+export type createSupplierInvoiceResponse =
+  | createSupplierInvoiceResponseSuccess
+  | createSupplierInvoiceResponseError;
+
+export const getCreateSupplierInvoiceUrl = (purchaseOrder: string) => {
+  return `/api/purchase-orders/${purchaseOrder}/supplier-invoices`;
+};
+
+export const createSupplierInvoice = async (
+  purchaseOrder: string,
+  captureSupplierInvoiceRequest: CaptureSupplierInvoiceRequest,
+  options?: RequestInit,
+): Promise<createSupplierInvoiceResponse> => {
+  return cognifyFetch<createSupplierInvoiceResponse>(getCreateSupplierInvoiceUrl(purchaseOrder), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(captureSupplierInvoiceRequest),
+  });
+};
+
+/**
+ * @summary List supplier invoice attachments
+ */
+export type listSupplierInvoiceAttachmentsResponse200 = {
+  data: AttachmentListResponse;
+  status: 200;
+};
+
+export type listSupplierInvoiceAttachmentsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listSupplierInvoiceAttachmentsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listSupplierInvoiceAttachmentsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type listSupplierInvoiceAttachmentsResponseSuccess =
+  listSupplierInvoiceAttachmentsResponse200 & {
+    headers: Headers;
+  };
+export type listSupplierInvoiceAttachmentsResponseError = (
+  | listSupplierInvoiceAttachmentsResponse401
+  | listSupplierInvoiceAttachmentsResponse403
+  | listSupplierInvoiceAttachmentsResponse404
+) & {
+  headers: Headers;
+};
+
+export type listSupplierInvoiceAttachmentsResponse =
+  | listSupplierInvoiceAttachmentsResponseSuccess
+  | listSupplierInvoiceAttachmentsResponseError;
+
+export const getListSupplierInvoiceAttachmentsUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/attachments`;
+};
+
+export const listSupplierInvoiceAttachments = async (
+  supplierInvoice: string,
+  options?: RequestInit,
+): Promise<listSupplierInvoiceAttachmentsResponse> => {
+  return cognifyFetch<listSupplierInvoiceAttachmentsResponse>(
+    getListSupplierInvoiceAttachmentsUrl(supplierInvoice),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Upload a supplier invoice attachment
+ */
+export type uploadSupplierInvoiceAttachmentResponse201 = {
+  data: AttachmentResponse;
+  status: 201;
+};
+
+export type uploadSupplierInvoiceAttachmentResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type uploadSupplierInvoiceAttachmentResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type uploadSupplierInvoiceAttachmentResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type uploadSupplierInvoiceAttachmentResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type uploadSupplierInvoiceAttachmentResponseSuccess =
+  uploadSupplierInvoiceAttachmentResponse201 & {
+    headers: Headers;
+  };
+export type uploadSupplierInvoiceAttachmentResponseError = (
+  | uploadSupplierInvoiceAttachmentResponse401
+  | uploadSupplierInvoiceAttachmentResponse403
+  | uploadSupplierInvoiceAttachmentResponse404
+  | uploadSupplierInvoiceAttachmentResponse422
+) & {
+  headers: Headers;
+};
+
+export type uploadSupplierInvoiceAttachmentResponse =
+  | uploadSupplierInvoiceAttachmentResponseSuccess
+  | uploadSupplierInvoiceAttachmentResponseError;
+
+export const getUploadSupplierInvoiceAttachmentUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/attachments`;
+};
+
+export const uploadSupplierInvoiceAttachment = async (
+  supplierInvoice: string,
+  attachmentUploadRequest: AttachmentUploadRequest,
+  options?: RequestInit,
+): Promise<uploadSupplierInvoiceAttachmentResponse> => {
+  const formData = buildFormData(attachmentUploadRequest);
+  return cognifyFetch<uploadSupplierInvoiceAttachmentResponse>(
+    getUploadSupplierInvoiceAttachmentUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
     },
   );
 };
