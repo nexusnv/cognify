@@ -28,6 +28,7 @@ import type { PurchaseOrderPermissions } from "./purchaseOrderPermissions";
 import type { PurchaseOrderSupplierIssue } from "./purchaseOrderSupplierIssue";
 import type { PurchaseOrderChangeOrdersSummary } from "./purchaseOrderChangeOrdersSummary";
 import type { PurchaseOrderReceivingSummary } from "./purchaseOrderReceivingSummary";
+import type { PurchaseOrderInvoiceSummary } from "./purchaseOrderInvoiceSummary";
 
 export interface PurchaseOrder {
   id: string;
@@ -65,4 +66,5 @@ export interface PurchaseOrder {
   supplierIssue: PurchaseOrderSupplierIssue;
   changeOrdersSummary: PurchaseOrderChangeOrdersSummary;
   receivingSummary: PurchaseOrderReceivingSummary;
+  invoiceSummary: PurchaseOrderInvoiceSummary;
 }

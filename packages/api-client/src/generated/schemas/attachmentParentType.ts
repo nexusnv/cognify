@@ -11,4 +11,5 @@ export type AttachmentParentType = (typeof AttachmentParentType)[keyof typeof At
 export const AttachmentParentType = {
   requisition: "requisition",
   quotation: "quotation",
+  supplier_invoice: "supplier_invoice",
 } as const;

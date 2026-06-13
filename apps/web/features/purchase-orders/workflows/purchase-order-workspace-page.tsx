@@ -9,6 +9,7 @@ import { PurchaseOrderDetailCard } from "../components/purchase-order-detail-car
 import { PurchaseOrderFulfillmentPanel } from "../components/purchase-order-fulfillment-panel";
 import { PurchaseOrderGoodsReceiptPanel } from "../components/purchase-order-goods-receipt-panel";
 import { PurchaseOrderLinesTable } from "../components/purchase-order-lines-table";
+import { PurchaseOrderSupplierInvoicePanel } from "../components/purchase-order-supplier-invoice-panel";
 import { PurchaseOrderSupplierIssuePanel } from "../components/purchase-order-supplier-issue-panel";
 import { usePurchaseOrder } from "../hooks/use-purchase-order";
 
@@ -31,6 +32,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
   const canShowChangeOrders = ["issued", "acknowledged", "change_pending", "cancelled"].includes(purchaseOrder.status);
   const canShowFulfillment = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
   const canShowGoodsReceipts = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
+  const canShowSupplierInvoices = ["issued", "acknowledged", "change_pending"].includes(purchaseOrder.status);
 
   return (
     <WorkflowStateLayout
@@ -50,6 +52,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
         ...(canShowChangeOrders ? [{ id: "change-orders", label: "Change orders" }] : []),
         ...(canShowFulfillment ? [{ id: "fulfillment", label: "Fulfillment" }] : []),
         ...(canShowGoodsReceipts ? [{ id: "goods-receipts", label: "Goods receipt" }] : []),
+        ...(canShowSupplierInvoices ? [{ id: "supplier-invoices", label: "Supplier invoices" }] : []),
         { id: "draft-fields", label: "Draft fields" },
       ]}
       sidebar={
@@ -83,6 +86,7 @@ export function PurchaseOrderWorkspacePage({ purchaseOrderId }: { purchaseOrderI
       {canShowChangeOrders ? <PurchaseOrderChangeOrderPanel purchaseOrder={purchaseOrder} /> : null}
       {canShowFulfillment ? <PurchaseOrderFulfillmentPanel purchaseOrder={purchaseOrder} /> : null}
       {canShowGoodsReceipts ? <PurchaseOrderGoodsReceiptPanel purchaseOrder={purchaseOrder} /> : null}
+      {canShowSupplierInvoices ? <PurchaseOrderSupplierInvoicePanel purchaseOrder={purchaseOrder} /> : null}
       <PurchaseOrderApprovalPanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderSupplierIssuePanel purchaseOrder={purchaseOrder} />
       <PurchaseOrderActions purchaseOrder={purchaseOrder} />

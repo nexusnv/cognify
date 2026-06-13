@@ -3,6 +3,7 @@
 namespace Domains\Attachment\Http\Resources;
 
 use Domains\Attachment\Models\Attachment;
+use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Quotation\Models\Quotation;
 use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\Request;
@@ -27,7 +28,9 @@ class AttachmentResource extends JsonResource
             'id' => (string) $attachment->id,
             'parentType' => $attachment->attachable_type === Requisition::class
                 ? 'requisition'
-                : ($attachment->attachable_type === Quotation::class ? 'quotation' : 'unknown'),
+                : ($attachment->attachable_type === Quotation::class
+                    ? 'quotation'
+                    : ($attachment->attachable_type === SupplierInvoice::class ? 'supplier_invoice' : 'unknown')),
             'parentId' => (string) $attachment->attachable_id,
             'filename' => $attachment->original_filename,
             'mimeType' => $attachment->mime_type,

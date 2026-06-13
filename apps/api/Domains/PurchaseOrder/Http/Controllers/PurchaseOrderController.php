@@ -50,7 +50,7 @@ class PurchaseOrderController extends Controller
 
         $query = PurchaseOrder::query()
             ->where('tenant_id', $tenant->id)
-            ->with('lines');
+            ->with(['lines', 'goodsReceipts', 'supplierInvoices']);
 
         $query
             ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
@@ -258,7 +258,7 @@ class PurchaseOrderController extends Controller
         $tenantPurchaseOrder = PurchaseOrder::query()
             ->where('tenant_id', $tenant->id)
             ->whereKey($purchaseOrder->id)
-            ->with(['lines', 'currentChangeOrder', 'changeOrders'])
+            ->with(['lines', 'currentChangeOrder', 'changeOrders', 'goodsReceipts', 'supplierInvoices'])
             ->first();
 
         if ($tenantPurchaseOrder === null) {

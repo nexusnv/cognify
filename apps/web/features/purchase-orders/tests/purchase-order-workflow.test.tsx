@@ -258,6 +258,7 @@ describe("purchase order workflow", () => {
         canCreateShipment: true,
         canRecordGoodsReceipt: true,
         canConfirmGoodsReceipt: true,
+        canCaptureInvoice: true,
       },
       lines: [
         {

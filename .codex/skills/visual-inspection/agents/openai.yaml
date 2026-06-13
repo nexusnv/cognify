@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visual Inspection"
+  short_description: "Run Cognify UI screenshot review"
+  default_prompt: "Use $visual-inspection to inspect Cognify UI changes before completion."

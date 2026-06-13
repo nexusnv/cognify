@@ -10,6 +10,7 @@ use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Receiving\Models\GoodsReceipt;
+use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
@@ -457,6 +458,14 @@ class PurchaseOrder extends Model
     public function goodsReceipts(): HasMany
     {
         return $this->hasMany(GoodsReceipt::class);
+    }
+
+    /**
+     * @return HasMany<SupplierInvoice, $this>
+     */
+    public function supplierInvoices(): HasMany
+    {
+        return $this->hasMany(SupplierInvoice::class)->orderByDesc('invoice_date')->orderByDesc('created_at');
     }
 
     /**

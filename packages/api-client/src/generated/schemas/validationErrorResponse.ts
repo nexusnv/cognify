@@ -4,9 +4,8 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { ValidationError } from "./validationError";
+import type { ValidationErrorResponseError } from "./validationErrorResponseError";
 
-/**
- * Validation failure
- */
-export type ValidationErrorResponse = ValidationError;
+export type ValidationErrorResponse = {
+  error?: ValidationErrorResponseError;
+};

@@ -98,6 +98,17 @@ class PurchaseOrderPolicy
             && $this->buyerOrAdmin($user);
     }
 
+    public function captureInvoice(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->isTenantScoped($purchaseOrder->tenant_id)
+            && in_array($purchaseOrder->statusState(), [
+                PurchaseOrderStatus::Issued,
+                PurchaseOrderStatus::Acknowledged,
+                PurchaseOrderStatus::ChangePending,
+            ], true)
+            && $this->buyerOrAdmin($user);
+    }
+
     public function createShipment(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $this->isTenantScoped($purchaseOrder->tenant_id)

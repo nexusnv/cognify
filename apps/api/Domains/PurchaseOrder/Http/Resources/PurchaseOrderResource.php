@@ -113,6 +113,24 @@ class PurchaseOrderResource extends JsonResource
                     ? $purchaseOrder->lines->max('last_receipt_at')?->toDateString()
                     : null,
             ],
+            'invoiceSummary' => [
+                'totalInvoiceCount' => $purchaseOrder->relationLoaded('supplierInvoices')
+                    ? $purchaseOrder->supplierInvoices->count()
+                    : 0,
+                'latestInvoiceDate' => $purchaseOrder->relationLoaded('supplierInvoices')
+                    ? $purchaseOrder->supplierInvoices->max(fn ($invoice) => $invoice->invoice_date?->toDateString())
+                    : null,
+                'totalInvoicedAmount' => $purchaseOrder->relationLoaded('supplierInvoices')
+                    ? array_reduce(
+                        $purchaseOrder->supplierInvoices->pluck('total_amount')->all(),
+                        static fn (string $carry, string|int|float|null $value): string => $value === null
+                            ? $carry
+                            : bcadd($carry, (string) $value, 4),
+                        '0.0000',
+                    )
+                    : '0.0000',
+                'currency' => $purchaseOrder->currency,
+            ],
             'changeOrdersSummary' => [
                 'currentChangeOrder' => $purchaseOrder->relationLoaded('currentChangeOrder') && $purchaseOrder->currentChangeOrder instanceof PurchaseOrderChangeOrder
                     ? [
@@ -174,6 +192,9 @@ class PurchaseOrderResource extends JsonResource
                 'canRecordGoodsReceipt' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
                     && $user !== null
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),
+                'canCaptureInvoice' => in_array($status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Acknowledged, PurchaseOrderStatus::ChangePending], true)
+                    && $user !== null
+                    && Gate::forUser($user)->check('captureInvoice', $purchaseOrder),
                 'canConfirmGoodsReceipt' => $user !== null
                     // Receipt-specific policies still decide whether the current actor can confirm each receipt.
                     && Gate::forUser($user)->check('recordGoodsReceipt', $purchaseOrder),

@@ -18,12 +18,17 @@ use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
+use Domains\Attachment\Models\Attachment;
 use Domains\Collaboration\Models\CollaborationComment;
 use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
 use Domains\Fulfillment\Models\Shipment;
 use Domains\Fulfillment\Models\ShipmentLine;
 use Domains\Fulfillment\States\FulfillmentTrackingEventStatus;
 use Domains\Fulfillment\States\ShipmentStatus;
+use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Models\SupplierInvoiceLine;
+use Domains\Invoice\States\SupplierInvoiceStatus;
+use Domains\Invoice\Support\SupplierInvoiceNumber;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -73,6 +78,7 @@ use Domains\Quotation\States\SourcingPath;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class DemoProcurementLifecycleSeeder
 {
@@ -123,6 +129,7 @@ class DemoProcurementLifecycleSeeder
         $this->seedPurchaseOrders($context, $tenant, $buyer, $finance, $purchaseOrderPolicy);
 
         $this->seedGoodsReceipts($context, $tenant, $buyer);
+        $this->seedSupplierInvoices($tenant, $buyer);
         $this->seedFulfillment($context, $tenant, $buyer);
     }
 
@@ -1739,6 +1746,96 @@ class DemoProcurementLifecycleSeeder
                     ],
                 ));
             }
+        }
+    }
+
+    private function seedSupplierInvoices(Tenant $tenant, User $buyer): void
+    {
+        $purchaseOrder = PurchaseOrder::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('number', 'PO-2026-SUSTAIN-ISSUED')
+            ->with('lines')
+            ->first();
+
+        if ($purchaseOrder === null) {
+            return;
+        }
+
+        $lineSource = $purchaseOrder->lines->take(2)->values();
+        $subtotalAmount = $lineSource->reduce(
+            fn (string $carry, $purchaseOrderLine): string => bcadd(
+                $carry,
+                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
+                4,
+            ),
+            '0.0000',
+        );
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-SUSTAIN-001'],
+            [
+                'purchase_order_id' => $purchaseOrder->id,
+                'vendor_id' => $purchaseOrder->vendor_id,
+                'invoice_number' => 'INV-2026-SUSTAIN-001',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-SUSTAIN-001'),
+                'status' => SupplierInvoiceStatus::Captured,
+                'invoice_date' => '2026-06-17',
+                'due_date' => '2026-07-17',
+                'currency' => $purchaseOrder->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded supplier invoice captured against the issued sustainable furniture PO.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-17 09:15:00',
+                'lock_version' => 1,
+            ],
+        );
+
+        $invoice->lines()->delete();
+
+        foreach ($lineSource as $index => $purchaseOrderLine) {
+            $quantity = $purchaseOrderLine->quantity;
+            $unitPrice = $purchaseOrderLine->unit_price;
+            SupplierInvoiceLine::query()->create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'purchase_order_line_id' => $purchaseOrderLine->id,
+                'line_number' => $index + 1,
+                'description_snapshot' => $purchaseOrderLine->description,
+                'quantity_ordered' => $purchaseOrderLine->quantity,
+                'quantity_invoiced' => $quantity,
+                'unit_price' => $unitPrice,
+                'line_subtotal' => bcmul((string) $quantity, (string) $unitPrice, 4),
+                'notes' => $index === 0 ? 'Matched to the first issued PO line.' : 'Matched to the second issued PO line.',
+            ]);
+        }
+
+        $attachmentPath = "tenants/{$tenant->id}/demo/invoices/inv-2026-sustain-001.pdf";
+        $attachmentContents = "Cognify local demo supplier invoice for PO-2026-SUSTAIN-ISSUED\n";
+        Storage::disk('local')->put($attachmentPath, $attachmentContents);
+
+        $attachment = Attachment::withTrashed()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'storage_disk' => 'local', 'storage_path' => $attachmentPath],
+            [
+                'tenant_id' => $tenant->id,
+                'attachable_type' => SupplierInvoice::class,
+                'attachable_id' => $invoice->id,
+                'uploaded_by' => $buyer->id,
+                'original_filename' => 'inv-2026-sustain-001.pdf',
+                'mime_type' => 'application/pdf',
+                'extension' => 'pdf',
+                'size_bytes' => strlen($attachmentContents),
+                'storage_disk' => 'local',
+                'storage_path' => $attachmentPath,
+                'checksum_sha256' => hash('sha256', $attachmentContents),
+                'previewable' => false,
+            ],
+        );
+
+        if ($attachment->trashed()) {
+            $attachment->restore();
         }
     }
 

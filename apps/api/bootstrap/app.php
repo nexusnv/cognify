@@ -4,6 +4,7 @@ use App\Exceptions\ApiErrorCode;
 use App\Exceptions\ApiErrorResponse;
 use App\Http\Middleware\AssignRequestId;
 use App\Tenancy\AmbiguousTenantException;
+use Domains\Invoice\Exceptions\DuplicateSupplierInvoiceException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -73,6 +74,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ConflictHttpException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
+            }
+
+            if ($exception instanceof DuplicateSupplierInvoiceException) {
+                return ApiErrorResponse::make(
+                    $request,
+                    ApiErrorCode::Conflict,
+                    $exception->getMessage(),
+                    409,
+                    ['matchingInvoice' => $exception->matchingInvoice],
+                );
             }
 
             return ApiErrorResponse::make($request, ApiErrorCode::Conflict, $exception->getMessage(), 409);

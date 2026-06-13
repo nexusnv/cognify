@@ -15,6 +15,7 @@ use Database\Seeders\Demo\DemoUserSeeder;
 use Domains\Demo\Models\DemoSeedRun;
 use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
 use Domains\Fulfillment\Models\Shipment;
+use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -59,6 +60,7 @@ class DatabaseSeeder extends Seeder
                         'purchase_orders' => $context->purchaseOrders->count(),
                         'shipments' => Shipment::query()->count(),
                         'fulfillment_tracking_events' => FulfillmentTrackingEvent::query()->count(),
+                        'supplier_invoices' => SupplierInvoice::query()->count(),
                     ],
                 ],
             );
