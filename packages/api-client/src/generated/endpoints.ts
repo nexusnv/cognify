@@ -72,6 +72,7 @@ import type {
   ListRequisitionsParams,
   ListShipmentTrackingEvents200,
   ListSourcingIntakeReviewsParams,
+  ListSupplierInvoiceQueueParams,
   ListVendorsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
@@ -156,7 +157,9 @@ import type {
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
   SupplierInvoiceListResponse,
+  SupplierInvoiceQueueResponse,
   SupplierInvoiceResponse,
+  SupplierInvoiceReviewActionRequest,
   SystemStatusResponse,
   TooManyRequestsResponse,
   TransitionProcurementProjectRequest,
@@ -11572,6 +11575,300 @@ export const updateShipmentLineBackorder = async (
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(updateShipmentBackorderRequest),
+    },
+  );
+};
+
+/**
+ * @summary List supplier invoices for AP review
+ */
+export type listSupplierInvoiceQueueResponse200 = {
+  data: SupplierInvoiceQueueResponse;
+  status: 200;
+};
+
+export type listSupplierInvoiceQueueResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listSupplierInvoiceQueueResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listSupplierInvoiceQueueResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listSupplierInvoiceQueueResponseSuccess = listSupplierInvoiceQueueResponse200 & {
+  headers: Headers;
+};
+export type listSupplierInvoiceQueueResponseError = (
+  | listSupplierInvoiceQueueResponse400
+  | listSupplierInvoiceQueueResponse401
+  | listSupplierInvoiceQueueResponse403
+) & {
+  headers: Headers;
+};
+
+export type listSupplierInvoiceQueueResponse =
+  | listSupplierInvoiceQueueResponseSuccess
+  | listSupplierInvoiceQueueResponseError;
+
+export const getListSupplierInvoiceQueueUrl = (params?: ListSupplierInvoiceQueueParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/supplier-invoices?${stringifiedParams}`
+    : `/api/supplier-invoices`;
+};
+
+export const listSupplierInvoiceQueue = async (
+  params?: ListSupplierInvoiceQueueParams,
+  options?: RequestInit,
+): Promise<listSupplierInvoiceQueueResponse> => {
+  return cognifyFetch<listSupplierInvoiceQueueResponse>(getListSupplierInvoiceQueueUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Start supplier invoice review
+ */
+export type startSupplierInvoiceReviewResponse200 = {
+  data: SupplierInvoiceResponse;
+  status: 200;
+};
+
+export type startSupplierInvoiceReviewResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type startSupplierInvoiceReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type startSupplierInvoiceReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type startSupplierInvoiceReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type startSupplierInvoiceReviewResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type startSupplierInvoiceReviewResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type startSupplierInvoiceReviewResponseSuccess = startSupplierInvoiceReviewResponse200 & {
+  headers: Headers;
+};
+export type startSupplierInvoiceReviewResponseError = (
+  | startSupplierInvoiceReviewResponse400
+  | startSupplierInvoiceReviewResponse401
+  | startSupplierInvoiceReviewResponse403
+  | startSupplierInvoiceReviewResponse404
+  | startSupplierInvoiceReviewResponse409
+  | startSupplierInvoiceReviewResponse422
+) & {
+  headers: Headers;
+};
+
+export type startSupplierInvoiceReviewResponse =
+  | startSupplierInvoiceReviewResponseSuccess
+  | startSupplierInvoiceReviewResponseError;
+
+export const getStartSupplierInvoiceReviewUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/start-review`;
+};
+
+export const startSupplierInvoiceReview = async (
+  supplierInvoice: string,
+  supplierInvoiceReviewActionRequest: SupplierInvoiceReviewActionRequest,
+  options?: RequestInit,
+): Promise<startSupplierInvoiceReviewResponse> => {
+  return cognifyFetch<startSupplierInvoiceReviewResponse>(
+    getStartSupplierInvoiceReviewUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(supplierInvoiceReviewActionRequest),
+    },
+  );
+};
+
+/**
+ * @summary Mark supplier invoice as needing information
+ */
+export type markSupplierInvoiceNeedsInformationResponse200 = {
+  data: SupplierInvoiceResponse;
+  status: 200;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type markSupplierInvoiceNeedsInformationResponseSuccess =
+  markSupplierInvoiceNeedsInformationResponse200 & {
+    headers: Headers;
+  };
+export type markSupplierInvoiceNeedsInformationResponseError = (
+  | markSupplierInvoiceNeedsInformationResponse400
+  | markSupplierInvoiceNeedsInformationResponse401
+  | markSupplierInvoiceNeedsInformationResponse403
+  | markSupplierInvoiceNeedsInformationResponse404
+  | markSupplierInvoiceNeedsInformationResponse409
+  | markSupplierInvoiceNeedsInformationResponse422
+) & {
+  headers: Headers;
+};
+
+export type markSupplierInvoiceNeedsInformationResponse =
+  | markSupplierInvoiceNeedsInformationResponseSuccess
+  | markSupplierInvoiceNeedsInformationResponseError;
+
+export const getMarkSupplierInvoiceNeedsInformationUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/needs-information`;
+};
+
+export const markSupplierInvoiceNeedsInformation = async (
+  supplierInvoice: string,
+  supplierInvoiceReviewActionRequest: SupplierInvoiceReviewActionRequest,
+  options?: RequestInit,
+): Promise<markSupplierInvoiceNeedsInformationResponse> => {
+  return cognifyFetch<markSupplierInvoiceNeedsInformationResponse>(
+    getMarkSupplierInvoiceNeedsInformationUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(supplierInvoiceReviewActionRequest),
+    },
+  );
+};
+
+/**
+ * @summary Complete supplier invoice review
+ */
+export type completeSupplierInvoiceReviewResponse200 = {
+  data: SupplierInvoiceResponse;
+  status: 200;
+};
+
+export type completeSupplierInvoiceReviewResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type completeSupplierInvoiceReviewResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type completeSupplierInvoiceReviewResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type completeSupplierInvoiceReviewResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type completeSupplierInvoiceReviewResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type completeSupplierInvoiceReviewResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type completeSupplierInvoiceReviewResponseSuccess =
+  completeSupplierInvoiceReviewResponse200 & {
+    headers: Headers;
+  };
+export type completeSupplierInvoiceReviewResponseError = (
+  | completeSupplierInvoiceReviewResponse400
+  | completeSupplierInvoiceReviewResponse401
+  | completeSupplierInvoiceReviewResponse403
+  | completeSupplierInvoiceReviewResponse404
+  | completeSupplierInvoiceReviewResponse409
+  | completeSupplierInvoiceReviewResponse422
+) & {
+  headers: Headers;
+};
+
+export type completeSupplierInvoiceReviewResponse =
+  | completeSupplierInvoiceReviewResponseSuccess
+  | completeSupplierInvoiceReviewResponseError;
+
+export const getCompleteSupplierInvoiceReviewUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/complete-review`;
+};
+
+export const completeSupplierInvoiceReview = async (
+  supplierInvoice: string,
+  supplierInvoiceReviewActionRequest: SupplierInvoiceReviewActionRequest,
+  options?: RequestInit,
+): Promise<completeSupplierInvoiceReviewResponse> => {
+  return cognifyFetch<completeSupplierInvoiceReviewResponse>(
+    getCompleteSupplierInvoiceReviewUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(supplierInvoiceReviewActionRequest),
     },
   );
 };

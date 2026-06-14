@@ -11,4 +11,7 @@ export type SupplierInvoiceStatus =
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const SupplierInvoiceStatus = {
   captured: "captured",
+  in_review: "in_review",
+  needs_information: "needs_information",
+  reviewed: "reviewed",
 } as const;

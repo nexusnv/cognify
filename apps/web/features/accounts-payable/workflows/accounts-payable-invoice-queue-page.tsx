@@ -1,0 +1,84 @@
+"use client";
+
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsList, TabsTrigger } from "@cognify/ui";
+import type { ListSupplierInvoiceQueueStatus, SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
+import { InvoiceQueueSummary } from "../components/invoice-queue-summary";
+import { InvoiceReviewPanel } from "../components/invoice-review-panel";
+import { useAccountsPayableInvoices } from "../hooks/use-accounts-payable-invoices";
+import { AccountsPayableInvoiceQueueTable } from "../tables/accounts-payable-invoice-queue-table";
+
+const statusTabs: Array<{ label: string; value: string; status?: ListSupplierInvoiceQueueStatus }> = [
+  { label: "Needs review", value: "captured", status: "captured" },
+  { label: "In review", value: "in_review", status: "in_review" },
+  { label: "Needs information", value: "needs_information", status: "needs_information" },
+  { label: "Reviewed", value: "reviewed", status: "reviewed" },
+  { label: "All", value: "all" },
+];
+
+export function AccountsPayableInvoiceQueuePage() {
+  const [status, setStatus] = useState("captured");
+  const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoiceQueueItem | null>(null);
+  const activeTab = statusTabs.find((tab) => tab.value === status) ?? statusTabs[0];
+  const invoicesQuery = useAccountsPayableInvoices(activeTab.status ? { status: activeTab.status } : {});
+  const invoices = invoicesQuery.data ?? [];
+
+  return (
+    <section className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-normal">Invoice review</h1>
+        <p className="text-sm text-muted-foreground">
+          Review captured supplier invoices before matching and approval.
+        </p>
+      </header>
+
+      <InvoiceQueueSummary invoices={invoices} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Review queue</CardTitle>
+          <CardDescription>Captured supplier invoices across purchase orders for the active tenant.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Tabs
+            value={status}
+            onValueChange={(nextStatus) => {
+              setStatus(nextStatus);
+              setSelectedInvoice(null);
+            }}
+          >
+            <TabsList aria-label="Invoice review states" className="flex h-auto w-full flex-wrap justify-start">
+              {statusTabs.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value} className="min-h-11 px-3">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_28rem]">
+            <AccountsPayableInvoiceQueueTable
+              invoices={invoices}
+              state={
+                invoicesQuery.isLoading
+                  ? "loading"
+                  : invoicesQuery.isError
+                    ? "error"
+                    : invoices.length === 0
+                      ? "empty"
+                      : "idle"
+              }
+              onSelect={setSelectedInvoice}
+            />
+            <InvoiceReviewPanel
+              invoice={selectedInvoice}
+              onMutationSettled={() => {
+                void invoicesQuery.refetch();
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}

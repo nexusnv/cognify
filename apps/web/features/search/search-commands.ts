@@ -13,6 +13,9 @@ import type { IdentityPermissions } from "@/features/identity/types/identity-vie
 import { canUseCalendar, canUseRequisitions } from "@/components/default-shell/shell-utils";
 import type { SearchCommandViewModel } from "./types/search-view-model";
 
+const canUseAccountsPayable = (permissions: IdentityPermissions) =>
+  permissions.canAccessAdmin || permissions.canViewSubmittedRequisitions;
+
 export function getSearchCommands(
   permissions?: IdentityPermissions | null,
 ): SearchCommandViewModel[] {
@@ -88,6 +91,16 @@ export function getSearchCommands(
       keywords: ["quotations", "normalization", "procurement"],
       icon: ReceiptText,
       enabled: permissions.canReviewQuotationNormalization,
+    },
+    {
+      id: "navigate:/accounts-payable/invoices",
+      group: "Navigation",
+      label: "Open invoice review",
+      description: "Go to accounts payable invoice review",
+      href: "/accounts-payable/invoices",
+      keywords: ["invoice", "review", "accounts payable", "ap", "finance"],
+      icon: ReceiptText,
+      enabled: canUseAccountsPayable(permissions),
     },
     {
       id: "navigate:/system",

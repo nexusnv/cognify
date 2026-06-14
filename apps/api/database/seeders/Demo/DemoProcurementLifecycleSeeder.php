@@ -129,7 +129,7 @@ class DemoProcurementLifecycleSeeder
         $this->seedPurchaseOrders($context, $tenant, $buyer, $finance, $purchaseOrderPolicy);
 
         $this->seedGoodsReceipts($context, $tenant, $buyer);
-        $this->seedSupplierInvoices($tenant, $buyer);
+        $this->seedSupplierInvoices($tenant, $buyer, $finance);
         $this->seedFulfillment($context, $tenant, $buyer);
     }
 
@@ -1749,18 +1749,32 @@ class DemoProcurementLifecycleSeeder
         }
     }
 
-    private function seedSupplierInvoices(Tenant $tenant, User $buyer): void
+    private function seedSupplierInvoices(Tenant $tenant, User $buyer, User $finance): void
     {
-        $purchaseOrder = PurchaseOrder::query()
+        $issuedPO = PurchaseOrder::query()
             ->where('tenant_id', $tenant->id)
             ->where('number', 'PO-2026-SUSTAIN-ISSUED')
             ->with('lines')
             ->first();
 
-        if ($purchaseOrder === null) {
+        $acknowledgedPO = PurchaseOrder::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('number', 'PO-2026-SUSTAIN-ACK')
+            ->with('lines')
+            ->first();
+
+        if ($issuedPO === null) {
             return;
         }
 
+        $this->seedCapturedInvoice($tenant, $issuedPO, $buyer);
+        $this->seedInReviewInvoice($tenant, $issuedPO, $buyer);
+        $this->seedNeedsInformationInvoice($tenant, $issuedPO, $buyer);
+        $this->seedReviewedInvoice($tenant, $acknowledgedPO ?? $issuedPO, $buyer, $finance);
+    }
+
+    private function seedCapturedInvoice(Tenant $tenant, PurchaseOrder $purchaseOrder, User $buyer): void
+    {
         $lineSource = $purchaseOrder->lines->take(2)->values();
         $subtotalAmount = $lineSource->reduce(
             fn (string $carry, $purchaseOrderLine): string => bcadd(
@@ -1772,12 +1786,12 @@ class DemoProcurementLifecycleSeeder
         );
 
         $invoice = SupplierInvoice::query()->updateOrCreate(
-            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-SUSTAIN-001'],
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-001'],
             [
                 'purchase_order_id' => $purchaseOrder->id,
                 'vendor_id' => $purchaseOrder->vendor_id,
-                'invoice_number' => 'INV-2026-SUSTAIN-001',
-                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-SUSTAIN-001'),
+                'invoice_number' => 'INV-2026-DEMO-001',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-001'),
                 'status' => SupplierInvoiceStatus::Captured,
                 'invoice_date' => '2026-06-17',
                 'due_date' => '2026-07-17',
@@ -1786,13 +1800,163 @@ class DemoProcurementLifecycleSeeder
                 'tax_amount' => '0.0000',
                 'freight_amount' => '0.0000',
                 'total_amount' => $subtotalAmount,
-                'notes' => 'Seeded supplier invoice captured against the issued sustainable furniture PO.',
+                'notes' => 'Seeded captured invoice for demo workflow.',
                 'captured_by_user_id' => $buyer->id,
                 'captured_at' => '2026-06-17 09:15:00',
                 'lock_version' => 1,
             ],
         );
 
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-001.pdf', 'INV-2026-DEMO-001');
+    }
+
+    private function seedInReviewInvoice(Tenant $tenant, PurchaseOrder $purchaseOrder, User $buyer): void
+    {
+        $lineSource = $purchaseOrder->lines->take(2)->values();
+        $subtotalAmount = $lineSource->reduce(
+            fn (string $carry, $purchaseOrderLine): string => bcadd(
+                $carry,
+                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
+                4,
+            ),
+            '0.0000',
+        );
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-002'],
+            [
+                'purchase_order_id' => $purchaseOrder->id,
+                'vendor_id' => $purchaseOrder->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-002',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-002'),
+                'status' => SupplierInvoiceStatus::InReview,
+                'invoice_date' => '2026-06-18',
+                'due_date' => '2026-07-18',
+                'currency' => $purchaseOrder->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded in-review invoice for demo workflow.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-18 09:15:00',
+                'review_started_by_user_id' => $buyer->id,
+                'review_started_at' => '2026-06-18 10:00:00',
+                'review_checklist' => [
+                    ['key' => 'amount_matches_po', 'label' => 'Amount matches PO', 'complete' => true],
+                    ['key' => 'line_items_match', 'label' => 'Line items match PO', 'complete' => true],
+                    ['key' => 'vendor_details_verified', 'label' => 'Vendor details verified', 'complete' => false],
+                ],
+                'lock_version' => 1,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-002.pdf', 'INV-2026-DEMO-002');
+    }
+
+    private function seedNeedsInformationInvoice(Tenant $tenant, PurchaseOrder $purchaseOrder, User $buyer): void
+    {
+        $lineSource = $purchaseOrder->lines->take(2)->values();
+        $subtotalAmount = $lineSource->reduce(
+            fn (string $carry, $purchaseOrderLine): string => bcadd(
+                $carry,
+                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
+                4,
+            ),
+            '0.0000',
+        );
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-003'],
+            [
+                'purchase_order_id' => $purchaseOrder->id,
+                'vendor_id' => $purchaseOrder->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-003',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-003'),
+                'status' => SupplierInvoiceStatus::NeedsInformation,
+                'invoice_date' => '2026-06-19',
+                'due_date' => '2026-07-19',
+                'currency' => $purchaseOrder->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded needs-information invoice for demo workflow.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-19 09:15:00',
+                'review_started_by_user_id' => $buyer->id,
+                'review_started_at' => '2026-06-19 10:00:00',
+                'review_notes' => 'Several line items need clarification with the supplier. Awaiting response.',
+                'review_checklist' => [
+                    ['key' => 'amount_matches_po', 'label' => 'Amount matches PO', 'complete' => false],
+                    ['key' => 'line_items_match', 'label' => 'Line items match PO', 'complete' => false],
+                    ['key' => 'vendor_details_verified', 'label' => 'Vendor details verified', 'complete' => true],
+                ],
+                'review_blockers' => [
+                    ['key' => 'unit_price_mismatch', 'label' => 'Unit price mismatch on line 1', 'severity' => 'error'],
+                    ['key' => 'quantity_discrepancy', 'label' => 'Quantity discrepancy on line 2', 'severity' => 'warning'],
+                ],
+                'lock_version' => 2,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-003.pdf', 'INV-2026-DEMO-003');
+    }
+
+    private function seedReviewedInvoice(Tenant $tenant, PurchaseOrder $purchaseOrder, User $buyer, User $finance): void
+    {
+        $lineSource = $purchaseOrder->lines->take(2)->values();
+        $subtotalAmount = $lineSource->reduce(
+            fn (string $carry, $purchaseOrderLine): string => bcadd(
+                $carry,
+                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
+                4,
+            ),
+            '0.0000',
+        );
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-004'],
+            [
+                'purchase_order_id' => $purchaseOrder->id,
+                'vendor_id' => $purchaseOrder->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-004',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-004'),
+                'status' => SupplierInvoiceStatus::Reviewed,
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-20',
+                'currency' => $purchaseOrder->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded reviewed invoice ready for matching.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $finance->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $finance->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice verified and approved for matching.',
+                'review_checklist' => [
+                    ['key' => 'amount_matches_po', 'label' => 'Amount matches PO', 'complete' => true],
+                    ['key' => 'line_items_match', 'label' => 'Line items match PO', 'complete' => true],
+                    ['key' => 'vendor_details_verified', 'label' => 'Vendor details verified', 'complete' => true],
+                ],
+                'review_blockers' => [],
+                'lock_version' => 3,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-004.pdf', 'INV-2026-DEMO-004');
+    }
+
+    private function seedInvoiceLines(SupplierInvoice $invoice, Collection $lineSource, Tenant $tenant): void
+    {
         $invoice->lines()->delete();
 
         foreach ($lineSource as $index => $purchaseOrderLine) {
@@ -1808,12 +1972,16 @@ class DemoProcurementLifecycleSeeder
                 'quantity_invoiced' => $quantity,
                 'unit_price' => $unitPrice,
                 'line_subtotal' => bcmul((string) $quantity, (string) $unitPrice, 4),
-                'notes' => $index === 0 ? 'Matched to the first issued PO line.' : 'Matched to the second issued PO line.',
+                'notes' => "Matched to PO line {$purchaseOrderLine->line_number}.",
             ]);
         }
+    }
 
-        $attachmentPath = "tenants/{$tenant->id}/demo/invoices/inv-2026-sustain-001.pdf";
-        $attachmentContents = "Cognify local demo supplier invoice for PO-2026-SUSTAIN-ISSUED\n";
+    private function seedInvoiceAttachment(Tenant $tenant, SupplierInvoice $invoice, User $uploader, string $filename, string $invoiceNumber): void
+    {
+        $attachmentPath = "tenants/{$tenant->id}/demo/invoices/{$filename}";
+        $attachmentContents = "Cognify local demo supplier invoice {$invoiceNumber}\n";
+
         Storage::disk('local')->put($attachmentPath, $attachmentContents);
 
         $attachment = Attachment::withTrashed()->updateOrCreate(
@@ -1822,8 +1990,8 @@ class DemoProcurementLifecycleSeeder
                 'tenant_id' => $tenant->id,
                 'attachable_type' => SupplierInvoice::class,
                 'attachable_id' => $invoice->id,
-                'uploaded_by' => $buyer->id,
-                'original_filename' => 'inv-2026-sustain-001.pdf',
+                'uploaded_by' => $uploader->id,
+                'original_filename' => $filename,
                 'mime_type' => 'application/pdf',
                 'extension' => 'pdf',
                 'size_bytes' => strlen($attachmentContents),
