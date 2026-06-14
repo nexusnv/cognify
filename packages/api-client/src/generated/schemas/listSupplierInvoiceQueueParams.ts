@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListSupplierInvoiceQueueStatus } from "./listSupplierInvoiceQueueStatus";
+import type { ListSupplierInvoiceQueueSort } from "./listSupplierInvoiceQueueSort";
 
 export type ListSupplierInvoiceQueueParams = {
   status?: ListSupplierInvoiceQueueStatus;
@@ -22,4 +23,5 @@ export type ListSupplierInvoiceQueueParams = {
    * @minimum 1
    */
   perPage?: number;
+  sort?: ListSupplierInvoiceQueueSort;
 };

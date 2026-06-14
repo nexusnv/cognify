@@ -9345,6 +9345,14 @@
               "type": "integer",
               "minimum": 1
             }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["due_date_asc", "due_date_desc", "created_at_asc", "created_at_desc"]
+            }
           }
         ],
         "responses": {

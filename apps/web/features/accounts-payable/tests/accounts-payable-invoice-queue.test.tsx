@@ -57,6 +57,24 @@ describe("Accounts payable invoice queue", () => {
     await waitFor(() => expect(screen.getByText("reviewed")).toBeInTheDocument());
   });
 
+  it("marks invoice as needs information", async () => {
+    const user = userEvent.setup();
+    render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
+
+    const row = await screen.findByRole("row", { name: /INV-10001/i });
+    await user.click(within(row).getByRole("button", { name: "Review invoice" }));
+    await user.click(screen.getByRole("button", { name: "Start review" }));
+
+    await waitFor(() => expect(screen.getByText("in_review")).toBeInTheDocument());
+
+    await user.click(screen.getByLabelText("Completeness failed"));
+    await user.click(screen.getByLabelText("Coding failed"));
+
+    await user.click(screen.getByRole("button", { name: "Needs information" }));
+
+    await waitFor(() => expect(screen.getByText("needs_information")).toBeInTheDocument());
+  });
+
   it("surfaces stale review conflicts", async () => {
     const user = userEvent.setup();
     server.use(
