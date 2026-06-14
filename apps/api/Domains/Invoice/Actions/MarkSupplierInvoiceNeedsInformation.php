@@ -73,7 +73,9 @@ class MarkSupplierInvoiceNeedsInformation
                 subject: $invoice,
                 metadata: [
                     'invoiceNumber' => $invoice->invoice_number,
+                    'invoiceId' => (string) $invoice->id,
                     'purchaseOrderId' => (string) $invoice->purchase_order_id,
+                    'purchaseOrderNumber' => $invoice->purchaseOrder?->number,
                     'vendorId' => $invoice->vendor_id !== null ? (string) $invoice->vendor_id : null,
                     'previousStatus' => SupplierInvoiceStatus::InReview->value,
                     'nextStatus' => SupplierInvoiceStatus::NeedsInformation->value,

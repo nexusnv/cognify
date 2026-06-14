@@ -43,9 +43,13 @@ class SupplierInvoiceController
         $this->applyQueueFilters($query, $request);
 
         $invoices = $query
-            ->orderByRaw('due_date is null')
-            ->orderBy('due_date')
-            ->orderByDesc('created_at')
+            ->when(
+                $request->query('sort', 'due_date_asc') === 'due_date_asc',
+                fn (Builder $q) => $q
+                    ->orderByRaw('due_date is null')
+                    ->orderBy('due_date')
+                    ->orderByDesc('created_at'),
+            )
             ->paginate((int) $request->integer('perPage', 25));
 
         return SupplierInvoiceQueueResource::collection($invoices);
@@ -131,6 +135,18 @@ class SupplierInvoiceController
 
         if ($reviewBlocker = $request->query('reviewBlocker')) {
             $query->whereJsonContains('review_blockers', [['key' => $reviewBlocker]]);
+        }
+
+        $sort = $request->query('sort', 'due_date_asc');
+
+        if ($sort === 'due_date_asc') {
+            // no change needed - default sort applied in queue()
+        } elseif ($sort === 'due_date_desc') {
+            $query->orderByDesc('due_date')->orderByDesc('created_at');
+        } elseif ($sort === 'created_at_asc') {
+            $query->orderBy('created_at');
+        } elseif ($sort === 'created_at_desc') {
+            $query->orderByDesc('created_at');
         }
     }
 

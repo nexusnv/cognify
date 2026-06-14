@@ -51,7 +51,9 @@ class StartSupplierInvoiceReview
                 subject: $invoice,
                 metadata: [
                     'invoiceNumber' => $invoice->invoice_number,
+                    'invoiceId' => (string) $invoice->id,
                     'purchaseOrderId' => (string) $invoice->purchase_order_id,
+                    'purchaseOrderNumber' => $invoice->purchaseOrder?->number,
                     'vendorId' => $invoice->vendor_id !== null ? (string) $invoice->vendor_id : null,
                     'previousStatus' => $previousStatus->value,
                     'nextStatus' => SupplierInvoiceStatus::InReview->value,

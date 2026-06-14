@@ -337,6 +337,7 @@ export * from "./listSourcingIntakeReviewsParams";
 export * from "./listSourcingIntakeReviewsPreset";
 export * from "./listSourcingIntakeReviewsSort";
 export * from "./listSupplierInvoiceQueueParams";
+export * from "./listSupplierInvoiceQueueSort";
 export * from "./listSupplierInvoiceQueueStatus";
 export * from "./listVendorsParams";
 export * from "./loginRequest";
