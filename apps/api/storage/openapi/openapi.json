@@ -9262,6 +9262,305 @@
           }
         }
       }
+    },
+    "/api/supplier-invoices": {
+      "get": {
+        "operationId": "listSupplierInvoiceQueue",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "List supplier invoices for AP review",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "captured",
+                "in_review",
+                "needs_information",
+                "reviewed"
+              ]
+            }
+          },
+          {
+            "name": "vendorId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purchaseOrderNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "invoiceNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dueBefore",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "requiresAttachment",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "reviewBlocker",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier invoice review queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceQueueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/start-review": {
+      "post": {
+        "operationId": "startSupplierInvoiceReview",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "Start supplier invoice review",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierInvoiceReviewActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier invoice review started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/needs-information": {
+      "post": {
+        "operationId": "markSupplierInvoiceNeedsInformation",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "Mark supplier invoice as needing information",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierInvoiceReviewActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier invoice marked as needing information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/complete-review": {
+      "post": {
+        "operationId": "completeSupplierInvoiceReview",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "Complete supplier invoice review",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierInvoiceReviewActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier invoice review completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AmbiguousTenant"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -22466,8 +22765,21 @@
           "notes",
           "capturedByUserId",
           "capturedAt",
+          "purchaseOrder",
+          "vendor",
+          "attachmentCount",
+          "reviewStartedByUserId",
+          "reviewStartedAt",
+          "reviewedByUserId",
+          "reviewedAt",
+          "reviewNotes",
+          "reviewChecklist",
+          "reviewChecklistSummary",
+          "reviewBlockers",
+          "reviewBlockerCount",
           "lines",
-          "lockVersion"
+          "lockVersion",
+          "permissions"
         ],
         "properties": {
           "id": {
@@ -22495,7 +22807,10 @@
           "status": {
             "type": "string",
             "enum": [
-              "captured"
+              "captured",
+              "in_review",
+              "needs_information",
+              "reviewed"
             ]
           },
           "invoiceDate": {
@@ -22566,6 +22881,92 @@
           "lockVersion": {
             "type": "integer",
             "minimum": 1
+          },
+          "purchaseOrder": {
+            "$ref": "#/components/schemas/SupplierInvoicePurchaseOrderSummary"
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/SupplierInvoiceVendorSummary"
+          },
+          "attachmentCount": {
+            "type": "integer"
+          },
+          "reviewStartedByUserId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewStartedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewedByUserId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewNotes": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewChecklist": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SupplierInvoiceReviewChecklist"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewChecklistSummary": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistSummary"
+          },
+          "reviewBlockers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierInvoiceReviewBlocker"
+            }
+          },
+          "reviewBlockerCount": {
+            "type": "integer"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/SupplierInvoicePermissions"
           }
         }
       },
@@ -24689,6 +25090,324 @@
         "required": [
           "backorderQuantity"
         ]
+      },
+      "SupplierInvoiceReviewChecklistItem": {
+        "type": "object",
+        "required": [
+          "status",
+          "note"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "needs_attention"
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SupplierInvoiceReviewChecklist": {
+        "type": "object",
+        "required": [
+          "completeness",
+          "coding",
+          "attachment",
+          "vendorIdentity",
+          "poLinkage"
+        ],
+        "properties": {
+          "completeness": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistItem"
+          },
+          "coding": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistItem"
+          },
+          "attachment": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistItem"
+          },
+          "vendorIdentity": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistItem"
+          },
+          "poLinkage": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistItem"
+          }
+        }
+      },
+      "SupplierInvoiceReviewChecklistSummary": {
+        "type": "object",
+        "required": [
+          "total",
+          "passed",
+          "needsAttention",
+          "failed"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "passed": {
+            "type": "integer"
+          },
+          "needsAttention": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          }
+        }
+      },
+      "SupplierInvoiceReviewBlocker": {
+        "type": "object",
+        "required": [
+          "key",
+          "status",
+          "note"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail",
+              "needs_attention"
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SupplierInvoiceReviewActionRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklist"
+          }
+        }
+      },
+      "SupplierInvoiceVendorSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SupplierInvoicePurchaseOrderSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "number"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SupplierInvoicePermissions": {
+        "type": "object",
+        "required": [
+          "canReview"
+        ],
+        "properties": {
+          "canReview": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SupplierInvoiceQueueItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "invoiceNumber",
+          "status",
+          "invoiceDate",
+          "dueDate",
+          "currency",
+          "totalAmount",
+          "vendor",
+          "purchaseOrder",
+          "attachmentCount",
+          "reviewChecklistSummary",
+          "reviewBlockerCount",
+          "reviewStartedAt",
+          "reviewedAt",
+          "lockVersion",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "captured",
+              "in_review",
+              "needs_information",
+              "reviewed"
+            ]
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "totalAmount": {
+            "type": "string"
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/SupplierInvoiceVendorSummary"
+          },
+          "purchaseOrder": {
+            "$ref": "#/components/schemas/SupplierInvoicePurchaseOrderSummary"
+          },
+          "attachmentCount": {
+            "type": "integer"
+          },
+          "reviewChecklistSummary": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklistSummary"
+          },
+          "reviewBlockerCount": {
+            "type": "integer"
+          },
+          "reviewStartedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/SupplierInvoicePermissions"
+          }
+        }
+      },
+      "SupplierInvoiceQueueResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierInvoiceQueueItem"
+            }
+          }
+        }
       }
     }
   }

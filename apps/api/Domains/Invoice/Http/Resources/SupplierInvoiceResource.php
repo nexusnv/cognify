@@ -2,9 +2,11 @@
 
 namespace Domains\Invoice\Http\Resources;
 
+use Domains\Invoice\Data\SupplierInvoiceReviewChecklistData;
 use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * @mixin SupplierInvoice
@@ -33,10 +35,33 @@ class SupplierInvoiceResource extends JsonResource
             'notes' => $this->notes,
             'capturedByUserId' => $this->captured_by_user_id !== null ? (string) $this->captured_by_user_id : null,
             'capturedAt' => $this->captured_at?->toISOString(),
+            'purchaseOrder' => [
+                'id' => (string) $this->purchase_order_id,
+                'number' => $this->purchaseOrder?->number,
+            ],
+            'vendor' => [
+                'id' => $this->vendor_id !== null ? (string) $this->vendor_id : null,
+                'name' => $this->vendor?->name,
+            ],
+            'attachmentCount' => $this->relationLoaded('attachments')
+                ? $this->attachments->count()
+                : (int) ($this->attachments_count ?? $this->attachments()->count()),
+            'reviewStartedByUserId' => $this->review_started_by_user_id !== null ? (string) $this->review_started_by_user_id : null,
+            'reviewStartedAt' => $this->review_started_at?->toISOString(),
+            'reviewedByUserId' => $this->reviewed_by_user_id !== null ? (string) $this->reviewed_by_user_id : null,
+            'reviewedAt' => $this->reviewed_at?->toISOString(),
+            'reviewNotes' => $this->review_notes,
+            'reviewChecklist' => $this->review_checklist,
+            'reviewChecklistSummary' => SupplierInvoiceReviewChecklistData::summary($this->review_checklist),
+            'reviewBlockers' => $this->review_blockers ?? [],
+            'reviewBlockerCount' => count($this->review_blockers ?? []),
             'lines' => $this->relationLoaded('lines')
                 ? SupplierInvoiceLineResource::collection($this->lines)->resolve()
                 : [],
             'lockVersion' => $this->lock_version,
+            'permissions' => [
+                'canReview' => Gate::allows('review', $this->resource),
+            ],
         ];
     }
 }

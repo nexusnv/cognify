@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { approvalHandlers } from "@/features/approvals/mocks/approval-handlers";
+import { accountsPayableInvoiceHandlers } from "@/features/accounts-payable/mocks/accounts-payable-invoice-handlers";
 import { attachmentHandlers } from "../../features/attachments/mocks/attachments-handlers";
 import { auditHandlers } from "../../features/audit/mocks/audit-handlers";
 import { identityHandlers } from "../../features/identity/mocks/identity-handlers";
@@ -27,6 +28,7 @@ export const handlers = [
       service: "cognify-api",
     });
   }),
+  ...accountsPayableInvoiceHandlers,
   ...approvalHandlers,
   ...requisitionsHandlers,
   ...projectHandlers,

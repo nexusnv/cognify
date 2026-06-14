@@ -19,4 +19,15 @@ describe("default shell navigation visibility", () => {
 
     expect(procurementItem?.items?.some((item) => item.title === "Purchase orders")).toBe(true);
   });
+
+  it("includes finance invoice review when accounts payable access is allowed", () => {
+    const primaryItems = getVisibleNavigation({
+      ...requesterIdentity.permissions,
+      canViewSubmittedRequisitions: true,
+    });
+    const financeItem = primaryItems.find((item) => item.title === "Finance");
+
+    expect(financeItem?.implemented).toBe(true);
+    expect(financeItem?.items?.some((item) => item.title === "Invoice review")).toBe(true);
+  });
 });

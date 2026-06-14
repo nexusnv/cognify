@@ -4,6 +4,7 @@ namespace Domains\Invoice\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Attachment\Models\Attachment;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\Vendor\Models\Vendor;
@@ -11,7 +12,9 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class SupplierInvoice extends Model
 {
@@ -39,6 +42,13 @@ class SupplierInvoice extends Model
         'notes',
         'captured_by_user_id',
         'captured_at',
+        'review_started_by_user_id',
+        'review_started_at',
+        'reviewed_by_user_id',
+        'reviewed_at',
+        'review_notes',
+        'review_checklist',
+        'review_blockers',
         'lock_version',
     ];
 
@@ -53,6 +63,10 @@ class SupplierInvoice extends Model
             'freight_amount' => 'decimal:4',
             'total_amount' => 'decimal:4',
             'captured_at' => 'datetime',
+            'review_started_at' => 'datetime',
+            'reviewed_at' => 'datetime',
+            'review_checklist' => 'array',
+            'review_blockers' => 'array',
             'lock_version' => 'integer',
         ];
     }
@@ -95,6 +109,20 @@ class SupplierInvoice extends Model
                     throw new InvalidArgumentException('Supplier invoice capturer must belong to the same tenant.');
                 }
             }
+
+            foreach (['review_started_by_user_id', 'reviewed_by_user_id'] as $userColumn) {
+                if ($invoice->{$userColumn} !== null && $invoice->isDirty([$userColumn, 'tenant_id'])) {
+                    $belongsToTenant = User::query()
+                        ->whereKey($invoice->{$userColumn})
+                        ->whereHas('tenants', fn ($query) => $query->whereKey($invoice->tenant_id))
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Supplier invoice reviewer must belong to the same tenant.');
+                    }
+                }
+            }
         });
     }
 
@@ -118,9 +146,24 @@ class SupplierInvoice extends Model
         return $this->belongsTo(User::class, 'captured_by_user_id');
     }
 
+    public function reviewStartedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'review_started_by_user_id');
+    }
+
+    public function reviewedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_user_id');
+    }
+
     public function lines(): HasMany
     {
         return $this->hasMany(SupplierInvoiceLine::class)->orderBy('line_number');
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     public function statusState(): SupplierInvoiceStatus
@@ -128,5 +171,12 @@ class SupplierInvoice extends Model
         return $this->status instanceof SupplierInvoiceStatus
             ? $this->status
             : SupplierInvoiceStatus::from((string) $this->getAttribute('status'));
+    }
+
+    public function assertLockVersion(int $lockVersion): void
+    {
+        if ((int) $this->lock_version !== $lockVersion) {
+            throw new ConflictHttpException('Supplier invoice was updated by another user. Refresh and try again.');
+        }
     }
 }

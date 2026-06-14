@@ -1,0 +1,196 @@
+import { http, HttpResponse } from "msw";
+import type {
+  SupplierInvoice,
+  SupplierInvoiceQueueItem,
+  SupplierInvoiceReviewActionRequest,
+} from "@cognify/api-client/schemas";
+import {
+  accountsPayableInvoiceDetails,
+  accountsPayableInvoiceRows,
+} from "./accounts-payable-invoice-fixtures";
+
+let rows: SupplierInvoiceQueueItem[] = [];
+let details: Record<string, SupplierInvoice> = {};
+
+export function resetAccountsPayableInvoiceMockState() {
+  rows = accountsPayableInvoiceRows.map((row) => structuredClone(row));
+  details = Object.fromEntries(
+    Object.entries(accountsPayableInvoiceDetails).map(([id, invoice]) => [id, structuredClone(invoice)]),
+  );
+}
+
+resetAccountsPayableInvoiceMockState();
+
+export const accountsPayableInvoiceHandlers = [
+  http.get("/api/supplier-invoices", ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status");
+    const filteredRows = status ? rows.filter((row) => row.status === status) : rows;
+
+    return HttpResponse.json({ data: filteredRows });
+  }),
+  http.get("/api/supplier-invoices/:supplierInvoice", ({ params }) => {
+    const invoice = details[String(params.supplierInvoice)];
+
+    if (!invoice) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Supplier invoice not found." } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({ data: invoice });
+  }),
+  http.post("/api/supplier-invoices/:supplierInvoice/start-review", async ({ params, request }) => {
+    const id = String(params.supplierInvoice);
+    const payload = await request.json() as SupplierInvoiceReviewActionRequest;
+    const detail = details[id];
+
+    if (!detail) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Supplier invoice not found." } },
+        { status: 404 },
+      );
+    }
+
+    if (payload.lockVersion !== detail.lockVersion) {
+      return HttpResponse.json(
+        { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
+        { status: 409 },
+      );
+    }
+
+    const next: SupplierInvoice = {
+      ...detail,
+      status: "in_review",
+      reviewStartedByUserId: "buyer-1",
+      reviewStartedAt: "2026-06-13T03:00:00.000Z",
+      lockVersion: detail.lockVersion + 1,
+    };
+
+    details[id] = next;
+    rows = rows.map((row) =>
+      row.id === id
+        ? {
+            ...row,
+            status: next.status,
+            reviewStartedAt: next.reviewStartedAt,
+            lockVersion: next.lockVersion,
+          }
+        : row,
+    );
+
+    return HttpResponse.json({ data: next });
+  }),
+  http.post("/api/supplier-invoices/:supplierInvoice/needs-information", async ({ params, request }) => {
+    const id = String(params.supplierInvoice);
+    const payload = await request.json() as SupplierInvoiceReviewActionRequest;
+    const detail = details[id];
+
+    if (!detail) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Supplier invoice not found." } },
+        { status: 404 },
+      );
+    }
+
+    if (payload.lockVersion !== detail.lockVersion) {
+      return HttpResponse.json(
+        { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
+        { status: 409 },
+      );
+    }
+
+    const blockers = Object.entries(payload.checklist ?? {})
+      .filter(([, item]) => item.status !== "pass")
+      .map(([key, item]) => ({ key, status: item.status, note: item.note ?? null }));
+
+    const next: SupplierInvoice = {
+      ...detail,
+      status: "needs_information",
+      reviewNotes: payload.notes ?? null,
+      reviewChecklist: detail.reviewChecklist,
+      reviewChecklistSummary: {
+        total: 5,
+        passed: Object.values(payload.checklist ?? {}).filter((item) => item.status === "pass").length,
+        needsAttention: Object.values(payload.checklist ?? {}).filter((item) => item.status === "needs_attention").length,
+        failed: Object.values(payload.checklist ?? {}).filter((item) => item.status === "fail").length,
+      },
+      reviewBlockers: blockers,
+      reviewBlockerCount: blockers.length,
+      lockVersion: detail.lockVersion + 1,
+    };
+
+    if (payload.checklist) {
+      next.reviewChecklist = payload.checklist;
+    }
+
+    details[id] = next;
+    rows = rows.map((row) =>
+      row.id === id
+        ? {
+            ...row,
+            status: next.status,
+            reviewChecklistSummary: next.reviewChecklistSummary,
+            reviewBlockerCount: blockers.length,
+            lockVersion: next.lockVersion,
+          }
+        : row,
+    );
+
+    return HttpResponse.json({ data: next });
+  }),
+  http.post("/api/supplier-invoices/:supplierInvoice/complete-review", async ({ params, request }) => {
+    const id = String(params.supplierInvoice);
+    const payload = await request.json() as SupplierInvoiceReviewActionRequest;
+    const detail = details[id];
+
+    if (!detail) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Supplier invoice not found." } },
+        { status: 404 },
+      );
+    }
+
+    if (payload.lockVersion !== detail.lockVersion) {
+      return HttpResponse.json(
+        { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
+        { status: 409 },
+      );
+    }
+
+    const next: SupplierInvoice = {
+      ...detail,
+      status: "reviewed",
+      reviewedByUserId: "buyer-1",
+      reviewedAt: "2026-06-13T03:10:00.000Z",
+      reviewNotes: payload.notes ?? null,
+      reviewChecklist: payload.checklist ?? detail.reviewChecklist,
+      reviewChecklistSummary: {
+        total: 5,
+        passed: Object.values(payload.checklist ?? {}).filter((item) => item.status === "pass").length,
+        needsAttention: 0,
+        failed: 0,
+      },
+      reviewBlockers: [],
+      reviewBlockerCount: 0,
+      lockVersion: detail.lockVersion + 1,
+    };
+
+    details[id] = next;
+    rows = rows.map((row) =>
+      row.id === id
+        ? {
+            ...row,
+            status: next.status,
+            reviewedAt: next.reviewedAt,
+            reviewChecklistSummary: next.reviewChecklistSummary,
+            reviewBlockerCount: 0,
+            lockVersion: next.lockVersion,
+          }
+        : row,
+    );
+
+    return HttpResponse.json({ data: next });
+  }),
+];

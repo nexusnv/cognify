@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { resetAccountsPayableInvoiceMockState } from "../features/accounts-payable/mocks/accounts-payable-invoice-handlers";
 import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
 import { resetIdentityMockState } from "../features/identity/mocks/identity-handlers";
@@ -40,7 +41,7 @@ if (typeof window !== "undefined" && !window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({
-      matches: false,
+      matches: query.includes("min-width"),
       media: query,
       onchange: null,
       addListener: vi.fn(),
@@ -56,6 +57,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  resetAccountsPayableInvoiceMockState();
   resetApprovalMockState();
   resetAttachmentMockState();
   resetRequisitionMockState();

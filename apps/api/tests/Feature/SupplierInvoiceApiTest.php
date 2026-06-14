@@ -222,6 +222,232 @@ class SupplierInvoiceApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_buyer_can_list_supplier_invoice_review_queue(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line))
+            ->assertCreated();
+
+        $otherPo = $this->issuedPurchaseOrder($tenant, $buyer, 1, 'Contoso Ltd', 'POOTHER');
+        $otherLine = $otherPo->lines->firstOrFail();
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$otherPo->id}/supplier-invoices", $this->capturePayload($otherPo, $otherLine, [
+                'invoiceNumber' => 'INV-OTHER-001',
+            ]))
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/supplier-invoices?status=captured')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.status', 'captured')
+            ->assertJsonPath('data.1.status', 'captured');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/supplier-invoices')
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+    }
+
+    public function test_supplier_invoice_review_queue_is_tenant_scoped(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line))
+            ->assertCreated();
+
+        [$otherTenant, $otherBuyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+
+        $this->actingAsTenant($otherTenant, $otherBuyer)
+            ->getJson('/api/supplier-invoices')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_buyer_can_start_and_complete_supplier_invoice_review(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'in_review')
+            ->assertJsonPath('data.reviewStartedByUserId', (string) $buyer->id)
+            ->json('data');
+
+        $this->assertDatabaseHas('supplier_invoices', [
+            'id' => $invoice['id'],
+            'status' => 'in_review',
+            'review_started_by_user_id' => $buyer->id,
+        ]);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/complete-review", [
+                'lockVersion' => $started['lockVersion'],
+                'notes' => 'Invoice is complete and ready for matching.',
+                'checklist' => $this->passingReviewChecklist(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'reviewed')
+            ->assertJsonPath('data.reviewedByUserId', (string) $buyer->id)
+            ->assertJsonPath('data.reviewChecklist.completeness.status', 'pass')
+            ->assertJsonPath('data.reviewChecklistSummary.passed', 5)
+            ->assertJsonPath('data.reviewBlockerCount', 0);
+
+        $this->assertDatabaseHas('supplier_invoices', [
+            'id' => $invoice['id'],
+            'status' => 'reviewed',
+            'reviewed_by_user_id' => $buyer->id,
+        ]);
+    }
+
+    public function test_buyer_can_mark_supplier_invoice_needs_information(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/needs-information", [
+                'lockVersion' => $started['lockVersion'],
+                'notes' => 'Invoice PDF is missing from the record.',
+                'checklist' => [
+                    ...$this->passingReviewChecklist(),
+                    'attachment' => ['status' => 'fail', 'note' => 'Missing supplier invoice PDF.'],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'needs_information')
+            ->assertJsonPath('data.reviewChecklist.attachment.status', 'fail')
+            ->assertJsonPath('data.reviewBlockerCount', 1);
+
+        $this->assertDatabaseHas('supplier_invoices', [
+            'id' => $invoice['id'],
+            'status' => 'needs_information',
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $buyer->id,
+            'action' => 'supplier_invoice.needs_information',
+        ]);
+    }
+
+    public function test_supplier_invoice_review_rejects_invalid_transition_and_stale_lock(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/complete-review", [
+                'lockVersion' => $invoice['lockVersion'],
+                'checklist' => $this->passingReviewChecklist(),
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/needs-information", [
+                'lockVersion' => $started['lockVersion'] - 1,
+                'notes' => 'Stale update.',
+                'checklist' => [
+                    ...$this->passingReviewChecklist(),
+                    'attachment' => ['status' => 'fail', 'note' => 'Missing supplier invoice PDF.'],
+                ],
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'conflict');
+    }
+
+    public function test_supplier_invoice_review_requires_buyer_or_admin(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+        [, $requester] = $this->tenantUserPair(TenantRole::Requester->value, $tenant);
+
+        $this->actingAsTenant($tenant, $requester)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertForbidden();
+
+        [, $admin] = $this->tenantUserPair(TenantRole::Admin->value, $tenant);
+
+        $this->actingAsTenant($tenant, $admin)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk();
+    }
+
+    public function test_supplier_invoice_review_records_audit_events(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/complete-review", [
+                'lockVersion' => $started['lockVersion'],
+                'checklist' => $this->passingReviewChecklist(),
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $buyer->id,
+            'action' => 'supplier_invoice.review_started',
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $tenant->id,
+            'actor_id' => $buyer->id,
+            'action' => 'supplier_invoice.review_completed',
+        ]);
+    }
+
     public function test_invoice_capture_rejects_lock_version_conflict(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
@@ -350,6 +576,31 @@ class SupplierInvoiceApiTest extends TestCase
                 'notes' => 'Invoice line matches PO line.',
             ]],
             ...$overrides,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function captureInvoice(Tenant $tenant, User $buyer, PurchaseOrder $po, PurchaseOrderLine $line): array
+    {
+        return $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line))
+            ->assertCreated()
+            ->json('data');
+    }
+
+    /**
+     * @return array<string, array{status: string, note: string|null}>
+     */
+    private function passingReviewChecklist(): array
+    {
+        return [
+            'completeness' => ['status' => 'pass', 'note' => null],
+            'coding' => ['status' => 'pass', 'note' => null],
+            'attachment' => ['status' => 'pass', 'note' => null],
+            'vendorIdentity' => ['status' => 'pass', 'note' => null],
+            'poLinkage' => ['status' => 'pass', 'note' => null],
         ];
     }
 

@@ -50,6 +50,9 @@ const canUseQuotationNormalizations = (permissions: IdentityPermissions) =>
 
 const canUseAdmin = (permissions: IdentityPermissions) => permissions.canAccessAdmin;
 
+const canUseAccountsPayable = (permissions: IdentityPermissions) =>
+  permissions.canAccessAdmin || permissions.canViewSubmittedRequisitions;
+
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
 const APPROVAL_TASK_WORKSPACE_PATH = /^\/approvals\/tasks\/[^/]+$/;
@@ -128,8 +131,18 @@ export const finalNavigationItems: DefaultNavItem[] = [
   },
   {
     title: "Finance",
+    url: "/accounts-payable/invoices",
     icon: <RiBarChartBoxLine />,
-    implemented: false,
+    implemented: true,
+    permission: canUseAccountsPayable,
+    items: [
+      {
+        title: "Invoice review",
+        url: "/accounts-payable/invoices",
+        implemented: true,
+        permission: canUseAccountsPayable,
+      },
+    ],
   },
   {
     title: "Evidence",
@@ -262,6 +275,7 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   if (normalizedPathname === "/approval-policies") return [{ label: "Approval policies" }];
   if (normalizedPathname === "/approvals") return [{ label: "Approvals" }];
   if (normalizedPathname === "/sourcing/intake") return [{ label: "Sourcing intake" }];
+  if (normalizedPathname === "/accounts-payable/invoices") return [{ label: "Finance" }, { label: "Invoice review" }];
   if (normalizedPathname === "/calendar") return [{ label: "Calendar" }];
   if (normalizedPathname === "/quotations/normalizations") return [{ label: "Quotations" }];
   if (normalizedPathname === "/quotations/scoring/templates") {

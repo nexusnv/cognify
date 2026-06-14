@@ -24,4 +24,13 @@ describe("getSearchCommands", () => {
 
     expect(commands.some((command) => command.label === "Open calendar")).toBe(true);
   });
+
+  it("includes invoice review when accounts payable permissions allow it", () => {
+    const commands = getSearchCommands({
+      ...requesterIdentity.permissions,
+      canViewSubmittedRequisitions: true,
+    });
+
+    expect(commands.some((command) => command.label === "Open invoice review")).toBe(true);
+  });
 });

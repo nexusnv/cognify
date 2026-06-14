@@ -11,6 +11,17 @@ import type { SupplierInvoiceNotes } from "./supplierInvoiceNotes";
 import type { SupplierInvoiceCapturedByUserId } from "./supplierInvoiceCapturedByUserId";
 import type { SupplierInvoiceCapturedAt } from "./supplierInvoiceCapturedAt";
 import type { SupplierInvoiceLine } from "./supplierInvoiceLine";
+import type { SupplierInvoicePurchaseOrderSummary } from "./supplierInvoicePurchaseOrderSummary";
+import type { SupplierInvoiceVendorSummary } from "./supplierInvoiceVendorSummary";
+import type { SupplierInvoiceReviewStartedByUserId } from "./supplierInvoiceReviewStartedByUserId";
+import type { SupplierInvoiceReviewStartedAt } from "./supplierInvoiceReviewStartedAt";
+import type { SupplierInvoiceReviewedByUserId } from "./supplierInvoiceReviewedByUserId";
+import type { SupplierInvoiceReviewedAt } from "./supplierInvoiceReviewedAt";
+import type { SupplierInvoiceReviewNotes } from "./supplierInvoiceReviewNotes";
+import type { SupplierInvoiceReviewChecklistProperty } from "./supplierInvoiceReviewChecklistProperty";
+import type { SupplierInvoiceReviewChecklistSummary } from "./supplierInvoiceReviewChecklistSummary";
+import type { SupplierInvoiceReviewBlocker } from "./supplierInvoiceReviewBlocker";
+import type { SupplierInvoicePermissions } from "./supplierInvoicePermissions";
 
 export interface SupplierInvoice {
   id: string;
@@ -36,4 +47,17 @@ export interface SupplierInvoice {
   lines: SupplierInvoiceLine[];
   /** @minimum 1 */
   lockVersion: number;
+  purchaseOrder: SupplierInvoicePurchaseOrderSummary;
+  vendor: SupplierInvoiceVendorSummary;
+  attachmentCount: number;
+  reviewStartedByUserId: SupplierInvoiceReviewStartedByUserId;
+  reviewStartedAt: SupplierInvoiceReviewStartedAt;
+  reviewedByUserId: SupplierInvoiceReviewedByUserId;
+  reviewedAt: SupplierInvoiceReviewedAt;
+  reviewNotes: SupplierInvoiceReviewNotes;
+  reviewChecklist: SupplierInvoiceReviewChecklistProperty;
+  reviewChecklistSummary: SupplierInvoiceReviewChecklistSummary;
+  reviewBlockers: SupplierInvoiceReviewBlocker[];
+  reviewBlockerCount: number;
+  permissions: SupplierInvoicePermissions;
 }

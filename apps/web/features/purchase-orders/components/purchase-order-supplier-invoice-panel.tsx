@@ -239,6 +239,32 @@ function payloadToInvoiceStub(payload: CaptureSupplierInvoiceRequest, purchaseOr
     notes: payload.notes ?? null,
     capturedByUserId: null,
     capturedAt: null,
+    purchaseOrder: {
+      id: purchaseOrder.id,
+      number: purchaseOrder.number,
+    },
+    vendor: {
+      id: purchaseOrder.vendor.id,
+      name: purchaseOrder.vendor.name,
+    },
+    attachmentCount: 0,
+    reviewStartedByUserId: null,
+    reviewStartedAt: null,
+    reviewedByUserId: null,
+    reviewedAt: null,
+    reviewNotes: null,
+    reviewChecklist: null,
+    reviewChecklistSummary: {
+      total: 5,
+      passed: 0,
+      needsAttention: 0,
+      failed: 0,
+    },
+    reviewBlockers: [],
+    reviewBlockerCount: 0,
+    permissions: {
+      canReview: purchaseOrder.permissions.canCaptureInvoice,
+    },
     lockVersion: 1,
     lines: payload.lines.map((line, index) => {
       const purchaseOrderLine = purchaseOrder.lines.find((item) => item.id === line.purchaseOrderLineId);

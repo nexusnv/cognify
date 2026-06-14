@@ -6,9 +6,12 @@ use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Invoice\Actions\CaptureSupplierInvoice;
 use Domains\Invoice\Http\Requests\CaptureSupplierInvoiceRequest;
+use Domains\Invoice\Http\Resources\SupplierInvoiceQueueResource;
 use Domains\Invoice\Http\Resources\SupplierInvoiceResource;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Support\SupplierInvoiceNumber;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +26,30 @@ class SupplierInvoiceController
     public function __construct(
         private readonly CaptureSupplierInvoice $captureSupplierInvoice,
     ) {}
+
+    public function queue(CurrentTenant $currentTenant, Request $request): ResourceCollection
+    {
+        $tenant = $this->tenantOrAbort($currentTenant);
+        $prototype = new SupplierInvoice([
+            'tenant_id' => $tenant->id,
+        ]);
+        $this->authorize('review', $prototype);
+
+        $query = SupplierInvoice::query()
+            ->where('tenant_id', $tenant->id)
+            ->with(['purchaseOrder', 'vendor', 'lines'])
+            ->withCount('attachments');
+
+        $this->applyQueueFilters($query, $request);
+
+        $invoices = $query
+            ->orderByRaw('due_date is null')
+            ->orderBy('due_date')
+            ->orderByDesc('created_at')
+            ->paginate((int) $request->integer('perPage', 25));
+
+        return SupplierInvoiceQueueResource::collection($invoices);
+    }
 
     public function index(CurrentTenant $currentTenant, PurchaseOrder $purchaseOrder): ResourceCollection
     {
@@ -68,11 +95,43 @@ class SupplierInvoiceController
         $supplierInvoice = $this->findTenantSupplierInvoice($this->tenantOrAbort($currentTenant), $supplierInvoice);
         $this->authorize('view', $supplierInvoice);
 
-        $supplierInvoice->load('lines');
+        $supplierInvoice->loadMissing(['lines', 'purchaseOrder', 'vendor']);
+        $supplierInvoice->loadCount('attachments');
 
         return response()->json([
             'data' => (new SupplierInvoiceResource($supplierInvoice))->resolve($request),
         ]);
+    }
+
+    private function applyQueueFilters(Builder $query, Request $request): void
+    {
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($vendorId = $request->query('vendorId')) {
+            $query->where('vendor_id', $vendorId);
+        }
+
+        if ($invoiceNumber = $request->query('invoiceNumber')) {
+            $query->where('invoice_number_normalized', 'like', '%'.SupplierInvoiceNumber::normalize((string) $invoiceNumber).'%');
+        }
+
+        if ($purchaseOrderNumber = $request->query('purchaseOrderNumber')) {
+            $query->whereHas('purchaseOrder', fn (Builder $poQuery) => $poQuery->where('number', 'like', '%'.$purchaseOrderNumber.'%'));
+        }
+
+        if ($dueBefore = $request->query('dueBefore')) {
+            $query->whereDate('due_date', '<=', $dueBefore);
+        }
+
+        if ($request->boolean('requiresAttachment')) {
+            $query->doesntHave('attachments');
+        }
+
+        if ($reviewBlocker = $request->query('reviewBlocker')) {
+            $query->whereJsonContains('review_blockers', [['key' => $reviewBlocker]]);
+        }
     }
 
     private function findTenantPurchaseOrder(Tenant $tenant, PurchaseOrder $purchaseOrder): PurchaseOrder
@@ -94,7 +153,8 @@ class SupplierInvoiceController
         $tenantSupplierInvoice = SupplierInvoice::query()
             ->where('tenant_id', $tenant->id)
             ->whereKey($supplierInvoice->id)
-            ->with('lines')
+            ->with(['lines', 'purchaseOrder', 'vendor'])
+            ->withCount('attachments')
             ->first();
 
         if ($tenantSupplierInvoice === null) {
