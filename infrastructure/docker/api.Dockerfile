@@ -12,7 +12,7 @@ RUN apk add --no-cache \
     zlib-dev \
     curl
 
-RUN docker-php-ext-install pdo pdo_pgsql intl zip opcache pcntl
+RUN docker-php-ext-install pdo pdo_pgsql intl zip opcache pcntl bcmath
 
 RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-installer.php \
     && curl -sS https://composer.github.io/installer.sig -o /tmp/composer-installer.sig \
