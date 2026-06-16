@@ -1307,7 +1307,6 @@ export * from "./supplierInvoiceReviewStartedByUserId";
 export * from "./supplierInvoiceReviewedAt";
 export * from "./supplierInvoiceReviewedByUserId";
 export * from "./supplierInvoiceStartReviewRequest";
-export * from "./supplierInvoiceStartReviewRequestNotes";
 export * from "./supplierInvoiceStatus";
 export * from "./supplierInvoiceVendorId";
 export * from "./supplierInvoiceVendorSummary";

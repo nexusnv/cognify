@@ -4,12 +4,8 @@
  * Cognify API
  * OpenAPI spec version: 0.1.0
  */
-import type { SupplierInvoiceStartReviewRequestNotes } from "./supplierInvoiceStartReviewRequestNotes";
-import type { SupplierInvoiceReviewChecklist } from "./supplierInvoiceReviewChecklist";
 
 export interface SupplierInvoiceStartReviewRequest {
   /** @minimum 1 */
   lockVersion: number;
-  notes?: SupplierInvoiceStartReviewRequestNotes;
-  checklist?: SupplierInvoiceReviewChecklist;
 }

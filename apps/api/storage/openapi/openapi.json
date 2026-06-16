@@ -25122,7 +25122,8 @@
           "note": {
             "oneOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 1000
               },
               {
                 "type": "null"
@@ -25411,7 +25412,8 @@
       "SupplierInvoiceQueueResponse": {
         "type": "object",
         "required": [
-          "data"
+          "data",
+          "meta"
         ],
         "properties": {
           "data": {
@@ -25419,6 +25421,9 @@
             "items": {
               "$ref": "#/components/schemas/SupplierInvoiceQueueItem"
             }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
           }
         }
       },
@@ -25431,20 +25436,6 @@
           "lockVersion": {
             "type": "integer",
             "minimum": 1
-          },
-          "notes": {
-            "oneOf": [
-              {
-                "type": "string",
-                "maxLength": 2000
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "checklist": {
-            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklist"
           }
         }
       },
