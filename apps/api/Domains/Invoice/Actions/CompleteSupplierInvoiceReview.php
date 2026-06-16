@@ -9,6 +9,7 @@ use Domains\Invoice\Data\SupplierInvoiceReviewChecklistData;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -27,6 +28,8 @@ class CompleteSupplierInvoiceReview
                 ->where('tenant_id', $supplierInvoice->tenant_id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            Gate::forUser($actor)->authorize('review', $invoice);
 
             if ($invoice->statusState() !== SupplierInvoiceStatus::InReview) {
                 throw new ConflictHttpException('Supplier invoice review can only be completed while in review.');

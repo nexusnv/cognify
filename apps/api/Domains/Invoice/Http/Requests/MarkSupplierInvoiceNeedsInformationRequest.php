@@ -24,7 +24,7 @@ class MarkSupplierInvoiceNeedsInformationRequest extends FormRequest
     {
         return [
             'lockVersion' => ['required', 'integer', 'min:1'],
-            'notes' => ['required', 'string', 'max:2000'],
+            'notes' => ['required', 'string', 'max:2000', 'not_regex:/^\s*$/'],
             'checklist' => ['required', 'array'],
             'checklist.*.status' => ['required', 'string', Rule::in(SupplierInvoiceReviewChecklistData::STATUSES)],
             'checklist.*.note' => ['nullable', 'string', 'max:1000'],
