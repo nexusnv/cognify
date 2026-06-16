@@ -8,6 +8,7 @@ use App\Models\User;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
+use Domains\Receiving\Events\GoodsReceiptLinePosted;
 use Domains\Receiving\Models\GoodsReceipt;
 use Domains\Receiving\Models\GoodsReceiptLine;
 use Domains\Receiving\States\GoodsReceiptStatus;
@@ -148,8 +149,13 @@ class RecordGoodsReceipt
                 ])->save();
             }
 
+            $createdLines = [];
             foreach ($linesData as $lineData) {
-                GoodsReceiptLine::query()->create($lineData);
+                $createdLines[] = GoodsReceiptLine::query()->create($lineData);
+            }
+
+            foreach ($createdLines as $createdLine) {
+                GoodsReceiptLinePosted::dispatch($createdLine);
             }
 
             $po->forceFill(['lock_version' => $po->lock_version + 1])->save();
