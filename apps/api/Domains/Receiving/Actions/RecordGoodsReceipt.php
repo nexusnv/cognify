@@ -25,7 +25,9 @@ class RecordGoodsReceipt
 
     public function handle(PurchaseOrder $purchaseOrder, User $actor, array $payload): GoodsReceipt
     {
-        return DB::transaction(function () use ($purchaseOrder, $actor, $payload): GoodsReceipt {
+        $createdLines = [];
+
+        $receipt = DB::transaction(function () use ($purchaseOrder, $actor, $payload, &$createdLines): GoodsReceipt {
             $po = PurchaseOrder::query()
                 ->whereKey($purchaseOrder->id)
                 ->where('tenant_id', $purchaseOrder->tenant_id)
@@ -149,13 +151,8 @@ class RecordGoodsReceipt
                 ])->save();
             }
 
-            $createdLines = [];
             foreach ($linesData as $lineData) {
                 $createdLines[] = GoodsReceiptLine::query()->create($lineData);
-            }
-
-            foreach ($createdLines as $createdLine) {
-                GoodsReceiptLinePosted::dispatch($createdLine);
             }
 
             $po->forceFill(['lock_version' => $po->lock_version + 1])->save();
@@ -176,5 +173,11 @@ class RecordGoodsReceipt
 
             return $receipt->fresh('lines');
         });
+
+        foreach ($createdLines as $createdLine) {
+            GoodsReceiptLinePosted::dispatch($createdLine);
+        }
+
+        return $receipt;
     }
 }

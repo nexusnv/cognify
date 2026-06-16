@@ -20,10 +20,10 @@ class ReRunMatchingOnGoodsReceipt
 
         $pendingInvoices = SupplierInvoice::query()
             ->where('purchase_order_id', $purchaseOrderId)
-            ->whereIn('matching_status', [
-                SupplierInvoiceStatus::Reviewed->value,
-                null,
-            ])
+            ->where(function ($query) {
+                $query->whereNull('matching_status')
+                    ->orWhere('matching_status', SupplierInvoiceStatus::Reviewed->value);
+            })
             ->orWhere(function ($query) use ($purchaseOrderId) {
                 $query->where('purchase_order_id', $purchaseOrderId)
                     ->where('matching_status', SupplierInvoiceStatus::Mismatch->value);
