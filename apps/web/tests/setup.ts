@@ -1,6 +1,31 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
+
+// Suppress React 18 act() warnings from Radix UI portal components (Select, Dialog, etc.)
+// Radix uses flushSync internally, which triggers unstoppable warnings that are not actionable.
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  for (const arg of args) {
+    if (typeof arg === "string") {
+      if (
+        arg.includes("not wrapped in act(") ||
+        arg.includes("suspended inside an `act` scope")
+      ) {
+        return;
+      }
+    }
+  }
+  originalConsoleError.apply(console, args);
+};
+
+// Disable CSS animations and transitions so Radix portals (Select, Dialog, etc.)
+// and other animated components settle synchronously.
+if (typeof document !== "undefined") {
+  const disableAnimations = document.createElement("style");
+  disableAnimations.textContent = `*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important;}`;
+  document.head.appendChild(disableAnimations);
+}
 import { resetAccountsPayableInvoiceMockState } from "../features/accounts-payable/mocks/accounts-payable-invoice-handlers";
 import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
