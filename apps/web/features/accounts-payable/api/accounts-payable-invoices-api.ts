@@ -2,8 +2,10 @@
 
 import {
   completeSupplierInvoiceReview,
+  listSupplierInvoiceMatchResults,
   listSupplierInvoiceQueue,
   markSupplierInvoiceNeedsInformation,
+  runSupplierInvoiceMatching,
   showSupplierInvoice,
   startSupplierInvoiceReview,
 } from "@cognify/api-client/endpoints";
@@ -94,4 +96,57 @@ export async function completeReview(
     throwResponseData,
   );
   return unwrapData<SupplierInvoice>(response);
+}
+
+export interface MatchSummary {
+  totalLines: number;
+  matchedLines: number;
+  mismatchLines: number;
+  dimensionsWithIssues: string[];
+}
+
+export interface MatchResult {
+  id: string;
+  lineNumber: number | null;
+  matchLevel: "header" | "line";
+  matchType: "two_way" | "three_way";
+  dimension: string;
+  expectedValue: string | null;
+  actualValue: string | null;
+  tolerancePercentApplied: number | null;
+  toleranceFloorApplied: number | null;
+  toleranceCapApplied: number | null;
+  result: "pass" | "fail" | "not_applicable";
+  notes: string | null;
+}
+
+export async function triggerInvoiceMatching(
+  invoiceId: string,
+  lockVersion: number,
+): Promise<SupplierInvoice> {
+  const response = await runSupplierInvoiceMatching(invoiceId, {
+    lockVersion,
+  }).catch(throwResponseData);
+  return unwrapData<SupplierInvoice>(response);
+}
+
+export async function fetchInvoiceMatchResults(
+  invoiceId: string,
+): Promise<MatchResult[]> {
+  const { data } = await listSupplierInvoiceMatchResults(invoiceId);
+  return (data?.data ?? []) as MatchResult[];
+}
+
+export function buildMatchSummary(results: MatchResult[]): MatchSummary {
+  const lineResults = results.filter((r) => r.matchLevel === "line");
+  const lineNumbers = [...new Set(lineResults.map((r) => r.lineNumber).filter((n): n is number => n !== null))];
+  const mismatchLines = [...new Set(lineResults.filter((r) => r.result === "fail").map((r) => r.lineNumber))];
+  const dimensionsWithIssues = [...new Set(results.filter((r) => r.result === "fail").map((r) => r.dimension))];
+
+  return {
+    totalLines: lineNumbers.length,
+    matchedLines: lineNumbers.length - mismatchLines.length,
+    mismatchLines: mismatchLines.length,
+    dimensionsWithIssues,
+  };
 }
