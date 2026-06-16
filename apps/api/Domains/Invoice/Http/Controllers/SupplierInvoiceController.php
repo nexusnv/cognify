@@ -41,8 +41,8 @@ class SupplierInvoiceController
             ->where('tenant_id', $tenant->id)
             ->with(['purchaseOrder', 'vendor', 'lines'])
             ->selectRaw(
-                'supplier_invoices.*, (SELECT COUNT(*) FROM attachments WHERE CAST(supplier_invoices.id AS TEXT) = attachments.attachable_id AND attachments.attachable_type = ? AND attachments.deleted_at IS NULL) as attachments_count',
-                [$invoiceClass]
+                'supplier_invoices.*, (SELECT COUNT(*) FROM attachments WHERE CAST(supplier_invoices.id AS TEXT) = attachments.attachable_id AND attachments.attachable_type = ? AND attachments.tenant_id = ? AND attachments.deleted_at IS NULL) as attachments_count',
+                [$invoiceClass, $tenant->id]
             );
 
         $this->applyQueueFilters($query, $request);

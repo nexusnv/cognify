@@ -35,9 +35,15 @@ class RunInvoiceMatching
                 throw new ConflictHttpException('Matching can only be run on reviewed invoices.');
             }
 
-            $invoice->load(['lines', 'purchaseOrder.lines']);
+            $invoice->load(['lines', 'purchaseOrder']);
 
-            $poLines = $invoice->purchaseOrder->lines->keyBy('id');
+            // Lock PO lines for update to prevent concurrent modification
+            $poLines = PurchaseOrderLine::query()
+                ->whereIn('id', $invoice->purchaseOrder->lines->pluck('id'))
+                ->where('tenant_id', $invoice->tenant_id)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
 
             $toleranceService = new ToleranceService();
             $matchingService = new InvoiceMatchingService($toleranceService);

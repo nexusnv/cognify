@@ -25,6 +25,7 @@ class InvoiceMatchingService
     ): array {
         $results = [];
         $cumulativeInvoicedUpdates = [];
+        $runningCumulative = []; // Track cumulative per PO line as we process invoice lines
         $matchingPolicy = $invoice->purchaseOrder->matching_policy ?? 'three_way';
 
         // Header-level: vendor identity
@@ -61,11 +62,15 @@ class InvoiceMatchingService
             $results[] = $this->matchFreight($line, $pol);
 
             // Two-way quantity with cumulative over-billing protection
-            $cumulativeInvoiced = $pol->cumulative_quantity_invoiced ?? '0.0000';
+            // Use running cumulative from previous lines for same PO line, not just the initial DB read
+            if (!isset($runningCumulative[$line->purchase_order_line_id])) {
+                $runningCumulative[$line->purchase_order_line_id] = $pol->cumulative_quantity_invoiced ?? '0.0000';
+            }
+            $cumulativeInvoiced = $runningCumulative[$line->purchase_order_line_id];
             $effectivePoQty = $pol->quantity;
 
             if ($pol->cancelled_by_change_order_id !== null) {
-                   $effectivePoQty = '0.0000';
+                $effectivePoQty = '0.0000';
             }
 
             $qtyResult = $this->toleranceService->compareQuantity(
@@ -75,9 +80,13 @@ class InvoiceMatchingService
             );
 
             $qtyNote = $qtyResult['notes'];
-            $passesQty = $qtyResult['result'] === 'pass';
+            $passesQtyTwoWay = $qtyResult['result'] === 'pass';
 
             // Three-way quantity (only if policy is three_way)
+            // Use separate variable to avoid affecting two-way result
+            $passesQtyThreeWay = true;
+            $threeWayResult = null;
+            
             if ($matchingPolicy === 'three_way') {
                 $acceptedQty = $pol->cumulative_quantity_accepted ?? '0.0000';
                 $receiptResult = $this->toleranceService->compareQuantity(
@@ -86,8 +95,8 @@ class InvoiceMatchingService
                     (string) $acceptedQty,
                 );
 
-                if ($receiptResult['result'] !== 'pass') {
-                    $passesQty = false;
+                $passesQtyThreeWay = $receiptResult['result'] === 'pass';
+                if (!$passesQtyThreeWay) {
                     $qtyNote = $qtyNote
                         ? $qtyNote . '; ' . $receiptResult['notes']
                         : $receiptResult['notes'];
@@ -109,7 +118,7 @@ class InvoiceMatchingService
                 );
             }
 
-            // Two-way quantity result
+            // Two-way quantity result (independent of three-way outcome)
             $results[] = new InvoiceMatchResultData(
                 dimension: 'quantity',
                 matchType: 'two_way',
@@ -121,17 +130,19 @@ class InvoiceMatchingService
                 tolerancePercentApplied: 0.0,
                 toleranceFloorApplied: 0.0,
                 toleranceCapApplied: 0.0,
-                result: $passesQty ? 'pass' : 'fail',
+                result: $passesQtyTwoWay ? 'pass' : 'fail',
                 notes: $qtyNote,
             );
 
-            // Track cumulative update for this PO line
-            $currentCumulative = $cumulativeInvoicedUpdates[$line->purchase_order_line_id] ?? $cumulativeInvoiced;
-            $cumulativeInvoicedUpdates[$line->purchase_order_line_id] = bcadd(
-                $currentCumulative,
+            // Update running cumulative for this PO line
+            $runningCumulative[$line->purchase_order_line_id] = bcadd(
+                $cumulativeInvoiced,
                 $line->quantity_invoiced,
                 4,
             );
+            
+            // Track final cumulative update for persistence
+            $cumulativeInvoicedUpdates[$line->purchase_order_line_id] = $runningCumulative[$line->purchase_order_line_id];
         }
 
         return [

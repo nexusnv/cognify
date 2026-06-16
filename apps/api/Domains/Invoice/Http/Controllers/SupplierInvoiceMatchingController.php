@@ -49,7 +49,9 @@ class SupplierInvoiceMatchingController
         $this->authorize('view', $supplierInvoice);
 
         $results = SupplierInvoiceMatchResult::query()
+            ->where('tenant_id', $supplierInvoice->tenant_id)
             ->where('supplier_invoice_id', $supplierInvoice->id)
+            ->with('supplierInvoiceLine')
             ->orderBy('created_at')
             ->get();
 

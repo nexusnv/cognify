@@ -9,10 +9,9 @@ class RunInvoiceMatchingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $supplierInvoice = $this->route('supplierInvoice');
-
-        return $supplierInvoice instanceof SupplierInvoice
-            && ($this->user()?->can('review', $supplierInvoice) ?? false);
+        // Authorization deferred to controller (findTenantSupplierInvoice + policy check)
+        // to avoid leaking cross-tenant invoice existence via 403 vs 404
+        return true;
     }
 
     public function rules(): array

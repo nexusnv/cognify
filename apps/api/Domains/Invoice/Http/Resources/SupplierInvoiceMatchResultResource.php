@@ -12,11 +12,8 @@ class SupplierInvoiceMatchResultResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $lineNumber = null;
-        if ($this->supplier_invoice_line_id !== null) {
-            $line = SupplierInvoiceLine::find($this->supplier_invoice_line_id);
-            $lineNumber = $line?->line_number;
-        }
+        // Access pre-loaded relationship to avoid unscoped lookup and N+1 queries
+        $lineNumber = $this->supplierInvoiceLine?->line_number;
 
         return [
             'id' => $this->id,
