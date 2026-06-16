@@ -20,22 +20,31 @@ Single-context repo (most repos):
 ├── docs/adr/
 │   ├── 0001-event-sourced-orders.md
 │   └── 0002-postgres-for-write-model.md
-└── src/
+└── apps/
+    ├── api/
+    ├── web/
+    └── artifacts/
 ```
 
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
+Multi-context repo (Cognify: presence of `AGENTS.md` at the root):
 
 ```
 /
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
+├── AGENTS.md
+├── docs/agents/                       ← agent and triage guidance
+├── apps/
+│   ├── api/                           ← Laravel backend domains
+│   │   └── Domains/
+│   ├── web/                           ← Next.js frontend features
+│   │   └── features/
+│   └── artifacts/
+├── packages/
+│   ├── ui/
+│   ├── api-client/
+│   ├── schemas/
+│   └── types/
+└── infrastructure/
+    └── docker/
 ```
 
 ## Use the glossary's vocabulary

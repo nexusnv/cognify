@@ -213,7 +213,7 @@ export const accountsPayableInvoiceHandlers = [
     details[id] = next;
     rows = rows.map((row) =>
       row.id === id
-        ? { ...row, matchingStatus: "mismatch" as const, lockVersion: updatedLockVersion }
+        ? { ...row, matchingStatus: next.matchingStatus, lockVersion: updatedLockVersion }
         : row,
     );
 

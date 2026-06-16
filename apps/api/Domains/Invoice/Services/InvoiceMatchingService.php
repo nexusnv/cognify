@@ -65,7 +65,7 @@ class InvoiceMatchingService
             $effectivePoQty = $pol->quantity;
 
             if ($pol->cancelled_by_change_order_id !== null) {
-                $effectivePoQty = bcsub((string) $pol->quantity, (string) $pol->quantity, 4);
+                   $effectivePoQty = '0.0000';
             }
 
             $qtyResult = $this->toleranceService->compareQuantity(
