@@ -101,12 +101,12 @@ class RunInvoiceMatching
                 action: 'supplier_invoice.matching_completed',
                 subject: $invoice,
                 metadata: [
-                    'matching_status' => $invoice->matching_status,
-                    'total_results' => $totalResults,
-                    'fail_results' => $failResults,
-                    'trigger_source' => $triggerSource,
-                    'matching_policy' => $invoice->purchaseOrder->matching_policy,
-                    'dimensions_with_issues' => collect($matchResult['results'])
+                    'matchingStatus' => $invoice->matching_status,
+                    'totalResults' => $totalResults,
+                    'failResults' => $failResults,
+                    'triggerSource' => $triggerSource,
+                    'matchingPolicy' => $invoice->purchaseOrder->matching_policy,
+                    'dimensionsWithIssues' => collect($matchResult['results'])
                         ->where('result', 'fail')
                         ->pluck('dimension')
                         ->unique()

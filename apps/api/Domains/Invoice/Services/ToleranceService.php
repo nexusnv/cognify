@@ -20,23 +20,24 @@ class ToleranceService
     ): array {
         $tolerance = MatchingToleranceConfigData::forDimension($dimension, $this->tenantConfig);
 
-        $expectedFloat = (float) $expected;
-        $actualFloat = (float) $actual;
-        $variance = abs($expectedFloat - $actualFloat);
-
-        if ($expectedFloat === 0.0 && $actualFloat === 0.0) {
+        if (bccomp($expected, '0', 4) === 0 && bccomp($actual, '0', 4) === 0) {
             return $this->passResult($tolerance);
         }
 
-        if ($expectedFloat === 0.0 && $actualFloat !== 0.0) {
+        if (bccomp($expected, '0', 4) === 0 && bccomp($actual, '0', 4) !== 0) {
             return $this->failResult($tolerance, 'Expected value is zero but actual is non-zero.');
         }
 
-        $percentageTolerance = $expectedFloat * ($tolerance['percent'] / 100);
-        $effectiveTolerance = max($percentageTolerance, $tolerance['floor']);
+        $diff = bcsub($expected, $actual, 4);
+        $variance = bccomp($diff, '0', 4) < 0 ? bcsub('0', $diff, 4) : $diff;
 
-        $passesEffective = bccomp((string) $variance, (string) $effectiveTolerance, 4) <= 0;
-        $passesCap = $tolerance['cap'] === 0.0 || bccomp((string) $variance, (string) $tolerance['cap'], 4) <= 0;
+        $percentageTolerance = bcmul($expected, (string) ($tolerance['percent'] / 100), 4);
+        $effectiveTolerance = bccomp($percentageTolerance, (string) $tolerance['floor'], 4) >= 0
+            ? $percentageTolerance
+            : (string) $tolerance['floor'];
+
+        $passesEffective = bccomp($variance, $effectiveTolerance, 4) <= 0;
+        $passesCap = $tolerance['cap'] == 0 || bccomp($variance, (string) $tolerance['cap'], 4) <= 0;
 
         if ($passesEffective && $passesCap) {
             return $this->passResult($tolerance);
@@ -44,10 +45,10 @@ class ToleranceService
 
         $notes = [];
         if (! $passesEffective) {
-            $notes[] = sprintf('Variance %.4f exceeds effective tolerance %.4f', $variance, $effectiveTolerance);
+            $notes[] = sprintf('Variance %s exceeds effective tolerance %s', $variance, $effectiveTolerance);
         }
         if (! $passesCap) {
-            $notes[] = sprintf('Variance %.4f exceeds hard cap %.4f', $variance, $tolerance['cap']);
+            $notes[] = sprintf('Variance %s exceeds hard cap %s', $variance, $tolerance['cap']);
         }
 
         return $this->failResult($tolerance, implode('; ', $notes));

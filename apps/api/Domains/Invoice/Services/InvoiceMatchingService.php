@@ -251,12 +251,6 @@ class InvoiceMatchingService
 
     private function matchTax(SupplierInvoiceLine $line, PurchaseOrderLine $pol): InvoiceMatchResultData
     {
-        $comparison = $this->toleranceService->compare(
-            (string) ($pol->tax_amount ?? '0.0000'),
-            '0.0000',
-            'tax',
-        );
-
         return new InvoiceMatchResultData(
             dimension: 'tax',
             matchType: 'two_way',
@@ -265,9 +259,9 @@ class InvoiceMatchingService
             purchaseOrderLineId: $line->purchase_order_line_id,
             expectedValue: (string) ($pol->tax_amount ?? '0.0000'),
             actualValue: '0.0000',
-            tolerancePercentApplied: $comparison['tolerance_percent_applied'],
-            toleranceFloorApplied: $comparison['tolerance_floor_applied'],
-            toleranceCapApplied: $comparison['tolerance_cap_applied'],
+            tolerancePercentApplied: null,
+            toleranceFloorApplied: null,
+            toleranceCapApplied: null,
             result: 'not_applicable',
             notes: 'Tax matching at line level not yet supported; tax is typically header-level',
         );
@@ -275,12 +269,6 @@ class InvoiceMatchingService
 
     private function matchFreight(SupplierInvoiceLine $line, PurchaseOrderLine $pol): InvoiceMatchResultData
     {
-        $comparison = $this->toleranceService->compare(
-            (string) ($pol->freight_amount ?? '0.0000'),
-            '0.0000',
-            'freight',
-        );
-
         return new InvoiceMatchResultData(
             dimension: 'freight',
             matchType: 'two_way',
@@ -289,9 +277,9 @@ class InvoiceMatchingService
             purchaseOrderLineId: $line->purchase_order_line_id,
             expectedValue: (string) ($pol->freight_amount ?? '0.0000'),
             actualValue: '0.0000',
-            tolerancePercentApplied: $comparison['tolerance_percent_applied'],
-            toleranceFloorApplied: $comparison['tolerance_floor_applied'],
-            toleranceCapApplied: $comparison['tolerance_cap_applied'],
+            tolerancePercentApplied: null,
+            toleranceFloorApplied: null,
+            toleranceCapApplied: null,
             result: 'not_applicable',
             notes: 'Freight matching at line level not yet supported; freight is typically header-level',
         );
