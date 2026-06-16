@@ -147,7 +147,7 @@ export async function fetchInvoiceMatchResults(
 export function buildMatchSummary(results: MatchResult[]): MatchSummary {
   const lineResults = results.filter((r) => r.matchLevel === "line");
   const lineNumbers = [...new Set(lineResults.map((r) => r.lineNumber).filter((n): n is number => n !== null))];
-  const mismatchLines = [...new Set(lineResults.filter((r) => r.result === "fail").map((r) => r.lineNumber))];
+  const mismatchLines = [...new Set(lineResults.filter((r) => r.result === "fail").map((r) => r.lineNumber).filter((n): n is number => n !== null))];
   const dimensionsWithIssues = [...new Set(results.filter((r) => r.result === "fail").map((r) => r.dimension))];
 
   return {

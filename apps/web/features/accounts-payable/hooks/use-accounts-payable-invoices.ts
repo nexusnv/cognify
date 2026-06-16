@@ -13,6 +13,8 @@ export const accountsPayableInvoiceKeys = {
     [...accountsPayableInvoiceKeys.all, "list", tenantId, filters] as const,
   detail: (tenantId: string, invoiceId: string) =>
     [...accountsPayableInvoiceKeys.all, "detail", tenantId, invoiceId] as const,
+  matchResults: (tenantId: string, invoiceId: string) =>
+    [...accountsPayableInvoiceKeys.all, "match-results", tenantId, invoiceId] as const,
 };
 
 export function useAccountsPayableInvoices(filters: AccountsPayableInvoiceFilters) {

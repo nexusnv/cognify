@@ -1,18 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Skeleton } from "@cognify/ui";
+import { Alert, AlertDescription, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Skeleton } from "@cognify/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 import { useInvoiceMatchSummary, useRunInvoiceMatching } from "../hooks/use-invoice-matching";
 import { InvoiceMatchingStatusBadge } from "./invoice-matching-status-badge";
-import type { MatchResult } from "../api/accounts-payable-invoices-api";
 
 interface InvoiceMatchResultsPanelProps {
   invoiceId: string;
   lockVersion: number;
   invoiceStatus: string;
-  matchingStatus: string | null | undefined;
+  matchingStatus: "pending" | "matched" | "mismatch" | null | undefined;
 }
 
 export function InvoiceMatchResultsPanel({
@@ -23,20 +21,16 @@ export function InvoiceMatchResultsPanel({
 }: InvoiceMatchResultsPanelProps) {
   const { summary, results, isLoading, isError } = useInvoiceMatchSummary(invoiceId);
   const runMatching = useRunInvoiceMatching(invoiceId);
-  const [isRunning, setIsRunning] = useState(false);
 
   const canRunMatching =
     invoiceStatus === "reviewed" &&
     (!matchingStatus || matchingStatus === "mismatch" || matchingStatus === "pending" || matchingStatus === null);
 
-  const handleRunMatching = async () => {
-    setIsRunning(true);
-    try {
-      await runMatching.mutateAsync({ lockVersion });
-    } finally {
-      setIsRunning(false);
-    }
+  const handleRunMatching = () => {
+    runMatching.mutate({ lockVersion });
   };
+
+  const runError = runMatching.error;
 
   return (
     <Card>
@@ -53,14 +47,20 @@ export function InvoiceMatchResultsPanel({
             <Button
               size="sm"
               onClick={handleRunMatching}
-              disabled={isRunning || runMatching.isPending}
+              disabled={runMatching.isPending}
             >
-              {isRunning || runMatching.isPending ? "Running..." : "Run Matching"}
+              {runMatching.isPending ? "Running..." : "Run Matching"}
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
+        {runError ? (
+          <Alert variant="destructive" role="alert" className="mb-3">
+            <AlertDescription>{errorToMessage(runError)}</AlertDescription>
+          </Alert>
+        ) : null}
+
         {isLoading && (
           <div className="space-y-2">
             <Skeleton className="h-4 w-48" />
@@ -103,7 +103,7 @@ export function InvoiceMatchResultsPanel({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {results.map((r: MatchResult) => (
+                  {results.map((r) => (
                     <TableRow key={r.id} className={r.result === "fail" ? "bg-red-50" : ""}>
                       <TableCell>{r.lineNumber ?? "\u2014"}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{r.matchLevel}</TableCell>
@@ -140,4 +140,15 @@ export function InvoiceMatchResultsPanel({
       </CardContent>
     </Card>
   );
+}
+
+function errorToMessage(error: unknown) {
+  if (typeof error === "object" && error !== null && "error" in error) {
+    const apiError = (error as { error?: { message?: string } }).error;
+    if (apiError?.message) return apiError.message;
+  }
+
+  if (error instanceof Error) return error.message;
+
+  return "Invoice matching could not be completed.";
 }

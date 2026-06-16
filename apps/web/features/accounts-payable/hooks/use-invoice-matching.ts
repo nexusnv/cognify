@@ -1,18 +1,21 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   triggerInvoiceMatching,
   fetchInvoiceMatchResults,
   buildMatchSummary,
-  MatchResult,
 } from "../api/accounts-payable-invoices-api";
+import { accountsPayableInvoiceKeys } from "./use-accounts-payable-invoices";
 
 export function useInvoiceMatchResults(invoiceId: string | null) {
-  return useQuery<MatchResult[]>({
-    queryKey: ["supplier-invoice", "match-results", invoiceId],
-    queryFn: () => fetchInvoiceMatchResults(invoiceId!),
-    enabled: !!invoiceId,
+  const tenantId = getStoredActiveTenantId();
+
+  return useQuery({
+    queryKey: accountsPayableInvoiceKeys.matchResults(tenantId ?? "no-tenant", invoiceId ?? "no-invoice"),
+    queryFn: () => fetchInvoiceMatchResults(invoiceId!, tenantId),
+    enabled: Boolean(tenantId) && !!invoiceId,
   });
 }
 
@@ -24,13 +27,7 @@ export function useRunInvoiceMatching(invoiceId: string | null) {
       triggerInvoiceMatching(invoiceId!, lockVersion),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["supplier-invoice", "match-results", invoiceId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["supplier-invoice", "detail", invoiceId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["supplier-invoice-queue"],
+        queryKey: accountsPayableInvoiceKeys.all,
       });
     },
   });
