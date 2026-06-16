@@ -41,4 +41,4 @@ USER appuser
 
 EXPOSE 8890
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --force && cd public && php -S 0.0.0.0:8890 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
+CMD ["sh", "-c", "php artisan migrate:fresh --seed && cd public && php -S 0.0.0.0:8890 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
