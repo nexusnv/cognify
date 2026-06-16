@@ -16,6 +16,7 @@ import {
   InvoiceReviewChecklist,
 } from "./invoice-review-checklist";
 import { InvoiceReviewStatusBadge } from "./invoice-review-status-badge";
+import { InvoiceMatchResultsPanel } from "./invoice-match-results-panel";
 
 export function InvoiceReviewPanel({
   invoice,
@@ -192,6 +193,15 @@ export function InvoiceReviewPanel({
           ))}
         </div>
       ) : null}
+
+      {displayInvoice.matchingStatus !== undefined && (
+        <InvoiceMatchResultsPanel
+          invoiceId={displayInvoice.id}
+          lockVersion={displayInvoice.lockVersion}
+          invoiceStatus={displayInvoice.status}
+          matchingStatus={displayInvoice.matchingStatus}
+        />
+      )}
     </aside>
   );
 }

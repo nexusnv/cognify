@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsList, TabsTrigger } from "@cognify/ui";
-import type { ListSupplierInvoiceQueueStatus, SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsList, TabsTrigger } from "@cognify/ui";
+import type { ListSupplierInvoiceQueueMatchingStatus, ListSupplierInvoiceQueueStatus, SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
 import { InvoiceQueueSummary } from "../components/invoice-queue-summary";
 import { InvoiceReviewPanel } from "../components/invoice-review-panel";
 import { useAccountsPayableInvoices } from "../hooks/use-accounts-payable-invoices";
@@ -16,11 +16,23 @@ const statusTabs: Array<{ label: string; value: string; status?: ListSupplierInv
   { label: "All", value: "all" },
 ];
 
+const matchingFilters: Array<{ label: string; value: ListSupplierInvoiceQueueMatchingStatus | undefined }> = [
+  { label: "All", value: undefined },
+  { label: "Pending", value: "pending" },
+  { label: "Matched", value: "matched" },
+  { label: "Mismatch", value: "mismatch" },
+];
+
 export function AccountsPayableInvoiceQueuePage() {
   const [status, setStatus] = useState("captured");
+  const [matchingFilter, setMatchingFilter] = useState<ListSupplierInvoiceQueueMatchingStatus | undefined>();
   const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoiceQueueItem | null>(null);
   const activeTab = statusTabs.find((tab) => tab.value === status) ?? statusTabs[0];
-  const invoicesQuery = useAccountsPayableInvoices(activeTab.status ? { status: activeTab.status } : {});
+  const invoicesQuery = useAccountsPayableInvoices(
+    activeTab.status
+      ? { status: activeTab.status, ...(matchingFilter ? { matchingStatus: matchingFilter } : {}) }
+      : { ...(matchingFilter ? { matchingStatus: matchingFilter } : {}) },
+  );
   const invoices = invoicesQuery.data ?? [];
 
   return (
@@ -55,6 +67,19 @@ export function AccountsPayableInvoiceQueuePage() {
               ))}
             </TabsList>
           </Tabs>
+
+          <div className="flex gap-2">
+            {matchingFilters.map((filter) => (
+              <Button
+                key={filter.label}
+                variant={matchingFilter === filter.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMatchingFilter(filter.value)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
 
           <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_28rem]">
             <AccountsPayableInvoiceQueueTable
