@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('supplier_invoice_match_results', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->foreignUuid('supplier_invoice_id')->constrained('supplier_invoices');
-            $table->foreignUuid('supplier_invoice_line_id')->nullable()->constrained('supplier_invoice_lines');
-            $table->foreignUuid('purchase_order_line_id')->nullable()->constrained('purchase_order_lines');
+            $table->foreignUuid('supplier_invoice_id')->constrained('supplier_invoices')->cascadeOnDelete();
+            $table->foreignUuid('supplier_invoice_line_id')->nullable()->constrained('supplier_invoice_lines')->nullOnDelete();
+            $table->foreignUuid('purchase_order_line_id')->nullable()->constrained('purchase_order_lines')->nullOnDelete();
             $table->string('match_type');
             $table->string('match_level');
             $table->string('dimension');
