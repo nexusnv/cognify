@@ -2,7 +2,7 @@
 
 namespace Domains\Invoice\Data;
 
-class InvoiceMatchResultData
+final class InvoiceMatchResultData
 {
     public function __construct(
         public readonly string $dimension,
