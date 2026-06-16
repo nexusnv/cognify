@@ -8,6 +8,7 @@ import {
   accountsPayableInvoiceDetails,
   accountsPayableInvoiceRows,
 } from "./accounts-payable-invoice-fixtures";
+import { mockMatchedResults, mockMismatchedResults } from "./invoice-matching-fixtures";
 
 let rows: SupplierInvoiceQueueItem[] = [];
 let details: Record<string, SupplierInvoice> = {};
@@ -162,6 +163,63 @@ export const accountsPayableInvoiceHandlers = [
 
     return HttpResponse.json({ data: next });
   }),
+  http.post("/api/supplier-invoices/:supplierInvoice/run-matching", async ({ params, request }) => {
+    const id = String(params.supplierInvoice);
+    const payload = await request.json() as { lockVersion: number };
+    const detail = details[id];
+
+    if (!detail) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Invoice not found" } },
+        { status: 404 },
+      );
+    }
+
+    if (detail.status !== "reviewed") {
+      return HttpResponse.json(
+        { error: { code: "conflict", message: "Matching can only be run on reviewed invoices." } },
+        { status: 409 },
+      );
+    }
+
+    const updatedLockVersion = detail.lockVersion + 1;
+    const next: SupplierInvoice = {
+      ...detail,
+      matchingStatus: "mismatch",
+      matchSummary: {
+        totalLines: 1,
+        matchedLines: 0,
+        mismatchLines: 1,
+        dimensionsWithIssues: ["quantity", "unit_price"],
+      },
+      lockVersion: updatedLockVersion,
+    };
+
+    details[id] = next;
+    rows = rows.map((row) =>
+      row.id === id
+        ? { ...row, matchingStatus: "mismatch" as const, lockVersion: updatedLockVersion }
+        : row,
+    );
+
+    return HttpResponse.json({ data: next });
+  }),
+
+  http.get("/api/supplier-invoices/:supplierInvoice/match-results", ({ params }) => {
+    const id = String(params.supplierInvoice);
+    const detail = details[id];
+
+    if (!detail) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Invoice not found" } },
+        { status: 404 },
+      );
+    }
+
+    const results = id === "invoice-4" ? mockMatchedResults : mockMismatchedResults;
+    return HttpResponse.json({ data: results });
+  }),
+
   http.post("/api/supplier-invoices/:supplierInvoice/complete-review", async ({ params, request }) => {
     const id = String(params.supplierInvoice);
     const payload = await request.json() as SupplierInvoiceReviewActionRequest;
