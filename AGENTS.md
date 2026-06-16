@@ -63,3 +63,17 @@ Before claiming work is complete, run the narrow checks for the files touched an
 - Feature development runbook: `docs/05-runbooks/feature-development.md`
 - Engineering standards: `docs/04-engineering/standards/`
 - Local services: `docs/05-runbooks/local-development.md`
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked as GitHub Issues in this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The label vocabulary uses the five default labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout. See `docs/agents/domain.md`.
