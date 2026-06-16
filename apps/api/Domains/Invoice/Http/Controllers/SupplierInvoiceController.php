@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -35,10 +36,14 @@ class SupplierInvoiceController
         ]);
         $this->authorize('review', $prototype);
 
+        $invoiceClass = SupplierInvoice::class;
         $query = SupplierInvoice::query()
             ->where('tenant_id', $tenant->id)
             ->with(['purchaseOrder', 'vendor', 'lines'])
-            ->withCount('attachments');
+            ->selectRaw(
+                'supplier_invoices.*, (SELECT COUNT(*) FROM attachments WHERE CAST(supplier_invoices.id AS TEXT) = attachments.attachable_id AND attachments.attachable_type = ? AND attachments.deleted_at IS NULL) as attachments_count',
+                [$invoiceClass]
+            );
 
         $this->applyQueueFilters($query, $request);
 
