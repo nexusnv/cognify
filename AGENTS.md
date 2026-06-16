@@ -35,6 +35,13 @@ Cognify is a multi-tenant enterprise procurement SaaS. It is a greenfield codeba
 - `pnpm build`
 - `pnpm dev:services`
 - `pnpm dev:services:down`
+- `pnpm dev:reset`
+
+## Common MCP, Skills & Assist Tool
+
+- `CodeGraph mcp`
+- `shadcn MCP`
+- `Coderabbit Skill`
 
 ## Verification
 

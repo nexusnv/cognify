@@ -13,7 +13,6 @@ coverage/
 .vercel/
 *.tsbuildinfo
 artifacts/
-!artifacts/
 artifacts/*
 !artifacts/login-logout-ux-audit.mjs
 !artifacts/report.md

@@ -19,7 +19,7 @@ The structure borrows from proven architecture documentation patterns:
 
 ## 1. Architectural Intent
 
-Cognify is a multi-tenant enterprise procure-to-pay SaaS. The system is designed around procurement workflows rather than isolated CRUD pages. The product direction spans requisition, approval, sourcing, quotation, award, purchase order, receiving, supplier invoice, matching, payment readiness, and spend visibility workflows. The core architectural priorities are:
+Cognify is a multi-tenant enterprise procure-to-pay SaaS. Cognify target web desktop user only and no mobile support. The system is designed around procurement workflows rather than isolated CRUD pages. The product direction spans requisition, approval, sourcing, quotation, award, purchase order, receiving, supplier invoice, matching, payment readiness, and spend visibility workflows. The core architectural priorities are:
 
 1. Preserve tenant isolation in every user-facing and backend workflow.
 2. Keep authentication and session behavior browser-native, explicit, and testable.
