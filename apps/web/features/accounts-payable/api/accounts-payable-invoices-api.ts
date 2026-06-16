@@ -21,6 +21,28 @@ import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
 export type AccountsPayableInvoiceFilters = ListSupplierInvoiceQueueParams;
 
+export interface MatchResult {
+  id: string;
+  lineNumber: number | null;
+  matchLevel: "header" | "line";
+  matchType: "two_way" | "three_way";
+  dimension: string;
+  expectedValue: string | null;
+  actualValue: string | null;
+  tolerancePercentApplied: number | null;
+  toleranceFloorApplied: number | null;
+  toleranceCapApplied: number | null;
+  result: "pass" | "fail" | "not_applicable";
+  notes: string | null;
+}
+
+export interface MatchSummary {
+  totalLines: number;
+  matchedLines: number;
+  mismatchLines: number;
+  dimensionsWithIssues: string[];
+}
+
 function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit {
   if (!tenantId) {
     throw new Error("Missing active tenant context");
@@ -98,43 +120,28 @@ export async function completeReview(
   return unwrapData<SupplierInvoice>(response);
 }
 
-export interface MatchSummary {
-  totalLines: number;
-  matchedLines: number;
-  mismatchLines: number;
-  dimensionsWithIssues: string[];
-}
-
-export interface MatchResult {
-  id: string;
-  lineNumber: number | null;
-  matchLevel: "header" | "line";
-  matchType: "two_way" | "three_way";
-  dimension: string;
-  expectedValue: string | null;
-  actualValue: string | null;
-  tolerancePercentApplied: number | null;
-  toleranceFloorApplied: number | null;
-  toleranceCapApplied: number | null;
-  result: "pass" | "fail" | "not_applicable";
-  notes: string | null;
-}
-
 export async function triggerInvoiceMatching(
   invoiceId: string,
   lockVersion: number,
+  tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<SupplierInvoice> {
-  const response = await runSupplierInvoiceMatching(invoiceId, {
-    lockVersion,
-  }).catch(throwResponseData);
+  const response = await runSupplierInvoiceMatching(
+    invoiceId,
+    { lockVersion },
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
   return unwrapData<SupplierInvoice>(response);
 }
 
 export async function fetchInvoiceMatchResults(
   invoiceId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<MatchResult[]> {
-  const { data } = await listSupplierInvoiceMatchResults(invoiceId);
-  return (data?.data ?? []) as MatchResult[];
+  const response = await listSupplierInvoiceMatchResults(
+    invoiceId,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapData<MatchResult[]>(response);
 }
 
 export function buildMatchSummary(results: MatchResult[]): MatchSummary {

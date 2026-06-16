@@ -22,14 +22,14 @@ export function useRunInvoiceMatching(invoiceId: string | null) {
   return useMutation({
     mutationFn: ({ lockVersion }: { lockVersion: number }) =>
       triggerInvoiceMatching(invoiceId!, lockVersion),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ["supplier-invoice", "match-results", invoiceId],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["supplier-invoice", "detail", invoiceId],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["supplier-invoice-queue"],
       });
     },
