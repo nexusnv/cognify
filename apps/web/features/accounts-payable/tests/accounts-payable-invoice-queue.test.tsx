@@ -75,6 +75,31 @@ describe("Accounts payable invoice queue", () => {
     await waitFor(() => expect(screen.getByText("needs_information")).toBeInTheDocument());
   });
 
+  it("shows review blocker count badge on invoices with blockers", async () => {
+    const user = userEvent.setup();
+    render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
+
+    await user.click(await screen.findByRole("tab", { name: "Needs information" }));
+
+    const rowWithBlockers = await screen.findByRole("row", { name: /INV-10003/i });
+    expect(within(rowWithBlockers).getByText("1")).toBeInTheDocument();
+  });
+
+  it("shows permission denied state for forbidden queue loads", async () => {
+    server.use(
+      http.get("/api/supplier-invoices", () =>
+        HttpResponse.json(
+          { error: { code: "forbidden", message: "You are not allowed to perform this action." } },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
+
+    expect(await screen.findByText("You are not allowed to perform this action.")).toBeInTheDocument();
+  });
+
   it("surfaces stale review conflicts", async () => {
     const user = userEvent.setup();
     server.use(

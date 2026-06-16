@@ -1,7 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SupplierInvoiceReviewActionRequest } from "@cognify/api-client/schemas";
+import type {
+  SupplierInvoiceCompleteReviewRequest,
+  SupplierInvoiceNeedsInformationRequest,
+  SupplierInvoiceStartReviewRequest,
+} from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 import {
   completeReview,
@@ -26,7 +30,7 @@ export function useStartSupplierInvoiceReview(invoiceId: string) {
   const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (payload: SupplierInvoiceReviewActionRequest) => startReview(invoiceId, payload, tenantId),
+    mutationFn: (payload: SupplierInvoiceStartReviewRequest) => startReview(invoiceId, payload, tenantId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: accountsPayableInvoiceKeys.all });
     },
@@ -38,7 +42,7 @@ export function useMarkSupplierInvoiceNeedsInformation(invoiceId: string) {
   const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (payload: SupplierInvoiceReviewActionRequest) => markNeedsInformation(invoiceId, payload, tenantId),
+    mutationFn: (payload: SupplierInvoiceNeedsInformationRequest) => markNeedsInformation(invoiceId, payload, tenantId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: accountsPayableInvoiceKeys.all });
     },
@@ -50,7 +54,7 @@ export function useCompleteSupplierInvoiceReview(invoiceId: string) {
   const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (payload: SupplierInvoiceReviewActionRequest) => completeReview(invoiceId, payload, tenantId),
+    mutationFn: (payload: SupplierInvoiceCompleteReviewRequest) => completeReview(invoiceId, payload, tenantId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: accountsPayableInvoiceKeys.all });
     },

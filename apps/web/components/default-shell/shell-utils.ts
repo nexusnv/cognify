@@ -54,3 +54,7 @@ export function canUseCalendar(permissions: IdentityPermissions): boolean {
     permissions.canViewSubmittedRequisitions
   );
 }
+
+export function canUseAccountsPayable(permissions: IdentityPermissions): boolean {
+  return permissions.canAccessAdmin || permissions.canManageSourcingIntake;
+}

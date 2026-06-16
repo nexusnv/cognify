@@ -27,6 +27,32 @@ export function buildSupplierInvoiceFixture(overrides: Partial<SupplierInvoice> 
     notes: "Supplier invoice received by AP.",
     capturedByUserId: "user-1",
     capturedAt: "2026-06-11T10:00:00Z",
+    purchaseOrder: {
+      id: "po-1",
+      number: "PO-2026-000001",
+    },
+    vendor: {
+      id: "vendor-1",
+      name: "Northwind Traders",
+    },
+    attachmentCount: 0,
+    reviewStartedByUserId: null,
+    reviewStartedAt: null,
+    reviewedByUserId: null,
+    reviewedAt: null,
+    reviewNotes: null,
+    reviewChecklist: null,
+    reviewChecklistSummary: {
+      total: 5,
+      passed: 0,
+      needsAttention: 0,
+      failed: 0,
+    },
+    reviewBlockers: [],
+    reviewBlockerCount: 0,
+    permissions: {
+      canReview: true,
+    },
     lockVersion: 1,
     lines: [
       {

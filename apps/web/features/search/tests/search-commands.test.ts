@@ -28,9 +28,18 @@ describe("getSearchCommands", () => {
   it("includes invoice review when accounts payable permissions allow it", () => {
     const commands = getSearchCommands({
       ...requesterIdentity.permissions,
-      canViewSubmittedRequisitions: true,
+      canManageSourcingIntake: true,
     });
 
     expect(commands.some((command) => command.label === "Open invoice review")).toBe(true);
+  });
+
+  it("hides invoice review from approver-only permissions", () => {
+    const commands = getSearchCommands({
+      ...requesterIdentity.permissions,
+      canViewSubmittedRequisitions: true,
+    });
+
+    expect(commands.some((command) => command.label === "Open invoice review")).toBe(false);
   });
 });

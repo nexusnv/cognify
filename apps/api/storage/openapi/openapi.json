@@ -9351,7 +9351,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["due_date_asc", "due_date_desc", "created_at_asc", "created_at_desc"]
+              "enum": [
+                "due_date_asc",
+                "due_date_desc",
+                "created_at_asc",
+                "created_at_desc"
+              ]
             }
           }
         ],
@@ -9405,7 +9410,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupplierInvoiceReviewActionRequest"
+                "$ref": "#/components/schemas/SupplierInvoiceStartReviewRequest"
               }
             }
           }
@@ -9469,7 +9474,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupplierInvoiceReviewActionRequest"
+                "$ref": "#/components/schemas/SupplierInvoiceNeedsInformationRequest"
               }
             }
           }
@@ -9533,7 +9538,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupplierInvoiceReviewActionRequest"
+                "$ref": "#/components/schemas/SupplierInvoiceCompleteReviewRequest"
               }
             }
           }
@@ -25414,6 +25419,80 @@
             "items": {
               "$ref": "#/components/schemas/SupplierInvoiceQueueItem"
             }
+          }
+        }
+      },
+      "SupplierInvoiceStartReviewRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklist"
+          }
+        }
+      },
+      "SupplierInvoiceNeedsInformationRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "notes",
+          "checklist"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklist"
+          }
+        }
+      },
+      "SupplierInvoiceCompleteReviewRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "checklist"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/SupplierInvoiceReviewChecklist"
           }
         }
       }

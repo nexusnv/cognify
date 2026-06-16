@@ -156,10 +156,12 @@ import type {
   SubmitPurchaseOrderChangeOrderRequest,
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
+  SupplierInvoiceCompleteReviewRequest,
   SupplierInvoiceListResponse,
+  SupplierInvoiceNeedsInformationRequest,
   SupplierInvoiceQueueResponse,
   SupplierInvoiceResponse,
-  SupplierInvoiceReviewActionRequest,
+  SupplierInvoiceStartReviewRequest,
   SystemStatusResponse,
   TooManyRequestsResponse,
   TransitionProcurementProjectRequest,
@@ -11705,7 +11707,7 @@ export const getStartSupplierInvoiceReviewUrl = (supplierInvoice: string) => {
 
 export const startSupplierInvoiceReview = async (
   supplierInvoice: string,
-  supplierInvoiceReviewActionRequest: SupplierInvoiceReviewActionRequest,
+  supplierInvoiceStartReviewRequest: SupplierInvoiceStartReviewRequest,
   options?: RequestInit,
 ): Promise<startSupplierInvoiceReviewResponse> => {
   return cognifyFetch<startSupplierInvoiceReviewResponse>(
@@ -11714,7 +11716,7 @@ export const startSupplierInvoiceReview = async (
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(supplierInvoiceReviewActionRequest),
+      body: JSON.stringify(supplierInvoiceStartReviewRequest),
     },
   );
 };
@@ -11782,7 +11784,7 @@ export const getMarkSupplierInvoiceNeedsInformationUrl = (supplierInvoice: strin
 
 export const markSupplierInvoiceNeedsInformation = async (
   supplierInvoice: string,
-  supplierInvoiceReviewActionRequest: SupplierInvoiceReviewActionRequest,
+  supplierInvoiceNeedsInformationRequest: SupplierInvoiceNeedsInformationRequest,
   options?: RequestInit,
 ): Promise<markSupplierInvoiceNeedsInformationResponse> => {
   return cognifyFetch<markSupplierInvoiceNeedsInformationResponse>(
@@ -11791,7 +11793,7 @@ export const markSupplierInvoiceNeedsInformation = async (
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(supplierInvoiceReviewActionRequest),
+      body: JSON.stringify(supplierInvoiceNeedsInformationRequest),
     },
   );
 };
@@ -11859,7 +11861,7 @@ export const getCompleteSupplierInvoiceReviewUrl = (supplierInvoice: string) => 
 
 export const completeSupplierInvoiceReview = async (
   supplierInvoice: string,
-  supplierInvoiceReviewActionRequest: SupplierInvoiceReviewActionRequest,
+  supplierInvoiceCompleteReviewRequest: SupplierInvoiceCompleteReviewRequest,
   options?: RequestInit,
 ): Promise<completeSupplierInvoiceReviewResponse> => {
   return cognifyFetch<completeSupplierInvoiceReviewResponse>(
@@ -11868,7 +11870,7 @@ export const completeSupplierInvoiceReview = async (
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(supplierInvoiceReviewActionRequest),
+      body: JSON.stringify(supplierInvoiceCompleteReviewRequest),
     },
   );
 };

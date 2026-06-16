@@ -56,7 +56,7 @@ export function AccountsPayableInvoiceQueuePage() {
             </TabsList>
           </Tabs>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_28rem]">
+          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_28rem]">
             <AccountsPayableInvoiceQueueTable
               invoices={invoices}
               state={
@@ -69,6 +69,7 @@ export function AccountsPayableInvoiceQueuePage() {
                       : "idle"
               }
               onSelect={setSelectedInvoice}
+              errorTitle={queueErrorTitle(invoicesQuery.error)}
             />
             <InvoiceReviewPanel
               invoice={selectedInvoice}
@@ -81,4 +82,19 @@ export function AccountsPayableInvoiceQueuePage() {
       </Card>
     </section>
   );
+}
+
+function queueErrorTitle(error: unknown) {
+  if (typeof error === "object" && error !== null && "error" in error) {
+    const apiError = (error as { error?: { code?: string; message?: string } }).error;
+    if (apiError?.code === "forbidden") {
+      return "You are not allowed to perform this action.";
+    }
+
+    if (apiError?.message) {
+      return apiError.message;
+    }
+  }
+
+  return "Invoice review queue unavailable";
 }

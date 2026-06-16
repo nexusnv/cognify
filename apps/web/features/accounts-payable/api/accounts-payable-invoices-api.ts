@@ -10,8 +10,10 @@ import {
 import type {
   ListSupplierInvoiceQueueParams,
   SupplierInvoice,
+  SupplierInvoiceCompleteReviewRequest,
+  SupplierInvoiceNeedsInformationRequest,
   SupplierInvoiceQueueItem,
-  SupplierInvoiceReviewActionRequest,
+  SupplierInvoiceStartReviewRequest,
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
@@ -61,7 +63,7 @@ export async function fetchSupplierInvoiceDetail(
 
 export async function startReview(
   id: string,
-  payload: SupplierInvoiceReviewActionRequest,
+  payload: SupplierInvoiceStartReviewRequest,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<SupplierInvoice> {
   const response = await startSupplierInvoiceReview(id, payload, withActiveTenantHeader(tenantId)).catch(
@@ -72,7 +74,7 @@ export async function startReview(
 
 export async function markNeedsInformation(
   id: string,
-  payload: SupplierInvoiceReviewActionRequest,
+  payload: SupplierInvoiceNeedsInformationRequest,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<SupplierInvoice> {
   const response = await markSupplierInvoiceNeedsInformation(id, payload, withActiveTenantHeader(tenantId)).catch(
@@ -83,7 +85,7 @@ export async function markNeedsInformation(
 
 export async function completeReview(
   id: string,
-  payload: SupplierInvoiceReviewActionRequest,
+  payload: SupplierInvoiceCompleteReviewRequest,
   tenantId: string | null = getStoredActiveTenantId(),
 ): Promise<SupplierInvoice> {
   const response = await completeSupplierInvoiceReview(id, payload, withActiveTenantHeader(tenantId)).catch(
