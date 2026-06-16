@@ -2,8 +2,9 @@
 
 ## Changelog
 
-- 2026-06-08: Shifted target direction from procurement governance through award handoff to complete procure-to-pay SaaS; expanded P1 with purchase order, receiving, invoice, matching, payment readiness, and P2P operational control features.
+- 2026-06-13: Implemented P1-43 Invoice Review Workspace with AP queue, review checklist, state transitions, audit events, and generated-client coverage.
 - 2026-06-09: Added the P1-36 purchase order creation design spec and implementation plan as the next P2P foundation slice after PO request handoff.
+- 2026-06-08: Shifted target direction from procurement governance through award handoff to complete procure-to-pay SaaS; expanded P1 with purchase order, receiving, invoice, matching, payment readiness, and P2P operational control features.
 - 2026-05-12: Added implementation grouping, ownership mapping, and parallelization guidance.
 - 2026-05-11: Initial comprehensive feature inventory and implementation-priority roadmap.
 
@@ -27,7 +28,7 @@ Priority is ordered by product dependency, customer value, implementation levera
 
 ## Status Assessment
 
-Feature status below is assessed against the current repository state as of 2026-05-22, using shipped routes, tests, generated contracts, and committed spec/plan artifacts.
+Feature status below is assessed against the current repository state as of 2026-06-16, using shipped routes, tests, generated contracts, and committed spec/plan artifacts.
 
 Exception: P1-32 through P1-37 were updated after this assessment date and reflect recommendation, award approval, purchase-order request handoff, procurement calendar, purchase order creation, and purchase order review and approval work from 2026-05-25 through 2026-06-09. P1-38 through P1-54 were added on 2026-06-08 as planned future scope for Cognify's procure-to-pay direction.
 

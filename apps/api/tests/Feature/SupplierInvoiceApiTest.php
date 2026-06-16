@@ -6,6 +6,9 @@ use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Invoice\Actions\CompleteSupplierInvoiceReview;
+use Domains\Invoice\Actions\MarkSupplierInvoiceNeedsInformation;
+use Domains\Invoice\Models\SupplierInvoice;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
@@ -19,6 +22,7 @@ use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Vendor\Models\Vendor;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -253,6 +257,51 @@ class SupplierInvoiceApiTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
+    public function test_supplier_invoice_review_queue_caps_page_size_and_ignores_unsupported_sort(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line, [
+                'invoiceNumber' => 'INV-LATE-001',
+                'dueDate' => '2026-07-12',
+            ]))
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po->fresh(), $line, [
+                'invoiceNumber' => 'INV-EARLY-001',
+                'dueDate' => '2026-06-12',
+            ]))
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/supplier-invoices?perPage=999999&sort=unexpected')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 100)
+            ->assertJsonPath('data.0.invoiceNumber', 'INV-EARLY-001')
+            ->assertJsonPath('data.1.invoiceNumber', 'INV-LATE-001');
+    }
+
+    public function test_supplier_invoice_review_queue_rejects_invalid_due_before_filter(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $this->capturePayload($po, $line))
+            ->assertCreated();
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->getJson('/api/supplier-invoices?dueBefore=not-a-date')
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonPath('error.details.fields.dueBefore.0', 'The due before date must be a valid date.');
+    }
+
     public function test_supplier_invoice_review_queue_is_tenant_scoped(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
@@ -355,6 +404,34 @@ class SupplierInvoiceApiTest extends TestCase
         ]);
     }
 
+    public function test_supplier_invoice_needs_information_rejects_whitespace_only_notes(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/needs-information", [
+                'lockVersion' => $started['lockVersion'],
+                'notes' => '   ',
+                'checklist' => [
+                    ...$this->passingReviewChecklist(),
+                    'attachment' => ['status' => 'fail', 'note' => 'Missing supplier invoice PDF.'],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed')
+            ->assertJsonPath('error.details.fields.notes.0', 'The notes field is required.');
+    }
+
     public function test_supplier_invoice_review_rejects_invalid_transition_and_stale_lock(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
@@ -389,6 +466,63 @@ class SupplierInvoiceApiTest extends TestCase
             ])
             ->assertStatus(409)
             ->assertJsonPath('error.code', 'conflict');
+    }
+
+    public function test_supplier_invoice_review_action_enforces_authorization_without_controller(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        [, $requester] = $this->tenantUserPair(TenantRole::Requester->value, $tenant);
+        $this->actingAsTenant($tenant, $requester);
+        $this->expectException(AuthorizationException::class);
+
+        (new MarkSupplierInvoiceNeedsInformation(app(\App\Audit\AuditRecorder::class)))->handle(
+            SupplierInvoice::query()->findOrFail($invoice['id']),
+            $requester,
+            (int) $started['lockVersion'],
+            'Missing invoice.',
+            [
+                ...$this->passingReviewChecklist(),
+                'attachment' => ['status' => 'fail', 'note' => 'Missing supplier invoice PDF.'],
+            ],
+        );
+    }
+
+    public function test_supplier_invoice_complete_review_action_enforces_authorization_without_controller(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $invoice = $this->captureInvoice($tenant, $buyer, $po, $line);
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        [, $requester] = $this->tenantUserPair(TenantRole::Requester->value, $tenant);
+        $this->actingAsTenant($tenant, $requester);
+        $this->expectException(AuthorizationException::class);
+
+        (new CompleteSupplierInvoiceReview(app(\App\Audit\AuditRecorder::class)))->handle(
+            SupplierInvoice::query()->findOrFail($invoice['id']),
+            $requester,
+            (int) $started['lockVersion'],
+            null,
+            $this->passingReviewChecklist(),
+        );
     }
 
     public function test_supplier_invoice_review_requires_buyer_or_admin(): void
