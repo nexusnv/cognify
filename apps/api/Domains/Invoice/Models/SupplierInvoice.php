@@ -5,6 +5,7 @@ namespace Domains\Invoice\Models;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\Vendor\Models\Vendor;
@@ -50,6 +51,7 @@ class SupplierInvoice extends Model
         'review_checklist',
         'review_blockers',
         'lock_version',
+        'matching_status',
     ];
 
     protected function casts(): array
@@ -68,6 +70,7 @@ class SupplierInvoice extends Model
             'review_checklist' => 'array',
             'review_blockers' => 'array',
             'lock_version' => 'integer',
+            'matching_status' => 'string',
         ];
     }
 
@@ -159,6 +162,11 @@ class SupplierInvoice extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(SupplierInvoiceLine::class)->orderBy('line_number');
+    }
+
+    public function matchResults(): HasMany
+    {
+        return $this->hasMany(SupplierInvoiceMatchResult::class)->orderBy('created_at');
     }
 
     public function attachments(): MorphMany
