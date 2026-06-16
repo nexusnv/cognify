@@ -182,16 +182,31 @@ export const accountsPayableInvoiceHandlers = [
       );
     }
 
+    if (payload.lockVersion !== detail.lockVersion) {
+      return HttpResponse.json(
+        { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
+        { status: 409 },
+      );
+    }
+
+    const isMatched = id === "invoice-4";
     const updatedLockVersion = detail.lockVersion + 1;
     const next: SupplierInvoice = {
       ...detail,
-      matchingStatus: "mismatch",
-      matchSummary: {
-        totalLines: 1,
-        matchedLines: 0,
-        mismatchLines: 1,
-        dimensionsWithIssues: ["quantity", "unit_price"],
-      },
+      matchingStatus: isMatched ? "matched" : "mismatch",
+      matchSummary: isMatched
+        ? {
+            totalLines: 1,
+            matchedLines: 1,
+            mismatchLines: 0,
+            dimensionsWithIssues: [],
+          }
+        : {
+            totalLines: 1,
+            matchedLines: 0,
+            mismatchLines: 1,
+            dimensionsWithIssues: ["quantity", "unit_price"],
+          },
       lockVersion: updatedLockVersion,
     };
 

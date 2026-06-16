@@ -98,17 +98,10 @@ class SupplierInvoiceReviewController
 
     private function findTenantSupplierInvoice(Tenant $tenant, SupplierInvoice $supplierInvoice): SupplierInvoice
     {
-        $tenantSupplierInvoice = SupplierInvoice::query()
+        return SupplierInvoice::query()
             ->where('tenant_id', $tenant->id)
-            ->whereKey($supplierInvoice->id)
             ->with(['lines', 'purchaseOrder', 'vendor'])
-            ->first();
-
-        if ($tenantSupplierInvoice === null) {
-            abort(403, 'You are not allowed to access this supplier invoice.');
-        }
-
-        return $tenantSupplierInvoice;
+            ->findOrFail($supplierInvoice->id);
     }
 
     private function tenantOrAbort(CurrentTenant $currentTenant): Tenant

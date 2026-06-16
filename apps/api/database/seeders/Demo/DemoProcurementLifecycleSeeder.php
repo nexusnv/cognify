@@ -1969,15 +1969,8 @@ class DemoProcurementLifecycleSeeder
 
     private function seedMatchedInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void
     {
-        $lineSource = $po->lines->take(2)->values();
-        $subtotalAmount = $lineSource->reduce(
-            fn (string $carry, $purchaseOrderLine): string => bcadd(
-                $carry,
-                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
-                4,
-            ),
-            '0.0000',
-        );
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
 
         $invoice = SupplierInvoice::query()->updateOrCreate(
             ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-005'],
@@ -2010,7 +2003,9 @@ class DemoProcurementLifecycleSeeder
         $this->seedInvoiceLines($invoice, $lineSource, $tenant);
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-005.pdf', 'INV-2026-DEMO-005');
 
+        $invoice->matchResults()->delete();
         foreach ($invoice->lines as $line) {
+            $qty = (string) $line->quantity_invoiced;
             SupplierInvoiceMatchResult::create([
                 'tenant_id' => $tenant->id,
                 'supplier_invoice_id' => $invoice->id,
@@ -2019,11 +2014,11 @@ class DemoProcurementLifecycleSeeder
                 'match_type' => 'two_way',
                 'match_level' => 'line',
                 'dimension' => 'quantity',
-                'expected_value' => 10,
-                'actual_value' => 10,
-                'tolerance_percent_applied' => 0,
-                'tolerance_floor_applied' => 0,
-                'tolerance_cap_applied' => 0,
+                'expected_value' => $qty,
+                'actual_value' => $qty,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
                 'result' => 'pass',
             ]);
         }
@@ -2031,15 +2026,8 @@ class DemoProcurementLifecycleSeeder
 
     private function seedMismatchInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void
     {
-        $lineSource = $po->lines->take(2)->values();
-        $subtotalAmount = $lineSource->reduce(
-            fn (string $carry, $purchaseOrderLine): string => bcadd(
-                $carry,
-                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
-                4,
-            ),
-            '0.0000',
-        );
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
 
         $invoice = SupplierInvoice::query()->updateOrCreate(
             ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-006'],
@@ -2072,7 +2060,10 @@ class DemoProcurementLifecycleSeeder
         $this->seedInvoiceLines($invoice, $lineSource, $tenant);
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-006.pdf', 'INV-2026-DEMO-006');
 
+        $invoice->matchResults()->delete();
         foreach ($invoice->lines as $line) {
+            $expectedPrice = (string) $line->unit_price;
+            $actualPrice = bcadd($expectedPrice, '20.0000', 4);
             SupplierInvoiceMatchResult::create([
                 'tenant_id' => $tenant->id,
                 'supplier_invoice_id' => $invoice->id,
@@ -2081,11 +2072,11 @@ class DemoProcurementLifecycleSeeder
                 'match_type' => 'two_way',
                 'match_level' => 'line',
                 'dimension' => 'unit_price',
-                'expected_value' => 100,
-                'actual_value' => 120,
-                'tolerance_percent_applied' => 5,
-                'tolerance_floor_applied' => 2,
-                'tolerance_cap_applied' => 250,
+                'expected_value' => $expectedPrice,
+                'actual_value' => $actualPrice,
+                'tolerance_percent_applied' => 5.0,
+                'tolerance_floor_applied' => (float) bcmul($expectedPrice, '0.02', 4),
+                'tolerance_cap_applied' => 250.0,
                 'result' => 'fail',
                 'notes' => 'Unit price variance exceeds tolerance',
             ]);
@@ -2094,15 +2085,8 @@ class DemoProcurementLifecycleSeeder
 
     private function seedPendingMatchingInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void
     {
-        $lineSource = $po->lines->take(2)->values();
-        $subtotalAmount = $lineSource->reduce(
-            fn (string $carry, $purchaseOrderLine): string => bcadd(
-                $carry,
-                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
-                4,
-            ),
-            '0.0000',
-        );
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
 
         $invoice = SupplierInvoice::query()->updateOrCreate(
             ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-007'],
@@ -2112,6 +2096,7 @@ class DemoProcurementLifecycleSeeder
                 'invoice_number' => 'INV-2026-DEMO-007',
                 'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-007'),
                 'status' => SupplierInvoiceStatus::Reviewed,
+                'matching_status' => null,
                 'invoice_date' => '2026-06-20',
                 'due_date' => '2026-07-20',
                 'currency' => $po->currency,
@@ -2135,6 +2120,25 @@ class DemoProcurementLifecycleSeeder
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-007.pdf', 'INV-2026-DEMO-007');
     }
 
+    private function pickTwoLines(PurchaseOrder $po): Collection
+    {
+        $lines = $po->lines->take(2)->values();
+        assert($lines->count() >= 2, 'Purchase order must have at least 2 lines for invoice demo seeding.');
+        return $lines;
+    }
+
+    private function computeSubtotal(Collection $lines): string
+    {
+        return $lines->reduce(
+            fn (string $carry, $purchaseOrderLine): string => bcadd(
+                $carry,
+                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
+                4,
+            ),
+            '0.0000',
+        );
+    }
+
     private function seedInvoiceLines(SupplierInvoice $invoice, Collection $lineSource, Tenant $tenant): void
     {
         $invoice->lines()->delete();
@@ -2152,7 +2156,7 @@ class DemoProcurementLifecycleSeeder
                 'quantity_invoiced' => $quantity,
                 'unit_price' => $unitPrice,
                 'line_subtotal' => bcmul((string) $quantity, (string) $unitPrice, 4),
-                'notes' => "Matched to PO line {$purchaseOrderLine->line_number}.",
+                'notes' => "From PO line {$purchaseOrderLine->line_number}.",
             ]);
         }
     }

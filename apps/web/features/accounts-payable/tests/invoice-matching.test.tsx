@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
@@ -10,6 +10,8 @@ import { server } from "@/tests/msw/server";
 import { InvoiceMatchingStatusBadge } from "../components/invoice-matching-status-badge";
 import { InvoiceMatchResultsPanel } from "../components/invoice-match-results-panel";
 import { resetAccountsPayableInvoiceMockState } from "../mocks/accounts-payable-invoice-handlers";
+
+// Global setup in tests/setup.ts already calls resetAccountsPayableInvoiceMockState in afterEach.
 
 function TestProviders({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
@@ -120,6 +122,20 @@ describe("InvoiceMatchResultsPanel", () => {
     expect(screen.getByText("Mismatch")).toBeInTheDocument();
   });
 
+  it("shows Matched badge and hides Run button when status is matched", () => {
+    render(
+      <InvoiceMatchResultsPanel
+        invoiceId="invoice-4"
+        lockVersion={7}
+        invoiceStatus="reviewed"
+        matchingStatus="matched"
+      />,
+      { wrapper: TestProviders },
+    );
+    expect(screen.getByText("Matched")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /run matching/i })).not.toBeInTheDocument();
+  });
+
   it("shows Match Results header", () => {
     render(
       <InvoiceMatchResultsPanel
@@ -131,6 +147,33 @@ describe("InvoiceMatchResultsPanel", () => {
       { wrapper: TestProviders },
     );
     expect(screen.getByText("Matching Results")).toBeInTheDocument();
+  });
+
+  it("shows loading skeleton while fetching results", async () => {
+    server.use(
+      http.get("/api/supplier-invoices/:supplierInvoice/match-results", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    render(
+      <InvoiceMatchResultsPanel
+        invoiceId="invoice-4"
+        lockVersion={7}
+        invoiceStatus="reviewed"
+        matchingStatus={null}
+      />,
+      { wrapper: TestProviders },
+    );
+
+    expect(screen.getByText("Matching Results")).toBeInTheDocument();
+    expect(screen.queryByText(/lines matched/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Failed to load match results.")).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText(/0 of 0 lines matched/)).toBeInTheDocument();
+    });
   });
 
   it("renders match results when API returns data", async () => {
@@ -177,6 +220,10 @@ describe("InvoiceMatchResultsPanel", () => {
     await waitFor(() => {
       expect(screen.getByRole("table")).toBeInTheDocument();
     });
+    expect(screen.getByText("vendor_identity")).toBeInTheDocument();
+    expect(screen.getByText("invoice_total")).toBeInTheDocument();
+    expect(screen.getByText("quantity")).toBeInTheDocument();
+    expect(screen.getByText("unit_price")).toBeInTheDocument();
   });
 
   it("shows empty summary when no results available", async () => {
@@ -257,6 +304,9 @@ describe("InvoiceMatchResultsPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Run Matching" }));
     await waitFor(() => expect(called).toBe(true));
+
+    // Button re-enabled after mutation completes
+    expect(screen.getByRole("button", { name: "Run Matching" })).not.toBeDisabled();
   });
 
   it("shows conflict error when matching returns 409", async () => {

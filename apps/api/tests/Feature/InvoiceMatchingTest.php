@@ -100,7 +100,7 @@ class InvoiceMatchingTest extends TestCase
         ]);
 
         $invoice->refresh();
-        $this->assertNotNull($invoice->matching_status);
+        $this->assertEquals('matched', $invoice->matching_status);
     }
 
     public function test_matching_passes_when_all_dimensions_within_tolerance(): void
@@ -200,6 +200,17 @@ class InvoiceMatchingTest extends TestCase
         ])->assertStatus(409);
     }
 
+    public function test_run_matching_on_missing_invoice_returns_not_found(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        $missingId = (string) Str::uuid();
+
+        $this->actingAsTenant($tenant, $buyer);
+        $this->postJson("/api/supplier-invoices/{$missingId}/run-matching", [
+            'lockVersion' => 1,
+        ])->assertStatus(404);
+    }
+
     public function test_match_results_list(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair();
@@ -230,7 +241,7 @@ class InvoiceMatchingTest extends TestCase
     public function test_match_results_tenant_scoped(): void
     {
         [$tenant, $buyer] = $this->tenantUserPair();
-        [$otherTenant] = $this->tenantUserPair();
+        [$otherTenant, $otherBuyer] = $this->tenantUserPair();
         $po = $this->issuedPurchaseOrder($tenant, $buyer);
         $invoice = $this->reviewedInvoice($tenant, $po, $buyer);
 
@@ -242,11 +253,10 @@ class InvoiceMatchingTest extends TestCase
         $response = $this->getJson("/api/supplier-invoices/{$invoice->id}/match-results");
         $response->assertStatus(200);
 
-        $otherInvoiceId = (string) Str::uuid();
-
-        $this->actingAsTenant($otherTenant, $buyer);
-        $response = $this->getJson("/api/supplier-invoices/{$otherInvoiceId}/match-results");
-        $response->assertStatus(404);
+        // A user from another tenant cannot access this invoice's match results
+        $this->actingAsTenant($otherTenant, $otherBuyer);
+        $response = $this->getJson("/api/supplier-invoices/{$invoice->id}/match-results");
+        $response->assertNotFound();
     }
 
     private function tenantUserPair(): array
