@@ -552,6 +552,14 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'warehouse-supplies-brief.txt']);
         $this->assertDatabaseHas('attachments', ['storage_disk' => 'local', 'original_filename' => 'inv-2026-demo-001.pdf', 'mime_type' => 'application/pdf', 'previewable' => 0]);
         $this->assertSame('varchar', Schema::getColumnType('attachments', 'attachable_id'));
+
+        $acmeOfficeRequisition = Requisition::query()->where('number', 'REQ-2026-0001')->firstOrFail();
+        $requisitionAttachment = Attachment::query()
+            ->where('attachable_type', Requisition::class)
+            ->where('original_filename', 'office-refresh-brief.txt')
+            ->firstOrFail();
+        $this->assertSame($acmeOfficeRequisition->id, (int) $requisitionAttachment->attachable_id);
+        $this->assertSame('Cognify local demo attachment for HQ workplace refresh.'."\n", Storage::disk($requisitionAttachment->storage_disk)->get($requisitionAttachment->storage_path));
         $this->assertDatabaseHas('audit_events', ['action' => 'requisition.submitted']);
         $this->assertDatabaseHas('notifications', ['title' => 'Local demo data is ready']);
         $this->assertDatabaseHas('demo_seed_runs', ['name' => 'local-demo']);
