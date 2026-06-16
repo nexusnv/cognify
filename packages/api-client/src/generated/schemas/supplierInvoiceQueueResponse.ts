@@ -5,7 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { SupplierInvoiceQueueItem } from "./supplierInvoiceQueueItem";
+import type { PaginationMeta } from "./paginationMeta";
 
 export interface SupplierInvoiceQueueResponse {
   data: SupplierInvoiceQueueItem[];
+  meta: PaginationMeta;
 }

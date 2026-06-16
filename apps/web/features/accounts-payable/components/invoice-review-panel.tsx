@@ -32,12 +32,17 @@ export function InvoiceReviewPanel({
   const needsInformationMutation = useMarkSupplierInvoiceNeedsInformation(invoice?.id ?? "");
   const completeMutation = useCompleteSupplierInvoiceReview(invoice?.id ?? "");
   const actionError = startMutation.error ?? needsInformationMutation.error ?? completeMutation.error;
-  const previousCurrentRef = useRef(current);
+  const previousCurrentRef = useRef<{ id: string; lockVersion: number } | null>(null);
 
   useEffect(() => {
     if (!current) return;
-    if (previousCurrentRef.current?.id === current.id) return;
-    previousCurrentRef.current = current;
+    if (
+      previousCurrentRef.current?.id === current.id &&
+      previousCurrentRef.current?.lockVersion === current.lockVersion
+    ) {
+      return;
+    }
+    previousCurrentRef.current = { id: current.id, lockVersion: current.lockVersion };
     setChecklist(current.reviewChecklist ?? buildEmptyChecklist());
     setNotes(current.reviewNotes ?? "");
   }, [current]);

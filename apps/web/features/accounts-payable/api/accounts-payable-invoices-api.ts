@@ -19,8 +19,10 @@ import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
 export type AccountsPayableInvoiceFilters = ListSupplierInvoiceQueueParams;
 
-function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit | undefined {
-  if (!tenantId) return undefined;
+function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit {
+  if (!tenantId) {
+    throw new Error("Missing active tenant context");
+  }
 
   return {
     headers: {

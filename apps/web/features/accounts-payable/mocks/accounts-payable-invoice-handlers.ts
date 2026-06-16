@@ -21,6 +21,14 @@ export function resetAccountsPayableInvoiceMockState() {
 
 resetAccountsPayableInvoiceMockState();
 
+function isStartAllowed(status: SupplierInvoice["status"]) {
+  return status === "captured" || status === "needs_information";
+}
+
+function isReviewActionAllowed(status: SupplierInvoice["status"]) {
+  return status === "in_review";
+}
+
 export const accountsPayableInvoiceHandlers = [
   http.get("/api/supplier-invoices", ({ request }) => {
     const url = new URL(request.url);
@@ -57,6 +65,13 @@ export const accountsPayableInvoiceHandlers = [
       return HttpResponse.json(
         { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
         { status: 409 },
+      );
+    }
+
+    if (!isStartAllowed(detail.status)) {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Invoice cannot be started from the current status." } },
+        { status: 422 },
       );
     }
 
@@ -98,6 +113,13 @@ export const accountsPayableInvoiceHandlers = [
       return HttpResponse.json(
         { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
         { status: 409 },
+      );
+    }
+
+    if (!isReviewActionAllowed(detail.status)) {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Invoice is not currently in review." } },
+        { status: 422 },
       );
     }
 
@@ -156,6 +178,13 @@ export const accountsPayableInvoiceHandlers = [
       return HttpResponse.json(
         { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
         { status: 409 },
+      );
+    }
+
+    if (!isReviewActionAllowed(detail.status)) {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Invoice is not currently in review." } },
+        { status: 422 },
       );
     }
 

@@ -30,7 +30,7 @@ Priority is ordered by product dependency, customer value, implementation levera
 
 Feature status below is assessed against the current repository state as of 2026-06-16, using shipped routes, tests, generated contracts, and committed spec/plan artifacts.
 
-Exception: P1-32 through P1-37 were updated after this assessment date and reflect recommendation, award approval, purchase-order request handoff, procurement calendar, purchase order creation, and purchase order review and approval work from 2026-05-25 through 2026-06-09. P1-38 through P1-54 were added on 2026-06-08 as planned future scope for Cognify's procure-to-pay direction.
+Exception: P1-32 through P1-37 were updated after this assessment date and reflect recommendation, award approval, purchase-order request handoff, procurement calendar, purchase order creation, and purchase order review and approval work from 2026-05-25 through 2026-06-09. P1-38 through P1-54 were added on 2026-06-08 as planned future scope for Cognify's procure-to-pay direction; P1-38 through P1-43 have since been fully implemented through subsequent PRs.
 
 ## P0 - Platform and Workflow Foundation
 
