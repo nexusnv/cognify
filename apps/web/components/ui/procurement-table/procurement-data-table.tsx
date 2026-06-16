@@ -80,8 +80,8 @@ export function DataTable<TRow>({
 
   return (
     <div className="space-y-3">
-      <div className="hidden overflow-hidden rounded-md border md:block">
-        <Table className="table-fixed text-left text-sm">
+      <div className="hidden overflow-auto rounded-md border xl:block">
+        <Table className="table-fixed w-[1250px] text-left text-sm">
           <TableCaption className="sr-only">{caption}</TableCaption>
           <TableHeader className="bg-card text-xs uppercase text-muted-foreground">
             <TableRow>
@@ -152,13 +152,13 @@ export function DataTable<TRow>({
       </div>
 
       {renderMobileRow ? (
-        <div className="space-y-3 md:hidden">
+        <div className="space-y-3 xl:hidden">
           {rows.map((row) => (
             <div key={getRowId(row)}>{renderMobileRow(row)}</div>
           ))}
         </div>
       ) : (
-        <ul className="space-y-3 md:hidden">
+        <ul className="space-y-3 xl:hidden">
           {rows.map((row) => {
             const mobileColumns = columns.filter((column) => column.hideOnMobile !== true);
 

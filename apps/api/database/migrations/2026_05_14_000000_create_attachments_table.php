@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('attachments', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->morphs('attachable');
+            $table->uuidMorphs('attachable');
             $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('original_filename');
             $table->string('mime_type');

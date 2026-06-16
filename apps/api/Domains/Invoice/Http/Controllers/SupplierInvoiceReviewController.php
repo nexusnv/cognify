@@ -102,7 +102,6 @@ class SupplierInvoiceReviewController
             ->where('tenant_id', $tenant->id)
             ->whereKey($supplierInvoice->id)
             ->with(['lines', 'purchaseOrder', 'vendor'])
-            ->withCount('attachments')
             ->first();
 
         if ($tenantSupplierInvoice === null) {

@@ -19,12 +19,13 @@ import {
   RiUserSettingsLine,
 } from "@remixicon/react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
-import { canUseCalendar, canUseRequisitions, isActivePath } from "./shell-utils";
+import { canUseAccountsPayable, canUseCalendar, canUseRequisitions, isActivePath } from "./shell-utils";
 
 export interface DefaultNavSubItem {
   title: string;
   url: string;
   implemented: boolean;
+  isActive?: boolean;
   permission?: (permissions: IdentityPermissions) => boolean;
 }
 
@@ -49,9 +50,6 @@ const canUseQuotationNormalizations = (permissions: IdentityPermissions) =>
   permissions.canReviewQuotationNormalization;
 
 const canUseAdmin = (permissions: IdentityPermissions) => permissions.canAccessAdmin;
-
-const canUseAccountsPayable = (permissions: IdentityPermissions) =>
-  permissions.canAccessAdmin || permissions.canViewSubmittedRequisitions;
 
 const REQUISITION_EDIT_PATH = /^\/requisitions\/([^/]+)\/edit$/;
 const REQUISITION_WORKSPACE_PATH = /^\/requisitions\/[^/]+$/;
@@ -256,9 +254,14 @@ export function getActiveNavigation(items: DefaultNavItem[], pathname: string): 
   return items.map((item) => {
     const itemActive = item.url ? isActivePath(item.url, pathname) : false;
     const childActive = item.items?.some((subItem) => isActivePath(subItem.url, pathname)) ?? false;
+
     return {
       ...item,
       isActive: itemActive || childActive,
+      items: item.items?.map((subItem) => ({
+        ...subItem,
+        isActive: isActivePath(subItem.url, pathname),
+      })),
     };
   });
 }

@@ -335,6 +335,8 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'auditor@example.com', 'name' => 'Audit User']);
         $this->assertDatabaseHas('users', ['email' => 'vendor.manager@example.com', 'name' => 'Vendor Manager']);
         $this->assertDatabaseHas('users', ['email' => 'admin@example.com', 'name' => 'Admin User']);
+        $buyer = User::where('email', 'buyer@example.com')->firstOrFail();
+        $finance = User::where('email', 'finance@example.com')->firstOrFail();
 
         $this->assertSame(TenantRole::Requester->value, $acme->roleFor(User::where('email', 'test@example.com')->firstOrFail()));
         $this->assertSame(TenantRole::Buyer->value, $acme->roleFor(User::where('email', 'buyer@example.com')->firstOrFail()));
@@ -468,6 +470,29 @@ class DemoSeederTest extends TestCase
             'number' => 'INV-2026-DEMO-004',
             'status' => 'reviewed',
         ]);
+        $inReviewInvoice = SupplierInvoice::query()->where('number', 'INV-2026-DEMO-002')->firstOrFail();
+        $needsInformationInvoice = SupplierInvoice::query()->where('number', 'INV-2026-DEMO-003')->firstOrFail();
+        $reviewedInvoice = SupplierInvoice::query()->where('number', 'INV-2026-DEMO-004')->firstOrFail();
+        $this->assertSame('in_review', $inReviewInvoice->statusState()->value);
+        $this->assertSame((string) $buyer->id, (string) $inReviewInvoice->review_started_by_user_id);
+        $this->assertSame('2026-06-18 10:00:00', $inReviewInvoice->review_started_at?->toDateTimeString());
+        $this->assertSame('needs_attention', data_get($inReviewInvoice->review_checklist, 'completeness.status'));
+        $this->assertSame('Pending line-item reconciliation.', data_get($inReviewInvoice->review_checklist, 'completeness.note'));
+        $this->assertSame('needs_information', $needsInformationInvoice->statusState()->value);
+        $this->assertSame((string) $buyer->id, (string) $needsInformationInvoice->review_started_by_user_id);
+        $this->assertSame('2026-06-19 10:00:00', $needsInformationInvoice->review_started_at?->toDateTimeString());
+        $this->assertSame('Several line items need clarification with the supplier. Awaiting response.', $needsInformationInvoice->review_notes);
+        $this->assertSame('fail', data_get($needsInformationInvoice->review_checklist, 'completeness.status'));
+        $this->assertSame('Missing invoice line-item detail.', data_get($needsInformationInvoice->review_checklist, 'completeness.note'));
+        $this->assertCount(3, $needsInformationInvoice->review_blockers);
+        $this->assertSame('completeness', data_get($needsInformationInvoice->review_blockers, '0.key'));
+        $this->assertSame('reviewed', $reviewedInvoice->statusState()->value);
+        $this->assertSame((string) $finance->id, (string) $reviewedInvoice->review_started_by_user_id);
+        $this->assertSame((string) $finance->id, (string) $reviewedInvoice->reviewed_by_user_id);
+        $this->assertSame('2026-06-20 11:30:00', $reviewedInvoice->reviewed_at?->toDateTimeString());
+        $this->assertSame('Invoice verified and approved for matching.', $reviewedInvoice->review_notes);
+        $this->assertSame('pass', data_get($reviewedInvoice->review_checklist, 'completeness.status'));
+        $this->assertSame([], $reviewedInvoice->review_blockers);
         $this->assertDatabaseHas('supplier_invoice_lines', [
             'line_number' => 1,
             'quantity_invoiced' => 50,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@cognify/ui";
+import { Badge, Button } from "@cognify/ui";
 import type { SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
 import { DataTable } from "@/components/ui/procurement-table/procurement-data-table";
 import type { DataTableColumn, DataTableState } from "@/components/ui/procurement-table/data-table-types";
@@ -30,7 +30,14 @@ const columns: Array<DataTableColumn<SupplierInvoiceQueueItem>> = [
   {
     id: "status",
     header: "Status",
-    cell: (invoice) => <InvoiceReviewStatusBadge status={invoice.status} />,
+    cell: (invoice) => (
+      <div className="flex items-center gap-2">
+        <InvoiceReviewStatusBadge status={invoice.status} />
+        {invoice.reviewBlockerCount > 0 && (
+          <Badge variant="destructive">{invoice.reviewBlockerCount}</Badge>
+        )}
+      </div>
+    ),
   },
   {
     id: "dueDate",
@@ -64,10 +71,12 @@ export function AccountsPayableInvoiceQueueTable({
   invoices,
   state,
   onSelect,
+  errorTitle = "Invoice review queue unavailable",
 }: {
   invoices: SupplierInvoiceQueueItem[];
   state: DataTableState;
   onSelect: (invoice: SupplierInvoiceQueueItem) => void;
+  errorTitle?: string;
 }) {
   return (
     <DataTable
@@ -77,7 +86,7 @@ export function AccountsPayableInvoiceQueueTable({
       getRowId={(invoice) => invoice.id}
       state={state}
       loadingLabel="Loading invoice review queue"
-      errorTitle="Invoice review queue unavailable"
+      errorTitle={errorTitle}
       emptyTitle="No invoices match this review state."
       emptyDescription="Switch review state or return when supplier invoices are captured."
       renderRowActions={(invoice) => (

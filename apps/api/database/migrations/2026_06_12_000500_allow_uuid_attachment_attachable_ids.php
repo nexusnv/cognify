@@ -10,10 +10,10 @@ return new class extends Migration
     public function up(): void
     {
         match (DB::getDriverName()) {
-            'pgsql' => DB::statement('ALTER TABLE attachments ALTER COLUMN attachable_id TYPE varchar(255) USING attachable_id::text'),
-            'mysql' => DB::statement('ALTER TABLE attachments MODIFY attachable_id varchar(255) NOT NULL'),
+            'pgsql' => DB::statement('ALTER TABLE attachments ALTER COLUMN attachable_id TYPE uuid USING attachable_id::uuid'),
+            'mysql' => DB::statement('ALTER TABLE attachments MODIFY attachable_id char(36) NOT NULL'),
             default => Schema::table('attachments', static function (Blueprint $table): void {
-                $table->string('attachable_id')->change();
+                $table->uuid('attachable_id')->change();
             }),
         };
     }
@@ -21,7 +21,7 @@ return new class extends Migration
     public function down(): void
     {
         if (DB::getDriverName() === 'pgsql') {
-            $nonNumericAttachableIds = (int) DB::selectOne("SELECT COUNT(*) AS aggregate FROM attachments WHERE attachable_id !~ '^[0-9]+$'")->aggregate;
+            $nonNumericAttachableIds = (int) DB::selectOne("SELECT COUNT(*) AS aggregate FROM attachments WHERE attachable_id !~ '^[0-9a-fA-F-]{36}$'")->aggregate;
 
             if ($nonNumericAttachableIds > 0) {
                 throw new RuntimeException('Cannot roll back attachments.attachable_id to bigint while UUID attachable IDs exist.');
@@ -33,7 +33,7 @@ return new class extends Migration
         }
 
         if (DB::getDriverName() === 'mysql') {
-            $nonNumericAttachableIds = (int) DB::selectOne("SELECT COUNT(*) AS aggregate FROM attachments WHERE attachable_id NOT REGEXP '^[0-9]+$'")->aggregate;
+            $nonNumericAttachableIds = (int) DB::selectOne("SELECT COUNT(*) AS aggregate FROM attachments WHERE attachable_id NOT REGEXP '^[0-9a-fA-F-]{36}$'")->aggregate;
 
             if ($nonNumericAttachableIds > 0) {
                 throw new RuntimeException('Cannot roll back attachments.attachable_id to bigint while UUID attachable IDs exist.');

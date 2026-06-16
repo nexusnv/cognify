@@ -10,11 +10,8 @@ import {
   Settings,
 } from "lucide-react";
 import type { IdentityPermissions } from "@/features/identity/types/identity-view-model";
-import { canUseCalendar, canUseRequisitions } from "@/components/default-shell/shell-utils";
+import { canUseAccountsPayable, canUseCalendar, canUseRequisitions } from "@/components/default-shell/shell-utils";
 import type { SearchCommandViewModel } from "./types/search-view-model";
-
-const canUseAccountsPayable = (permissions: IdentityPermissions) =>
-  permissions.canAccessAdmin || permissions.canViewSubmittedRequisitions;
 
 export function getSearchCommands(
   permissions?: IdentityPermissions | null,
