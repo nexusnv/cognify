@@ -89,6 +89,15 @@ class SupplierInvoiceReviewChecklistData
      */
     public static function summary(?array $checklist): array
     {
+        if ($checklist === null) {
+            return [
+                'total' => count(self::KEYS),
+                'passed' => 0,
+                'needsAttention' => 0,
+                'failed' => 0,
+            ];
+        }
+
         $passed = 0;
         $needsAttention = 0;
         $failed = 0;

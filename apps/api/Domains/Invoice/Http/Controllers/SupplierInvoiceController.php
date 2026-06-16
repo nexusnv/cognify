@@ -42,15 +42,7 @@ class SupplierInvoiceController
 
         $this->applyQueueFilters($query, $request);
 
-        $invoices = $query
-            ->when(
-                $request->query('sort', 'due_date_asc') === 'due_date_asc',
-                fn (Builder $q) => $q
-                    ->orderByRaw('due_date is null')
-                    ->orderBy('due_date')
-                    ->orderByDesc('created_at'),
-            )
-            ->paginate((int) $request->integer('perPage', 25));
+        $invoices = $query->paginate(min(max((int) $request->integer('perPage', 25), 1), 100));
 
         return SupplierInvoiceQueueResource::collection($invoices);
     }
@@ -126,6 +118,10 @@ class SupplierInvoiceController
         }
 
         if ($dueBefore = $request->query('dueBefore')) {
+            if (! is_string($dueBefore) || ! $this->isValidDate($dueBefore, 'Y-m-d')) {
+                throw ValidationException::withMessages(['dueBefore' => ['The due before date must be a valid date.']]);
+            }
+
             $query->whereDate('due_date', '<=', $dueBefore);
         }
 
@@ -139,15 +135,23 @@ class SupplierInvoiceController
 
         $sort = $request->query('sort', 'due_date_asc');
 
-        if ($sort === 'due_date_asc') {
-            // no change needed - default sort applied in queue()
-        } elseif ($sort === 'due_date_desc') {
-            $query->orderByDesc('due_date')->orderByDesc('created_at');
-        } elseif ($sort === 'created_at_asc') {
-            $query->orderBy('created_at');
-        } elseif ($sort === 'created_at_desc') {
-            $query->orderByDesc('created_at');
+        if (! is_string($sort) || ! in_array($sort, ['due_date_asc', 'due_date_desc', 'created_at_asc', 'created_at_desc'], true)) {
+            $sort = 'due_date_asc';
         }
+
+        match ($sort) {
+            'due_date_desc' => $query->orderByDesc('due_date')->orderByDesc('created_at'),
+            'created_at_asc' => $query->orderBy('created_at'),
+            'created_at_desc' => $query->orderByDesc('created_at'),
+            default => $query->orderByRaw('due_date is null')->orderBy('due_date')->orderByDesc('created_at'),
+        };
+    }
+
+    private function isValidDate(string $value, string $format): bool
+    {
+        $date = \DateTimeImmutable::createFromFormat('!'.$format, $value);
+
+        return $date !== false && $date->format($format) === $value;
     }
 
     private function findTenantPurchaseOrder(Tenant $tenant, PurchaseOrder $purchaseOrder): PurchaseOrder
