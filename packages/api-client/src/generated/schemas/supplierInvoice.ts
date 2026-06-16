@@ -22,6 +22,8 @@ import type { SupplierInvoiceReviewChecklistProperty } from "./supplierInvoiceRe
 import type { SupplierInvoiceReviewChecklistSummary } from "./supplierInvoiceReviewChecklistSummary";
 import type { SupplierInvoiceReviewBlocker } from "./supplierInvoiceReviewBlocker";
 import type { SupplierInvoicePermissions } from "./supplierInvoicePermissions";
+import type { SupplierInvoiceMatchingStatus } from "./supplierInvoiceMatchingStatus";
+import type { SupplierInvoiceMatchSummary } from "./supplierInvoiceMatchSummary";
 
 export interface SupplierInvoice {
   id: string;
@@ -60,4 +62,6 @@ export interface SupplierInvoice {
   reviewBlockers: SupplierInvoiceReviewBlocker[];
   reviewBlockerCount: number;
   permissions: SupplierInvoicePermissions;
+  matchingStatus?: SupplierInvoiceMatchingStatus;
+  matchSummary?: SupplierInvoiceMatchSummary;
 }

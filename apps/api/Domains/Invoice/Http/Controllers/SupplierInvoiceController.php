@@ -129,6 +129,14 @@ class SupplierInvoiceController
             $query->doesntHave('attachments');
         }
 
+        if ($matchingStatus = $request->query('matchingStatus')) {
+            $query->where('matching_status', $matchingStatus);
+        }
+
+        if ($request->boolean('hasMismatch')) {
+            $query->where('matching_status', 'mismatch');
+        }
+
         if ($reviewBlocker = $request->query('reviewBlocker')) {
             $query->whereJsonContains('review_blockers', [['key' => $reviewBlocker]]);
         }
