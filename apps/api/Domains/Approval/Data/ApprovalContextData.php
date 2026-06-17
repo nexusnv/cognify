@@ -36,6 +36,14 @@ final class ApprovalContextData
         public readonly ?float $scorecardWeightedTotal = null,
         public readonly bool $riskSummaryPresent = false,
         public readonly bool $exceptionSummaryPresent = false,
+        public readonly ?string $supplierInvoiceId = null,
+        public readonly ?string $purchaseOrderId = null,
+        public readonly ?string $purchaseOrderNumber = null,
+        public readonly ?string $matchingStatus = null,
+        public readonly int $exceptionCount = 0,
+        public readonly bool $hasValueAdjustments = false,
+        public readonly float $originalInvoiceAmount = 0.0,
+        public readonly float $totalVarianceAdjusted = 0.0,
     ) {}
 
     public static function fromRequisition(Requisition $requisition): self
@@ -108,6 +116,14 @@ final class ApprovalContextData
                 : null,
             riskSummaryPresent: (bool) ($context['riskSummaryPresent'] ?? false),
             exceptionSummaryPresent: (bool) ($context['exceptionSummaryPresent'] ?? false),
+            supplierInvoiceId: isset($context['supplierInvoiceId']) && $context['supplierInvoiceId'] !== '' ? (string) $context['supplierInvoiceId'] : null,
+            purchaseOrderId: isset($context['purchaseOrderId']) && $context['purchaseOrderId'] !== '' ? (string) $context['purchaseOrderId'] : null,
+            purchaseOrderNumber: isset($context['purchaseOrderNumber']) && $context['purchaseOrderNumber'] !== '' ? (string) $context['purchaseOrderNumber'] : null,
+            matchingStatus: isset($context['matchingStatus']) && $context['matchingStatus'] !== '' ? (string) $context['matchingStatus'] : null,
+            exceptionCount: (int) ($context['exceptionCount'] ?? 0),
+            hasValueAdjustments: (bool) ($context['hasValueAdjustments'] ?? false),
+            originalInvoiceAmount: isset($context['originalInvoiceAmount']) ? round((float) $context['originalInvoiceAmount'], 2) : 0.0,
+            totalVarianceAdjusted: isset($context['totalVarianceAdjusted']) ? round((float) $context['totalVarianceAdjusted'], 2) : 0.0,
         );
     }
 
@@ -144,6 +160,14 @@ final class ApprovalContextData
             'scorecardWeightedTotal',
             'riskSummaryPresent',
             'exceptionSummaryPresent',
+            'supplierInvoiceId',
+            'purchaseOrderId',
+            'purchaseOrderNumber',
+            'matchingStatus',
+            'exceptionCount',
+            'hasValueAdjustments',
+            'originalInvoiceAmount',
+            'totalVarianceAdjusted',
         ]);
 
         foreach (array_values(array_unique($requiredFields)) as $field) {
@@ -197,6 +221,14 @@ final class ApprovalContextData
             'scorecardWeightedTotal' => $this->scorecardWeightedTotal,
             'riskSummaryPresent' => $this->riskSummaryPresent,
             'exceptionSummaryPresent' => $this->exceptionSummaryPresent,
+            'supplierInvoiceId' => $this->supplierInvoiceId,
+            'purchaseOrderId' => $this->purchaseOrderId,
+            'purchaseOrderNumber' => $this->purchaseOrderNumber,
+            'matchingStatus' => $this->matchingStatus,
+            'exceptionCount' => $this->exceptionCount,
+            'hasValueAdjustments' => $this->hasValueAdjustments,
+            'originalInvoiceAmount' => $this->originalInvoiceAmount,
+            'totalVarianceAdjusted' => $this->totalVarianceAdjusted,
         ];
     }
 
