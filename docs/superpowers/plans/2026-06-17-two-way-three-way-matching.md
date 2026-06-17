@@ -10,7 +10,7 @@
 
 ---
 
-### Task 1: Database Migrations
+## Task 1: Database Migrations
 
 **Files:**
 - Create: `apps/api/database/migrations/2026_06_17_000001_add_matching_fields_to_supplier_invoices.php`

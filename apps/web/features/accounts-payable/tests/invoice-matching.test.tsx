@@ -224,6 +224,9 @@ describe("InvoiceMatchResultsPanel", () => {
     expect(screen.getByText("invoice_total")).toBeInTheDocument();
     expect(screen.getByText("quantity")).toBeInTheDocument();
     expect(screen.getByText("unit_price")).toBeInTheDocument();
+    // Validate accessible result state announcements
+    expect(screen.getAllByLabelText("Pass").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Fail")).not.toBeInTheDocument();
   });
 
   it("shows empty summary when no results available", async () => {

@@ -231,7 +231,12 @@ export const accountsPayableInvoiceHandlers = [
       );
     }
 
-    const results = id === "invoice-4" ? mockMatchedResults : mockMismatchedResults;
+    // Return empty results when matching hasn't been run yet
+    if (!detail.matchingStatus) {
+      return HttpResponse.json({ data: [] });
+    }
+
+    const results = detail.matchingStatus === "matched" ? mockMatchedResults : mockMismatchedResults;
     return HttpResponse.json({ data: results });
   }),
 

@@ -74,7 +74,10 @@ export function AccountsPayableInvoiceQueuePage() {
                 key={filter.label}
                 variant={matchingFilter === filter.value ? "default" : "outline"}
                 size="sm"
-                onClick={() => setMatchingFilter(filter.value)}
+                onClick={() => {
+                  setMatchingFilter(filter.value);
+                  setSelectedInvoice(null);
+                }}
               >
                 {filter.label}
               </Button>

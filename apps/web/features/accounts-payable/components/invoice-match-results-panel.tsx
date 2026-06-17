@@ -82,9 +82,9 @@ export function InvoiceMatchResultsPanel({
               <span className="text-muted-foreground">
                 {summary.matchedLines} of {summary.totalLines} lines matched
               </span>
-              {summary.mismatchLines > 0 && (
+                {(summary.mismatchLines ?? 0) > 0 && (
                 <span className="font-medium text-red-600">
-                  Issues in: {summary.dimensionsWithIssues.join(", ")}
+                  Issues in: {(summary.dimensionsWithIssues ?? []).join(", ")}
                 </span>
               )}
             </div>
@@ -113,10 +113,12 @@ export function InvoiceMatchResultsPanel({
                       <TableCell className="font-mono text-xs">{r.actualValue ?? "\u2014"}</TableCell>
                       <TableCell>
                         {r.result === "pass" && (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span aria-label="Pass">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          </span>
                         )}
                         {r.result === "fail" && (
-                          <span title={r.notes ?? ""}>
+                          <span aria-label="Fail" title={r.notes ?? ""}>
                             <AlertTriangle className="h-4 w-4 text-red-600" />
                           </span>
                         )}

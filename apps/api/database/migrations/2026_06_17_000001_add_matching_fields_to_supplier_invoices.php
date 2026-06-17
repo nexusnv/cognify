@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::table('supplier_invoices', function (Blueprint $table) {
             $table->string('matching_status')->nullable()->after('review_blockers');
+            $table->index('matching_status');
         });
     }
 

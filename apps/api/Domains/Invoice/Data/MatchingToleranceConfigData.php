@@ -20,7 +20,11 @@ final class MatchingToleranceConfigData
 
     public static function forDimension(string $dimension, ?array $tenantConfig = null): array
     {
-        $default = self::DEFAULTS[$dimension] ?? self::DEFAULTS['unit_price'];
+        if (! isset(self::DEFAULTS[$dimension])) {
+            throw new \InvalidArgumentException("Unknown matching dimension: {$dimension}");
+        }
+
+        $default = self::DEFAULTS[$dimension];
 
         if ($tenantConfig === null || ! isset($tenantConfig[$dimension])) {
             return $default;

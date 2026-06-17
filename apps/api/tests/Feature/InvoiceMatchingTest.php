@@ -135,6 +135,13 @@ class InvoiceMatchingTest extends TestCase
 
         $invoice->refresh();
         $this->assertEquals('mismatch', $invoice->matching_status);
+
+        $results = SupplierInvoiceMatchResult::query()
+            ->where('supplier_invoice_id', $invoice->id)
+            ->where('dimension', 'unit_price')
+            ->where('result', 'fail')
+            ->get();
+        $this->assertGreaterThan(0, $results->count(), 'Expected at least one unit_price match failure');
     }
 
     public function test_vendor_identity_mismatch_fails(): void
@@ -256,6 +263,12 @@ class InvoiceMatchingTest extends TestCase
         // A user from another tenant cannot access this invoice's match results
         $this->actingAsTenant($otherTenant, $otherBuyer);
         $response = $this->getJson("/api/supplier-invoices/{$invoice->id}/match-results");
+        $response->assertNotFound();
+
+        // A user from another tenant cannot invoke run-matching on this invoice
+        $response = $this->postJson("/api/supplier-invoices/{$invoice->id}/run-matching", [
+            'lockVersion' => 1,
+        ]);
         $response->assertNotFound();
     }
 

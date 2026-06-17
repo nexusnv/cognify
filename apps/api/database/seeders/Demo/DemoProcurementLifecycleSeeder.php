@@ -2116,6 +2116,11 @@ class DemoProcurementLifecycleSeeder
             ],
         );
 
+        // Delete stale match results from previous matching runs to ensure clean state
+        SupplierInvoiceMatchResult::query()
+            ->where('supplier_invoice_id', $invoice->id)
+            ->delete();
+
         $this->seedInvoiceLines($invoice, $lineSource, $tenant);
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-007.pdf', 'INV-2026-DEMO-007');
     }

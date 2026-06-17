@@ -159,5 +159,7 @@ export const accountsPayableInvoiceDetails: Record<string, SupplierInvoice> = {
   "invoice-4": buildDetail(accountsPayableInvoiceRows[3], {
     reviewNotes: "Invoice is complete and ready for matching.",
     reviewChecklist: passingChecklist,
+    matchingStatus: "matched",
+    matchSummary: { totalLines: 1, matchedLines: 1, mismatchLines: 0, dimensionsWithIssues: [] },
   }),
 };

@@ -5,6 +5,7 @@ namespace Domains\Invoice\Models;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
+use Domains\Invoice\Models\Relations\UuidMorphMany;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
@@ -171,7 +172,11 @@ class SupplierInvoice extends Model
 
     public function attachments(): MorphMany
     {
-        return $this->morphMany(Attachment::class, 'attachable');
+        $relation = $this->morphMany(Attachment::class, 'attachable');
+
+        return $relation->getQuery()->getConnection()->getDriverName() === 'pgsql'
+            ? new UuidMorphMany($relation->getQuery(), $this, 'attachable_type', 'attachable_id', 'id')
+            : $relation;
     }
 
     public function statusState(): SupplierInvoiceStatus

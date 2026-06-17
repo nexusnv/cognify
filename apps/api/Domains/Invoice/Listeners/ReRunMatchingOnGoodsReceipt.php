@@ -29,11 +29,6 @@ class ReRunMatchingOnGoodsReceipt implements ShouldQueue
         $pendingInvoices = SupplierInvoice::query()
             ->where('purchase_order_id', $purchaseOrderId)
             ->where('status', SupplierInvoiceStatus::Reviewed->value)
-            ->where(function ($query) {
-                // Match invoices with no matching_status OR that failed matching previously
-                $query->whereNull('matching_status')
-                    ->orWhere('matching_status', SupplierInvoiceStatus::Mismatch->value);
-            })
             ->get();
 
         foreach ($pendingInvoices as $invoice) {

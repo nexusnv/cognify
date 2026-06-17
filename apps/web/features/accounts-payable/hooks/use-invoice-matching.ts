@@ -23,8 +23,12 @@ export function useRunInvoiceMatching(invoiceId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ lockVersion }: { lockVersion: number }) =>
-      triggerInvoiceMatching(invoiceId!, lockVersion),
+    mutationFn: ({ lockVersion }: { lockVersion: number }) => {
+      if (invoiceId === null) {
+        throw new Error("Cannot run matching: no invoice selected");
+      }
+      return triggerInvoiceMatching(invoiceId, lockVersion);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: accountsPayableInvoiceKeys.all,
