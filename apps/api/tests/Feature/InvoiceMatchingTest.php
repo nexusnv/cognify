@@ -487,8 +487,8 @@ class InvoiceMatchingTest extends TestCase
         $payload = $this->capturePayload($po, $line, ['lines' => [
             [
                 'purchaseOrderLineId' => (string) $line->id,
-                'quantityInvoiced' => '5.0000',
-                'unitPrice' => '150.0000',
+                'quantityInvoiced' => '10.0000',
+                'unitPrice' => '11749.0000',
             ],
         ]]);
 
@@ -518,7 +518,7 @@ class InvoiceMatchingTest extends TestCase
                 'lockVersion' => $started['lockVersion'] + 1,
             ])
             ->assertOk()
-            ->json('data');
+            ->json();
 
         return ['tenant' => $tenant, 'buyer' => $buyer, 'invoice' => $matched, 'po' => $po, 'line' => $line];
     }
@@ -533,7 +533,11 @@ class InvoiceMatchingTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'type', 'dimension', 'status'],
+                '*' => [
+                    'id', 'dimension', 'matchType', 'status',
+                    'expectedValue', 'actualValue',
+                    'supplierInvoiceLineId', 'purchaseOrderLineId',
+                ],
             ],
         ]);
         $this->assertNotEmpty($response->json('data'));
@@ -569,8 +573,8 @@ class InvoiceMatchingTest extends TestCase
             "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
             [
                 'lockVersion' => 1,
-                'type' => 'explanation',
-                'explanation' => 'Vendor pricing confirmed via email.',
+                'resolutionType' => 'explanation',
+                'explanation' => 'Price variance accepted per buyer discretion — market rate increase since PO issuance.',
             ]
         );
 
@@ -590,7 +594,7 @@ class InvoiceMatchingTest extends TestCase
             "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
             [
                 'lockVersion' => 1,
-                'type' => 'value_adjustment',
+                'resolutionType' => 'value_adjustment',
                 'adjustedValue' => '150.0000',
             ]
         );
@@ -614,7 +618,7 @@ class InvoiceMatchingTest extends TestCase
             [
                 'lockVersion' => 1,
                 'escalatedToUserId' => (string) $escalatedUser->id,
-                'reason' => 'Requires senior review.',
+                'note' => 'Requires senior review.',
             ]
         );
 
@@ -637,7 +641,7 @@ class InvoiceMatchingTest extends TestCase
             [
                 'lockVersion' => 1,
                 'escalatedToUserId' => (string) $escalatedUser->id,
-                'reason' => 'Requires senior review.',
+                'note' => 'Requires senior review.',
             ]
         )->assertOk();
 
@@ -646,12 +650,12 @@ class InvoiceMatchingTest extends TestCase
             "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
             [
                 'lockVersion' => 2,
-                'type' => 'explanation',
+                'resolutionType' => 'explanation',
                 'explanation' => 'Should be rejected.',
             ]
         );
 
-        $response->assertStatus(409);
+        $response->assertForbidden();
     }
 
     public function test_cannot_re_escalate_exception(): void
@@ -669,7 +673,7 @@ class InvoiceMatchingTest extends TestCase
             [
                 'lockVersion' => 1,
                 'escalatedToUserId' => (string) $escalatedUser->id,
-                'reason' => 'Requires senior review.',
+                'note' => 'Requires senior review.',
             ]
         )->assertOk();
 
@@ -679,7 +683,7 @@ class InvoiceMatchingTest extends TestCase
             [
                 'lockVersion' => 2,
                 'escalatedToUserId' => (string) $escalatedUser->id,
-                'reason' => 'Escalating again.',
+                'note' => 'Escalating again.',
             ]
         );
 
@@ -701,22 +705,31 @@ class InvoiceMatchingTest extends TestCase
             [
                 'lockVersion' => 1,
                 'escalatedToUserId' => (string) $escalatedUser->id,
-                'reason' => 'Requires senior review.',
+                'note' => 'Requires senior review.',
             ]
         )->assertOk();
 
-        // Escalated user rejects
+        // Escalated user can reject via resolve endpoint
         $this->actingAsTenant($tenant, $escalatedUser);
-        $response = $this->postJson(
-            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/reject-escalation",
+        $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
             [
                 'lockVersion' => 2,
-                'reason' => 'Pricing is acceptable.',
+                'resolutionType' => 'explanation',
+                'explanation' => 'Price variance rejected — revert to PO price.',
             ]
-        );
+        )
+            ->assertOk()
+            ->assertJsonPath('data.status', 'resolved');
 
-        $response->assertOk();
-        $response->assertJsonPath('data.status', 'rejected');
+        // Original buyer can no longer modify
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve", [
+                'lockVersion' => 3,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Should not work.',
+            ])
+            ->assertStatus(409);
     }
 
     public function test_all_explanations_advances_invoice_to_ready_for_approval(): void
@@ -731,7 +744,7 @@ class InvoiceMatchingTest extends TestCase
                 "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exception['id']}/resolve",
                 [
                     'lockVersion' => 1,
-                    'type' => 'explanation',
+                    'resolutionType' => 'explanation',
                     'explanation' => 'Vendor confirmed pricing.',
                 ]
             )->assertOk();
@@ -747,16 +760,26 @@ class InvoiceMatchingTest extends TestCase
 
         $this->actingAsTenant($result['tenant'], $result['buyer']);
         $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
-        $exceptionId = $exceptions[0]['id'];
 
-        $this->postJson(
-            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
-            [
-                'lockVersion' => 1,
-                'type' => 'value_adjustment',
-                'adjustedValue' => '150.0000',
-            ]
-        )->assertOk();
+        $adjustedValues = [
+            'unit_price' => '12000.0000',
+            'line_total' => '120000.0000',
+            'invoice_total' => '120000.0000',
+        ];
+
+        foreach ($exceptions as $exception) {
+            $adjustedValue = $adjustedValues[$exception['dimension']] ?? null;
+            if ($adjustedValue !== null) {
+                $this->postJson(
+                    "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exception['id']}/resolve",
+                    [
+                        'lockVersion' => $exception['lockVersion'],
+                        'resolutionType' => 'value_adjustment',
+                        'adjustedValue' => $adjustedValue,
+                    ]
+                )->assertOk();
+            }
+        }
 
         $invoice = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}")->json('data');
         $this->assertEquals('ready_for_approval', $invoice['status']);
@@ -768,14 +791,14 @@ class InvoiceMatchingTest extends TestCase
 
         $this->actingAsTenant($result['tenant'], $result['buyer']);
         $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
-        $exceptionId = $exceptions[0]['id'];
+        $unitPriceException = collect($exceptions)->firstWhere('dimension', 'unit_price');
 
         $this->postJson(
-            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$unitPriceException['id']}/resolve",
             [
-                'lockVersion' => 1,
-                'type' => 'value_adjustment',
-                'adjustedValue' => '150.0000',
+                'lockVersion' => $unitPriceException['lockVersion'],
+                'resolutionType' => 'value_adjustment',
+                'adjustedValue' => '12000.0000',
             ]
         )->assertOk();
 
@@ -801,7 +824,7 @@ class InvoiceMatchingTest extends TestCase
             "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
             [
                 'lockVersion' => 999,
-                'type' => 'explanation',
+                'resolutionType' => 'explanation',
                 'explanation' => 'Stale lock version.',
             ]
         );
@@ -825,7 +848,7 @@ class InvoiceMatchingTest extends TestCase
             "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
             [
                 'lockVersion' => 1,
-                'type' => 'explanation',
+                'resolutionType' => 'explanation',
                 'explanation' => 'Should be forbidden.',
             ]
         );
@@ -849,7 +872,7 @@ class InvoiceMatchingTest extends TestCase
             [
                 'lockVersion' => 1,
                 'escalatedToUserId' => (string) $otherUser->id,
-                'reason' => 'Should be invalid.',
+                'note' => 'Should be invalid.',
             ]
         );
 

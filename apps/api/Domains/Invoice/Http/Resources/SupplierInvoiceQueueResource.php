@@ -41,6 +41,7 @@ class SupplierInvoiceQueueResource extends JsonResource
             'reviewStartedAt' => $this->review_started_at?->toISOString(),
             'reviewedAt' => $this->reviewed_at?->toISOString(),
             'matchingStatus' => $this->matching_status,
+            'exceptionSummary' => $this->exception_summary,
             'lockVersion' => $this->lock_version,
             'permissions' => [
                 'canReview' => Gate::allows('review', $this->resource),
