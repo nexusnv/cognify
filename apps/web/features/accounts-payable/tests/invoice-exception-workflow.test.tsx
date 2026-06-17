@@ -18,30 +18,38 @@ describe("Invoice exception workflow", () => {
   });
 
   it("shows exception panel when invoice has mismatches", async () => {
+    const user = userEvent.setup();
     render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
 
-    const row = await screen.findByRole("row", { name: /INV-MISMATCH/i });
-    await userEvent.click(within(row).getByRole("button", { name: "View exceptions" }));
+    await user.click(screen.getByRole("tab", { name: "All" }));
 
-    expect(await screen.findByText("Unit price mismatch")).toBeInTheDocument();
+    const row = await screen.findByRole("row", { name: /INV-MISMATCH/i });
+    await user.click(within(row).getByRole("button", { name: "View exceptions" }));
+
+    expect(await screen.findAllByText("unit_price")).toHaveLength(2);
+    expect(await screen.findByText("line_total")).toBeInTheDocument();
   });
 
   it("allows resolving an exception with explanation", async () => {
     const user = userEvent.setup();
     render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
 
+    await user.click(screen.getByRole("tab", { name: "All" }));
+
     const row = await screen.findByRole("row", { name: /INV-MISMATCH/i });
     await user.click(within(row).getByRole("button", { name: "View exceptions" }));
 
-    await user.click(screen.getByRole("button", { name: "Resolve" }));
+    const resolveButtons = await screen.findAllByRole("button", { name: "Resolve" });
+    await user.click(resolveButtons[0]);
 
-    await user.click(screen.getByLabelText("Explanation"));
-    await user.type(screen.getByLabelText("Explanation notes"), "Price variance accepted per policy.");
+    const explanationRadio = await screen.findByLabelText("Explanation (waive variance)");
+    await user.click(explanationRadio);
+    await user.type(await screen.findByLabelText("Explanation notes"), "Price variance accepted per policy.");
 
-    await user.click(screen.getByRole("button", { name: "Submit resolution" }));
+    await user.click(await screen.findByRole("button", { name: "Submit resolution" }));
 
     await waitFor(() => {
-      expect(screen.getByText("resolved")).toBeInTheDocument();
+      expect(screen.getByText("Resolved")).toBeInTheDocument();
     });
   });
 
@@ -49,16 +57,19 @@ describe("Invoice exception workflow", () => {
     const user = userEvent.setup();
     render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
 
+    await user.click(screen.getByRole("tab", { name: "All" }));
+
     const row = await screen.findByRole("row", { name: /INV-MISMATCH/i });
     await user.click(within(row).getByRole("button", { name: "View exceptions" }));
 
-    await user.click(screen.getByRole("button", { name: "Escalate" }));
-    await user.type(screen.getByLabelText("Escalation note"), "Requires manager review.");
+    const escalateButtons = await screen.findAllByRole("button", { name: "Escalate" });
+    await user.click(escalateButtons[0]);
+    await user.type(await screen.findByLabelText("Escalation note"), "Requires manager review.");
 
-    await user.click(screen.getByRole("button", { name: "Confirm escalation" }));
+    await user.click(await screen.findByRole("button", { name: "Confirm escalation" }));
 
     await waitFor(() => {
-      expect(screen.getByText("escalated")).toBeInTheDocument();
+      expect(screen.getByText("Escalated")).toBeInTheDocument();
     });
   });
 
@@ -75,11 +86,17 @@ describe("Invoice exception workflow", () => {
     const user = userEvent.setup();
     render(<AccountsPayableInvoiceQueuePage />, { wrapper: TestProviders });
 
+    await user.click(screen.getByRole("tab", { name: "All" }));
+
     const row = await screen.findByRole("row", { name: /INV-MISMATCH/i });
     await user.click(within(row).getByRole("button", { name: "View exceptions" }));
-    await user.click(screen.getByRole("button", { name: "Resolve" }));
-    await user.click(screen.getByLabelText("Explanation"));
-    await user.click(screen.getByRole("button", { name: "Submit resolution" }));
+    const resolveButtons = await screen.findAllByRole("button", { name: "Resolve" });
+    await user.click(resolveButtons[0]);
+    const explanationRadio = await screen.findByLabelText("Explanation (waive variance)");
+    await user.click(explanationRadio);
+    await user.click(await screen.findByRole("button", { name: "Submit resolution" }));
+
+    await user.keyboard("{Escape}");
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Exception was updated by another user");
   });

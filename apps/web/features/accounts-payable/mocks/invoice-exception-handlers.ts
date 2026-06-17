@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { invoiceExceptionFixtures, buildExceptionFixture } from "./invoice-exception-fixtures";
+import { invoiceExceptionFixtures } from "./invoice-exception-fixtures";
 import type { SupplierInvoiceException } from "@cognify/api-client/schemas";
 
 let exceptions: SupplierInvoiceException[] = [];

@@ -40,9 +40,10 @@ export async function fetchInvoiceExceptions(
   supplierInvoiceId: string,
   tenantId: string | null,
 ): Promise<SupplierInvoiceException[]> {
-  const response = await listSupplierInvoiceExceptions(supplierInvoiceId, {
-    headers: withActiveTenantHeader(tenantId),
-  }).catch(throwResponseData);
+  const response = await listSupplierInvoiceExceptions(
+    supplierInvoiceId,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
   return unwrapData<SupplierInvoiceException[]>(response);
 }
 
@@ -63,7 +64,7 @@ export async function resolveException(
     supplierInvoiceId,
     exceptionId,
     payload,
-    { headers: withActiveTenantHeader(tenantId) },
+    withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
   return unwrapData<SupplierInvoiceException>(response);
 }
@@ -84,7 +85,7 @@ export async function escalateException(
     supplierInvoiceId,
     exceptionId,
     payload,
-    { headers: withActiveTenantHeader(tenantId) },
+    withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
   return unwrapData<SupplierInvoiceException>(response);
 }
