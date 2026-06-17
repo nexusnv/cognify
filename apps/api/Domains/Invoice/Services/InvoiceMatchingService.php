@@ -85,7 +85,6 @@ class InvoiceMatchingService
             // Three-way quantity (only if policy is three_way)
             // Use separate variable to avoid affecting two-way result
             $passesQtyThreeWay = true;
-            $threeWayResult = null;
             
             if ($matchingPolicy === 'three_way') {
                 $acceptedQty = $pol->cumulative_quantity_accepted ?? '0.0000';

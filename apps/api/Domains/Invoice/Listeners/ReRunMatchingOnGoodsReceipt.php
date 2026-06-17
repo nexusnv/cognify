@@ -42,4 +42,4 @@ class ReRunMatchingOnGoodsReceipt implements ShouldQueue
             }
         }
     }
-}}
+}

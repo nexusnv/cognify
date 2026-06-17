@@ -90,7 +90,7 @@ This is selected. Each failed match result becomes a `SupplierInvoiceException` 
 
 Exceptions are created from failed `SupplierInvoiceMatchResult` rows after invoice matching runs. Header-level failed results create header-level exceptions with null line IDs. Line-level failed results create line-level exceptions with `supplier_invoice_line_id` and `purchase_order_line_id`.
 
-A manual create action is available for AP/buyer/admin users when a user sees a failed match result that was not automatically converted because of an older match run. Manual creation requires a failed match result reference or enough dimension context to create the same stable exception key.
+A manual create action is available for AP/buyer/admin users when a user sees a failed match result that was not automatically converted because of an older match run. Manual creation requires a `matchResultId` reference (see POST contract below).
 
 ### Stable Exception Identity
 
@@ -125,9 +125,9 @@ Owner routing is server-side and deterministic. AP/buyer/admin users can reassig
 Internal owner resolution:
 
 - `requester`: `purchase_order.requisition.requester_id`.
-- `buyer`: `purchase_order.created_by_user_id`, then any tenant buyer, then admin.
+- `buyer`: `purchase_order.created_by_user_id`, then tenant buyers ordered by `id` ASC (earliest first), then tenant admins ordered by `id` ASC.
 - `receiver`: latest goods receipt `recorded_by_user_id`, then `requester_confirmed_by_user_id`, then requester, then buyer.
-- `finance`: tenant users with `approver` role, then buyer/admin fallback.
+- `finance`: tenant users with `approver` role ordered by `id` ASC, then tenant buyers ordered by `id` ASC, then tenant admins ordered by `id` ASC.
 
 External vendor owner resolution:
 
@@ -304,6 +304,7 @@ Add indexes on:
 Extend `supplier_invoices`:
 
 ```
+matching_status               VARCHAR nullable — none, pending, matched, mismatch, exception_pending, resolved
 exception_status              VARCHAR nullable — none, pending, resolved
 open_exception_count          UNSIGNED INTEGER default 0
 accepted_exception_count      UNSIGNED INTEGER default 0
@@ -420,6 +421,7 @@ Use only the files the implementation needs. Empty folders should not be created
 - Allows `resolved`.
 - Requires `lockVersion`.
 - Sets status `accepted`, stores acceptor and timestamp, recomputes invoice exception summary.
+- Updates invoice `exception_status` within the same transaction.
 - Records audit event.
 
 **`RejectSupplierInvoiceExceptionResolution`:**
@@ -428,6 +430,7 @@ Use only the files the implementation needs. Empty folders should not be created
 - Allows `resolved`.
 - Requires rejection reason.
 - Sets status `rejected`, stores rejection metadata, recomputes invoice exception summary.
+- Updates invoice `exception_status` within the same transaction.
 - Records audit event and notification to previous owner.
 
 **`CancelSupplierInvoiceException`:**
@@ -436,6 +439,7 @@ Use only the files the implementation needs. Empty folders should not be created
 - Allows any non-`accepted` state.
 - Requires cancellation reason for manual cancellation.
 - Sets status `cancelled`, recomputes invoice exception summary.
+- Updates invoice `exception_status` within the same transaction.
 - Records audit event.
 
 ### Authorization
