@@ -6,7 +6,9 @@ use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Models\SupplierInvoiceLine;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
+use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
 use Domains\Invoice\Services\InvoiceMatchingService;
 use Domains\Invoice\Services\ToleranceService;
 use Domains\Invoice\States\SupplierInvoiceStatus;
@@ -18,6 +20,7 @@ class RunInvoiceMatching
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
+        private readonly CreateExceptionsFromMatchResults $createExceptions,
     ) {}
 
     public function handle(SupplierInvoice $supplierInvoice, User $actor, int $lockVersion, string $triggerSource = 'manual'): SupplierInvoice
@@ -44,6 +47,23 @@ class RunInvoiceMatching
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+
+            // On re-runs, subtract this invoice's quantity from cumulative so the
+            // matching service doesn't double-count when adding it back.
+            if ($invoice->matching_status !== null) {
+                foreach ($poLines as $poLine) {
+                    $invQty = SupplierInvoiceLine::query()
+                        ->where('supplier_invoice_id', $invoice->id)
+                        ->where('tenant_id', $invoice->tenant_id)
+                        ->where('purchase_order_line_id', $poLine->id)
+                        ->sum('quantity_invoiced');
+                    $poLine->cumulative_quantity_invoiced = bcsub(
+                        $poLine->cumulative_quantity_invoiced ?? '0.0000',
+                        (string) $invQty,
+                        4,
+                    );
+                }
+            }
 
             $toleranceService = new ToleranceService();
             $matchingService = new InvoiceMatchingService($toleranceService);
@@ -80,13 +100,20 @@ class RunInvoiceMatching
                 }
             }
 
-            // Update cumulative invoiced on PO lines
-            foreach ($matchResult['cumulativeInvoicedUpdates'] as $poLineId => $newCumulative) {
-                PurchaseOrderLine::query()
-                    ->whereKey($poLineId)
-                    ->where('tenant_id', $invoice->tenant_id)
-                    ->lockForUpdate()
-                    ->update(['cumulative_quantity_invoiced' => $newCumulative]);
+            // Create exception records from failed match results
+            if ($hasFailures) {
+                $this->createExceptions->handle($invoice);
+            }
+
+            // Update cumulative invoiced on PO lines (skip on re-runs)
+            if ($invoice->matching_status === null) {
+                foreach ($matchResult['cumulativeInvoicedUpdates'] as $poLineId => $newCumulative) {
+                    PurchaseOrderLine::query()
+                        ->whereKey($poLineId)
+                        ->where('tenant_id', $invoice->tenant_id)
+                        ->lockForUpdate()
+                        ->update(['cumulative_quantity_invoiced' => $newCumulative]);
+                }
             }
 
             // Set matching status

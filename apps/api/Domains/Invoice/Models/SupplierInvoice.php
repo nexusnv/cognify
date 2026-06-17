@@ -53,6 +53,7 @@ class SupplierInvoice extends Model
         'review_blockers',
         'lock_version',
         'matching_status',
+        'exception_summary',
     ];
 
     protected function casts(): array
@@ -72,6 +73,7 @@ class SupplierInvoice extends Model
             'review_blockers' => 'array',
             'lock_version' => 'integer',
             'matching_status' => 'string',
+            'exception_summary' => 'array',
         ];
     }
 
@@ -168,6 +170,11 @@ class SupplierInvoice extends Model
     public function matchResults(): HasMany
     {
         return $this->hasMany(SupplierInvoiceMatchResult::class)->orderBy('created_at');
+    }
+
+    public function exceptions(): HasMany
+    {
+        return $this->hasMany(SupplierInvoiceException::class)->orderBy('created_at');
     }
 
     public function attachments(): MorphMany

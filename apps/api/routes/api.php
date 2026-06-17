@@ -19,6 +19,7 @@ use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Attachment\Http\Controllers\SupplierInvoiceAttachmentController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceController;
+use Domains\Invoice\Http\Controllers\SupplierInvoiceExceptionController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceMatchingController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceReviewController;
 use Domains\Collaboration\Http\Controllers\ApprovalTaskCommentController;
@@ -195,6 +196,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/supplier-invoices/{supplierInvoice}/complete-review', [SupplierInvoiceReviewController::class, 'complete']);
             Route::post('/supplier-invoices/{supplierInvoice}/run-matching', [SupplierInvoiceMatchingController::class, 'run']);
             Route::get('/supplier-invoices/{supplierInvoice}/match-results', [SupplierInvoiceMatchingController::class, 'results']);
+            Route::get('/supplier-invoices/{supplierInvoice}/exceptions', [SupplierInvoiceExceptionController::class, 'index']);
+            Route::post('/supplier-invoices/{supplierInvoice}/exceptions/{exception}/resolve', [SupplierInvoiceExceptionController::class, 'resolve']);
+            Route::post('/supplier-invoices/{supplierInvoice}/exceptions/{exception}/escalate', [SupplierInvoiceExceptionController::class, 'escalate']);
             Route::get('/supplier-invoices/{supplierInvoice}/attachments', [SupplierInvoiceAttachmentController::class, 'index']);
             Route::post('/supplier-invoices/{supplierInvoice}/attachments', [SupplierInvoiceAttachmentController::class, 'store']);
             Route::get('/shipments/{shipment}', [\Domains\Fulfillment\Http\Controllers\ShipmentController::class, 'show']);

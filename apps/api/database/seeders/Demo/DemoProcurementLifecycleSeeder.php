@@ -30,6 +30,7 @@ use Domains\Invoice\Models\SupplierInvoiceLine;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Invoice\Support\SupplierInvoiceNumber;
+use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -2061,6 +2062,7 @@ class DemoProcurementLifecycleSeeder
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-006.pdf', 'INV-2026-DEMO-006');
 
         $invoice->matchResults()->delete();
+        $invoice->exceptions()->delete();
         foreach ($invoice->lines as $line) {
             $expectedPrice = (string) $line->unit_price;
             $actualPrice = bcadd($expectedPrice, '20.0000', 4);
@@ -2081,6 +2083,8 @@ class DemoProcurementLifecycleSeeder
                 'notes' => 'Unit price variance exceeds tolerance',
             ]);
         }
+
+        app(CreateExceptionsFromMatchResults::class)->handle($invoice);
     }
 
     private function seedPendingMatchingInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void

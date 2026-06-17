@@ -5,9 +5,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface SupplierInvoiceMatchSummary {
+/**
+ * @nullable
+ */
+export type SupplierInvoiceMatchSummary = {
   totalLines?: number;
   matchedLines?: number;
   mismatchLines?: number;
   dimensionsWithIssues?: string[];
-}
+} | null;

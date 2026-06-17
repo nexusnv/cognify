@@ -24,7 +24,9 @@ use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Models\SupplierInvoiceException;
 use Domains\Invoice\Models\SupplierInvoiceLine;
+use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -233,6 +235,23 @@ class DemoSeederTest extends TestCase
             'total_amount' => '100.00',
             'currency' => 'USD',
         ]);
+    }
+
+    public function test_demo_seeds_invoice_exceptions(): void
+    {
+        $this->seed();
+
+        $invoice = SupplierInvoice::query()
+            ->where('matching_status', SupplierInvoiceStatus::Mismatch->value)
+            ->first();
+
+        $this->assertNotNull($invoice);
+        $this->assertNotNull($invoice->exception_summary);
+        $this->assertGreaterThan(0, $invoice->exception_summary['total']);
+
+        $exceptions = $invoice->exceptions;
+        $this->assertNotEmpty($exceptions);
+        $this->assertEquals('open', $exceptions->first()->status);
     }
 
     public function test_awards_reject_cross_tenant_project_links(): void
@@ -632,6 +651,7 @@ class DemoSeederTest extends TestCase
             'fulfillment_tracking_events' => 5,
             'supplier_invoices' => 7,
         ], $run->metadata);
+        $this->assertSame(2, SupplierInvoiceException::query()->count());
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
     }
 

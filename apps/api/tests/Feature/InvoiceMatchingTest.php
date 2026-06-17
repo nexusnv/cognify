@@ -272,19 +272,22 @@ class InvoiceMatchingTest extends TestCase
         $response->assertNotFound();
     }
 
-    private function tenantUserPair(): array
+    private function tenantUserPair(?string $role = null, ?Tenant $existingTenant = null): array
     {
-        $tenant = Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
+        $role ??= 'buyer';
+        $tenant = $existingTenant ?? Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
-        $tenant->users()->attach($user->id, ['role' => 'buyer']);
+        $tenant->users()->attach($user->id, ['role' => $role]);
 
         return [$tenant, $user];
     }
 
-    private function actingAsTenant(Tenant $tenant, User $user): void
+    private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
         $this->withHeader('X-Tenant-Id', (string) $tenant->id);
+
+        return $this;
     }
 
     private function issuedPurchaseOrder(Tenant $tenant, User $buyer): PurchaseOrder
@@ -443,5 +446,436 @@ class InvoiceMatchingTest extends TestCase
         ]);
 
         return $po->fresh('lines');
+    }
+
+    /**
+     * @return array<string, array{status: string, note: string|null}>
+     */
+    private function passingReviewChecklist(): array
+    {
+        return [
+            'completeness' => ['status' => 'pass', 'note' => null],
+            'coding' => ['status' => 'pass', 'note' => null],
+            'attachment' => ['status' => 'pass', 'note' => null],
+            'vendorIdentity' => ['status' => 'pass', 'note' => null],
+            'poLinkage' => ['status' => 'pass', 'note' => null],
+        ];
+    }
+
+    private function capturePayload(PurchaseOrder $po, PurchaseOrderLine $line, array $overrides = []): array
+    {
+        return array_merge([
+            'lockVersion' => 1,
+            'invoiceNumber' => 'INV-MISMATCH-'.Str::random(6),
+            'invoiceDate' => now()->toDateString(),
+            'dueDate' => now()->addDays(30)->toDateString(),
+            'lines' => [
+                [
+                    'purchaseOrderLineId' => (string) $line->id,
+                    'quantityInvoiced' => '5.0000',
+                    'unitPrice' => '12000.0000',
+                ],
+            ],
+        ], $overrides);
+    }
+
+    private function createMismatchInvoice(Tenant $tenant, User $buyer): array
+    {
+        $po = $this->issuedPurchaseOrder($tenant, $buyer);
+        $line = $po->lines->firstOrFail();
+
+        $payload = $this->capturePayload($po, $line, ['lines' => [
+            [
+                'purchaseOrderLineId' => (string) $line->id,
+                'quantityInvoiced' => '10.0000',
+                'unitPrice' => '11749.0000',
+            ],
+        ]]);
+
+        $invoice = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/purchase-orders/{$po->id}/supplier-invoices", $payload)
+            ->assertCreated()
+            ->json('data');
+
+        // Complete review
+        $started = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/start-review", [
+                'lockVersion' => $invoice['lockVersion'],
+            ])
+            ->assertOk()
+            ->json('data');
+
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/complete-review", [
+                'lockVersion' => $started['lockVersion'],
+                'checklist' => $this->passingReviewChecklist(),
+            ])
+            ->assertOk();
+
+        // Run matching — produces mismatch
+        $matched = $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice['id']}/run-matching", [
+                'lockVersion' => $started['lockVersion'] + 1,
+            ])
+            ->assertOk()
+            ->json();
+
+        return ['tenant' => $tenant, 'buyer' => $buyer, 'invoice' => $matched, 'po' => $po, 'line' => $line];
+    }
+
+    public function test_exceptions_are_created_after_mismatch_matching(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $response = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions");
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id', 'dimension', 'matchType', 'status',
+                    'expectedValue', 'actualValue',
+                    'supplierInvoiceLineId', 'purchaseOrderLineId',
+                ],
+            ],
+        ]);
+        $this->assertNotEmpty($response->json('data'));
+    }
+
+    public function test_exception_list_is_tenant_scoped(): void
+    {
+        [$tenantA, $buyerA] = $this->tenantUserPair();
+        $resultA = $this->createMismatchInvoice($tenantA, $buyerA);
+
+        [$tenantB, $buyerB] = $this->tenantUserPair();
+        $resultB = $this->createMismatchInvoice($tenantB, $buyerB);
+
+        $this->actingAsTenant($tenantA, $buyerA);
+        $responseA = $this->getJson("/api/supplier-invoices/{$resultA['invoice']['id']}/exceptions");
+        $responseA->assertOk();
+
+        // Tenant B cannot see Tenant A's exceptions
+        $this->actingAsTenant($tenantB, $buyerB);
+        $responseB = $this->getJson("/api/supplier-invoices/{$resultA['invoice']['id']}/exceptions");
+        $responseB->assertNotFound();
+    }
+
+    public function test_buyer_can_resolve_exception_with_explanation(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            [
+                'lockVersion' => 1,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Price variance accepted per buyer discretion — market rate increase since PO issuance.',
+            ]
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.status', 'resolved');
+    }
+
+    public function test_buyer_can_resolve_exception_with_value_adjustment(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            [
+                'lockVersion' => 1,
+                'resolutionType' => 'value_adjustment',
+                'adjustedValue' => '150.0000',
+            ]
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.status', 'resolved');
+    }
+
+    public function test_buyer_can_escalate_exception(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        [, $escalatedUser] = $this->tenantUserPair(role: null, existingTenant: $tenant);
+        $result = $this->createMismatchInvoice($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/escalate",
+            [
+                'lockVersion' => 1,
+                'escalatedToUserId' => (string) $escalatedUser->id,
+                'note' => 'Requires senior review.',
+            ]
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.status', 'escalated');
+    }
+
+    public function test_cannot_resolve_already_escalated_exception(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        [, $escalatedUser] = $this->tenantUserPair(role: null, existingTenant: $tenant);
+        $result = $this->createMismatchInvoice($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/escalate",
+            [
+                'lockVersion' => 1,
+                'escalatedToUserId' => (string) $escalatedUser->id,
+                'note' => 'Requires senior review.',
+            ]
+        )->assertOk();
+
+        // Attempt to resolve escalated exception
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            [
+                'lockVersion' => 2,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Should be rejected.',
+            ]
+        );
+
+        $response->assertForbidden();
+    }
+
+    public function test_cannot_re_escalate_exception(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        [, $escalatedUser] = $this->tenantUserPair(role: null, existingTenant: $tenant);
+        $result = $this->createMismatchInvoice($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/escalate",
+            [
+                'lockVersion' => 1,
+                'escalatedToUserId' => (string) $escalatedUser->id,
+                'note' => 'Requires senior review.',
+            ]
+        )->assertOk();
+
+        // Attempt to escalate again
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/escalate",
+            [
+                'lockVersion' => 2,
+                'escalatedToUserId' => (string) $escalatedUser->id,
+                'note' => 'Escalating again.',
+            ]
+        );
+
+        $response->assertStatus(409);
+    }
+
+    public function test_escalated_user_can_reject_escalated_exception(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        [, $escalatedUser] = $this->tenantUserPair(role: null, existingTenant: $tenant);
+        $result = $this->createMismatchInvoice($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/escalate",
+            [
+                'lockVersion' => 1,
+                'escalatedToUserId' => (string) $escalatedUser->id,
+                'note' => 'Requires senior review.',
+            ]
+        )->assertOk();
+
+        // Escalated user can reject via resolve endpoint
+        $this->actingAsTenant($tenant, $escalatedUser);
+        $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            [
+                'lockVersion' => 2,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Price variance rejected — revert to PO price.',
+            ]
+        )
+            ->assertOk()
+            ->assertJsonPath('data.status', 'resolved');
+
+        // Original buyer can no longer modify
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve", [
+                'lockVersion' => 3,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Should not work.',
+            ])
+            ->assertStatus(409);
+    }
+
+    public function test_all_explanations_advances_invoice_to_ready_for_approval(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+
+        foreach ($exceptions as $exception) {
+            $this->postJson(
+                "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exception['id']}/resolve",
+                [
+                    'lockVersion' => 1,
+                    'resolutionType' => 'explanation',
+                    'explanation' => 'Vendor confirmed pricing.',
+                ]
+            )->assertOk();
+        }
+
+        $invoice = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}")->json('data');
+        $this->assertEquals('ready_for_approval', $invoice['status']);
+    }
+
+    public function test_value_adjustment_reruns_matching_then_advances(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+
+        $adjustedValues = [
+            'unit_price' => '12000.0000',
+            'line_total' => '120000.0000',
+            'invoice_total' => '120000.0000',
+        ];
+
+        foreach ($exceptions as $exception) {
+            $adjustedValue = $adjustedValues[$exception['dimension']] ?? null;
+            if ($adjustedValue !== null) {
+                $this->postJson(
+                    "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exception['id']}/resolve",
+                    [
+                        'lockVersion' => $exception['lockVersion'],
+                        'resolutionType' => 'value_adjustment',
+                        'adjustedValue' => $adjustedValue,
+                    ]
+                )->assertOk();
+            }
+        }
+
+        $invoice = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}")->json('data');
+        $this->assertEquals('ready_for_approval', $invoice['status']);
+    }
+
+    public function test_post_resolution_matching_reruns_when_value_adjustment_exists(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $unitPriceException = collect($exceptions)->firstWhere('dimension', 'unit_price');
+
+        $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$unitPriceException['id']}/resolve",
+            [
+                'lockVersion' => $unitPriceException['lockVersion'],
+                'resolutionType' => 'value_adjustment',
+                'adjustedValue' => '12000.0000',
+            ]
+        )->assertOk();
+
+        // Rerun matching after value adjustment
+        $invoice = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}")->json('data');
+        $response = $this->postJson("/api/supplier-invoices/{$result['invoice']['id']}/run-matching", [
+            'lockVersion' => $invoice['lockVersion'],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('matchingStatus', 'matched');
+    }
+
+    public function test_exception_resolve_rejects_stale_lock_version(): void
+    {
+        $result = $this->createMismatchInvoice(...$this->tenantUserPair());
+
+        $this->actingAsTenant($result['tenant'], $result['buyer']);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            [
+                'lockVersion' => 999,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Stale lock version.',
+            ]
+        );
+
+        $response->assertStatus(409);
+    }
+
+    public function test_exception_resolve_requires_buyer_or_admin(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        [, $requester] = $this->tenantUserPair('requester', $tenant);
+        $result = $this->createMismatchInvoice($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        // Requester cannot resolve
+        $this->actingAsTenant($tenant, $requester);
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/resolve",
+            [
+                'lockVersion' => 1,
+                'resolutionType' => 'explanation',
+                'explanation' => 'Should be forbidden.',
+            ]
+        );
+
+        $response->assertStatus(403);
+    }
+
+    public function test_exception_escalate_requires_valid_tenant_user(): void
+    {
+        [$tenant, $buyer] = $this->tenantUserPair();
+        [$otherTenant, $otherUser] = $this->tenantUserPair();
+        $result = $this->createMismatchInvoice($tenant, $buyer);
+
+        $this->actingAsTenant($tenant, $buyer);
+        $exceptions = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}/exceptions")->json('data');
+        $exceptionId = $exceptions[0]['id'];
+
+        // User from another tenant cannot be the escalation target
+        $response = $this->postJson(
+            "/api/supplier-invoices/{$result['invoice']['id']}/exceptions/{$exceptionId}/escalate",
+            [
+                'lockVersion' => 1,
+                'escalatedToUserId' => (string) $otherUser->id,
+                'note' => 'Should be invalid.',
+            ]
+        );
+
+        $response->assertStatus(422);
     }
 }

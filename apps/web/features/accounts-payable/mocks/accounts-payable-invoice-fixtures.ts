@@ -94,6 +94,27 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     lockVersion: 7,
     permissions: { canReview: true },
   },
+  {
+    id: "invoice-mismatch-1",
+    number: "INV-MISMATCH-001",
+    invoiceNumber: "INV-MISMATCH-001",
+    status: "mismatch",
+    invoiceDate: "2026-06-10",
+    dueDate: "2026-07-10",
+    currency: "USD",
+    totalAmount: "1380.0000",
+    vendor: { id: "vendor-1", name: "Northwind Traders" },
+    purchaseOrder: { id: "po-1", number: "PO-2026-AP-001" },
+    attachmentCount: 1,
+    reviewChecklistSummary: { total: 5, passed: 5, needsAttention: 0, failed: 0 },
+    reviewBlockerCount: 0,
+    reviewStartedAt: "2026-06-13T02:00:00.000Z",
+    reviewedAt: "2026-06-13T03:00:00.000Z",
+    lockVersion: 8,
+    permissions: { canReview: true },
+    matchingStatus: "mismatch",
+    exceptionSummary: { total: 2, open: 2, resolved: 0, escalated: 0 },
+  },
 ];
 
 function buildDetail(row: SupplierInvoiceQueueItem, overrides: Partial<SupplierInvoice> = {}): SupplierInvoice {
@@ -161,5 +182,12 @@ export const accountsPayableInvoiceDetails: Record<string, SupplierInvoice> = {
     reviewChecklist: passingChecklist,
     matchingStatus: "matched",
     matchSummary: { totalLines: 1, matchedLines: 1, mismatchLines: 0, dimensionsWithIssues: [] },
+  }),
+  "invoice-mismatch-1": buildDetail(accountsPayableInvoiceRows[4], {
+    status: "mismatch",
+    matchingStatus: "mismatch",
+    matchSummary: { totalLines: 1, matchedLines: 0, mismatchLines: 1, dimensionsWithIssues: ["unit_price", "quantity"] },
+    exceptionSummary: { total: 2, open: 2, resolved: 0, escalated: 0 },
+    reviewChecklist: passingChecklist,
   }),
 };

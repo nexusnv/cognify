@@ -13,6 +13,7 @@ import type { SupplierInvoiceQueueItemReviewStartedAt } from "./supplierInvoiceQ
 import type { SupplierInvoiceQueueItemReviewedAt } from "./supplierInvoiceQueueItemReviewedAt";
 import type { SupplierInvoicePermissions } from "./supplierInvoicePermissions";
 import type { SupplierInvoiceMatchingStatus } from "./supplierInvoiceMatchingStatus";
+import type { SupplierInvoiceExceptionSummary } from "./supplierInvoiceExceptionSummary";
 
 export interface SupplierInvoiceQueueItem {
   id: string;
@@ -38,4 +39,5 @@ export interface SupplierInvoiceQueueItem {
   lockVersion: number;
   permissions: SupplierInvoicePermissions;
   matchingStatus?: SupplierInvoiceMatchingStatus;
+  exceptionSummary?: SupplierInvoiceExceptionSummary;
 }

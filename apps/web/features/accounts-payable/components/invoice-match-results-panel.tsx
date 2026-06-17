@@ -5,6 +5,7 @@ import { Alert, AlertDescription, Button, Card, CardContent, CardDescription, Ca
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cognify/ui";
 import { useInvoiceMatchSummary, useRunInvoiceMatching } from "../hooks/use-invoice-matching";
 import { InvoiceMatchingStatusBadge } from "./invoice-matching-status-badge";
+import { InvoiceExceptionPanel } from "./invoice-exception-panel";
 
 interface InvoiceMatchResultsPanelProps {
   invoiceId: string;
@@ -33,6 +34,7 @@ export function InvoiceMatchResultsPanel({
   const runError = runMatching.error;
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
@@ -141,6 +143,13 @@ export function InvoiceMatchResultsPanel({
         )}
       </CardContent>
     </Card>
+
+    {matchingStatus === "mismatch" && (
+      <div className="mt-4">
+        <InvoiceExceptionPanel supplierInvoiceId={invoiceId} />
+      </div>
+    )}
+    </>
   );
 }
 

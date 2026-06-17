@@ -98,9 +98,17 @@ export function AccountsPayableInvoiceQueueTable({
       emptyTitle="No invoices match this review state."
       emptyDescription="Switch review state or return when supplier invoices are captured."
       renderRowActions={(invoice) => (
-        <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
-          Review invoice
-        </Button>
+        <div className="flex gap-2">
+          {invoice.matchingStatus === "mismatch" ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
+              View exceptions
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
+              Review invoice
+            </Button>
+          )}
+        </div>
       )}
     />
   );
