@@ -14,4 +14,7 @@ export const SupplierInvoiceStatus = {
   in_review: "in_review",
   needs_information: "needs_information",
   reviewed: "reviewed",
+  matched: "matched",
+  mismatch: "mismatch",
+  ready_for_approval: "ready_for_approval",
 } as const;

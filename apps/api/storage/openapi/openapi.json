@@ -9641,6 +9641,71 @@
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/exceptions": {
+      "get": {
+        "operationId": "listSupplierInvoiceExceptions",
+        "tags": ["Accounts Payable"],
+        "summary": "List exceptions for a supplier invoice",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "name": "supplierInvoice", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "List of exceptions", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SupplierInvoiceExceptionListResponse" } } } },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/exceptions/{exception}/resolve": {
+      "post": {
+        "operationId": "resolveSupplierInvoiceException",
+        "tags": ["Accounts Payable"],
+        "summary": "Resolve an invoice exception",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "name": "supplierInvoice", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "exception", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResolveInvoiceExceptionRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Resolved exception", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SupplierInvoiceExceptionResponse" } } } },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/exceptions/{exception}/escalate": {
+      "post": {
+        "operationId": "escalateSupplierInvoiceException",
+        "tags": ["Accounts Payable"],
+        "summary": "Escalate an invoice exception",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantId" },
+          { "name": "supplierInvoice", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "exception", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EscalateInvoiceExceptionRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Escalated exception", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SupplierInvoiceExceptionResponse" } } } },
+          "400": { "$ref": "#/components/responses/AmbiguousTenant" },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
     }
   },
   "components": {
@@ -9817,7 +9882,7 @@
             }
           }
         }
-      },
+      }
     },
     "schemas": {
       "ActiveTenantSummary": {
@@ -22890,7 +22955,10 @@
               "captured",
               "in_review",
               "needs_information",
-              "reviewed"
+              "reviewed",
+              "matched",
+              "mismatch",
+              "ready_for_approval"
             ]
           },
           "invoiceDate": {
@@ -23049,7 +23117,8 @@
             "$ref": "#/components/schemas/SupplierInvoicePermissions"
           },
           "matchingStatus": { "$ref": "#/components/schemas/SupplierInvoiceMatchingStatus" },
-          "matchSummary": { "$ref": "#/components/schemas/SupplierInvoiceMatchSummary" }
+          "matchSummary": { "$ref": "#/components/schemas/SupplierInvoiceMatchSummary" },
+          "exceptionSummary": { "$ref": "#/components/schemas/SupplierInvoiceExceptionSummary" }
         }
       },
       "SupplierInvoiceLine": {
@@ -25406,7 +25475,10 @@
               "captured",
               "in_review",
               "needs_information",
-              "reviewed"
+              "reviewed",
+              "matched",
+              "mismatch",
+              "ready_for_approval"
             ]
           },
           "invoiceDate": {
@@ -25476,7 +25548,8 @@
           "permissions": {
             "$ref": "#/components/schemas/SupplierInvoicePermissions"
           },
-          "matchingStatus": { "$ref": "#/components/schemas/SupplierInvoiceMatchingStatus" }
+          "matchingStatus": { "$ref": "#/components/schemas/SupplierInvoiceMatchingStatus" },
+          "exceptionSummary": { "$ref": "#/components/schemas/SupplierInvoiceExceptionSummary" }
         }
       },
       "SupplierInvoiceQueueResponse": {
@@ -25604,6 +25677,73 @@
           "dimensionsWithIssues": { "type": "array", "items": { "type": "string" } }
         },
         "nullable": true
+      },
+      "SupplierInvoiceException": {
+        "type": "object",
+        "required": ["id", "supplierInvoiceId", "dimension", "matchType", "status", "lockVersion", "createdAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "supplierInvoiceId": { "type": "string" },
+          "dimension": { "type": "string" },
+          "matchType": { "type": "string" },
+          "supplierInvoiceLineId": { "type": ["string", "null"] },
+          "purchaseOrderLineId": { "type": ["string", "null"] },
+          "expectedValue": { "type": ["string", "null"] },
+          "actualValue": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["open", "resolved", "escalated"] },
+          "resolutionType": { "type": ["string", "null"], "enum": ["value_adjustment", "explanation", null] },
+          "resolutionData": { "type": ["object", "null"] },
+          "resolvedByUserId": { "type": ["string", "null"] },
+          "resolvedAt": { "type": ["string", "null"], "format": "date-time" },
+          "escalatedToUserId": { "type": ["string", "null"] },
+          "escalatedByUserId": { "type": ["string", "null"] },
+          "escalatedAt": { "type": ["string", "null"], "format": "date-time" },
+          "escalationNote": { "type": ["string", "null"] },
+          "lockVersion": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SupplierInvoiceExceptionListResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/SupplierInvoiceException" } }
+        }
+      },
+      "SupplierInvoiceExceptionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/SupplierInvoiceException" }
+        }
+      },
+      "ResolveInvoiceExceptionRequest": {
+        "type": "object",
+        "required": ["lockVersion", "resolutionType"],
+        "properties": {
+          "lockVersion": { "type": "integer", "minimum": 1 },
+          "resolutionType": { "type": "string", "enum": ["value_adjustment", "explanation"] },
+          "adjustedValue": { "type": ["string", "null"] },
+          "explanation": { "type": ["string", "null"], "maxLength": 2000 }
+        }
+      },
+      "EscalateInvoiceExceptionRequest": {
+        "type": "object",
+        "required": ["lockVersion", "escalatedToUserId"],
+        "properties": {
+          "lockVersion": { "type": "integer", "minimum": 1 },
+          "escalatedToUserId": { "type": "string" },
+          "note": { "type": ["string", "null"], "maxLength": 2000 }
+        }
+      },
+      "SupplierInvoiceExceptionSummary": {
+        "type": ["object", "null"],
+        "properties": {
+          "total": { "type": "integer" },
+          "open": { "type": "integer" },
+          "resolved": { "type": "integer" },
+          "escalated": { "type": "integer" }
+        }
       }
     }
   }

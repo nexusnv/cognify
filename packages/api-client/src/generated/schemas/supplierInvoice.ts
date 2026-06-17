@@ -24,6 +24,7 @@ import type { SupplierInvoiceReviewBlocker } from "./supplierInvoiceReviewBlocke
 import type { SupplierInvoicePermissions } from "./supplierInvoicePermissions";
 import type { SupplierInvoiceMatchingStatus } from "./supplierInvoiceMatchingStatus";
 import type { SupplierInvoiceMatchSummary } from "./supplierInvoiceMatchSummary";
+import type { SupplierInvoiceExceptionSummary } from "./supplierInvoiceExceptionSummary";
 
 export interface SupplierInvoice {
   id: string;
@@ -64,4 +65,5 @@ export interface SupplierInvoice {
   permissions: SupplierInvoicePermissions;
   matchingStatus?: SupplierInvoiceMatchingStatus;
   matchSummary?: SupplierInvoiceMatchSummary;
+  exceptionSummary?: SupplierInvoiceExceptionSummary;
 }

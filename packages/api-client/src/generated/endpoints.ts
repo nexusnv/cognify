@@ -50,6 +50,7 @@ import type {
   CreateShipmentTrackingEvent201,
   CurrentUserResponse,
   DelegateApprovalTaskRequest,
+  EscalateInvoiceExceptionRequest,
   ForbiddenResponse,
   ForgotPasswordRequest,
   HealthResponse,
@@ -117,6 +118,7 @@ import type {
   RequisitionListResponse,
   RequisitionResponse,
   RequisitionTemplateListResponse,
+  ResolveInvoiceExceptionRequest,
   RfqAwardApprovalPreviewResponse,
   RfqAwardApprovalRouteResponse,
   RfqAwardRecommendationApprovalSummaryResponse,
@@ -158,6 +160,8 @@ import type {
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
   SupplierInvoiceCompleteReviewRequest,
+  SupplierInvoiceExceptionListResponse,
+  SupplierInvoiceExceptionResponse,
   SupplierInvoiceListResponse,
   SupplierInvoiceMatchResultListResponse,
   SupplierInvoiceNeedsInformationRequest,
@@ -11882,6 +11886,11 @@ export type runSupplierInvoiceMatchingResponse200 = {
   status: 200;
 };
 
+export type runSupplierInvoiceMatchingResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
 export type runSupplierInvoiceMatchingResponse409 = {
   data: ConflictResponse;
   status: 409;
@@ -11896,6 +11905,7 @@ export type runSupplierInvoiceMatchingResponseSuccess = runSupplierInvoiceMatchi
   headers: Headers;
 };
 export type runSupplierInvoiceMatchingResponseError = (
+  | runSupplierInvoiceMatchingResponse404
   | runSupplierInvoiceMatchingResponse409
   | runSupplierInvoiceMatchingResponse422
 ) & {
@@ -11931,12 +11941,23 @@ export type listSupplierInvoiceMatchResultsResponse200 = {
   status: 200;
 };
 
+export type listSupplierInvoiceMatchResultsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
 export type listSupplierInvoiceMatchResultsResponseSuccess =
   listSupplierInvoiceMatchResultsResponse200 & {
     headers: Headers;
   };
+export type listSupplierInvoiceMatchResultsResponseError =
+  listSupplierInvoiceMatchResultsResponse404 & {
+    headers: Headers;
+  };
+
 export type listSupplierInvoiceMatchResultsResponse =
-  listSupplierInvoiceMatchResultsResponseSuccess;
+  | listSupplierInvoiceMatchResultsResponseSuccess
+  | listSupplierInvoiceMatchResultsResponseError;
 
 export const getListSupplierInvoiceMatchResultsUrl = (supplierInvoice: string) => {
   return `/api/supplier-invoices/${supplierInvoice}/match-results`;
@@ -11951,6 +11972,212 @@ export const listSupplierInvoiceMatchResults = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary List exceptions for a supplier invoice
+ */
+export type listSupplierInvoiceExceptionsResponse200 = {
+  data: SupplierInvoiceExceptionListResponse;
+  status: 200;
+};
+
+export type listSupplierInvoiceExceptionsResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type listSupplierInvoiceExceptionsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listSupplierInvoiceExceptionsResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type listSupplierInvoiceExceptionsResponseSuccess =
+  listSupplierInvoiceExceptionsResponse200 & {
+    headers: Headers;
+  };
+export type listSupplierInvoiceExceptionsResponseError = (
+  | listSupplierInvoiceExceptionsResponse400
+  | listSupplierInvoiceExceptionsResponse401
+  | listSupplierInvoiceExceptionsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listSupplierInvoiceExceptionsResponse =
+  | listSupplierInvoiceExceptionsResponseSuccess
+  | listSupplierInvoiceExceptionsResponseError;
+
+export const getListSupplierInvoiceExceptionsUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/exceptions`;
+};
+
+export const listSupplierInvoiceExceptions = async (
+  supplierInvoice: string,
+  options?: RequestInit,
+): Promise<listSupplierInvoiceExceptionsResponse> => {
+  return cognifyFetch<listSupplierInvoiceExceptionsResponse>(
+    getListSupplierInvoiceExceptionsUrl(supplierInvoice),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Resolve an invoice exception
+ */
+export type resolveSupplierInvoiceExceptionResponse200 = {
+  data: SupplierInvoiceExceptionResponse;
+  status: 200;
+};
+
+export type resolveSupplierInvoiceExceptionResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type resolveSupplierInvoiceExceptionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type resolveSupplierInvoiceExceptionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type resolveSupplierInvoiceExceptionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type resolveSupplierInvoiceExceptionResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type resolveSupplierInvoiceExceptionResponseSuccess =
+  resolveSupplierInvoiceExceptionResponse200 & {
+    headers: Headers;
+  };
+export type resolveSupplierInvoiceExceptionResponseError = (
+  | resolveSupplierInvoiceExceptionResponse400
+  | resolveSupplierInvoiceExceptionResponse401
+  | resolveSupplierInvoiceExceptionResponse403
+  | resolveSupplierInvoiceExceptionResponse404
+  | resolveSupplierInvoiceExceptionResponse409
+) & {
+  headers: Headers;
+};
+
+export type resolveSupplierInvoiceExceptionResponse =
+  | resolveSupplierInvoiceExceptionResponseSuccess
+  | resolveSupplierInvoiceExceptionResponseError;
+
+export const getResolveSupplierInvoiceExceptionUrl = (
+  supplierInvoice: string,
+  exception: string,
+) => {
+  return `/api/supplier-invoices/${supplierInvoice}/exceptions/${exception}/resolve`;
+};
+
+export const resolveSupplierInvoiceException = async (
+  supplierInvoice: string,
+  exception: string,
+  resolveInvoiceExceptionRequest: ResolveInvoiceExceptionRequest,
+  options?: RequestInit,
+): Promise<resolveSupplierInvoiceExceptionResponse> => {
+  return cognifyFetch<resolveSupplierInvoiceExceptionResponse>(
+    getResolveSupplierInvoiceExceptionUrl(supplierInvoice, exception),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(resolveInvoiceExceptionRequest),
+    },
+  );
+};
+
+/**
+ * @summary Escalate an invoice exception
+ */
+export type escalateSupplierInvoiceExceptionResponse200 = {
+  data: SupplierInvoiceExceptionResponse;
+  status: 200;
+};
+
+export type escalateSupplierInvoiceExceptionResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type escalateSupplierInvoiceExceptionResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type escalateSupplierInvoiceExceptionResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type escalateSupplierInvoiceExceptionResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type escalateSupplierInvoiceExceptionResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type escalateSupplierInvoiceExceptionResponseSuccess =
+  escalateSupplierInvoiceExceptionResponse200 & {
+    headers: Headers;
+  };
+export type escalateSupplierInvoiceExceptionResponseError = (
+  | escalateSupplierInvoiceExceptionResponse400
+  | escalateSupplierInvoiceExceptionResponse401
+  | escalateSupplierInvoiceExceptionResponse403
+  | escalateSupplierInvoiceExceptionResponse404
+  | escalateSupplierInvoiceExceptionResponse409
+) & {
+  headers: Headers;
+};
+
+export type escalateSupplierInvoiceExceptionResponse =
+  | escalateSupplierInvoiceExceptionResponseSuccess
+  | escalateSupplierInvoiceExceptionResponseError;
+
+export const getEscalateSupplierInvoiceExceptionUrl = (
+  supplierInvoice: string,
+  exception: string,
+) => {
+  return `/api/supplier-invoices/${supplierInvoice}/exceptions/${exception}/escalate`;
+};
+
+export const escalateSupplierInvoiceException = async (
+  supplierInvoice: string,
+  exception: string,
+  escalateInvoiceExceptionRequest: EscalateInvoiceExceptionRequest,
+  options?: RequestInit,
+): Promise<escalateSupplierInvoiceExceptionResponse> => {
+  return cognifyFetch<escalateSupplierInvoiceExceptionResponse>(
+    getEscalateSupplierInvoiceExceptionUrl(supplierInvoice, exception),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(escalateInvoiceExceptionRequest),
     },
   );
 };
