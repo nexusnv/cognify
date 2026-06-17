@@ -27,6 +27,7 @@ use Domains\Fulfillment\States\FulfillmentTrackingEventStatus;
 use Domains\Fulfillment\States\ShipmentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceLine;
+use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Invoice\Support\SupplierInvoiceNumber;
 use Domains\Project\Models\ProcurementProject;
@@ -1771,6 +1772,10 @@ class DemoProcurementLifecycleSeeder
         $this->seedInReviewInvoice($tenant, $issuedPO, $buyer);
         $this->seedNeedsInformationInvoice($tenant, $issuedPO, $buyer);
         $this->seedReviewedInvoice($tenant, $acknowledgedPO ?? $issuedPO, $buyer, $finance);
+
+        $this->seedMatchedInvoice($tenant, $issuedPO, $buyer);
+        $this->seedMismatchInvoice($tenant, $issuedPO, $buyer);
+        $this->seedPendingMatchingInvoice($tenant, $issuedPO, $buyer);
     }
 
     private function seedCapturedInvoice(Tenant $tenant, PurchaseOrder $purchaseOrder, User $buyer): void
@@ -1962,6 +1967,183 @@ class DemoProcurementLifecycleSeeder
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-004.pdf', 'INV-2026-DEMO-004');
     }
 
+    private function seedMatchedInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void
+    {
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-005'],
+            [
+                'purchase_order_id' => $po->id,
+                'vendor_id' => $po->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-005',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-005'),
+                'status' => SupplierInvoiceStatus::Reviewed,
+                'matching_status' => SupplierInvoiceStatus::Matched->value,
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-20',
+                'currency' => $po->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded matched invoice for demo.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $buyer->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $buyer->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice verified and matched.',
+                'lock_version' => 1,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-005.pdf', 'INV-2026-DEMO-005');
+
+        $invoice->matchResults()->delete();
+        foreach ($invoice->lines as $line) {
+            $qty = (string) $line->quantity_invoiced;
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'quantity',
+                'expected_value' => $qty,
+                'actual_value' => $qty,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+        }
+    }
+
+    private function seedMismatchInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void
+    {
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-006'],
+            [
+                'purchase_order_id' => $po->id,
+                'vendor_id' => $po->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-006',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-006'),
+                'status' => SupplierInvoiceStatus::Reviewed,
+                'matching_status' => SupplierInvoiceStatus::Mismatch->value,
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-20',
+                'currency' => $po->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded mismatched invoice for demo.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $buyer->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $buyer->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice verified but matching failed.',
+                'lock_version' => 1,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-006.pdf', 'INV-2026-DEMO-006');
+
+        $invoice->matchResults()->delete();
+        foreach ($invoice->lines as $line) {
+            $expectedPrice = (string) $line->unit_price;
+            $actualPrice = bcadd($expectedPrice, '20.0000', 4);
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'unit_price',
+                'expected_value' => $expectedPrice,
+                'actual_value' => $actualPrice,
+                'tolerance_percent_applied' => 5.0,
+                'tolerance_floor_applied' => (float) bcmul($expectedPrice, '0.02', 4),
+                'tolerance_cap_applied' => 250.0,
+                'result' => 'fail',
+                'notes' => 'Unit price variance exceeds tolerance',
+            ]);
+        }
+    }
+
+    private function seedPendingMatchingInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer): void
+    {
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-007'],
+            [
+                'purchase_order_id' => $po->id,
+                'vendor_id' => $po->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-007',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-007'),
+                'status' => SupplierInvoiceStatus::Reviewed,
+                'matching_status' => null,
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-20',
+                'currency' => $po->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded pending matching invoice for demo.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $buyer->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $buyer->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice verified, matching not yet run.',
+                'lock_version' => 1,
+            ],
+        );
+
+        // Delete stale match results from previous matching runs to ensure clean state
+        SupplierInvoiceMatchResult::query()
+            ->where('supplier_invoice_id', $invoice->id)
+            ->delete();
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-007.pdf', 'INV-2026-DEMO-007');
+    }
+
+    private function pickTwoLines(PurchaseOrder $po): Collection
+    {
+        $lines = $po->lines->take(2)->values();
+        assert($lines->count() >= 2, 'Purchase order must have at least 2 lines for invoice demo seeding.');
+        return $lines;
+    }
+
+    private function computeSubtotal(Collection $lines): string
+    {
+        return $lines->reduce(
+            fn (string $carry, $purchaseOrderLine): string => bcadd(
+                $carry,
+                bcmul((string) $purchaseOrderLine->quantity, (string) $purchaseOrderLine->unit_price, 4),
+                4,
+            ),
+            '0.0000',
+        );
+    }
+
     private function seedInvoiceLines(SupplierInvoice $invoice, Collection $lineSource, Tenant $tenant): void
     {
         $invoice->lines()->delete();
@@ -1979,7 +2161,7 @@ class DemoProcurementLifecycleSeeder
                 'quantity_invoiced' => $quantity,
                 'unit_price' => $unitPrice,
                 'line_subtotal' => bcmul((string) $quantity, (string) $unitPrice, 4),
-                'notes' => "Matched to PO line {$purchaseOrderLine->line_number}.",
+                'notes' => "From PO line {$purchaseOrderLine->line_number}.",
             ]);
         }
     }

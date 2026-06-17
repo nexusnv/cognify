@@ -5,6 +5,7 @@ import type { SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
 import { DataTable } from "@/components/ui/procurement-table/procurement-data-table";
 import type { DataTableColumn, DataTableState } from "@/components/ui/procurement-table/data-table-types";
 import { InvoiceReviewStatusBadge } from "../components/invoice-review-status-badge";
+import { InvoiceMatchingStatusBadge } from "../components/invoice-matching-status-badge";
 
 const columns: Array<DataTableColumn<SupplierInvoiceQueueItem>> = [
   {
@@ -37,6 +38,13 @@ const columns: Array<DataTableColumn<SupplierInvoiceQueueItem>> = [
           <Badge variant="destructive">{invoice.reviewBlockerCount}</Badge>
         )}
       </div>
+    ),
+  },
+  {
+    id: "matchingStatus",
+    header: "Matching",
+    cell: (invoice) => (
+      <InvoiceMatchingStatusBadge matchingStatus={invoice.matchingStatus} />
     ),
   },
   {

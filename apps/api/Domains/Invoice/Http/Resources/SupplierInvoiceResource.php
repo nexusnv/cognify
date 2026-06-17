@@ -53,6 +53,8 @@ class SupplierInvoiceResource extends JsonResource
             'reviewNotes' => $this->review_notes,
             'reviewChecklist' => $this->review_checklist,
             'reviewChecklistSummary' => SupplierInvoiceReviewChecklistData::summary($this->review_checklist),
+            'matchingStatus' => $this->matching_status,
+            'matchSummary' => $this->match_summary,
             'reviewBlockers' => $this->review_blockers ?? [],
             'reviewBlockerCount' => count($this->review_blockers ?? []),
             'lines' => $this->relationLoaded('lines')

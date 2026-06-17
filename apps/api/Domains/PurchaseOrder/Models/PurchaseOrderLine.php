@@ -49,6 +49,7 @@ class PurchaseOrderLine extends Model
         'cumulative_quantity_accepted',
         'over_receipt_tolerance_percent',
         'last_receipt_at',
+        'cumulative_quantity_invoiced',
     ];
 
     protected function casts(): array
@@ -69,6 +70,7 @@ class PurchaseOrderLine extends Model
             'cumulative_quantity_received' => 'decimal:4',
             'cumulative_quantity_accepted' => 'decimal:4',
             'over_receipt_tolerance_percent' => 'decimal:2',
+            'cumulative_quantity_invoiced' => 'decimal:4',
             'last_receipt_at' => 'datetime',
         ];
     }

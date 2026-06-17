@@ -8,4 +8,6 @@ enum SupplierInvoiceStatus: string
     case InReview = 'in_review';
     case NeedsInformation = 'needs_information';
     case Reviewed = 'reviewed';
+    case Matched = 'matched';
+    case Mismatch = 'mismatch';
 }

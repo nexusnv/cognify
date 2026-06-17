@@ -3,6 +3,7 @@
 namespace App\Audit;
 
 use Domains\Attachment\Models\Attachment;
+use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
@@ -34,6 +35,7 @@ class AuditSubject
         RfqAwardRecommendation::class => 'award',
         PurchaseOrder::class => 'purchase_order',
         PurchaseOrderRequestHandoff::class => 'po_handoff',
+        SupplierInvoice::class => 'supplier_invoice',
     ];
 
     /**

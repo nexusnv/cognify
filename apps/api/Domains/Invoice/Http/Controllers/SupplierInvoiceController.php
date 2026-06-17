@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -35,10 +36,14 @@ class SupplierInvoiceController
         ]);
         $this->authorize('review', $prototype);
 
+        $invoiceClass = SupplierInvoice::class;
         $query = SupplierInvoice::query()
             ->where('tenant_id', $tenant->id)
             ->with(['purchaseOrder', 'vendor', 'lines'])
-            ->withCount('attachments');
+            ->selectRaw(
+                'supplier_invoices.*, (SELECT COUNT(*) FROM attachments WHERE CAST(supplier_invoices.id AS TEXT) = attachments.attachable_id AND attachments.attachable_type = ? AND attachments.tenant_id = ? AND attachments.deleted_at IS NULL) as attachments_count',
+                [$invoiceClass, $tenant->id]
+            );
 
         $this->applyQueueFilters($query, $request);
 
@@ -129,6 +134,14 @@ class SupplierInvoiceController
             $query->doesntHave('attachments');
         }
 
+        if ($matchingStatus = $request->query('matchingStatus')) {
+            $query->where('matching_status', $matchingStatus);
+        }
+
+        if ($request->boolean('hasMismatch')) {
+            $query->where('matching_status', 'mismatch');
+        }
+
         if ($reviewBlocker = $request->query('reviewBlocker')) {
             $query->whereJsonContains('review_blockers', [['key' => $reviewBlocker]]);
         }
@@ -170,17 +183,10 @@ class SupplierInvoiceController
 
     private function findTenantSupplierInvoice(Tenant $tenant, SupplierInvoice $supplierInvoice): SupplierInvoice
     {
-        $tenantSupplierInvoice = SupplierInvoice::query()
+        return SupplierInvoice::query()
             ->where('tenant_id', $tenant->id)
-            ->whereKey($supplierInvoice->id)
             ->with(['lines', 'purchaseOrder', 'vendor'])
-            ->first();
-
-        if ($tenantSupplierInvoice === null) {
-            abort(403, 'You are not allowed to access this supplier invoice.');
-        }
-
-        return $tenantSupplierInvoice;
+            ->findOrFail($supplierInvoice->id);
     }
 
     private function tenantOrAbort(CurrentTenant $currentTenant): Tenant

@@ -6,6 +6,7 @@
  */
 import type { ListSupplierInvoiceQueueStatus } from "./listSupplierInvoiceQueueStatus";
 import type { ListSupplierInvoiceQueueSort } from "./listSupplierInvoiceQueueSort";
+import type { ListSupplierInvoiceQueueMatchingStatus } from "./listSupplierInvoiceQueueMatchingStatus";
 
 export type ListSupplierInvoiceQueueParams = {
   status?: ListSupplierInvoiceQueueStatus;
@@ -24,4 +25,6 @@ export type ListSupplierInvoiceQueueParams = {
    */
   perPage?: number;
   sort?: ListSupplierInvoiceQueueSort;
+  matchingStatus?: ListSupplierInvoiceQueueMatchingStatus;
+  hasMismatch?: boolean;
 };

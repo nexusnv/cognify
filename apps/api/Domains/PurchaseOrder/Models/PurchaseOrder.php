@@ -102,6 +102,7 @@ class PurchaseOrder extends Model
         'cancelled_at',
         'cancelled_reason',
         'lock_version',
+        'matching_policy',
     ];
 
     protected function casts(): array
@@ -135,6 +136,7 @@ class PurchaseOrder extends Model
             'acknowledged_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'lock_version' => 'integer',
+            'matching_policy' => 'string',
         ];
     }
 

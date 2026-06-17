@@ -129,6 +129,7 @@ import type {
   RfqScorecardResponse,
   RfqUpdateRequest,
   RouteRequisitionApprovalResponse,
+  RunInvoiceMatchingRequest,
   SavePurchaseOrderChangeOrderRequest,
   SaveQuotationComparisonNoteRequest,
   SaveQuotationManualEntryRequest,
@@ -158,6 +159,7 @@ import type {
   SubmitRfqAwardRecommendationRequest,
   SupplierInvoiceCompleteReviewRequest,
   SupplierInvoiceListResponse,
+  SupplierInvoiceMatchResultListResponse,
   SupplierInvoiceNeedsInformationRequest,
   SupplierInvoiceQueueResponse,
   SupplierInvoiceResponse,
@@ -11871,6 +11873,84 @@ export const completeSupplierInvoiceReview = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(supplierInvoiceCompleteReviewRequest),
+    },
+  );
+};
+
+export type runSupplierInvoiceMatchingResponse200 = {
+  data: SupplierInvoiceResponse;
+  status: 200;
+};
+
+export type runSupplierInvoiceMatchingResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type runSupplierInvoiceMatchingResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type runSupplierInvoiceMatchingResponseSuccess = runSupplierInvoiceMatchingResponse200 & {
+  headers: Headers;
+};
+export type runSupplierInvoiceMatchingResponseError = (
+  | runSupplierInvoiceMatchingResponse409
+  | runSupplierInvoiceMatchingResponse422
+) & {
+  headers: Headers;
+};
+
+export type runSupplierInvoiceMatchingResponse =
+  | runSupplierInvoiceMatchingResponseSuccess
+  | runSupplierInvoiceMatchingResponseError;
+
+export const getRunSupplierInvoiceMatchingUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/run-matching`;
+};
+
+export const runSupplierInvoiceMatching = async (
+  supplierInvoice: string,
+  runInvoiceMatchingRequest: RunInvoiceMatchingRequest,
+  options?: RequestInit,
+): Promise<runSupplierInvoiceMatchingResponse> => {
+  return cognifyFetch<runSupplierInvoiceMatchingResponse>(
+    getRunSupplierInvoiceMatchingUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(runInvoiceMatchingRequest),
+    },
+  );
+};
+
+export type listSupplierInvoiceMatchResultsResponse200 = {
+  data: SupplierInvoiceMatchResultListResponse;
+  status: 200;
+};
+
+export type listSupplierInvoiceMatchResultsResponseSuccess =
+  listSupplierInvoiceMatchResultsResponse200 & {
+    headers: Headers;
+  };
+export type listSupplierInvoiceMatchResultsResponse =
+  listSupplierInvoiceMatchResultsResponseSuccess;
+
+export const getListSupplierInvoiceMatchResultsUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/match-results`;
+};
+
+export const listSupplierInvoiceMatchResults = async (
+  supplierInvoice: string,
+  options?: RequestInit,
+): Promise<listSupplierInvoiceMatchResultsResponse> => {
+  return cognifyFetch<listSupplierInvoiceMatchResultsResponse>(
+    getListSupplierInvoiceMatchResultsUrl(supplierInvoice),
+    {
+      ...options,
+      method: "GET",
     },
   );
 };

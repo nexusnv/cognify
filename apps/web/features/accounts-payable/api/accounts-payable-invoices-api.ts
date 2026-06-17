@@ -2,8 +2,10 @@
 
 import {
   completeSupplierInvoiceReview,
+  listSupplierInvoiceMatchResults,
   listSupplierInvoiceQueue,
   markSupplierInvoiceNeedsInformation,
+  runSupplierInvoiceMatching,
   showSupplierInvoice,
   startSupplierInvoiceReview,
 } from "@cognify/api-client/endpoints";
@@ -11,6 +13,8 @@ import type {
   ListSupplierInvoiceQueueParams,
   SupplierInvoice,
   SupplierInvoiceCompleteReviewRequest,
+  SupplierInvoiceMatchResult,
+  SupplierInvoiceMatchSummary,
   SupplierInvoiceNeedsInformationRequest,
   SupplierInvoiceQueueItem,
   SupplierInvoiceStartReviewRequest,
@@ -18,6 +22,9 @@ import type {
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
 export type AccountsPayableInvoiceFilters = ListSupplierInvoiceQueueParams;
+
+export type MatchResult = SupplierInvoiceMatchResult;
+export type MatchSummary = SupplierInvoiceMatchSummary;
 
 function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit {
   if (!tenantId) {
@@ -94,4 +101,43 @@ export async function completeReview(
     throwResponseData,
   );
   return unwrapData<SupplierInvoice>(response);
+}
+
+export async function triggerInvoiceMatching(
+  invoiceId: string,
+  lockVersion: number,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<SupplierInvoice> {
+  const response = await runSupplierInvoiceMatching(
+    invoiceId,
+    { lockVersion },
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapData<SupplierInvoice>(response);
+}
+
+export async function fetchInvoiceMatchResults(
+  invoiceId: string,
+  tenantId: string | null = getStoredActiveTenantId(),
+): Promise<MatchResult[]> {
+  const response = await listSupplierInvoiceMatchResults(
+    invoiceId,
+    withActiveTenantHeader(tenantId),
+  ).catch(throwResponseData);
+  return unwrapData<MatchResult[]>(response);
+}
+
+export function buildMatchSummary(results: MatchResult[]): MatchSummary {
+  const lineResults = results.filter((r) => r.matchLevel === "line");
+  const lineNumbers = [...new Set(lineResults.map((r) => r.lineNumber).filter((n): n is number => n !== null))];
+  const mismatchLines = [...new Set(lineResults.filter((r) => r.result === "fail").map((r) => r.lineNumber).filter((n): n is number => n !== null))];
+  const failedDimensions = results.filter((r) => r.result === "fail").map((r) => r.dimension).filter((d): d is NonNullable<typeof d> => d != null);
+  const dimensionsWithIssues: string[] = [...new Set(failedDimensions)];
+
+  return {
+    totalLines: lineNumbers.length,
+    matchedLines: lineNumbers.length - mismatchLines.length,
+    mismatchLines: mismatchLines.length,
+    dimensionsWithIssues,
+  };
 }
