@@ -29,7 +29,6 @@ export function useInvoiceExceptions(supplierInvoiceId: string | undefined) {
 
 export function useResolveException(supplierInvoiceId: string, onSuccess?: () => void) {
   const queryClient = useQueryClient();
-  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
     mutationFn: ({
@@ -38,7 +37,7 @@ export function useResolveException(supplierInvoiceId: string, onSuccess?: () =>
     }: {
       exceptionId: string;
       payload: ResolveExceptionPayload;
-    }) => resolveException(supplierInvoiceId, exceptionId, payload, tenantId),
+    }) => resolveException(supplierInvoiceId, exceptionId, payload, getStoredActiveTenantId()),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: invoiceExceptionKeys.all,
@@ -53,7 +52,6 @@ export function useResolveException(supplierInvoiceId: string, onSuccess?: () =>
 
 export function useEscalateException(supplierInvoiceId: string) {
   const queryClient = useQueryClient();
-  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
     mutationFn: ({
@@ -62,7 +60,7 @@ export function useEscalateException(supplierInvoiceId: string) {
     }: {
       exceptionId: string;
       payload: EscalateExceptionPayload;
-    }) => escalateException(supplierInvoiceId, exceptionId, payload, tenantId),
+    }) => escalateException(supplierInvoiceId, exceptionId, payload, getStoredActiveTenantId()),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: invoiceExceptionKeys.all,

@@ -29,6 +29,7 @@ class EscalateInvoiceException
             $exception = SupplierInvoiceException::query()
                 ->whereKey($exception->id)
                 ->where('tenant_id', $supplierInvoice->tenant_id)
+                ->where('supplier_invoice_id', $supplierInvoice->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 

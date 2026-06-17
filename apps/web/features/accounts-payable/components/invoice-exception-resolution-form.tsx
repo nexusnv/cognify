@@ -82,9 +82,9 @@ export function InvoiceExceptionResolutionForm({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="explanation">Explanation notes</Label>
+            <Label htmlFor="explanation-note">Explanation notes</Label>
             <Textarea
-              id="explanation"
+              id="explanation-note"
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               placeholder="Why is this variance acceptable?"

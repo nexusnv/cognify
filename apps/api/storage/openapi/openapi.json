@@ -9655,7 +9655,8 @@
           "200": { "description": "List of exceptions", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SupplierInvoiceExceptionListResponse" } } } },
           "400": { "$ref": "#/components/responses/AmbiguousTenant" },
           "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/Forbidden" }
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
     },
@@ -25738,6 +25739,7 @@
       },
       "SupplierInvoiceExceptionSummary": {
         "type": ["object", "null"],
+        "required": ["total", "open", "resolved", "escalated"],
         "properties": {
           "total": { "type": "integer" },
           "open": { "type": "integer" },

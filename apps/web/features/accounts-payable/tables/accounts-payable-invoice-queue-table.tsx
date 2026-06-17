@@ -99,7 +99,7 @@ export function AccountsPayableInvoiceQueueTable({
       emptyDescription="Switch review state or return when supplier invoices are captured."
       renderRowActions={(invoice) => (
         <div className="flex gap-2">
-          {invoice.status === "mismatch" ? (
+          {invoice.matchingStatus === "mismatch" ? (
             <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
               View exceptions
             </Button>

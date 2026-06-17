@@ -11,8 +11,9 @@ export function resetInvoiceExceptionMockState() {
 resetInvoiceExceptionMockState();
 
 export const invoiceExceptionHandlers = [
-  http.get("/api/supplier-invoices/:supplierInvoice/exceptions", () => {
-    return HttpResponse.json({ data: exceptions });
+  http.get("/api/supplier-invoices/:supplierInvoice/exceptions", ({ params }) => {
+    const filtered = exceptions.filter((e) => e.supplierInvoiceId === params.supplierInvoice);
+    return HttpResponse.json({ data: filtered });
   }),
 
   http.post(
@@ -24,7 +25,7 @@ export const invoiceExceptionHandlers = [
         adjustedValue?: string;
         explanation?: string;
       };
-      const idx = exceptions.findIndex((e) => e.id === params.exception);
+      const idx = exceptions.findIndex((e) => e.id === params.exception && e.supplierInvoiceId === params.supplierInvoice);
       if (idx === -1) return new HttpResponse(null, { status: 404 });
       if (exceptions[idx].lockVersion !== body.lockVersion) {
         return HttpResponse.json(
@@ -56,7 +57,7 @@ export const invoiceExceptionHandlers = [
         escalatedToUserId: string;
         note?: string;
       };
-      const idx = exceptions.findIndex((e) => e.id === params.exception);
+      const idx = exceptions.findIndex((e) => e.id === params.exception && e.supplierInvoiceId === params.supplierInvoice);
       if (idx === -1) return new HttpResponse(null, { status: 404 });
       if (exceptions[idx].lockVersion !== body.lockVersion) {
         return HttpResponse.json(

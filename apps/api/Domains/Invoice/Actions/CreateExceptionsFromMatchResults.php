@@ -41,18 +41,34 @@ class CreateExceptionsFromMatchResults
             ];
         }
 
-        DB::transaction(function () use ($exceptions, $invoice): void {
+        DB::transaction(function () use ($exceptions, $invoice, $now): void {
             foreach ($exceptions as $exception) {
-                SupplierInvoiceException::query()->firstOrCreate(
-                    [
-                        'tenant_id' => $exception['tenant_id'],
-                        'supplier_invoice_id' => $exception['supplier_invoice_id'],
-                        'dimension' => $exception['dimension'],
-                        'match_type' => $exception['match_type'],
-                        'supplier_invoice_line_id' => $exception['supplier_invoice_line_id'],
-                    ],
-                    $exception,
-                );
+                $existing = SupplierInvoiceException::query()
+                    ->where('tenant_id', $exception['tenant_id'])
+                    ->where('supplier_invoice_id', $exception['supplier_invoice_id'])
+                    ->where('dimension', $exception['dimension'])
+                    ->where('match_type', $exception['match_type'])
+                    ->where('supplier_invoice_line_id', $exception['supplier_invoice_line_id'])
+                    ->first();
+
+                if ($existing !== null) {
+                    if ($existing->status !== 'open') {
+                        $existing->forceFill([
+                            'status' => 'open',
+                            'resolution_type' => null,
+                            'resolution_data' => null,
+                            'resolved_by_user_id' => null,
+                            'resolved_at' => null,
+                            'escalated_to_user_id' => null,
+                            'escalated_by_user_id' => null,
+                            'escalated_at' => null,
+                            'escalation_note' => null,
+                            'lock_version' => $existing->lock_version + 1,
+                        ])->save();
+                    }
+                } else {
+                    SupplierInvoiceException::query()->create($exception);
+                }
             }
 
             $this->updateExceptionSummary($invoice);

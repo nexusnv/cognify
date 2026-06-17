@@ -35,6 +35,7 @@ class ResolveInvoiceException
             $exception = SupplierInvoiceException::query()
                 ->whereKey($exception->id)
                 ->where('tenant_id', $supplierInvoice->tenant_id)
+                ->where('supplier_invoice_id', $supplierInvoice->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -91,13 +92,18 @@ class ResolveInvoiceException
     private function applyAdjustment(SupplierInvoice $invoice, SupplierInvoiceException $exception, string $adjustedValue): void
     {
         if ($exception->dimension === 'unit_price' && $exception->supplier_invoice_line_id !== null) {
+            $line = SupplierInvoiceLine::query()->find($exception->supplier_invoice_line_id);
+            $lineSubtotal = $line !== null
+                ? bcmul((string) $line->quantity_invoiced, $adjustedValue, 4)
+                : '0.0000';
+
             SupplierInvoiceLine::query()
                 ->whereKey($exception->supplier_invoice_line_id)
                 ->where('supplier_invoice_id', $invoice->id)
                 ->where('tenant_id', $invoice->tenant_id)
                 ->update([
                     'unit_price' => $adjustedValue,
-                    'line_subtotal' => DB::raw("CAST(CAST(quantity_invoiced AS DECIMAL(18,4)) * CAST({$adjustedValue} AS DECIMAL(18,4)) AS TEXT)"),
+                    'line_subtotal' => $lineSubtotal,
                 ]);
         } elseif ($exception->dimension === 'line_total' && $exception->supplier_invoice_line_id !== null) {
             SupplierInvoiceLine::query()

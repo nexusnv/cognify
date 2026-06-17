@@ -20,6 +20,9 @@ class SupplierInvoiceExceptionResolutionData
             if ($adjustedValue === null || ! is_numeric($adjustedValue)) {
                 throw new InvalidArgumentException('Adjusted value is required for value_adjustment resolution.');
             }
+            if ((float) $adjustedValue < 0) {
+                throw new InvalidArgumentException('Adjusted value must be non-negative.');
+            }
             $data['adjusted_value'] = $adjustedValue;
         }
 
