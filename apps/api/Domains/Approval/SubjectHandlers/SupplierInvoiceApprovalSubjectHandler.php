@@ -78,7 +78,10 @@ final class SupplierInvoiceApprovalSubjectHandler implements ApprovalSubjectHand
     public function taskSubjectSummary(Model $subject): ApprovalSubjectSummary
     {
         assert($subject instanceof SupplierInvoice);
-        $subject->loadMissing(['purchaseOrder.vendor']);
+        $subject->loadMissing([
+            'purchaseOrder.vendor',
+            'exceptions',
+        ]);
 
         $vendorName = $subject->purchaseOrder?->vendor?->name ?? $subject->vendor?->name ?? 'Unknown vendor';
 

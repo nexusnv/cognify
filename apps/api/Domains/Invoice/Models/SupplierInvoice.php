@@ -4,6 +4,7 @@ namespace Domains\Invoice\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Attachment\Models\Attachment;
 use Domains\Invoice\Models\Relations\UuidMorphMany;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
@@ -163,6 +164,18 @@ class SupplierInvoice extends Model
                     if (! $belongsToTenant) {
                         throw new InvalidArgumentException('Supplier invoice approval actor must belong to the same tenant.');
                     }
+                }
+            }
+
+            if ($invoice->approval_instance_id !== null && $invoice->isDirty(['approval_instance_id', 'tenant_id'])) {
+                $belongsToTenant = ApprovalInstance::query()
+                    ->whereKey($invoice->approval_instance_id)
+                    ->where('tenant_id', $invoice->tenant_id)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Supplier invoice approval instance must belong to the same tenant.');
                 }
             }
         });

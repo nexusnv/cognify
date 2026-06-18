@@ -87,6 +87,9 @@ class SupplierInvoiceApprovalApiTest extends TestCase
         $result = $evaluator->handle($invoice->fresh(), $buyer);
 
         $this->assertFalse($result);
+        $reloaded = SupplierInvoice::query()->findOrFail($invoice->id);
+        $this->assertSame(SupplierInvoiceStatus::ReadyForApproval, $reloaded->status);
+        $this->assertNull($reloaded->stp_processed_at);
     }
 
     public function test_buyer_can_manually_submit_invoice_for_approval(): void
