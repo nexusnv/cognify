@@ -50,7 +50,9 @@ class SupplierInvoiceApprovalApiTest extends TestCase
         $this->assertDatabaseHas('supplier_invoices', [
             'id' => $invoice->id,
             'status' => SupplierInvoiceStatus::Approved->value,
+            'stp_eligible' => true,
         ]);
+        $this->assertNotNull(SupplierInvoice::find($invoice->id)->stp_processed_at);
     }
 
     public function test_evaluate_stp_action_auto_approves_invoice_with_all_exceptions_resolved_by_explanation(): void
@@ -65,6 +67,12 @@ class SupplierInvoiceApprovalApiTest extends TestCase
         $result = $evaluator->handle($invoice->fresh(), $buyer);
 
         $this->assertTrue($result);
+        $this->assertDatabaseHas('supplier_invoices', [
+            'id' => $invoice->id,
+            'status' => SupplierInvoiceStatus::Approved->value,
+            'stp_eligible' => true,
+        ]);
+        $this->assertNotNull(SupplierInvoice::find($invoice->id)->stp_processed_at);
     }
 
     public function test_evaluate_stp_does_not_fire_when_value_adjustment_exists(): void

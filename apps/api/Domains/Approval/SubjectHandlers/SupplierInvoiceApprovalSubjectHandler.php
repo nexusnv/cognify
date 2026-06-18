@@ -182,9 +182,9 @@ final class SupplierInvoiceApprovalSubjectHandler implements ApprovalSubjectHand
     public function onApproved(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor): void
     {
         assert($subject instanceof SupplierInvoice);
-        DB::transaction(function () use ($subject, $actor) {
+        DB::transaction(function () use ($tenant, $subject, $actor) {
             $lockedInvoice = SupplierInvoice::query()
-                ->where('tenant_id', $subject->tenant_id)
+                ->where('tenant_id', $tenant->id)
                 ->where('id', $subject->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -196,9 +196,9 @@ final class SupplierInvoiceApprovalSubjectHandler implements ApprovalSubjectHand
     public function onRejected(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor, string $reason): void
     {
         assert($subject instanceof SupplierInvoice);
-        DB::transaction(function () use ($subject, $actor, $reason) {
+        DB::transaction(function () use ($tenant, $subject, $actor, $reason) {
             $lockedInvoice = SupplierInvoice::query()
-                ->where('tenant_id', $subject->tenant_id)
+                ->where('tenant_id', $tenant->id)
                 ->where('id', $subject->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -210,9 +210,9 @@ final class SupplierInvoiceApprovalSubjectHandler implements ApprovalSubjectHand
     public function onChangesRequested(Tenant $tenant, Model $subject, ApprovalInstance $instance, User $actor, string $reason, array $requestedFields): void
     {
         assert($subject instanceof SupplierInvoice);
-        DB::transaction(function () use ($subject, $actor, $reason, $requestedFields) {
+        DB::transaction(function () use ($tenant, $subject, $actor, $reason, $requestedFields) {
             $lockedInvoice = SupplierInvoice::query()
-                ->where('tenant_id', $subject->tenant_id)
+                ->where('tenant_id', $tenant->id)
                 ->where('id', $subject->id)
                 ->lockForUpdate()
                 ->firstOrFail();

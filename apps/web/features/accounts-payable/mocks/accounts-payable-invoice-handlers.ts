@@ -316,7 +316,7 @@ export const accountsPayableInvoiceHandlers = [
     if (detail.status !== "ready_for_approval") {
       return HttpResponse.json(
         { error: { code: "invalid_state", message: "Invoice must be ready for approval." } },
-        { status: 422 },
+        { status: 409 },
       );
     }
 
@@ -330,7 +330,6 @@ export const accountsPayableInvoiceHandlers = [
     const updatedLockVersion = detail.lockVersion + 1;
     const next: SupplierInvoice = {
       ...detail,
-      status: "matched",
       approvalSubmittedByUserId: "buyer-1",
       approvalSubmittedAt: new Date().toISOString(),
       lockVersion: updatedLockVersion,
@@ -339,7 +338,7 @@ export const accountsPayableInvoiceHandlers = [
     details[id] = next;
     rows = rows.map((row) =>
       row.id === id
-        ? { ...row, status: next.status, lockVersion: updatedLockVersion }
+        ? { ...row, lockVersion: updatedLockVersion }
         : row,
     );
 

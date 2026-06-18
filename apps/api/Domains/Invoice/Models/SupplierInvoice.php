@@ -151,6 +151,20 @@ class SupplierInvoice extends Model
                     }
                 }
             }
+
+            foreach (['approval_submitted_by_user_id', 'approved_by_user_id', 'rejected_by_user_id', 'changes_requested_by_user_id'] as $userColumn) {
+                if ($invoice->{$userColumn} !== null && $invoice->isDirty([$userColumn, 'tenant_id'])) {
+                    $belongsToTenant = User::query()
+                        ->whereKey($invoice->{$userColumn})
+                        ->whereHas('tenants', fn ($query) => $query->whereKey($invoice->tenant_id))
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Supplier invoice approval actor must belong to the same tenant.');
+                    }
+                }
+            }
         });
     }
 

@@ -26,7 +26,9 @@ class SupplierInvoiceApprovalController extends Controller
         $tenant = $this->currentTenant->get();
         $user = $request->user();
         if ($user === null) {
-            return response()->json(['error' => 'Unauthenticated.'], 401);
+            return response()->json([
+                'error' => ['code' => 'unauthenticated', 'message' => 'Unauthenticated.'],
+            ], 401);
         }
 
         Gate::forUser($user)->authorize('submitForApproval', $supplierInvoice);

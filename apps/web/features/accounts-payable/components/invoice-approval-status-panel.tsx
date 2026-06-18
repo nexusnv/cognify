@@ -119,7 +119,7 @@ export function InvoiceApprovalPanel({
               </div>
             )}
 
-            {!isMismatch && !approvalStatus && (
+            {detail.status === "reviewed" && !approvalStatus && (
               <p className="text-sm text-muted-foreground">Run matching to determine approval eligibility.</p>
             )}
 

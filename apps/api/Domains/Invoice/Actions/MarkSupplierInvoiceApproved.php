@@ -41,11 +41,16 @@ class MarkSupplierInvoiceApproved
 
             $before = $invoice->only(['status', 'approved_by_user_id', 'approved_at', 'lock_version']);
 
+            $stpFields = $isStp
+                ? ['stp_eligible' => true, 'stp_processed_at' => now()]
+                : [];
+
             $invoice->forceFill([
                 'status' => SupplierInvoiceStatus::Approved,
                 'approved_by_user_id' => $isStp ? null : $actor->id,
                 'approved_at' => now(),
                 'lock_version' => $invoice->lock_version + 1,
+                ...$stpFields,
             ])->save();
 
             $this->auditRecorder->record(new AuditEventData(

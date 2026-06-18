@@ -44,10 +44,12 @@ export function canSubmitForApproval(invoice: SupplierInvoice): boolean {
 
 export function useSubmitInvoiceForApproval(invoiceId: string) {
   const queryClient = useQueryClient();
-  const tenantId = getStoredActiveTenantId();
 
   return useMutation({
-    mutationFn: (payload: SubmitSupplierInvoiceApprovalRequest) => submitForApproval(invoiceId, payload, tenantId),
+    mutationFn: (payload: SubmitSupplierInvoiceApprovalRequest) => {
+      const tenantId = getStoredActiveTenantId();
+      return submitForApproval(invoiceId, payload, tenantId);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: accountsPayableInvoiceKeys.all });
     },
