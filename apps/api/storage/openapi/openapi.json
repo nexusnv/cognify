@@ -9925,6 +9925,1034 @@
           }
         }
       }
+    },
+    "/api/ap-payment-handoffs": {
+      "get": {
+        "operationId": "listApPaymentHandoffs",
+        "summary": "List AP payment handoffs",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AP payment handoff list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApPaymentHandoff",
+        "summary": "Create AP payment handoff",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApPaymentHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "AP payment handoff created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}": {
+      "get": {
+        "operationId": "showApPaymentHandoff",
+        "summary": "Show AP payment handoff",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AP payment handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateApPaymentHandoff",
+        "summary": "Update AP payment handoff",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApPaymentHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated AP payment handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/ready": {
+      "post": {
+        "operationId": "markApPaymentHandoffReady",
+        "summary": "Mark AP payment handoff ready",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkApPaymentHandoffReadyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ready AP payment handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/refresh": {
+      "post": {
+        "operationId": "refreshApPaymentHandoffSnapshot",
+        "summary": "Refresh AP payment handoff snapshot",
+        "description": "Rebuilds a draft handoff's snapshot from live invoice data. Only allowed while the handoff is in draft status.",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshApPaymentHandoffSnapshotRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refreshed AP payment handoff with updated snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/cancel": {
+      "post": {
+        "operationId": "cancelApPaymentHandoff",
+        "summary": "Cancel AP payment handoff",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelApPaymentHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancelled AP payment handoff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/export.json": {
+      "get": {
+        "operationId": "exportApPaymentHandoffJson",
+        "summary": "Export AP payment handoff as JSON",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AP payment handoff JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recordApPaymentHandoffJsonExport",
+        "summary": "Record AP payment handoff JSON export",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded AP payment handoff JSON export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/export.csv": {
+      "get": {
+        "operationId": "exportApPaymentHandoffCsv",
+        "summary": "Export AP payment handoff as CSV",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AP payment handoff CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recordApPaymentHandoffCsvExport",
+        "summary": "Record AP payment handoff CSV export",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "parameters": [
+          {
+            "name": "handoff",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded AP payment handoff CSV export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/place-hold": {
+      "post": {
+        "operationId": "placeSupplierInvoiceOnPaymentHold",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "Place supplier invoice on payment hold",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceInvoiceOnHoldRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier invoice placed on payment hold",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoicePaymentResponseData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Supplier invoice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (lock version mismatch)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity (invalid state transition)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/release-hold": {
+      "post": {
+        "operationId": "releaseSupplierInvoicePaymentHold",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "Release supplier invoice payment hold",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseInvoiceHoldRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier invoice payment hold released",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoicePaymentResponseData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Supplier invoice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (lock version mismatch)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity (invalid state transition)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-invoices/{supplierInvoice}/retry-payment-induction": {
+      "post": {
+        "operationId": "retrySupplierInvoicePaymentInduction",
+        "tags": [
+          "Accounts Payable"
+        ],
+        "summary": "Retry supplier invoice payment induction",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "name": "supplierInvoice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Supplier invoice UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryPaymentInductionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier invoice payment induction retried",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierInvoicePaymentResponseData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Supplier invoice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (lock version mismatch)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity (invalid state transition)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -23143,7 +24171,8 @@
           "reviewBlockerCount",
           "lines",
           "lockVersion",
-          "permissions"
+          "permissions",
+          "paymentStatus"
         ],
         "properties": {
           "id": {
@@ -23408,6 +24437,33 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "paymentStatus": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "payment_eligible",
+                  "on_hold",
+                  "payment_ready",
+                  "handoff_exported"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paymentEligibleAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -26286,6 +27342,497 @@
             "minimum": 1
           }
         }
+      },
+      "ApPaymentHandoffStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "ready",
+          "exported",
+          "cancelled"
+        ]
+      },
+      "ApPaymentHandoffInvoiceItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "invoiceNumber",
+          "totalAmount",
+          "dueDate",
+          "currency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          }
+        }
+      },
+      "ApPaymentHandoffUserSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ApPaymentHandoffPermissions": {
+        "type": "object",
+        "required": [
+          "canUpdate",
+          "canMarkReady",
+          "canCancel",
+          "canExport"
+        ],
+        "properties": {
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canMarkReady": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApPaymentHandoff": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "invoiceCount",
+          "totalAmount",
+          "currency",
+          "invoices",
+          "createdBy",
+          "createdAt",
+          "lockVersion",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApPaymentHandoffStatus"
+          },
+          "invoiceCount": {
+            "type": "integer"
+          },
+          "totalAmount": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effectivePaymentDate": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remittanceReference": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancelledAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancelledReason": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exportedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "invoices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApPaymentHandoffInvoiceItem"
+            }
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/ApPaymentHandoffUserSummary"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ApPaymentHandoffPermissions"
+          }
+        }
+      },
+      "ApPaymentHandoffResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ApPaymentHandoff"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ApPaymentHandoffListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApPaymentHandoff"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "currentPage",
+              "lastPage",
+              "perPage",
+              "total"
+            ],
+            "properties": {
+              "currentPage": {
+                "type": "integer"
+              },
+              "lastPage": {
+                "type": "integer"
+              },
+              "perPage": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "CreateApPaymentHandoffRequest": {
+        "type": "object",
+        "required": [
+          "invoiceIds"
+        ],
+        "properties": {
+          "invoiceIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effectivePaymentDate": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "UpdateApPaymentHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "notes": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effectivePaymentDate": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remittanceReference": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "MarkApPaymentHandoffReadyRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "RefreshApPaymentHandoffSnapshotRequest": {
+        "type": "object",
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "CancelApPaymentHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "reason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      },
+      "PlaceInvoiceOnHoldRequest": {
+        "type": "object",
+        "required": [
+          "reason",
+          "lockVersion"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000,
+            "description": "Reason for placing the invoice on payment hold"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Current lock version of the supplier invoice for optimistic concurrency control"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReleaseInvoiceHoldRequest": {
+        "type": "object",
+        "required": [
+          "releaseNote",
+          "lockVersion"
+        ],
+        "properties": {
+          "releaseNote": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000,
+            "description": "Note explaining why the payment hold is being released"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Current lock version of the supplier invoice"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RetryPaymentInductionRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Current lock version of the supplier invoice"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupplierInvoicePaymentResponseData": {
+        "type": "object",
+        "required": [
+          "id",
+          "paymentStatus",
+          "paymentStatusLabel",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Supplier invoice UUID"
+          },
+          "paymentStatus": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "payment_eligible",
+                  "on_hold",
+                  "payment_ready",
+                  "handoff_exported"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Current payment status of the supplier invoice"
+          },
+          "paymentStatusLabel": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Human-readable label for the payment status"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "New lock version after the operation (incremented on changes)"
+          }
+        },
+        "additionalProperties": false
       }
     }
   }

@@ -27,6 +27,7 @@ if (typeof document !== "undefined") {
   document.head.appendChild(disableAnimations);
 }
 import { resetAccountsPayableInvoiceMockState } from "../features/accounts-payable/mocks/accounts-payable-invoice-handlers";
+import { resetAccountsPayablePaymentMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-handlers";
 import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
 import { resetIdentityMockState } from "../features/identity/mocks/identity-handlers";
@@ -83,6 +84,7 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   resetAccountsPayableInvoiceMockState();
+  resetAccountsPayablePaymentMockState();
   resetApprovalMockState();
   resetAttachmentMockState();
   resetRequisitionMockState();

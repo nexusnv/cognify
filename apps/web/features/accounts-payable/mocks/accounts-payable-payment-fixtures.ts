@@ -1,0 +1,356 @@
+export interface ApPaymentHandoffFixture {
+  id: string;
+  number: string;
+  status: "draft" | "ready" | "exported" | "cancelled";
+  effectivePaymentDate: string | null;
+  notes: string | null;
+  currency: string;
+  totalAmount: string;
+  remittanceReference: string | null;
+  snapshot: Record<string, unknown>;
+  readinessWarnings: Array<{ severity: string; message: string; context?: string }>;
+  createdByUserId: string;
+  readyByUserId: string | null;
+  readyAt: string | null;
+  cancelledByUserId: string | null;
+  cancelledAt: string | null;
+  cancelledReason: string | null;
+  lastExportedByUserId: string | null;
+  lastExportedAt: string | null;
+  lastExportFormat: string | null;
+  lockVersion: number;
+  invoiceCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentStatusInvoiceFixture {
+  id: string;
+  status: string;
+  paymentStatus: string | null;
+  paymentOnHoldReason: string | null;
+  paymentOnHoldByUserId: string | null;
+  paymentOnHoldAt: string | null;
+  paymentEligibleAt: string | null;
+  paymentReadyAt: string | null;
+  activeHandoffId: string | null;
+  activeHandoffNumber: string | null;
+  holdReleasedByUserId: string | null;
+  holdReleasedAt: string | null;
+  holdReleaseNote: string | null;
+  approvedAt: string | null;
+  lockVersion: number;
+  currency: string;
+  totalAmount: string;
+  vendorId: string;
+  vendorName: string;
+}
+
+export const apPaymentHandoffFixtures: ApPaymentHandoffFixture[] = [
+  {
+    id: "handoff-draft-1",
+    number: "APH-2026-000001",
+    status: "draft",
+    effectivePaymentDate: "2026-07-01",
+    notes: "Monthly payment batch for approved invoices.",
+    currency: "USD",
+    totalAmount: "14200.0000",
+    remittanceReference: null,
+    snapshot: {
+      invoiceCount: 2,
+      totalAmount: "14200.0000",
+      currency: "USD",
+      invoices: [
+        { id: "invoice-approval-1", number: "INV-2026-000007", amount: "8900.0000" },
+        { id: "invoice-payment-eligible-1", number: "INV-PE-001", amount: "5300.0000" },
+      ],
+    },
+    readinessWarnings: [],
+    createdByUserId: "buyer-1",
+    readyByUserId: null,
+    readyAt: null,
+    cancelledByUserId: null,
+    cancelledAt: null,
+    cancelledReason: null,
+    lastExportedByUserId: null,
+    lastExportedAt: null,
+    lastExportFormat: null,
+    lockVersion: 1,
+    invoiceCount: 2,
+    createdAt: "2026-06-17T08:00:00.000Z",
+    updatedAt: "2026-06-17T08:00:00.000Z",
+  },
+  {
+    id: "handoff-draft-2",
+    number: "APH-2026-000002",
+    status: "draft",
+    effectivePaymentDate: null,
+    notes: null,
+    currency: "USD",
+    totalAmount: "5200.0000",
+    remittanceReference: null,
+    snapshot: {
+      invoiceCount: 1,
+      totalAmount: "5200.0000",
+      currency: "USD",
+      invoices: [
+        { id: "invoice-ready-approval-1", number: "INV-2026-000005", amount: "5200.0000" },
+      ],
+    },
+    readinessWarnings: [
+      { severity: "warning", message: "Vendor missing tax ID", context: "vendor-1" },
+    ],
+    createdByUserId: "buyer-1",
+    readyByUserId: null,
+    readyAt: null,
+    cancelledByUserId: null,
+    cancelledAt: null,
+    cancelledReason: null,
+    lastExportedByUserId: null,
+    lastExportedAt: null,
+    lastExportFormat: null,
+    lockVersion: 1,
+    invoiceCount: 1,
+    createdAt: "2026-06-17T09:00:00.000Z",
+    updatedAt: "2026-06-17T09:00:00.000Z",
+  },
+  {
+    id: "handoff-ready-1",
+    number: "APH-2026-000003",
+    status: "ready",
+    effectivePaymentDate: "2026-07-05",
+    notes: "Ready for export batch.",
+    currency: "USD",
+    totalAmount: "8900.0000",
+    remittanceReference: null,
+    snapshot: {
+      invoiceCount: 1,
+      totalAmount: "8900.0000",
+      currency: "USD",
+      invoices: [
+        { id: "invoice-approved-1", number: "INV-2026-000007", amount: "8900.0000" },
+      ],
+      lockedAt: "2026-06-17T10:00:00.000Z",
+    },
+    readinessWarnings: [],
+    createdByUserId: "buyer-1",
+    readyByUserId: "buyer-1",
+    readyAt: "2026-06-17T10:00:00.000Z",
+    cancelledByUserId: null,
+    cancelledAt: null,
+    cancelledReason: null,
+    lastExportedByUserId: null,
+    lastExportedAt: null,
+    lastExportFormat: null,
+    lockVersion: 2,
+    invoiceCount: 1,
+    createdAt: "2026-06-16T08:00:00.000Z",
+    updatedAt: "2026-06-17T10:00:00.000Z",
+  },
+  {
+    id: "handoff-exported-1",
+    number: "APH-2026-000004",
+    status: "exported",
+    effectivePaymentDate: "2026-06-30",
+    notes: null,
+    currency: "USD",
+    totalAmount: "131100.0000",
+    remittanceReference: "REF-EXPORT-JSON-001",
+    snapshot: {
+      invoiceCount: 1,
+      totalAmount: "131100.0000",
+      currency: "USD",
+      invoices: [
+        { id: "invoice-1", number: "INV-2026-000001", amount: "131100.0000" },
+      ],
+      lockedAt: "2026-06-17T12:00:00.000Z",
+    },
+    readinessWarnings: [],
+    createdByUserId: "buyer-1",
+    readyByUserId: "buyer-1",
+    readyAt: "2026-06-17T11:00:00.000Z",
+    cancelledByUserId: null,
+    cancelledAt: null,
+    cancelledReason: null,
+    lastExportedByUserId: "buyer-1",
+    lastExportedAt: "2026-06-17T12:00:00.000Z",
+    lastExportFormat: "json",
+    lockVersion: 3,
+    invoiceCount: 1,
+    createdAt: "2026-06-15T08:00:00.000Z",
+    updatedAt: "2026-06-17T12:00:00.000Z",
+  },
+  {
+    id: "handoff-exported-2",
+    number: "APH-2026-000005",
+    status: "exported",
+    effectivePaymentDate: "2026-06-28",
+    notes: "CSV export batch.",
+    currency: "USD",
+    totalAmount: "2250.0000",
+    remittanceReference: "REF-EXPORT-CSV-001",
+    snapshot: {
+      invoiceCount: 1,
+      totalAmount: "2250.0000",
+      currency: "USD",
+      invoices: [
+        { id: "invoice-2", number: "INV-2026-000002", amount: "2250.0000" },
+      ],
+      lockedAt: "2026-06-16T14:00:00.000Z",
+    },
+    readinessWarnings: [],
+    createdByUserId: "buyer-1",
+    readyByUserId: "buyer-1",
+    readyAt: "2026-06-16T13:00:00.000Z",
+    cancelledByUserId: null,
+    cancelledAt: null,
+    cancelledReason: null,
+    lastExportedByUserId: "buyer-1",
+    lastExportedAt: "2026-06-16T14:00:00.000Z",
+    lastExportFormat: "csv",
+    lockVersion: 3,
+    invoiceCount: 1,
+    createdAt: "2026-06-14T08:00:00.000Z",
+    updatedAt: "2026-06-16T14:00:00.000Z",
+  },
+  {
+    id: "handoff-cancelled-1",
+    number: "APH-2026-000006",
+    status: "cancelled",
+    effectivePaymentDate: "2026-06-25",
+    notes: "Original batch for June payments.",
+    currency: "USD",
+    totalAmount: "4600.0000",
+    remittanceReference: null,
+    snapshot: {
+      invoiceCount: 1,
+      totalAmount: "4600.0000",
+      currency: "USD",
+      invoices: [
+        { id: "invoice-4", number: "INV-2026-000004", amount: "4600.0000" },
+      ],
+    },
+    readinessWarnings: [],
+    createdByUserId: "buyer-1",
+    readyByUserId: null,
+    readyAt: null,
+    cancelledByUserId: "buyer-1",
+    cancelledAt: "2026-06-17T06:00:00.000Z",
+    cancelledReason: "Invoices need re-evaluation",
+    lastExportedByUserId: null,
+    lastExportedAt: null,
+    lastExportFormat: null,
+    lockVersion: 2,
+    invoiceCount: 1,
+    createdAt: "2026-06-13T08:00:00.000Z",
+    updatedAt: "2026-06-17T06:00:00.000Z",
+  },
+];
+
+export const paymentStatusInvoiceFixtures: Record<string, PaymentStatusInvoiceFixture> = {
+  "invoice-ghost-approved-1": {
+    id: "invoice-ghost-approved-1",
+    status: "matched",
+    paymentStatus: null,
+    paymentOnHoldReason: null,
+    paymentOnHoldByUserId: null,
+    paymentOnHoldAt: null,
+    paymentEligibleAt: null,
+    paymentReadyAt: null,
+    activeHandoffId: null,
+    activeHandoffNumber: null,
+    holdReleasedByUserId: null,
+    holdReleasedAt: null,
+    holdReleaseNote: null,
+    approvedAt: "2026-06-17T08:00:00.000Z",
+    lockVersion: 1,
+    currency: "USD",
+    totalAmount: "4200.0000",
+    vendorId: "vendor-1",
+    vendorName: "Northwind Traders",
+  },
+  "invoice-on-hold-1": {
+    id: "invoice-on-hold-1",
+    status: "matched",
+    paymentStatus: "on_hold",
+    paymentOnHoldReason: "Vendor invoice discrepancy under review",
+    paymentOnHoldByUserId: "buyer-1",
+    paymentOnHoldAt: "2026-06-17T10:00:00.000Z",
+    paymentEligibleAt: "2026-06-16T08:00:00.000Z",
+    paymentReadyAt: null,
+    activeHandoffId: null,
+    activeHandoffNumber: null,
+    holdReleasedByUserId: null,
+    holdReleasedAt: null,
+    holdReleaseNote: null,
+    approvedAt: "2026-06-16T08:00:00.000Z",
+    lockVersion: 3,
+    currency: "USD",
+    totalAmount: "3100.0000",
+    vendorId: "vendor-2",
+    vendorName: "Fabrikam Industrial",
+  },
+  "invoice-payment-eligible-1": {
+    id: "invoice-payment-eligible-1",
+    status: "matched",
+    paymentStatus: "payment_eligible",
+    paymentOnHoldReason: null,
+    paymentOnHoldByUserId: null,
+    paymentOnHoldAt: null,
+    paymentEligibleAt: "2026-06-16T08:00:00.000Z",
+    paymentReadyAt: null,
+    activeHandoffId: null,
+    activeHandoffNumber: null,
+    holdReleasedByUserId: null,
+    holdReleasedAt: null,
+    holdReleaseNote: null,
+    approvedAt: "2026-06-16T08:00:00.000Z",
+    lockVersion: 2,
+    currency: "USD",
+    totalAmount: "5300.0000",
+    vendorId: "vendor-3",
+    vendorName: "Litware Components",
+  },
+  "invoice-payment-ready-1": {
+    id: "invoice-payment-ready-1",
+    status: "matched",
+    paymentStatus: "payment_ready",
+    paymentOnHoldReason: null,
+    paymentOnHoldByUserId: null,
+    paymentOnHoldAt: null,
+    paymentEligibleAt: "2026-06-16T08:00:00.000Z",
+    paymentReadyAt: "2026-06-17T08:00:00.000Z",
+    activeHandoffId: "handoff-draft-1",
+    activeHandoffNumber: "APH-2026-000001",
+    holdReleasedByUserId: null,
+    holdReleasedAt: null,
+    holdReleaseNote: null,
+    approvedAt: "2026-06-15T08:00:00.000Z",
+    lockVersion: 4,
+    currency: "USD",
+    totalAmount: "8900.0000",
+    vendorId: "vendor-3",
+    vendorName: "Litware Components",
+  },
+  "invoice-handoff-exported-1": {
+    id: "invoice-handoff-exported-1",
+    status: "matched",
+    paymentStatus: "handoff_exported",
+    paymentOnHoldReason: null,
+    paymentOnHoldByUserId: null,
+    paymentOnHoldAt: null,
+    paymentEligibleAt: "2026-06-16T08:00:00.000Z",
+    paymentReadyAt: "2026-06-17T11:00:00.000Z",
+    activeHandoffId: "handoff-exported-1",
+    activeHandoffNumber: "APH-2026-000004",
+    holdReleasedByUserId: null,
+    holdReleasedAt: null,
+    holdReleaseNote: null,
+    approvedAt: "2026-06-15T08:00:00.000Z",
+    lockVersion: 5,
+    currency: "USD",
+    totalAmount: "131100.0000",
+    vendorId: "vendor-1",
+    vendorName: "Northwind Traders",
+  },
+};

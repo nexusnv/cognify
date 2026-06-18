@@ -266,6 +266,7 @@ function payloadToInvoiceStub(payload: CaptureSupplierInvoiceRequest, purchaseOr
       canReview: purchaseOrder.permissions.canCaptureInvoice,
     },
     lockVersion: 1,
+    paymentStatus: null,
     lines: payload.lines.map((line, index) => {
       const purchaseOrderLine = purchaseOrder.lines.find((item) => item.id === line.purchaseOrderLineId);
 

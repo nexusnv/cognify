@@ -5,15 +5,18 @@ namespace Domains\Invoice\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use Domains\AccountsPayable\Actions\EvaluatePaymentReadiness;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class MarkSupplierInvoiceApproved
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
+        private readonly EvaluatePaymentReadiness $evaluatePaymentReadiness,
     ) {}
 
     public function handle(
@@ -66,6 +69,15 @@ class MarkSupplierInvoiceApproved
                 before: $before,
                 after: $invoice->only(['status', 'approved_by_user_id', 'approved_at', 'lock_version']),
             ));
+
+            try {
+                $this->evaluatePaymentReadiness->handle($invoice, $actor);
+            } catch (\Throwable $e) {
+                Log::warning('Auto-advance to payment_eligible failed', [
+                    'invoice_id' => (string) $invoice->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return $invoice->fresh(['lines', 'purchaseOrder', 'vendor']);
         });

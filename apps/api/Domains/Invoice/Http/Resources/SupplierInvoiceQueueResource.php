@@ -46,6 +46,16 @@ class SupplierInvoiceQueueResource extends JsonResource
             'permissions' => [
                 'canReview' => Gate::allows('review', $this->resource),
             ],
+            'paymentStatus' => $this->payment_status?->value,
+            'paymentStatusLabel' => $this->payment_status?->label(),
+            'paymentOnHoldReason' => $this->payment_on_hold_reason,
+            'paymentEligibleAt' => $this->payment_eligible_at?->toISOString(),
+            'paymentOnHoldAt' => $this->payment_on_hold_at?->toISOString(),
+            'paymentOnHoldByUserId' => $this->payment_on_hold_by_user_id ? (string) $this->payment_on_hold_by_user_id : null,
+            'activeHandoffId' => $this->relationLoaded('activeHandoff') && $this->activeHandoff->isNotEmpty()
+                ? (string) $this->activeHandoff->first()->id : null,
+            'activeHandoffNumber' => $this->relationLoaded('activeHandoff') && $this->activeHandoff->isNotEmpty()
+                ? $this->activeHandoff->first()->number : null,
         ];
     }
 }
