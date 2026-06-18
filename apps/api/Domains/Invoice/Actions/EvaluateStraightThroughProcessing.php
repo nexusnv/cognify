@@ -7,6 +7,8 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class EvaluateStraightThroughProcessing
 {
@@ -22,33 +24,45 @@ class EvaluateStraightThroughProcessing
      */
     public function handle(SupplierInvoice $invoice, User $actor): bool
     {
-        $invoice->loadMissing('exceptions');
+        return DB::transaction(function () use ($invoice, $actor): bool {
+            $invoice = SupplierInvoice::query()
+                ->whereKey($invoice->id)
+                ->where('tenant_id', $invoice->tenant_id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($this->isStpEligible($invoice)) {
-            $this->markApproved->handle(
-                $invoice,
-                actor: $actor,
-                lockVersion: (int) $invoice->lock_version,
-                isStp: true,
-            );
+            if ($invoice->statusState() !== SupplierInvoiceStatus::ReadyForApproval) {
+                throw new ConflictHttpException('STP can only be evaluated on invoices in ready-for-approval status.');
+            }
 
-            $this->auditRecorder->record(new AuditEventData(
-                tenant: $invoice->tenant,
-                actor: $actor,
-                action: 'supplier_invoice.stp_auto_approved',
-                subject: $invoice,
-                metadata: [
-                    'invoiceId' => (string) $invoice->id,
-                    'invoiceNumber' => $invoice->number,
-                    'matchingStatus' => $invoice->matching_status,
-                    'exceptionCount' => $invoice->exceptions->count(),
-                ],
-            ));
+            $invoice->loadMissing('exceptions');
 
-            return true;
-        }
+            if ($this->isStpEligible($invoice)) {
+                $this->markApproved->handle(
+                    $invoice,
+                    actor: $actor,
+                    lockVersion: (int) $invoice->lock_version,
+                    isStp: true,
+                );
 
-        return false;
+                $this->auditRecorder->record(new AuditEventData(
+                    tenant: $invoice->tenant,
+                    actor: $actor,
+                    action: 'supplier_invoice.stp_auto_approved',
+                    subject: $invoice,
+                    metadata: [
+                        'invoiceId' => (string) $invoice->id,
+                        'invoiceNumber' => $invoice->number,
+                        'matchingStatus' => $invoice->matching_status,
+                        'exceptionCount' => $invoice->exceptions->count(),
+                    ],
+                ));
+
+                return true;
+            }
+
+            return false;
+        });
     }
 
     private function isStpEligible(SupplierInvoice $invoice): bool

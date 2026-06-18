@@ -12,6 +12,7 @@ use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\SubjectHandlers\PurchaseOrderApprovalSubjectHandler;
 use Domains\Approval\SubjectHandlers\RequisitionApprovalSubjectHandler;
 use Domains\Approval\SubjectHandlers\RfqAwardRecommendationApprovalSubjectHandler;
+use Domains\Approval\SubjectHandlers\SupplierInvoiceApprovalSubjectHandler;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
 use Domains\Fulfillment\Models\Shipment;
@@ -58,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(RequisitionApprovalSubjectHandler::class),
             $app->make(RfqAwardRecommendationApprovalSubjectHandler::class),
             $app->make(PurchaseOrderApprovalSubjectHandler::class),
+            $app->make(SupplierInvoiceApprovalSubjectHandler::class),
         ]));
     }
 

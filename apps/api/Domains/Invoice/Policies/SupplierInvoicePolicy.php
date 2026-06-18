@@ -27,6 +27,12 @@ class SupplierInvoicePolicy
             && $this->buyerOrAdmin($user);
     }
 
+    public function submitForApproval(User $user, SupplierInvoice $supplierInvoice): bool
+    {
+        return $this->isTenantScoped($supplierInvoice->tenant_id)
+            && $this->buyerOrAdmin($user);
+    }
+
     private function buyerOrAdmin(User $user): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);

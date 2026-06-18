@@ -54,6 +54,20 @@ class SupplierInvoice extends Model
         'lock_version',
         'matching_status',
         'exception_summary',
+        'approval_instance_id',
+        'approval_submitted_by_user_id',
+        'approval_submitted_at',
+        'approved_by_user_id',
+        'approved_at',
+        'rejected_by_user_id',
+        'rejected_at',
+        'rejected_reason',
+        'changes_requested_by_user_id',
+        'changes_requested_at',
+        'changes_requested_reason',
+        'changes_requested_fields',
+        'stp_eligible',
+        'stp_processed_at',
     ];
 
     protected function casts(): array
@@ -74,6 +88,14 @@ class SupplierInvoice extends Model
             'lock_version' => 'integer',
             'matching_status' => 'string',
             'exception_summary' => 'array',
+            'approval_instance_id' => 'string',
+            'approval_submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'changes_requested_at' => 'datetime',
+            'changes_requested_fields' => 'array',
+            'stp_eligible' => 'boolean',
+            'stp_processed_at' => 'datetime',
         ];
     }
 

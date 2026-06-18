@@ -159,6 +159,7 @@ import type {
   SubmitPurchaseOrderChangeOrderRequest,
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
+  SubmitSupplierInvoiceApprovalRequest,
   SupplierInvoiceCompleteReviewRequest,
   SupplierInvoiceExceptionListResponse,
   SupplierInvoiceExceptionResponse,
@@ -11999,6 +12000,11 @@ export type listSupplierInvoiceExceptionsResponse403 = {
   status: 403;
 };
 
+export type listSupplierInvoiceExceptionsResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
 export type listSupplierInvoiceExceptionsResponseSuccess =
   listSupplierInvoiceExceptionsResponse200 & {
     headers: Headers;
@@ -12007,6 +12013,7 @@ export type listSupplierInvoiceExceptionsResponseError = (
   | listSupplierInvoiceExceptionsResponse400
   | listSupplierInvoiceExceptionsResponse401
   | listSupplierInvoiceExceptionsResponse403
+  | listSupplierInvoiceExceptionsResponse404
 ) & {
   headers: Headers;
 };
@@ -12178,6 +12185,83 @@ export const escalateSupplierInvoiceException = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(escalateInvoiceExceptionRequest),
+    },
+  );
+};
+
+/**
+ * @summary Submit supplier invoice for approval
+ */
+export type submitSupplierInvoiceApprovalResponse200 = {
+  data: SupplierInvoiceResponse;
+  status: 200;
+};
+
+export type submitSupplierInvoiceApprovalResponse400 = {
+  data: AmbiguousTenantResponse;
+  status: 400;
+};
+
+export type submitSupplierInvoiceApprovalResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type submitSupplierInvoiceApprovalResponse403 = {
+  data: ForbiddenResponse;
+  status: 403;
+};
+
+export type submitSupplierInvoiceApprovalResponse404 = {
+  data: NotFoundResponse;
+  status: 404;
+};
+
+export type submitSupplierInvoiceApprovalResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type submitSupplierInvoiceApprovalResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type submitSupplierInvoiceApprovalResponseSuccess =
+  submitSupplierInvoiceApprovalResponse200 & {
+    headers: Headers;
+  };
+export type submitSupplierInvoiceApprovalResponseError = (
+  | submitSupplierInvoiceApprovalResponse400
+  | submitSupplierInvoiceApprovalResponse401
+  | submitSupplierInvoiceApprovalResponse403
+  | submitSupplierInvoiceApprovalResponse404
+  | submitSupplierInvoiceApprovalResponse409
+  | submitSupplierInvoiceApprovalResponse422
+) & {
+  headers: Headers;
+};
+
+export type submitSupplierInvoiceApprovalResponse =
+  | submitSupplierInvoiceApprovalResponseSuccess
+  | submitSupplierInvoiceApprovalResponseError;
+
+export const getSubmitSupplierInvoiceApprovalUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/submit-approval`;
+};
+
+export const submitSupplierInvoiceApproval = async (
+  supplierInvoice: string,
+  submitSupplierInvoiceApprovalRequest: SubmitSupplierInvoiceApprovalRequest,
+  options?: RequestInit,
+): Promise<submitSupplierInvoiceApprovalResponse> => {
+  return cognifyFetch<submitSupplierInvoiceApprovalResponse>(
+    getSubmitSupplierInvoiceApprovalUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitSupplierInvoiceApprovalRequest),
     },
   );
 };
