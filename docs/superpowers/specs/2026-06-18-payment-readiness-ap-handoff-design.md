@@ -89,15 +89,25 @@ Unlike the PO handoff (which auto-creates one handoff per award recommendation),
 
 An invoice can belong to at most one active (non-cancelled) handoff at a time.
 
+### Multi-Currency Guardrail
+
+All invoices in a single handoff must share the same currency code. The system rejects handoff creation with a `422 Unprocessable` response if the selected invoices have mixed currencies. This prevents silent aggregation of values across different currencies (e.g., $500 + €500 = 1000) that would produce mathematically invalid financial records. Multi-currency handoff grouping is deferred as a non-goal; when supported in a future slice, it will require explicit currency conversion or separate per-currency totals.
+
 ### Auto-Advance On Approval
 
 When `MarkSupplierInvoiceApproved` or STP transitions an invoice to `approved`, a new `AutoAdvanceToPaymentEligible` action fires in the same transaction. This ensures approved invoices immediately surface in the payment readiness queue with no manual step required.
 
 If the auto-advance fails (e.g., constraint violation), the approval still commits — the invoice stays `approved` without `payment_eligible`. A retry action or recovery job handles the edge case.
 
-### Snapshot At Handoff Creation
+**"Ghost Approved" recovery**: An invoice in this state (main `status = approved` but `payment_status = null`) is invisible to the handoff creation engine (which queries `payment_eligible`), but still appears in the "Approved" queue tab. To prevent this dead-end, the "Approved" tab must check for `payment_status = null` and flag such invoices with an `"Awaiting payment induction"` warning badge. A manual `RetryPaymentInduction` action (available in the invoice detail panel and as a "Retry induction" button in the queue row) re-attempts the auto-advance and moves the invoice to `payment_eligible`.
 
-The handoff snapshot captures invoice, vendor, PO, line item, and approval metadata at creation time. This protects audit integrity if invoice records, vendor tax IDs, or PO references change after the handoff is created — the export always reflects what was known at handoff time.
+### Snapshot Dynamics: Draft Is Dynamic, Only Locked At Ready
+
+The handoff snapshot captures invoice, vendor, PO, line item, and approval metadata. While the handoff is in `draft` status, the snapshot is **recalculable** — the AP user can refresh it to pick up master data changes (e.g., vendor tax ID was added, payment terms were updated). This prevents a Catch-22 where a user fixes a warning trigger in another tab but cannot clear the warning in the draft.
+
+The snapshot **locks permanently** only when the handoff transitions from `draft` to `ready`. At that point, `MarkApPaymentHandoffReady` calls `BuildApPaymentHandoffSnapshot` one final time with current data before freezing. After `ready`, the snapshot is immutable — exactly as with the PO handoff pattern.
+
+A dedicated `POST /api/accounts-payable/handoffs/{handoff}/refresh` endpoint allows on-demand recalculation while in `draft`.
 
 ### Separate payment_status Column
 
@@ -184,11 +194,12 @@ State rules:
 6. AP user fills the handoff form: effective payment date, optional notes.
 7. System creates `ApPaymentHandoff` in `draft` status:
    - Creates pivot records for selected invoices.
-   - Builds snapshot from current invoice/vendor/PO data.
+   - Builds initial snapshot from current invoice/vendor/PO data (recalculable while in draft).
    - Sets each invoice `payment_status = payment_ready`.
    - Records `ap_payment_handoff.created` audit event.
 8. AP user reviews the handoff, sees readiness warnings (missing vendor tax ID, missing payment terms).
-9. AP user clicks "Mark ready". Handoff moves to `ready`.
+9. If the user fixes underlying master data in another tab, they can click "Refresh snapshot" (`POST /handoffs/{id}/refresh`) to recalculate warnings and data without leaving draft.
+10. AP user clicks "Mark ready". Handoff moves to `ready`. The system recalculates the snapshot one final time before locking — capturing up-to-the-second master data and freezing it for audit.
 10. AP user clicks "Export JSON" or "Export CSV". System generates downloadable export, moves handoff to `exported`, sets each invoice `payment_status = handoff_exported`.
 
 ### Failure Paths
@@ -196,12 +207,13 @@ State rules:
 - No `payment_eligible` invoices when creating handoff: return `409`.
 - Invoice already in another active handoff: return `409` with handoff reference.
 - Invoice currently `on_hold`: return `409` — must release hold first.
+- Mixed currencies in handoff creation: return `422` with list of distinct currencies found.
 - Stale `lockVersion` on invoice (hold/release): return `409`.
 - Stale `lockVersion` on handoff (update/ready/cancel): return `409`.
 - Export before ready: return `409`.
 - Export cancelled handoff: return `409`.
 - Cross-tenant access: return `403` or `404` consistent with adjacent invoice routes.
-- Auto-advance failure (constraint or missing data): log error, keep invoice `approved` without `payment_eligible`. Surface a retry action in the UI.
+- Auto-advance failure (constraint or missing data): log error, keep invoice `approved` without `payment_eligible`. Surface a retry action in the UI (see "Awaiting payment induction" below).
 
 ## Backend Design
 
@@ -364,10 +376,12 @@ The snapshot captures immutable approval context for JSON export and UI renderin
 apps/api/Domains/AccountsPayable/
   Actions/
     AutoAdvanceToPaymentEligible.php
+    RetryPaymentInduction.php
     PlaceSupplierInvoiceOnPaymentHold.php
     ReleaseSupplierInvoicePaymentHold.php
     CreateApPaymentHandoff.php
     BuildApPaymentHandoffSnapshot.php
+    RefreshApPaymentHandoffSnapshot.php
     MarkApPaymentHandoffReady.php
     ExportApPaymentHandoff.php
     CancelApPaymentHandoff.php
@@ -411,6 +425,16 @@ Use only the files the implementation needs. Empty folders should not be created
 - Records `supplier_invoice.payment_eligible` audit event.
 - Idempotent: skips if `payment_status` is already set.
 
+**`RetryPaymentInduction`**:
+
+- Accepts supplier invoice ID, actor.
+- Validates main `status = approved` and `payment_status = null`.
+- Calls the same logic as `AutoAdvanceToPaymentEligible` (idempotent guard still applies).
+- Sets `payment_status = payment_eligible`, `payment_eligible_at = now`.
+- Increments `lock_version`.
+- Records `supplier_invoice.payment_eligible` audit event (same event name as auto-advance).
+- Returns the invoice to the payment-eligible pool. Available as a human-callable retry action when the "ghost approved" edge case occurs.
+
 **`PlaceSupplierInvoiceOnPaymentHold`**:
 
 - Accepts supplier invoice ID, actor, reason, lockVersion.
@@ -435,6 +459,7 @@ Use only the files the implementation needs. Empty folders should not be created
 - Validates all invoices belong to tenant.
 - Validates all invoices have `payment_status = payment_eligible`.
 - Validates no invoice is already in another active handoff.
+- **Validates currency homogeneity**: all selected invoices must share the same `currency` code. Returns `422` with a list of distinct currencies found if mixed.
 - Creates `ApPaymentHandoff` in `draft` status with generated number.
 - Calls `BuildApPaymentHandoffSnapshot` to assemble the snapshot.
 - Creates pivot records, updates each invoice `payment_status = payment_ready`.
@@ -445,14 +470,17 @@ Use only the files the implementation needs. Empty folders should not be created
 
 - Accepts array of supplier invoices (eager-loaded with vendor, PO, lines).
 - Assembles JSON snapshot following the snapshot shape above.
-- Calculates readiness warnings.
+- Calculates readiness warnings by checking current master data (vendor tax ID, payment terms, etc.).
 - Returns the snapshot data object.
+- Callable at handoff creation (initial snapshot), on-demand via the refresh endpoint while in `draft`, and one final time inside `MarkApPaymentHandoffReady` before locking.
 
 **`MarkApPaymentHandoffReady`**:
 
 - Lock handoff row.
 - Validates status is `draft` and `lockVersion`.
 - Validates at least one invoice exists.
+- **Recalculates snapshot**: eager-loads invoices with vendor, PO, and lines, then calls `BuildApPaymentHandoffSnapshot` a final time with current data. This captures up-to-the-second master data changes before freezing.
+- Overwrites the handoff `snapshot` column with the fresh snapshot.
 - Sets status to `ready`, `ready_by_user_id`, `ready_at`.
 - Increments `lock_version`.
 - Records `ap_payment_handoff.ready`.
@@ -466,6 +494,15 @@ Use only the files the implementation needs. Empty folders should not be created
 - Iterates invoices, sets `payment_status = handoff_exported` if they were `payment_ready`.
 - Returns the snapshot as JSON or generates CSV from the snapshot data.
 - Records `ap_payment_handoff.exported` audit event.
+
+**`RefreshApPaymentHandoffSnapshot`**:
+
+- Validates handoff status is `draft`.
+- Eager-loads invoices with vendor, PO, and lines.
+- Calls `BuildApPaymentHandoffSnapshot` to recalculate the snapshot with current master data.
+- Overwrites the handoff `snapshot` column.
+- Records `ap_payment_handoff.snapshot_refreshed` audit event.
+- Returns the updated snapshot data.
 
 **`CancelApPaymentHandoff`**:
 
@@ -507,6 +544,7 @@ This runs in the same transactional boundary. If it fails, the approval outcome 
 | `supplier_invoice.payment_hold_released` | Release action |
 | `ap_payment_handoff.created` | Handoff creation |
 | `ap_payment_handoff.updated` | Handoff field update |
+| `ap_payment_handoff.snapshot_refreshed` | Snapshot recalculated while in draft |
 | `ap_payment_handoff.ready` | Marked ready |
 | `ap_payment_handoff.exported` | Export action |
 | `ap_payment_handoff.cancelled` | Cancel action |
@@ -527,12 +565,14 @@ Add tenant-scoped authenticated routes:
 # Invoice payment status
 POST /api/supplier-invoices/{supplierInvoice}/place-hold
 POST /api/supplier-invoices/{supplierInvoice}/release-hold
+POST /api/supplier-invoices/{supplierInvoice}/retry-payment-induction
 
 # Payment handoff
 GET    /api/accounts-payable/handoffs
 POST   /api/accounts-payable/handoffs
 GET    /api/accounts-payable/handoffs/{handoff}
 PATCH  /api/accounts-payable/handoffs/{handoff}
+POST   /api/accounts-payable/handoffs/{handoff}/refresh
 POST   /api/accounts-payable/handoffs/{handoff}/mark-ready
 POST   /api/accounts-payable/handoffs/{handoff}/cancel
 GET    /api/accounts-payable/handoffs/{handoff}/export.json
@@ -559,10 +599,12 @@ Extend `SupplierInvoiceQueueResource` with:
 Expected operation IDs:
 - `placeSupplierInvoiceOnPaymentHold`
 - `releaseSupplierInvoicePaymentHold`
+- `retryPaymentInduction`
 - `listApPaymentHandoffs`
 - `createApPaymentHandoff`
 - `showApPaymentHandoff`
 - `updateApPaymentHandoff`
+- `refreshApPaymentHandoffSnapshot`
 - `markApPaymentHandoffReady`
 - `cancelApPaymentHandoff`
 - `exportApPaymentHandoffJson`
@@ -571,7 +613,7 @@ Expected operation IDs:
 Expected schemas:
 - `PlaceInvoiceOnHoldRequest`
 - `ReleaseInvoiceHoldRequest`
-- `CreateApPaymentHandoffRequest`
+- `CreateApPaymentHandoffRequest` — validates `invoice_ids` are all `payment_eligible`, same tenant, **same currency**, and not in another active handoff
 - `UpdateApPaymentHandoffRequest`
 - `MarkApPaymentHandoffReadyRequest`
 - `CancelApPaymentHandoffRequest`
@@ -624,6 +666,7 @@ Demo data should include at least:
 - Approved invoice that auto-advanced to `payment_eligible`
 - `payment_eligible` invoice with no holds (eligible for handoff)
 - Invoice in `on_hold` status with hold reason visible
+- Invoice in "ghost approved" state (`status = approved`, `payment_status = null`, simulating an auto-advance failure) — used to verify the "Awaiting payment induction" UI
 - A payment handoff in `draft` status with multiple invoices
 - A payment handoff in `ready` status
 - A payment handoff in `exported` status with export metadata
@@ -645,6 +688,10 @@ Add focused tests for:
 - cross-tenant hold/release denied
 - stale lockVersion returns conflict
 - hold audit event recorded
+- auto-advance failure leaves invoice approved with `payment_status = null`
+- invoice with `payment_status = null` appears with "Awaiting payment induction" indicator
+- retry-payment-induction succeeds and moves invoice to `payment_eligible`
+- retry-payment-induction is idempotent (returns success if already `payment_eligible`)
 
 **Payment handoff:**
 - creating handoff from payment-eligible invoices succeeds
@@ -672,6 +719,9 @@ Add focused tests for:
 - On hold tab filters correctly
 - Payment status badge renders for each state
 - Header count includes payment-related invoice counts
+- "Approved" tab shows "Awaiting payment induction" badge for invoices where `payment_status = null`
+- "Retry induction" button in approved invoice row triggers retry-payment-induction
+- Retry induction moves invoice out of "Approved" tab into "Payment eligible" tab
 
 **Payment actions:**
 - Payment-eligible invoice shows hold button
@@ -725,6 +775,7 @@ This slice explicitly does NOT include:
 
 This slice is complete when:
 - Approved invoices automatically become payment-eligible within the same transactional boundary as approval.
+- If auto-advance fails, the invoice shows an "Awaiting payment induction" warning in the queue with a manual retry action.
 - AP users can place and release payment holds with reasons, audit trail, and lock-version concurrency.
 - AP users can create snapshot-based payment handoff packages from selected eligible invoices.
 - Handoff supports draft → ready → exported → cancelled states mirroring the PO handoff pattern.
