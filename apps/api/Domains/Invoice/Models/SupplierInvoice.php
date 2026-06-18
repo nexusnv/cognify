@@ -4,6 +4,7 @@ namespace Domains\Invoice\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalInstance;
 use Domains\Attachment\Models\Attachment;
 use Domains\Invoice\Models\Relations\UuidMorphMany;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
@@ -54,6 +55,20 @@ class SupplierInvoice extends Model
         'lock_version',
         'matching_status',
         'exception_summary',
+        'approval_instance_id',
+        'approval_submitted_by_user_id',
+        'approval_submitted_at',
+        'approved_by_user_id',
+        'approved_at',
+        'rejected_by_user_id',
+        'rejected_at',
+        'rejected_reason',
+        'changes_requested_by_user_id',
+        'changes_requested_at',
+        'changes_requested_reason',
+        'changes_requested_fields',
+        'stp_eligible',
+        'stp_processed_at',
     ];
 
     protected function casts(): array
@@ -74,6 +89,14 @@ class SupplierInvoice extends Model
             'lock_version' => 'integer',
             'matching_status' => 'string',
             'exception_summary' => 'array',
+            'approval_instance_id' => 'string',
+            'approval_submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'changes_requested_at' => 'datetime',
+            'changes_requested_fields' => 'array',
+            'stp_eligible' => 'boolean',
+            'stp_processed_at' => 'datetime',
         ];
     }
 
@@ -127,6 +150,32 @@ class SupplierInvoice extends Model
                     if (! $belongsToTenant) {
                         throw new InvalidArgumentException('Supplier invoice reviewer must belong to the same tenant.');
                     }
+                }
+            }
+
+            foreach (['approval_submitted_by_user_id', 'approved_by_user_id', 'rejected_by_user_id', 'changes_requested_by_user_id'] as $userColumn) {
+                if ($invoice->{$userColumn} !== null && $invoice->isDirty([$userColumn, 'tenant_id'])) {
+                    $belongsToTenant = User::query()
+                        ->whereKey($invoice->{$userColumn})
+                        ->whereHas('tenants', fn ($query) => $query->whereKey($invoice->tenant_id))
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Supplier invoice approval actor must belong to the same tenant.');
+                    }
+                }
+            }
+
+            if ($invoice->approval_instance_id !== null && $invoice->isDirty(['approval_instance_id', 'tenant_id'])) {
+                $belongsToTenant = ApprovalInstance::query()
+                    ->whereKey($invoice->approval_instance_id)
+                    ->where('tenant_id', $invoice->tenant_id)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if (! $belongsToTenant) {
+                    throw new InvalidArgumentException('Supplier invoice approval instance must belong to the same tenant.');
                 }
             }
         });

@@ -751,7 +751,7 @@ class InvoiceMatchingTest extends TestCase
         }
 
         $invoice = $this->getJson("/api/supplier-invoices/{$result['invoice']['id']}")->json('data');
-        $this->assertEquals('ready_for_approval', $invoice['status']);
+        $this->assertEquals('approved', $invoice['status']);
     }
 
     public function test_value_adjustment_reruns_matching_then_advances(): void

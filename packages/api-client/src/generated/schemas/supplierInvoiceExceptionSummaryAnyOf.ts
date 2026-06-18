@@ -6,8 +6,8 @@
  */
 
 export type SupplierInvoiceExceptionSummaryAnyOf = {
-  total?: number;
-  open?: number;
-  resolved?: number;
-  escalated?: number;
+  total: number;
+  open: number;
+  resolved: number;
+  escalated: number;
 };

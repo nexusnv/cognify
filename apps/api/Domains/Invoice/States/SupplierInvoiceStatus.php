@@ -11,4 +11,8 @@ enum SupplierInvoiceStatus: string
     case Matched = 'matched';
     case Mismatch = 'mismatch';
     case ReadyForApproval = 'ready_for_approval';
+    case InApproval = 'in_approval';
+    case Approved = 'approved';
+    case Rejected = 'rejected';
+    case ChangesRequested = 'changes_requested';
 }

@@ -1277,6 +1277,7 @@ export * from "./submitPurchaseOrderApprovalRequest";
 export * from "./submitPurchaseOrderChangeOrderRequest";
 export * from "./submitRequisitionResponse";
 export * from "./submitRfqAwardRecommendationRequest";
+export * from "./submitSupplierInvoiceApprovalRequest";
 export * from "./supplierInvoice";
 export * from "./supplierInvoiceCapturedAt";
 export * from "./supplierInvoiceCapturedByUserId";

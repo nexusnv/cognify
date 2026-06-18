@@ -66,4 +66,32 @@ export interface SupplierInvoice {
   matchingStatus?: SupplierInvoiceMatchingStatus;
   matchSummary?: SupplierInvoiceMatchSummary;
   exceptionSummary?: SupplierInvoiceExceptionSummary;
+  /** @nullable */
+  approvalInstanceId?: string | null;
+  /** @nullable */
+  approvalSubmittedByUserId?: string | null;
+  /** @nullable */
+  approvalSubmittedAt?: string | null;
+  /** @nullable */
+  approvedByUserId?: string | null;
+  /** @nullable */
+  approvedAt?: string | null;
+  /** @nullable */
+  rejectedByUserId?: string | null;
+  /** @nullable */
+  rejectedAt?: string | null;
+  /** @nullable */
+  rejectedReason?: string | null;
+  /** @nullable */
+  changesRequestedByUserId?: string | null;
+  /** @nullable */
+  changesRequestedAt?: string | null;
+  /** @nullable */
+  changesRequestedReason?: string | null;
+  /** @nullable */
+  changesRequestedFields?: string[] | null;
+  /** @nullable */
+  stpEligible?: boolean | null;
+  /** @nullable */
+  stpProcessedAt?: string | null;
 }

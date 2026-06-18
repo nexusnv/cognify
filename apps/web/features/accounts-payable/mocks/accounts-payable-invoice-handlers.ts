@@ -300,4 +300,48 @@ export const accountsPayableInvoiceHandlers = [
 
     return HttpResponse.json({ data: next });
   }),
+
+  http.post("/api/supplier-invoices/:supplierInvoice/submit-approval", async ({ params, request }) => {
+    const id = String(params.supplierInvoice);
+    const payload = await request.json() as { lockVersion: number };
+    const detail = details[id];
+
+    if (!detail) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "Supplier invoice not found." } },
+        { status: 404 },
+      );
+    }
+
+    if (detail.status !== "ready_for_approval") {
+      return HttpResponse.json(
+        { error: { code: "invalid_state", message: "Invoice must be ready for approval." } },
+        { status: 409 },
+      );
+    }
+
+    if (payload.lockVersion !== detail.lockVersion) {
+      return HttpResponse.json(
+        { error: { code: "conflict", message: "Supplier invoice was updated by another user." } },
+        { status: 409 },
+      );
+    }
+
+    const updatedLockVersion = detail.lockVersion + 1;
+    const next: SupplierInvoice = {
+      ...detail,
+      approvalSubmittedByUserId: "buyer-1",
+      approvalSubmittedAt: new Date().toISOString(),
+      lockVersion: updatedLockVersion,
+    };
+
+    details[id] = next;
+    rows = rows.map((row) =>
+      row.id === id
+        ? { ...row, lockVersion: updatedLockVersion }
+        : row,
+    );
+
+    return HttpResponse.json({ data: next });
+  }),
 ];

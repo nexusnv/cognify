@@ -5,6 +5,7 @@ namespace Domains\Invoice\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use App\Tenancy\CurrentTenant;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceException;
 use Domains\Invoice\States\SupplierInvoiceStatus;
@@ -16,6 +17,9 @@ class RunPostResolutionMatching
         private readonly RunInvoiceMatching $matchingAction,
         private readonly CreateExceptionsFromMatchResults $exceptionCreator,
         private readonly AuditRecorder $auditRecorder,
+        private readonly EvaluateStraightThroughProcessing $evaluateStp,
+        private readonly SubmitSupplierInvoiceForApproval $submitForApproval,
+        private readonly CurrentTenant $currentTenant,
     ) {}
 
     public function handle(SupplierInvoice $supplierInvoice, User $actor): void
@@ -43,6 +47,8 @@ class RunPostResolutionMatching
 
                 if ($updatedInvoice->matching_status === SupplierInvoiceStatus::Mismatch->value) {
                     $this->exceptionCreator->handle($updatedInvoice);
+
+                    return;
                 }
 
                 if ($updatedInvoice->matching_status === SupplierInvoiceStatus::Matched->value) {
@@ -71,5 +77,18 @@ class RunPostResolutionMatching
             after: $after,
             before: $before,
         ));
+
+        $stpApplied = $this->evaluateStp->handle($invoice, $actor);
+
+        if (! $stpApplied) {
+            $tenant = $this->currentTenant->nullable();
+            if ($tenant !== null) {
+                try {
+                    $this->submitForApproval->handle($invoice, $tenant, $actor, (int) $invoice->lock_version);
+                } catch (\Symfony\Component\HttpKernel\Exception\ConflictHttpException $e) {
+                    report($e);
+                }
+            }
+        }
     }
 }

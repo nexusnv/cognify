@@ -143,7 +143,7 @@ class ApprovalPolicyMatcher
                 $matched = false;
             }
 
-            if ($actualValue === null && in_array((string) ($rule['field'] ?? ''), ['riskClassification', 'vendorId'], true)) {
+            if ($actualValue === null && in_array((string) ($rule['field'] ?? ''), ['riskClassification', 'vendorId', 'matchingStatus', 'exceptionCount', 'hasValueAdjustments'], true)) {
                 $missingContextFields[] = (string) $rule['field'];
             }
         }
@@ -229,6 +229,14 @@ class ApprovalPolicyMatcher
             'scorecardWeightedTotal' => $context->scorecardWeightedTotal,
             'riskSummaryPresent' => $context->riskSummaryPresent,
             'exceptionSummaryPresent' => $context->exceptionSummaryPresent,
+            'supplierInvoiceId' => $context->supplierInvoiceId,
+            'purchaseOrderId' => $context->purchaseOrderId,
+            'purchaseOrderNumber' => $context->purchaseOrderNumber,
+            'matchingStatus' => $context->matchingStatus,
+            'exceptionCount' => $context->exceptionCount,
+            'hasValueAdjustments' => $context->hasValueAdjustments,
+            'originalInvoiceAmount' => $context->originalInvoiceAmount,
+            'totalVarianceAdjusted' => $context->totalVarianceAdjusted,
             default => null,
         };
     }

@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs
 import type { ListSupplierInvoiceQueueMatchingStatus, ListSupplierInvoiceQueueStatus, SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
 import { InvoiceQueueSummary } from "../components/invoice-queue-summary";
 import { InvoiceReviewPanel } from "../components/invoice-review-panel";
+import { InvoiceApprovalPanel } from "../components/invoice-approval-status-panel";
 import { useAccountsPayableInvoices } from "../hooks/use-accounts-payable-invoices";
 import { AccountsPayableInvoiceQueueTable } from "../tables/accounts-payable-invoice-queue-table";
 
@@ -99,12 +100,20 @@ export function AccountsPayableInvoiceQueuePage() {
               onSelect={setSelectedInvoice}
               errorTitle={queueErrorTitle(invoicesQuery.error)}
             />
-            <InvoiceReviewPanel
-              invoice={selectedInvoice}
-              onMutationSettled={() => {
-                void invoicesQuery.refetch();
-              }}
-            />
+            <div className="space-y-4">
+              <InvoiceReviewPanel
+                invoice={selectedInvoice}
+                onMutationSettled={() => {
+                  void invoicesQuery.refetch();
+                }}
+              />
+              <InvoiceApprovalPanel
+                invoice={selectedInvoice}
+                onMutationSettled={() => {
+                  void invoicesQuery.refetch();
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
