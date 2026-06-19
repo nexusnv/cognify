@@ -14,7 +14,8 @@ class RetryPaymentInductionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lockVersion' => ['required', 'integer', 'min:1'],
+            // Optimistic locking is not enforced by the retry action; the
+            // field is accepted for API consistency but not validated.
         ];
     }
 }

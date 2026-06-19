@@ -42,6 +42,9 @@ class HoldSupplierInvoicePayment
                 'payment_on_hold_by_user_id' => $actor->id,
                 'payment_on_hold_at' => now(),
                 'payment_on_hold_reason' => $reason,
+                'payment_hold_released_by_user_id' => null,
+                'payment_hold_released_at' => null,
+                'payment_hold_released_note' => null,
                 'lock_version' => $invoice->lock_version + 1,
             ])->save();
 
@@ -52,7 +55,11 @@ class HoldSupplierInvoicePayment
                 subject: $invoice,
                 metadata: ['invoiceId' => (string) $invoice->id, 'reason' => $reason],
                 before: $before,
-                after: $invoice->only(['payment_status', 'payment_on_hold_by_user_id', 'payment_on_hold_at', 'lock_version']),
+                after: $invoice->only([
+                    'payment_status', 'payment_on_hold_by_user_id', 'payment_on_hold_at',
+                    'payment_on_hold_reason', 'payment_hold_released_by_user_id',
+                    'payment_hold_released_at', 'payment_hold_released_note', 'lock_version',
+                ]),
             ));
 
             return $invoice->fresh();

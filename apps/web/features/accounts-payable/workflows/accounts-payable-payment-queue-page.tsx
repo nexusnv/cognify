@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsList, TabsTrigger } from "@cognify/ui";
-import type { SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
+import type { ListSupplierInvoiceQueuePaymentStatus, SupplierInvoiceQueueItem } from "@cognify/api-client/schemas";
 import { useAccountsPayableInvoices } from "../hooks/use-accounts-payable-invoices";
 import { useApPaymentHandoffs } from "../hooks/use-payment-handoffs";
 import { useRetryInvoicePaymentInduction } from "../hooks/use-payment-holds";
@@ -11,7 +11,7 @@ import { PaymentHoldPanel } from "../components/payment-hold-panel";
 import { PaymentHandoffCreateDialog } from "../components/payment-handoff-create-dialog";
 import { ActiveHandoffsSection } from "../components/active-handoffs-section";
 
-const paymentFilterTabs: Array<{ label: string; value: string }> = [
+const paymentFilterTabs: Array<{ label: string; value: ListSupplierInvoiceQueuePaymentStatus }> = [
   { label: "All", value: "any" },
   { label: "Payment eligible", value: "payment_eligible" },
   { label: "On hold", value: "on_hold" },
@@ -21,7 +21,7 @@ const paymentFilterTabs: Array<{ label: string; value: string }> = [
 ];
 
 export function AccountsPayablePaymentQueuePage() {
-  const [paymentStatus, setPaymentStatus] = useState("any");
+  const [paymentStatus, setPaymentStatus] = useState<ListSupplierInvoiceQueuePaymentStatus>("any");
   const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoiceQueueItem | null>(null);
   const [handoffDialogOpen, setHandoffDialogOpen] = useState(false);
 
@@ -32,7 +32,7 @@ export function AccountsPayablePaymentQueuePage() {
   const handoffsQuery = useApPaymentHandoffs();
 
   const eligibleInvoices = invoices.filter(
-    (inv) => inv.paymentStatus === "payment_eligible" || !inv.paymentStatus,
+    (inv) => inv.paymentStatus === "payment_eligible",
   );
 
   return (
@@ -60,7 +60,7 @@ export function AccountsPayablePaymentQueuePage() {
           <Tabs
             value={paymentStatus}
             onValueChange={(value) => {
-              setPaymentStatus(value);
+              setPaymentStatus(value as ListSupplierInvoiceQueuePaymentStatus);
               setSelectedInvoice(null);
             }}
           >
@@ -87,6 +87,7 @@ export function AccountsPayablePaymentQueuePage() {
               }
               onSelect={setSelectedInvoice}
               errorTitle={queueErrorTitle(invoicesQuery.error)}
+              showPaymentActions
             />
             <div className="space-y-4">
               {selectedInvoice?.paymentStatus && (
@@ -156,10 +157,20 @@ function RetryInductionPanel({
           onMutationSettled();
         },
         onError: (err) => {
-          const message =
-            typeof err === "object" && err !== null && "message" in err
-              ? (err as { message: string }).message
-              : "Failed to retry payment induction.";
+          let message = "Failed to retry payment induction.";
+
+          if (typeof err === "object" && err !== null) {
+            const errorObj = err as Record<string, unknown>;
+            if (typeof errorObj.message === "string") {
+              message = errorObj.message;
+            } else if (typeof errorObj.error === "object" && errorObj.error !== null) {
+              const nested = errorObj.error as Record<string, unknown>;
+              if (typeof nested.message === "string") {
+                message = nested.message;
+              }
+            }
+          }
+
           setError(message);
         },
       },

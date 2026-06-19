@@ -32,47 +32,61 @@ class CreateApPaymentHandoff
                 throw new ConflictHttpException('At least one invoice is required to create an AP payment handoff.');
             }
 
+            usort($invoices, fn ($a, $b) => $a->id <=> $b->id);
+
             $tenantId = null;
             $currency = null;
+            $lockedInvoices = [];
 
             foreach ($invoices as $invoice) {
-                $invoice = SupplierInvoice::query()
+                $lockedInvoice = SupplierInvoice::query()
                     ->whereKey($invoice->id)
                     ->where('tenant_id', $invoice->tenant_id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                if ($invoice->statusState() !== SupplierInvoiceStatus::Approved) {
-                    throw new ConflictHttpException("Invoice {$invoice->invoice_number} is not approved.");
+                if ($lockedInvoice->statusState() !== SupplierInvoiceStatus::Approved) {
+                    throw new ConflictHttpException("Invoice {$lockedInvoice->invoice_number} is not approved.");
                 }
 
-                if ($invoice->payment_status !== SupplierInvoicePaymentStatus::PaymentEligible) {
-                    throw new ConflictHttpException("Invoice {$invoice->invoice_number} is not payment eligible.");
+                if ($lockedInvoice->payment_status !== SupplierInvoicePaymentStatus::PaymentEligible) {
+                    throw new ConflictHttpException("Invoice {$lockedInvoice->invoice_number} is not payment eligible.");
+                }
+
+                $inActiveHandoff = ApPaymentHandoff::query()
+                    ->whereHas('invoices', fn ($q) => $q->whereKey($lockedInvoice->id))
+                    ->whereIn('status', [ApPaymentHandoffStatus::Draft, ApPaymentHandoffStatus::Ready, ApPaymentHandoffStatus::Exported])
+                    ->exists();
+
+                if ($inActiveHandoff) {
+                    throw new ConflictHttpException("Invoice {$lockedInvoice->invoice_number} is already in an active payment handoff.");
                 }
 
                 if ($tenantId === null) {
-                    $tenantId = $invoice->tenant_id;
-                    $currency = $invoice->currency;
+                    $tenantId = (int) $lockedInvoice->tenant_id;
+                    $currency = $lockedInvoice->currency;
                 } else {
-                    if ((int) $invoice->tenant_id !== $tenantId) {
+                    if ((int) $lockedInvoice->tenant_id !== $tenantId) {
                         throw new ConflictHttpException('All invoices must belong to the same tenant.');
                     }
 
-                    if ($invoice->currency !== $currency) {
+                    if ($lockedInvoice->currency !== $currency) {
                         throw new ConflictHttpException('All invoices must use the same currency.');
                     }
                 }
+
+                $lockedInvoices[] = $lockedInvoice;
             }
 
-            $tenant = $invoices[0]->tenant;
+            $tenant = $lockedInvoices[0]->tenant;
             $number = $this->handoffNumber->generate($tenantId);
 
-            $totalAmount = array_reduce($invoices, fn (float $carry, SupplierInvoice $invoice): float => $carry + (float) ($invoice->total_amount ?? 0), 0.0);
+            $totalAmount = array_reduce($lockedInvoices, fn (float $carry, SupplierInvoice $invoice): float => $carry + (float) ($invoice->total_amount ?? 0), 0.0);
 
-            $snapshotData = $this->buildSnapshot->handle($invoices, [
+            $snapshotData = $this->buildSnapshot->handle($lockedInvoices, [
                 'currency' => $currency,
                 'totalAmount' => (string) $totalAmount,
-                'invoiceCount' => count($invoices),
+                'invoiceCount' => count($lockedInvoices),
             ]);
 
             $handoff = ApPaymentHandoff::query()->create([
@@ -90,7 +104,7 @@ class CreateApPaymentHandoff
             ]);
 
             $handoff->invoices()->attach(
-                collect($invoices)->mapWithKeys(fn (SupplierInvoice $invoice) => [
+                collect($lockedInvoices)->mapWithKeys(fn (SupplierInvoice $invoice) => [
                     $invoice->id => ['tenant_id' => $tenantId],
                 ])->all()
             );
@@ -100,7 +114,7 @@ class CreateApPaymentHandoff
                 actor: $actor,
                 action: 'ap_payment_handoff.created',
                 subject: $handoff,
-                metadata: ['invoiceCount' => count($invoices), 'totalAmount' => (string) $totalAmount],
+                metadata: ['invoiceCount' => count($lockedInvoices), 'totalAmount' => (string) $totalAmount],
                 after: $handoff->fresh()->toArray(),
             ));
 

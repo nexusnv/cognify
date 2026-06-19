@@ -143,6 +143,14 @@ class SupplierInvoiceController
         }
 
         if ($paymentStatus = $request->query('paymentStatus')) {
+            $validPaymentStatuses = ['none', 'any', 'payment_eligible', 'on_hold', 'payment_ready', 'handoff_exported'];
+
+            if (! in_array($paymentStatus, $validPaymentStatuses, true)) {
+                throw ValidationException::withMessages([
+                    'paymentStatus' => ['The payment status filter is invalid.'],
+                ]);
+            }
+
             if ($paymentStatus === 'none') {
                 $query->whereNull('payment_status');
             } elseif ($paymentStatus === 'any') {

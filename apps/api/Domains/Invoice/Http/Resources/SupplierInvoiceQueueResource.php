@@ -56,6 +56,9 @@ class SupplierInvoiceQueueResource extends JsonResource
                 ? (string) $this->activeHandoff->first()->id : null,
             'activeHandoffNumber' => $this->relationLoaded('activeHandoff') && $this->activeHandoff->isNotEmpty()
                 ? $this->activeHandoff->first()->number : null,
+            // NOTE: activeHandoff should be loaded with deterministic ordering
+            // (e.g. ->orderBy('created_at', 'desc')) in the model relationship or
+            // query builder to ensure consistent first() results.
         ];
     }
 }

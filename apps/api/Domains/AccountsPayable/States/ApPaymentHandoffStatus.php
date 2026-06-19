@@ -19,7 +19,7 @@ enum ApPaymentHandoffStatus: string
         };
     }
 
-    public function isTerminal(): bool
+    public function isComplete(): bool
     {
         return $this === self::Exported || $this === self::Cancelled;
     }

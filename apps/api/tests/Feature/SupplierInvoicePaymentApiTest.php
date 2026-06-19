@@ -117,12 +117,24 @@ class SupplierInvoicePaymentApiTest extends TestCase
         $invoice = $this->createPaymentEligibleInvoice();
         $buyer = $this->tenantUser($invoice->tenant, TenantRole::Buyer->value);
 
-        $this->actingAsTenant($invoice->tenant, $buyer)
+        $response1 = $this->actingAsTenant($invoice->tenant, $buyer)
             ->postJson("/api/supplier-invoices/{$invoice->id}/retry-payment-induction", [
                 'lockVersion' => 2,
-            ])
-            ->assertOk()
+            ]);
+
+        $response1->assertOk()
             ->assertJsonPath('data.paymentStatus', 'payment_eligible');
+
+        $lockVersionAfterFirst = $response1->json('data.lockVersion');
+
+        $response2 = $this->actingAsTenant($invoice->tenant, $buyer)
+            ->postJson("/api/supplier-invoices/{$invoice->id}/retry-payment-induction", [
+                'lockVersion' => $lockVersionAfterFirst,
+            ]);
+
+        $response2->assertOk()
+            ->assertJsonPath('data.paymentStatus', 'payment_eligible')
+            ->assertJsonPath('data.lockVersion', $lockVersionAfterFirst);
     }
 
     public function test_cross_tenant_hold_is_denied(): void
@@ -295,7 +307,6 @@ class SupplierInvoicePaymentApiTest extends TestCase
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
-        app(CurrentTenant::class)->set($tenant);
 
         return $this->withHeader('X-Tenant-Id', (string) $tenant->id);
     }

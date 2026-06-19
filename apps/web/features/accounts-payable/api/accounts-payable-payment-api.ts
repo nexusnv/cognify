@@ -12,34 +12,7 @@ import type {
   SupplierInvoicePaymentResponseData,
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
-
-function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit {
-  if (!tenantId) {
-    throw new Error("Missing active tenant context");
-  }
-
-  return {
-    headers: {
-      "X-Tenant-Id": tenantId,
-    },
-  };
-}
-
-function unwrapData<T>(response: { status: number; data?: unknown }, success = 200): T {
-  if (response.status !== success) {
-    throw response.data ?? response;
-  }
-
-  return (response.data as { data: T }).data;
-}
-
-function throwResponseData(error: unknown): never {
-  if (typeof error === "object" && error !== null && "data" in error) {
-    throw (error as { data: unknown }).data;
-  }
-
-  throw error;
-}
+import { withActiveTenantHeader, unwrapData, throwResponseData } from "./api-helpers";
 
 export async function placeInvoiceOnPaymentHold(
   invoiceId: string,

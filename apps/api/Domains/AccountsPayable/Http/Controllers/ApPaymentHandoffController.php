@@ -33,7 +33,7 @@ class ApPaymentHandoffController extends Controller
         $handoffs = ApPaymentHandoff::query()
             ->where('tenant_id', $tenant->id)
             ->with('invoices')
-            ->paginate(min((int) $request->input('perPage', 25), 100));
+            ->paginate(min(max((int) $request->input('perPage', 25), 1), 100));
 
         return response()->json([
             'data' => ApPaymentHandoffResource::collection($handoffs),
@@ -62,10 +62,16 @@ class ApPaymentHandoffController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $this->authorize('create', ApPaymentHandoff::class);
 
+        $invoiceIds = array_values(array_unique((array) $request->validated('invoiceIds')));
+
         $invoices = SupplierInvoice::query()
             ->where('tenant_id', $tenant->id)
-            ->whereIn('id', (array) $request->validated('invoiceIds'))
+            ->whereIn('id', $invoiceIds)
             ->get();
+
+        if ($invoices->count() !== count($invoiceIds)) {
+            abort(422, 'One or more invoices were not found or do not belong to the current tenant.');
+        }
 
         $handoff = $action->handle(
             $invoices->all(),

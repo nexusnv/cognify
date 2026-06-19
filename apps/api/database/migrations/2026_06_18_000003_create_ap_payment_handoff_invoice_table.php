@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignUuid('supplier_invoice_id')->constrained('supplier_invoices')->restrictOnDelete();
             $table->timestamps();
 
+            $table->index('tenant_id');
             $table->unique(['ap_payment_handoff_id', 'supplier_invoice_id']);
         });
     }

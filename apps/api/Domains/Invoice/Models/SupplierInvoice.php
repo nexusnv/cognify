@@ -193,6 +193,20 @@ class SupplierInvoice extends Model
                     throw new InvalidArgumentException('Supplier invoice approval instance must belong to the same tenant.');
                 }
             }
+
+            foreach (['payment_on_hold_by_user_id', 'payment_hold_released_by_user_id'] as $userColumn) {
+                if ($invoice->{$userColumn} !== null && $invoice->isDirty([$userColumn, 'tenant_id'])) {
+                    $belongsToTenant = User::query()
+                        ->whereKey($invoice->{$userColumn})
+                        ->whereHas('tenants', fn ($query) => $query->whereKey($invoice->tenant_id))
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Supplier invoice payment actor must belong to the same tenant.');
+                    }
+                }
+            }
         });
     }
 
@@ -271,6 +285,10 @@ class SupplierInvoice extends Model
             'ap_payment_handoff_invoice',
             'supplier_invoice_id',
             'ap_payment_handoff_id',
-        )->whereIn('status', [ApPaymentHandoffStatus::Draft, ApPaymentHandoffStatus::Ready, ApPaymentHandoffStatus::Exported]);
+        )
+            ->whereIn('status', [ApPaymentHandoffStatus::Draft, ApPaymentHandoffStatus::Ready, ApPaymentHandoffStatus::Exported])
+            ->wherePivot('tenant_id', $this->tenant_id)
+            ->where('ap_payment_handoffs.tenant_id', $this->tenant_id)
+            ->orderBy('ap_payment_handoffs.created_at', 'desc');
     }
 }

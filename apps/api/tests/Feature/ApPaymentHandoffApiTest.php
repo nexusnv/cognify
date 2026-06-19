@@ -82,12 +82,15 @@ class ApPaymentHandoffApiTest extends TestCase
         [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
         $invoice = $this->createPaymentEligibleInvoice($tenant, $buyer, 'MYR');
 
-        [$handoff] = $this->createDraftHandoff($tenant, $buyer, 1);
+        // Create a handoff that includes the same invoice so the second
+        // handoff attempt conflicts on active handoff membership.
+        $this->actingAsTenant($tenant, $buyer)
+            ->postJson('/api/ap-payment-handoffs', [
+                'invoiceIds' => [$invoice->id],
+            ])
+            ->assertCreated();
 
         $invoice->refresh();
-        app(HoldSupplierInvoicePayment::class)->handle(
-            $invoice, $buyer, $invoice->lock_version, 'Being processed in another handoff.'
-        );
 
         $this->actingAsTenant($tenant, $buyer)
             ->postJson('/api/ap-payment-handoffs', [
@@ -430,7 +433,6 @@ class ApPaymentHandoffApiTest extends TestCase
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
-        app(CurrentTenant::class)->set($tenant);
 
         return $this->withHeader('X-Tenant-Id', (string) $tenant->id);
     }

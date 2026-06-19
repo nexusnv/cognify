@@ -67,7 +67,12 @@ export function useApPaymentHandoff(handoffId: string | null | undefined) {
 
   return useQuery({
     queryKey: apPaymentHandoffKeys.detail(tenantId ?? "no-tenant", handoffId ?? "missing"),
-    queryFn: () => showPaymentHandoff(handoffId as string, tenantId),
+    queryFn: () => {
+      if (!handoffId) {
+        throw new Error("handoffId is required");
+      }
+      return showPaymentHandoff(handoffId, tenantId);
+    },
     enabled: Boolean(tenantId) && Boolean(handoffId),
   });
 }

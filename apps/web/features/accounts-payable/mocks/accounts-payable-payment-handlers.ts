@@ -270,7 +270,7 @@ export const accountsPayablePaymentHandlers = [
         currency,
         invoices: body.invoiceIds.map((id) => {
           const inv = paymentInvoices[id]!;
-          return { id, number: id, amount: inv.totalAmount };
+          return { id, number: inv.number, amount: inv.totalAmount };
         }),
       },
       readinessWarnings: [],
@@ -432,6 +432,7 @@ export const accountsPayablePaymentHandlers = [
       status: "ready",
       readyByUserId: "buyer-1",
       readyAt: now,
+      snapshot: { ...handoff.snapshot, lockedAt: now },
       lockVersion: handoff.lockVersion + 1,
       updatedAt: now,
     })!;

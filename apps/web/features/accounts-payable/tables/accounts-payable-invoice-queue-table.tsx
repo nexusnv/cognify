@@ -93,11 +93,13 @@ export function AccountsPayableInvoiceQueueTable({
   state,
   onSelect,
   errorTitle = "Invoice review queue unavailable",
+  showPaymentActions = false,
 }: {
   invoices: SupplierInvoiceQueueItem[];
   state: DataTableState;
   onSelect: (invoice: SupplierInvoiceQueueItem) => void;
   errorTitle?: string;
+  showPaymentActions?: boolean;
 }) {
   return (
     <DataTable
@@ -121,17 +123,17 @@ export function AccountsPayableInvoiceQueueTable({
               Review invoice
             </Button>
           )}
-          {invoice.paymentStatus === "payment_eligible" && (
+          {showPaymentActions && invoice.paymentStatus === "payment_eligible" && (
             <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
               Hold payment
             </Button>
           )}
-          {invoice.paymentStatus === "on_hold" && (
+          {showPaymentActions && invoice.paymentStatus === "on_hold" && (
             <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
               Release hold
             </Button>
           )}
-          {!invoice.paymentStatus && (
+          {showPaymentActions && !invoice.paymentStatus && (
             <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
               Retry induction
             </Button>

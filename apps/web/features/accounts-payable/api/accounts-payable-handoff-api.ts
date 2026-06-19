@@ -24,26 +24,7 @@ import type {
   UpdateApPaymentHandoffRequest,
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
-
-function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit {
-  if (!tenantId) {
-    throw new Error("Missing active tenant context");
-  }
-
-  return {
-    headers: {
-      "X-Tenant-Id": tenantId,
-    },
-  };
-}
-
-function throwResponseData(error: unknown): never {
-  if (typeof error === "object" && error !== null && "data" in error) {
-    throw (error as { data: unknown }).data;
-  }
-
-  throw error;
-}
+import { withActiveTenantHeader, throwResponseData } from "./api-helpers";
 
 /**
  * Unwrap a single-resource envelope (`{ data: <resource> }`) for a 2xx
@@ -55,6 +36,10 @@ function unwrapResource<T>(
 ): T {
   if (response.status !== success) {
     throw response.data ?? response;
+  }
+
+  if (typeof response.data !== 'object' || response.data === null || !('data' in response.data)) {
+    throw new Error(`Unexpected response shape: expected nested data envelope, got ${typeof response.data}`);
   }
 
   return (response.data as { data: T }).data;
@@ -72,7 +57,12 @@ export async function listPaymentHandoffs(
   const response = await listApPaymentHandoffs(params, withActiveTenantHeader(tenantId)).catch(
     throwResponseData,
   );
-  const body = unwrapResource<ApPaymentHandoff[]>(response) as unknown as ApPaymentHandoffListResponse;
+
+  if (typeof response.data !== 'object' || response.data === null) {
+    throw new Error(`Unexpected response shape: expected object, got ${typeof response.data}`);
+  }
+
+  const body = response.data as ApPaymentHandoffListResponse;
 
   return { handoffs: body.data, meta: body.meta };
 }
@@ -158,9 +148,26 @@ export async function cancelPaymentHandoff(
 }
 
 export type ApPaymentHandoffJsonExport = {
-  exportedAt?: unknown;
+  exportedAt?: string;
   format?: string;
-  handoff?: unknown;
+  handoff?: {
+    id?: string;
+    number?: string;
+    status?: string;
+    currency?: string;
+    totalAmount?: string;
+    effectivePaymentDate?: string | null;
+    notes?: string | null;
+    remittanceReference?: string | null;
+    invoices?: Array<{
+      id?: string;
+      number?: string;
+      invoiceNumber?: string;
+      totalAmount?: string | null;
+      dueDate?: string | null;
+      currency?: string;
+    }>;
+  };
 };
 
 export async function exportPaymentHandoffJson(

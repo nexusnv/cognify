@@ -13,7 +13,10 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RemoveApPaymentHandoffInvoice
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder) {}
+    public function __construct(
+        private readonly AuditRecorder $auditRecorder,
+        private readonly BuildApPaymentHandoffSnapshot $buildSnapshot,
+    ) {}
 
     public function handle(ApPaymentHandoff $handoff, SupplierInvoice $invoice, User $actor, int $lockVersion): ApPaymentHandoff
     {
@@ -29,15 +32,27 @@ class RemoveApPaymentHandoffInvoice
 
             $handoff->assertLockVersion($lockVersion);
 
-            $handoff->invoices()->detach($invoice->id);
+            $detachCount = $handoff->invoices()->detach($invoice->id);
 
-            $remainingInvoices = $handoff->invoices()->get();
+            if ($detachCount === 0) {
+                throw new ConflictHttpException('Invoice is not attached to this AP payment handoff.');
+            }
+
+            $remainingInvoices = $handoff->invoices()->with(['vendor'])->lockForUpdate()->get();
             $totalAmount = $remainingInvoices->sum(fn ($inv) => (float) ($inv->total_amount ?? 0));
 
-            $before = $handoff->only(['total_amount', 'lock_version']);
+            $snapshotData = $this->buildSnapshot->handle($remainingInvoices, [
+                'currency' => $handoff->currency,
+                'totalAmount' => (string) $totalAmount,
+                'invoiceCount' => $remainingInvoices->count(),
+            ]);
+
+            $before = $handoff->only(['total_amount', 'snapshot', 'readiness_warnings', 'lock_version']);
 
             $handoff->forceFill([
                 'total_amount' => $totalAmount,
+                'snapshot' => $snapshotData->toArray(),
+                'readiness_warnings' => $snapshotData->readinessWarnings,
                 'lock_version' => $handoff->lock_version + 1,
             ])->save();
 

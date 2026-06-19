@@ -37,22 +37,22 @@ class ApPaymentHandoffResource extends JsonResource
             'snapshot' => $this->snapshot,
             'readinessWarnings' => $this->readiness_warnings,
             'createdBy' => $this->whenLoaded('createdByUser', fn() => [
-                'id' => (string) $this->createdByUser?->id,
+                'id' => $this->createdByUser?->id !== null ? (string) $this->createdByUser->id : null,
                 'name' => $this->createdByUser?->name,
             ]),
             'readyBy' => $this->whenLoaded('readyByUser', fn() => [
-                'id' => (string) $this->readyByUser?->id,
+                'id' => $this->readyByUser?->id !== null ? (string) $this->readyByUser->id : null,
                 'name' => $this->readyByUser?->name,
             ]),
             'readyAt' => $this->ready_at?->toISOString(),
             'cancelledBy' => $this->whenLoaded('cancelledByUser', fn() => [
-                'id' => (string) $this->cancelledByUser?->id,
+                'id' => $this->cancelledByUser?->id !== null ? (string) $this->cancelledByUser->id : null,
                 'name' => $this->cancelledByUser?->name,
             ]),
             'cancelledAt' => $this->cancelled_at?->toISOString(),
             'cancelledReason' => $this->cancelled_reason,
             'lastExportedBy' => $this->whenLoaded('lastExportedByUser', fn() => [
-                'id' => (string) $this->lastExportedByUser?->id,
+                'id' => $this->lastExportedByUser?->id !== null ? (string) $this->lastExportedByUser->id : null,
                 'name' => $this->lastExportedByUser?->name,
             ]),
             'lastExportedAt' => $this->last_exported_at?->toISOString(),

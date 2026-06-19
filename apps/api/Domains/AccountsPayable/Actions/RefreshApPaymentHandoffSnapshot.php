@@ -41,7 +41,7 @@ class RefreshApPaymentHandoffSnapshot
                 $handoff->assertLockVersion($lockVersion);
             }
 
-            $invoices = $handoff->invoices()->with(['vendor'])->get();
+            $invoices = $handoff->invoices()->with(['vendor'])->lockForUpdate()->get();
 
             $snapshotData = $this->buildSnapshot->handle($invoices, [
                 'currency' => $handoff->currency,

@@ -29,6 +29,10 @@ class EvaluatePaymentReadiness
                 return;
             }
 
+            if ($invoice->payment_status === SupplierInvoicePaymentStatus::PaymentEligible) {
+                return;
+            }
+
             if ($invoice->payment_status === SupplierInvoicePaymentStatus::OnHold) {
                 return;
             }

@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
 
 class RetrySupplierInvoicePayment
@@ -28,6 +29,14 @@ class RetrySupplierInvoicePayment
                 return;
             }
 
+            if ($invoice->statusState() !== SupplierInvoiceStatus::Approved) {
+                return;
+            }
+
+            if ($invoice->payment_status === SupplierInvoicePaymentStatus::PaymentEligible) {
+                return;
+            }
+
             $invoice->loadMissing('exceptions');
             $hasUnresolvedExceptions = $invoice->exceptions->contains(fn ($e) => $e->resolved_at === null);
 
@@ -43,6 +52,7 @@ class RetrySupplierInvoicePayment
 
             $invoice->forceFill([
                 'payment_status' => SupplierInvoicePaymentStatus::PaymentEligible,
+                'payment_eligible_at' => now(),
                 'payment_on_hold_by_user_id' => null,
                 'payment_on_hold_at' => null,
                 'payment_on_hold_reason' => null,

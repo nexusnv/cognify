@@ -94,7 +94,8 @@ class ExportApPaymentHandoff
      */
     private function jsonPayload(ApPaymentHandoff $handoff): array
     {
-        $invoices = $handoff->invoices()->get();
+        $snapshot = $handoff->snapshot;
+        $snapshotInvoices = isset($snapshot['invoices']) && is_array($snapshot['invoices']) ? $snapshot['invoices'] : [];
 
         return [
             'format' => 'json',
@@ -108,14 +109,15 @@ class ExportApPaymentHandoff
                 'effectivePaymentDate' => $handoff->effective_payment_date?->toDateString(),
                 'notes' => $handoff->notes,
                 'remittanceReference' => $handoff->remittance_reference,
-                'invoices' => $invoices->map(fn ($invoice) => [
-                    'id' => (string) $invoice->id,
-                    'number' => $invoice->number,
-                    'invoiceNumber' => $invoice->invoice_number,
-                    'totalAmount' => $invoice->total_amount !== null ? (string) $invoice->total_amount : null,
-                    'dueDate' => $invoice->due_date?->toDateString(),
-                    'currency' => $invoice->currency,
-                ])->all(),
+                'invoices' => array_map(fn (array $snapInv) => [
+                    'id' => (string) ($snapInv['id'] ?? ''),
+                    'number' => (string) ($snapInv['number'] ?? ''),
+                    'invoiceNumber' => (string) ($snapInv['invoiceNumber'] ?? ''),
+                    'totalAmount' => isset($snapInv['totalAmount']) ? (string) $snapInv['totalAmount'] : null,
+                    'dueDate' => $snapInv['dueDate'] ?? null,
+                    'currency' => (string) ($snapInv['currency'] ?? ''),
+                    'vendorId' => (string) ($snapInv['vendorId'] ?? ''),
+                ], $snapshotInvoices),
             ],
         ];
     }
@@ -130,9 +132,10 @@ class ExportApPaymentHandoff
 
         fputcsv($stream, self::CSV_HEADERS);
 
-        $invoices = $handoff->invoices()->get();
+        $snapshot = $handoff->snapshot;
+        $snapshotInvoices = isset($snapshot['invoices']) && is_array($snapshot['invoices']) ? $snapshot['invoices'] : [];
 
-        foreach ($invoices as $invoice) {
+        foreach ($snapshotInvoices as $snapInv) {
             fputcsv($stream, [
                 $handoff->number,
                 $handoff->statusState()->value,
@@ -141,12 +144,12 @@ class ExportApPaymentHandoff
                 $handoff->total_amount !== null ? (string) $handoff->total_amount : null,
                 $handoff->notes,
                 $handoff->remittance_reference,
-                $invoice->number,
-                $invoice->invoice_number,
-                $invoice->total_amount !== null ? (string) $invoice->total_amount : null,
-                $invoice->due_date?->toDateString(),
-                $invoice->currency,
-                (string) $invoice->vendor_id,
+                (string) ($snapInv['number'] ?? ''),
+                (string) ($snapInv['invoiceNumber'] ?? ''),
+                isset($snapInv['totalAmount']) ? (string) $snapInv['totalAmount'] : null,
+                $snapInv['dueDate'] ?? null,
+                (string) ($snapInv['currency'] ?? ''),
+                (string) ($snapInv['vendorId'] ?? ''),
                 $handoff->created_at?->toISOString(),
             ]);
         }
