@@ -25,6 +25,8 @@ import type { SupplierInvoicePermissions } from "./supplierInvoicePermissions";
 import type { SupplierInvoiceMatchingStatus } from "./supplierInvoiceMatchingStatus";
 import type { SupplierInvoiceMatchSummary } from "./supplierInvoiceMatchSummary";
 import type { SupplierInvoiceExceptionSummary } from "./supplierInvoiceExceptionSummary";
+import type { SupplierInvoicePaymentStatus } from "./supplierInvoicePaymentStatus";
+import type { SupplierInvoicePaymentEligibleAt } from "./supplierInvoicePaymentEligibleAt";
 
 export interface SupplierInvoice {
   id: string;
@@ -94,4 +96,6 @@ export interface SupplierInvoice {
   stpEligible?: boolean | null;
   /** @nullable */
   stpProcessedAt?: string | null;
+  paymentStatus: SupplierInvoicePaymentStatus;
+  paymentEligibleAt?: SupplierInvoicePaymentEligibleAt;
 }

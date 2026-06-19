@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1 --port 8880",
+    "dev": "next dev --hostname ${COGNIFY_WEB_HOST:-127.0.0.1} --port ${COGNIFY_WEB_PORT:-8880}",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -8,6 +8,8 @@ import type {
   AcknowledgePurchaseOrderRequest,
   AddFulfillmentTrackingEventRequest,
   AmbiguousTenantResponse,
+  ApPaymentHandoffListResponse,
+  ApPaymentHandoffResponse,
   ApplyRequisitionTemplateRequest,
   ApprovalDelegationCandidateListResponse,
   ApprovalDelegationListResponse,
@@ -27,6 +29,7 @@ import type {
   AttachmentResponse,
   AttachmentUploadRequest,
   AuditEventListResponse,
+  CancelApPaymentHandoffRequest,
   CancelPurchaseOrderChangeOrderRequest,
   CancelPurchaseOrderRequest,
   CancelPurchaseOrderRequestHandoffRequest,
@@ -40,6 +43,7 @@ import type {
   ConfirmGoodsReceiptRequest,
   ConfirmGoodsReceiptRequester200,
   ConflictResponse,
+  CreateApPaymentHandoffRequest,
   CreateCollaborationCommentRequest,
   CreatePurchaseOrderShipment201,
   CreateQuotationRevisionRequest,
@@ -51,6 +55,7 @@ import type {
   CurrentUserResponse,
   DelegateApprovalTaskRequest,
   EscalateInvoiceExceptionRequest,
+  ExportApPaymentHandoffJson200,
   ForbiddenResponse,
   ForgotPasswordRequest,
   HealthResponse,
@@ -58,6 +63,7 @@ import type {
   IssuePurchaseOrderRequest,
   IssuedPurchaseOrderExport,
   LinkProjectRequisitionRequest,
+  ListApPaymentHandoffsParams,
   ListApprovalTasksParams,
   ListAuditEventsParams,
   ListGlobalSearchParams,
@@ -77,11 +83,18 @@ import type {
   ListVendorsParams,
   LoginRequest,
   MarkAllNotificationsReadResponse,
+  MarkApPaymentHandoffReadyRequest,
   MarkPurchaseOrderReadyForReviewRequest,
   MarkPurchaseOrderRequestHandoffReadyRequest,
   NotFoundResponse,
   NotificationListResponse,
   NotificationResponse,
+  PlaceInvoiceOnHoldRequest,
+  PlaceSupplierInvoiceOnPaymentHold400,
+  PlaceSupplierInvoiceOnPaymentHold403,
+  PlaceSupplierInvoiceOnPaymentHold404,
+  PlaceSupplierInvoiceOnPaymentHold409,
+  PlaceSupplierInvoiceOnPaymentHold422,
   PreviewApprovalPolicyRequest,
   ProcurementCalendarEventCollectionResponse,
   ProcurementProjectListResponse,
@@ -108,9 +121,17 @@ import type {
   QuotationVersionListResponse,
   QuotationVersionResponse,
   ReasonedRequisitionActionRequest,
+  RecordApPaymentHandoffJsonExport200,
   RecordGoodsReceipt201,
   RecordGoodsReceiptRequest,
+  RefreshApPaymentHandoffSnapshotRequest,
   RejectApprovalTaskRequest,
+  ReleaseInvoiceHoldRequest,
+  ReleaseSupplierInvoicePaymentHold400,
+  ReleaseSupplierInvoicePaymentHold403,
+  ReleaseSupplierInvoicePaymentHold404,
+  ReleaseSupplierInvoicePaymentHold409,
+  ReleaseSupplierInvoicePaymentHold422,
   RequestApprovalChangesRequest,
   RequestRequisitionChangesRequest,
   RequisitionIntakeOptionsResponse,
@@ -119,6 +140,12 @@ import type {
   RequisitionResponse,
   RequisitionTemplateListResponse,
   ResolveInvoiceExceptionRequest,
+  RetryPaymentInductionRequest,
+  RetrySupplierInvoicePaymentInduction400,
+  RetrySupplierInvoicePaymentInduction403,
+  RetrySupplierInvoicePaymentInduction404,
+  RetrySupplierInvoicePaymentInduction409,
+  RetrySupplierInvoicePaymentInduction422,
   RfqAwardApprovalPreviewResponse,
   RfqAwardApprovalRouteResponse,
   RfqAwardRecommendationApprovalSummaryResponse,
@@ -166,6 +193,7 @@ import type {
   SupplierInvoiceListResponse,
   SupplierInvoiceMatchResultListResponse,
   SupplierInvoiceNeedsInformationRequest,
+  SupplierInvoicePaymentResponseData,
   SupplierInvoiceQueueResponse,
   SupplierInvoiceResponse,
   SupplierInvoiceStartReviewRequest,
@@ -174,6 +202,7 @@ import type {
   TransitionProcurementProjectRequest,
   UnauthenticatedResponse,
   UnauthorizedResponse,
+  UpdateApPaymentHandoffRequest,
   UpdateApprovalPolicyRequest,
   UpdateCurrentUserProfileRequest,
   UpdateProcurementProjectRequest,
@@ -12262,6 +12291,803 @@ export const submitSupplierInvoiceApproval = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(submitSupplierInvoiceApprovalRequest),
+    },
+  );
+};
+
+/**
+ * @summary List AP payment handoffs
+ */
+export type listApPaymentHandoffsResponse200 = {
+  data: ApPaymentHandoffListResponse;
+  status: 200;
+};
+
+export type listApPaymentHandoffsResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type listApPaymentHandoffsResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type listApPaymentHandoffsResponseSuccess = listApPaymentHandoffsResponse200 & {
+  headers: Headers;
+};
+export type listApPaymentHandoffsResponseError = (
+  | listApPaymentHandoffsResponse401
+  | listApPaymentHandoffsResponse403
+) & {
+  headers: Headers;
+};
+
+export type listApPaymentHandoffsResponse =
+  | listApPaymentHandoffsResponseSuccess
+  | listApPaymentHandoffsResponseError;
+
+export const getListApPaymentHandoffsUrl = (params?: ListApPaymentHandoffsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/ap-payment-handoffs?${stringifiedParams}`
+    : `/api/ap-payment-handoffs`;
+};
+
+export const listApPaymentHandoffs = async (
+  params?: ListApPaymentHandoffsParams,
+  options?: RequestInit,
+): Promise<listApPaymentHandoffsResponse> => {
+  return cognifyFetch<listApPaymentHandoffsResponse>(getListApPaymentHandoffsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Create AP payment handoff
+ */
+export type createApPaymentHandoffResponse201 = {
+  data: ApPaymentHandoffResponse;
+  status: 201;
+};
+
+export type createApPaymentHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type createApPaymentHandoffResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type createApPaymentHandoffResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type createApPaymentHandoffResponseSuccess = createApPaymentHandoffResponse201 & {
+  headers: Headers;
+};
+export type createApPaymentHandoffResponseError = (
+  | createApPaymentHandoffResponse401
+  | createApPaymentHandoffResponse403
+  | createApPaymentHandoffResponse422
+) & {
+  headers: Headers;
+};
+
+export type createApPaymentHandoffResponse =
+  | createApPaymentHandoffResponseSuccess
+  | createApPaymentHandoffResponseError;
+
+export const getCreateApPaymentHandoffUrl = () => {
+  return `/api/ap-payment-handoffs`;
+};
+
+export const createApPaymentHandoff = async (
+  createApPaymentHandoffRequest: CreateApPaymentHandoffRequest,
+  options?: RequestInit,
+): Promise<createApPaymentHandoffResponse> => {
+  return cognifyFetch<createApPaymentHandoffResponse>(getCreateApPaymentHandoffUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createApPaymentHandoffRequest),
+  });
+};
+
+/**
+ * @summary Show AP payment handoff
+ */
+export type showApPaymentHandoffResponse200 = {
+  data: ApPaymentHandoffResponse;
+  status: 200;
+};
+
+export type showApPaymentHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type showApPaymentHandoffResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type showApPaymentHandoffResponseSuccess = showApPaymentHandoffResponse200 & {
+  headers: Headers;
+};
+export type showApPaymentHandoffResponseError = (
+  | showApPaymentHandoffResponse401
+  | showApPaymentHandoffResponse403
+) & {
+  headers: Headers;
+};
+
+export type showApPaymentHandoffResponse =
+  | showApPaymentHandoffResponseSuccess
+  | showApPaymentHandoffResponseError;
+
+export const getShowApPaymentHandoffUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}`;
+};
+
+export const showApPaymentHandoff = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<showApPaymentHandoffResponse> => {
+  return cognifyFetch<showApPaymentHandoffResponse>(getShowApPaymentHandoffUrl(handoff), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Update AP payment handoff
+ */
+export type updateApPaymentHandoffResponse200 = {
+  data: ApPaymentHandoffResponse;
+  status: 200;
+};
+
+export type updateApPaymentHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type updateApPaymentHandoffResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type updateApPaymentHandoffResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type updateApPaymentHandoffResponseSuccess = updateApPaymentHandoffResponse200 & {
+  headers: Headers;
+};
+export type updateApPaymentHandoffResponseError = (
+  | updateApPaymentHandoffResponse401
+  | updateApPaymentHandoffResponse403
+  | updateApPaymentHandoffResponse422
+) & {
+  headers: Headers;
+};
+
+export type updateApPaymentHandoffResponse =
+  | updateApPaymentHandoffResponseSuccess
+  | updateApPaymentHandoffResponseError;
+
+export const getUpdateApPaymentHandoffUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}`;
+};
+
+export const updateApPaymentHandoff = async (
+  handoff: string,
+  updateApPaymentHandoffRequest: UpdateApPaymentHandoffRequest,
+  options?: RequestInit,
+): Promise<updateApPaymentHandoffResponse> => {
+  return cognifyFetch<updateApPaymentHandoffResponse>(getUpdateApPaymentHandoffUrl(handoff), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateApPaymentHandoffRequest),
+  });
+};
+
+/**
+ * @summary Mark AP payment handoff ready
+ */
+export type markApPaymentHandoffReadyResponse200 = {
+  data: ApPaymentHandoffResponse;
+  status: 200;
+};
+
+export type markApPaymentHandoffReadyResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type markApPaymentHandoffReadyResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type markApPaymentHandoffReadyResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type markApPaymentHandoffReadyResponseSuccess = markApPaymentHandoffReadyResponse200 & {
+  headers: Headers;
+};
+export type markApPaymentHandoffReadyResponseError = (
+  | markApPaymentHandoffReadyResponse401
+  | markApPaymentHandoffReadyResponse403
+  | markApPaymentHandoffReadyResponse422
+) & {
+  headers: Headers;
+};
+
+export type markApPaymentHandoffReadyResponse =
+  | markApPaymentHandoffReadyResponseSuccess
+  | markApPaymentHandoffReadyResponseError;
+
+export const getMarkApPaymentHandoffReadyUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/ready`;
+};
+
+export const markApPaymentHandoffReady = async (
+  handoff: string,
+  markApPaymentHandoffReadyRequest: MarkApPaymentHandoffReadyRequest,
+  options?: RequestInit,
+): Promise<markApPaymentHandoffReadyResponse> => {
+  return cognifyFetch<markApPaymentHandoffReadyResponse>(getMarkApPaymentHandoffReadyUrl(handoff), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(markApPaymentHandoffReadyRequest),
+  });
+};
+
+/**
+ * Rebuilds a draft handoff's snapshot from live invoice data. Only allowed while the handoff is in draft status.
+ * @summary Refresh AP payment handoff snapshot
+ */
+export type refreshApPaymentHandoffSnapshotResponse200 = {
+  data: ApPaymentHandoffResponse;
+  status: 200;
+};
+
+export type refreshApPaymentHandoffSnapshotResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type refreshApPaymentHandoffSnapshotResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type refreshApPaymentHandoffSnapshotResponse409 = {
+  data: ConflictResponse;
+  status: 409;
+};
+
+export type refreshApPaymentHandoffSnapshotResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type refreshApPaymentHandoffSnapshotResponseSuccess =
+  refreshApPaymentHandoffSnapshotResponse200 & {
+    headers: Headers;
+  };
+export type refreshApPaymentHandoffSnapshotResponseError = (
+  | refreshApPaymentHandoffSnapshotResponse401
+  | refreshApPaymentHandoffSnapshotResponse403
+  | refreshApPaymentHandoffSnapshotResponse409
+  | refreshApPaymentHandoffSnapshotResponse422
+) & {
+  headers: Headers;
+};
+
+export type refreshApPaymentHandoffSnapshotResponse =
+  | refreshApPaymentHandoffSnapshotResponseSuccess
+  | refreshApPaymentHandoffSnapshotResponseError;
+
+export const getRefreshApPaymentHandoffSnapshotUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/refresh`;
+};
+
+export const refreshApPaymentHandoffSnapshot = async (
+  handoff: string,
+  refreshApPaymentHandoffSnapshotRequest?: RefreshApPaymentHandoffSnapshotRequest,
+  options?: RequestInit,
+): Promise<refreshApPaymentHandoffSnapshotResponse> => {
+  return cognifyFetch<refreshApPaymentHandoffSnapshotResponse>(
+    getRefreshApPaymentHandoffSnapshotUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(refreshApPaymentHandoffSnapshotRequest),
+    },
+  );
+};
+
+/**
+ * @summary Cancel AP payment handoff
+ */
+export type cancelApPaymentHandoffResponse200 = {
+  data: ApPaymentHandoffResponse;
+  status: 200;
+};
+
+export type cancelApPaymentHandoffResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type cancelApPaymentHandoffResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type cancelApPaymentHandoffResponse422 = {
+  data: ValidationFailedResponse;
+  status: 422;
+};
+
+export type cancelApPaymentHandoffResponseSuccess = cancelApPaymentHandoffResponse200 & {
+  headers: Headers;
+};
+export type cancelApPaymentHandoffResponseError = (
+  | cancelApPaymentHandoffResponse401
+  | cancelApPaymentHandoffResponse403
+  | cancelApPaymentHandoffResponse422
+) & {
+  headers: Headers;
+};
+
+export type cancelApPaymentHandoffResponse =
+  | cancelApPaymentHandoffResponseSuccess
+  | cancelApPaymentHandoffResponseError;
+
+export const getCancelApPaymentHandoffUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/cancel`;
+};
+
+export const cancelApPaymentHandoff = async (
+  handoff: string,
+  cancelApPaymentHandoffRequest: CancelApPaymentHandoffRequest,
+  options?: RequestInit,
+): Promise<cancelApPaymentHandoffResponse> => {
+  return cognifyFetch<cancelApPaymentHandoffResponse>(getCancelApPaymentHandoffUrl(handoff), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(cancelApPaymentHandoffRequest),
+  });
+};
+
+/**
+ * @summary Export AP payment handoff as JSON
+ */
+export type exportApPaymentHandoffJsonResponse200 = {
+  data: ExportApPaymentHandoffJson200;
+  status: 200;
+};
+
+export type exportApPaymentHandoffJsonResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type exportApPaymentHandoffJsonResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type exportApPaymentHandoffJsonResponseSuccess = exportApPaymentHandoffJsonResponse200 & {
+  headers: Headers;
+};
+export type exportApPaymentHandoffJsonResponseError = (
+  | exportApPaymentHandoffJsonResponse401
+  | exportApPaymentHandoffJsonResponse403
+) & {
+  headers: Headers;
+};
+
+export type exportApPaymentHandoffJsonResponse =
+  | exportApPaymentHandoffJsonResponseSuccess
+  | exportApPaymentHandoffJsonResponseError;
+
+export const getExportApPaymentHandoffJsonUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/export.json`;
+};
+
+export const exportApPaymentHandoffJson = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<exportApPaymentHandoffJsonResponse> => {
+  return cognifyFetch<exportApPaymentHandoffJsonResponse>(
+    getExportApPaymentHandoffJsonUrl(handoff),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Record AP payment handoff JSON export
+ */
+export type recordApPaymentHandoffJsonExportResponse200 = {
+  data: RecordApPaymentHandoffJsonExport200;
+  status: 200;
+};
+
+export type recordApPaymentHandoffJsonExportResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordApPaymentHandoffJsonExportResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type recordApPaymentHandoffJsonExportResponseSuccess =
+  recordApPaymentHandoffJsonExportResponse200 & {
+    headers: Headers;
+  };
+export type recordApPaymentHandoffJsonExportResponseError = (
+  | recordApPaymentHandoffJsonExportResponse401
+  | recordApPaymentHandoffJsonExportResponse403
+) & {
+  headers: Headers;
+};
+
+export type recordApPaymentHandoffJsonExportResponse =
+  | recordApPaymentHandoffJsonExportResponseSuccess
+  | recordApPaymentHandoffJsonExportResponseError;
+
+export const getRecordApPaymentHandoffJsonExportUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/export.json`;
+};
+
+export const recordApPaymentHandoffJsonExport = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<recordApPaymentHandoffJsonExportResponse> => {
+  return cognifyFetch<recordApPaymentHandoffJsonExportResponse>(
+    getRecordApPaymentHandoffJsonExportUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Export AP payment handoff as CSV
+ */
+export type exportApPaymentHandoffCsvResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type exportApPaymentHandoffCsvResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type exportApPaymentHandoffCsvResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type exportApPaymentHandoffCsvResponseSuccess = exportApPaymentHandoffCsvResponse200 & {
+  headers: Headers;
+};
+export type exportApPaymentHandoffCsvResponseError = (
+  | exportApPaymentHandoffCsvResponse401
+  | exportApPaymentHandoffCsvResponse403
+) & {
+  headers: Headers;
+};
+
+export type exportApPaymentHandoffCsvResponse =
+  | exportApPaymentHandoffCsvResponseSuccess
+  | exportApPaymentHandoffCsvResponseError;
+
+export const getExportApPaymentHandoffCsvUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/export.csv`;
+};
+
+export const exportApPaymentHandoffCsv = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<exportApPaymentHandoffCsvResponse> => {
+  return cognifyFetch<exportApPaymentHandoffCsvResponse>(getExportApPaymentHandoffCsvUrl(handoff), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Record AP payment handoff CSV export
+ */
+export type recordApPaymentHandoffCsvExportResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type recordApPaymentHandoffCsvExportResponse401 = {
+  data: UnauthenticatedResponse;
+  status: 401;
+};
+
+export type recordApPaymentHandoffCsvExportResponse403 = {
+  data: UnauthorizedResponse;
+  status: 403;
+};
+
+export type recordApPaymentHandoffCsvExportResponseSuccess =
+  recordApPaymentHandoffCsvExportResponse200 & {
+    headers: Headers;
+  };
+export type recordApPaymentHandoffCsvExportResponseError = (
+  | recordApPaymentHandoffCsvExportResponse401
+  | recordApPaymentHandoffCsvExportResponse403
+) & {
+  headers: Headers;
+};
+
+export type recordApPaymentHandoffCsvExportResponse =
+  | recordApPaymentHandoffCsvExportResponseSuccess
+  | recordApPaymentHandoffCsvExportResponseError;
+
+export const getRecordApPaymentHandoffCsvExportUrl = (handoff: string) => {
+  return `/api/ap-payment-handoffs/${handoff}/export.csv`;
+};
+
+export const recordApPaymentHandoffCsvExport = async (
+  handoff: string,
+  options?: RequestInit,
+): Promise<recordApPaymentHandoffCsvExportResponse> => {
+  return cognifyFetch<recordApPaymentHandoffCsvExportResponse>(
+    getRecordApPaymentHandoffCsvExportUrl(handoff),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+/**
+ * @summary Place supplier invoice on payment hold
+ */
+export type placeSupplierInvoiceOnPaymentHoldResponse200 = {
+  data: SupplierInvoicePaymentResponseData;
+  status: 200;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponse400 = {
+  data: PlaceSupplierInvoiceOnPaymentHold400;
+  status: 400;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponse403 = {
+  data: PlaceSupplierInvoiceOnPaymentHold403;
+  status: 403;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponse404 = {
+  data: PlaceSupplierInvoiceOnPaymentHold404;
+  status: 404;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponse409 = {
+  data: PlaceSupplierInvoiceOnPaymentHold409;
+  status: 409;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponse422 = {
+  data: PlaceSupplierInvoiceOnPaymentHold422;
+  status: 422;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponseSuccess =
+  placeSupplierInvoiceOnPaymentHoldResponse200 & {
+    headers: Headers;
+  };
+export type placeSupplierInvoiceOnPaymentHoldResponseError = (
+  | placeSupplierInvoiceOnPaymentHoldResponse400
+  | placeSupplierInvoiceOnPaymentHoldResponse403
+  | placeSupplierInvoiceOnPaymentHoldResponse404
+  | placeSupplierInvoiceOnPaymentHoldResponse409
+  | placeSupplierInvoiceOnPaymentHoldResponse422
+) & {
+  headers: Headers;
+};
+
+export type placeSupplierInvoiceOnPaymentHoldResponse =
+  | placeSupplierInvoiceOnPaymentHoldResponseSuccess
+  | placeSupplierInvoiceOnPaymentHoldResponseError;
+
+export const getPlaceSupplierInvoiceOnPaymentHoldUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/place-hold`;
+};
+
+export const placeSupplierInvoiceOnPaymentHold = async (
+  supplierInvoice: string,
+  placeInvoiceOnHoldRequest: PlaceInvoiceOnHoldRequest,
+  options?: RequestInit,
+): Promise<placeSupplierInvoiceOnPaymentHoldResponse> => {
+  return cognifyFetch<placeSupplierInvoiceOnPaymentHoldResponse>(
+    getPlaceSupplierInvoiceOnPaymentHoldUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(placeInvoiceOnHoldRequest),
+    },
+  );
+};
+
+/**
+ * @summary Release supplier invoice payment hold
+ */
+export type releaseSupplierInvoicePaymentHoldResponse200 = {
+  data: SupplierInvoicePaymentResponseData;
+  status: 200;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponse400 = {
+  data: ReleaseSupplierInvoicePaymentHold400;
+  status: 400;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponse403 = {
+  data: ReleaseSupplierInvoicePaymentHold403;
+  status: 403;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponse404 = {
+  data: ReleaseSupplierInvoicePaymentHold404;
+  status: 404;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponse409 = {
+  data: ReleaseSupplierInvoicePaymentHold409;
+  status: 409;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponse422 = {
+  data: ReleaseSupplierInvoicePaymentHold422;
+  status: 422;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponseSuccess =
+  releaseSupplierInvoicePaymentHoldResponse200 & {
+    headers: Headers;
+  };
+export type releaseSupplierInvoicePaymentHoldResponseError = (
+  | releaseSupplierInvoicePaymentHoldResponse400
+  | releaseSupplierInvoicePaymentHoldResponse403
+  | releaseSupplierInvoicePaymentHoldResponse404
+  | releaseSupplierInvoicePaymentHoldResponse409
+  | releaseSupplierInvoicePaymentHoldResponse422
+) & {
+  headers: Headers;
+};
+
+export type releaseSupplierInvoicePaymentHoldResponse =
+  | releaseSupplierInvoicePaymentHoldResponseSuccess
+  | releaseSupplierInvoicePaymentHoldResponseError;
+
+export const getReleaseSupplierInvoicePaymentHoldUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/release-hold`;
+};
+
+export const releaseSupplierInvoicePaymentHold = async (
+  supplierInvoice: string,
+  releaseInvoiceHoldRequest: ReleaseInvoiceHoldRequest,
+  options?: RequestInit,
+): Promise<releaseSupplierInvoicePaymentHoldResponse> => {
+  return cognifyFetch<releaseSupplierInvoicePaymentHoldResponse>(
+    getReleaseSupplierInvoicePaymentHoldUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(releaseInvoiceHoldRequest),
+    },
+  );
+};
+
+/**
+ * @summary Retry supplier invoice payment induction
+ */
+export type retrySupplierInvoicePaymentInductionResponse200 = {
+  data: SupplierInvoicePaymentResponseData;
+  status: 200;
+};
+
+export type retrySupplierInvoicePaymentInductionResponse400 = {
+  data: RetrySupplierInvoicePaymentInduction400;
+  status: 400;
+};
+
+export type retrySupplierInvoicePaymentInductionResponse403 = {
+  data: RetrySupplierInvoicePaymentInduction403;
+  status: 403;
+};
+
+export type retrySupplierInvoicePaymentInductionResponse404 = {
+  data: RetrySupplierInvoicePaymentInduction404;
+  status: 404;
+};
+
+export type retrySupplierInvoicePaymentInductionResponse409 = {
+  data: RetrySupplierInvoicePaymentInduction409;
+  status: 409;
+};
+
+export type retrySupplierInvoicePaymentInductionResponse422 = {
+  data: RetrySupplierInvoicePaymentInduction422;
+  status: 422;
+};
+
+export type retrySupplierInvoicePaymentInductionResponseSuccess =
+  retrySupplierInvoicePaymentInductionResponse200 & {
+    headers: Headers;
+  };
+export type retrySupplierInvoicePaymentInductionResponseError = (
+  | retrySupplierInvoicePaymentInductionResponse400
+  | retrySupplierInvoicePaymentInductionResponse403
+  | retrySupplierInvoicePaymentInductionResponse404
+  | retrySupplierInvoicePaymentInductionResponse409
+  | retrySupplierInvoicePaymentInductionResponse422
+) & {
+  headers: Headers;
+};
+
+export type retrySupplierInvoicePaymentInductionResponse =
+  | retrySupplierInvoicePaymentInductionResponseSuccess
+  | retrySupplierInvoicePaymentInductionResponseError;
+
+export const getRetrySupplierInvoicePaymentInductionUrl = (supplierInvoice: string) => {
+  return `/api/supplier-invoices/${supplierInvoice}/retry-payment-induction`;
+};
+
+export const retrySupplierInvoicePaymentInduction = async (
+  supplierInvoice: string,
+  retryPaymentInductionRequest: RetryPaymentInductionRequest,
+  options?: RequestInit,
+): Promise<retrySupplierInvoicePaymentInductionResponse> => {
+  return cognifyFetch<retrySupplierInvoicePaymentInductionResponse>(
+    getRetrySupplierInvoicePaymentInductionUrl(supplierInvoice),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(retryPaymentInductionRequest),
     },
   );
 };

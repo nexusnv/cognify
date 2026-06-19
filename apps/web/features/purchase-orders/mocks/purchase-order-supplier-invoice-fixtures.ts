@@ -54,6 +54,7 @@ export function buildSupplierInvoiceFixture(overrides: Partial<SupplierInvoice> 
       canReview: true,
     },
     lockVersion: 1,
+    paymentStatus: null,
     lines: [
       {
         id: `supplier-invoice-line-${sequence}`,

@@ -17,7 +17,7 @@ const needsInformationChecklist: SupplierInvoiceReviewChecklist = {
   attachment: { status: "fail", note: "Missing attachment" },
 };
 
-export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
+export const accountsPayableInvoiceRows: (SupplierInvoiceQueueItem & { paymentStatus: null })[] = [
   {
     id: "invoice-1",
     number: "INV-2026-000001",
@@ -36,6 +36,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     reviewedAt: null,
     lockVersion: 1,
     permissions: { canReview: true },
+    paymentStatus: null,
   },
   {
     id: "invoice-2",
@@ -55,6 +56,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     reviewedAt: null,
     lockVersion: 3,
     permissions: { canReview: true },
+    paymentStatus: null,
   },
   {
     id: "invoice-3",
@@ -74,6 +76,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     reviewedAt: null,
     lockVersion: 5,
     permissions: { canReview: true },
+    paymentStatus: null,
   },
   {
     id: "invoice-4",
@@ -93,6 +96,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     reviewedAt: "2026-06-13T01:00:00.000Z",
     lockVersion: 7,
     permissions: { canReview: true },
+    paymentStatus: null,
   },
   {
     id: "invoice-mismatch-1",
@@ -114,6 +118,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     permissions: { canReview: true },
     matchingStatus: "mismatch",
     exceptionSummary: { total: 2, open: 2, resolved: 0, escalated: 0 },
+    paymentStatus: null,
   },
   {
     id: "invoice-ready-approval-1",
@@ -134,6 +139,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     lockVersion: 10,
     permissions: { canReview: true },
     matchingStatus: "matched",
+    paymentStatus: null,
   },
   {
     id: "invoice-in-approval-1",
@@ -154,6 +160,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     lockVersion: 11,
     permissions: { canReview: true },
     matchingStatus: "matched",
+    paymentStatus: null,
   },
   {
     id: "invoice-approved-1",
@@ -174,6 +181,7 @@ export const accountsPayableInvoiceRows: SupplierInvoiceQueueItem[] = [
     lockVersion: 12,
     permissions: { canReview: true },
     matchingStatus: "matched",
+    paymentStatus: null,
   },
 ];
 
@@ -224,6 +232,8 @@ function buildDetail(row: SupplierInvoiceQueueItem, overrides: Partial<SupplierI
       : [],
     reviewBlockerCount: row.reviewBlockerCount,
     permissions: row.permissions,
+    paymentStatus: null,
+    paymentEligibleAt: null,
     ...overrides,
   };
 }

@@ -5,9 +5,11 @@ namespace Domains\Invoice\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use Domains\AccountsPayable\Actions\AutoAdvanceToPaymentEligible;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class EvaluateStraightThroughProcessing
@@ -15,6 +17,7 @@ class EvaluateStraightThroughProcessing
     public function __construct(
         private readonly MarkSupplierInvoiceApproved $markApproved,
         private readonly AuditRecorder $auditRecorder,
+        private readonly AutoAdvanceToPaymentEligible $autoAdvanceToPaymentEligible,
     ) {}
 
     /**
@@ -57,6 +60,15 @@ class EvaluateStraightThroughProcessing
                         'exceptionCount' => $invoice->exceptions->count(),
                     ],
                 ));
+
+                try {
+                    $this->autoAdvanceToPaymentEligible->execute($invoice);
+                } catch (\Throwable $e) {
+                    Log::warning('Auto-advance to payment_eligible failed (STP path)', [
+                        'invoice_id' => (string) $invoice->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
                 return true;
             }

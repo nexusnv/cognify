@@ -13,7 +13,10 @@ use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Domains\AccountsPayable\Models\ApPaymentHandoff;
+use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use InvalidArgumentException;
@@ -69,6 +72,14 @@ class SupplierInvoice extends Model
         'changes_requested_fields',
         'stp_eligible',
         'stp_processed_at',
+        'payment_status',
+        'payment_eligible_at',
+        'payment_on_hold_by_user_id',
+        'payment_on_hold_at',
+        'payment_on_hold_reason',
+        'payment_hold_released_by_user_id',
+        'payment_hold_released_at',
+        'payment_hold_released_note',
     ];
 
     protected function casts(): array
@@ -97,6 +108,10 @@ class SupplierInvoice extends Model
             'changes_requested_fields' => 'array',
             'stp_eligible' => 'boolean',
             'stp_processed_at' => 'datetime',
+            'payment_status' => \Domains\AccountsPayable\States\SupplierInvoicePaymentStatus::class,
+            'payment_eligible_at' => 'datetime',
+            'payment_on_hold_at' => 'datetime',
+            'payment_hold_released_at' => 'datetime',
         ];
     }
 
@@ -178,6 +193,20 @@ class SupplierInvoice extends Model
                     throw new InvalidArgumentException('Supplier invoice approval instance must belong to the same tenant.');
                 }
             }
+
+            foreach (['payment_on_hold_by_user_id', 'payment_hold_released_by_user_id'] as $userColumn) {
+                if ($invoice->{$userColumn} !== null && $invoice->isDirty([$userColumn, 'tenant_id'])) {
+                    $belongsToTenant = User::query()
+                        ->whereKey($invoice->{$userColumn})
+                        ->whereHas('tenants', fn ($query) => $query->whereKey($invoice->tenant_id))
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if (! $belongsToTenant) {
+                        throw new InvalidArgumentException('Supplier invoice payment actor must belong to the same tenant.');
+                    }
+                }
+            }
         });
     }
 
@@ -247,5 +276,19 @@ class SupplierInvoice extends Model
         if ((int) $this->lock_version !== $lockVersion) {
             throw new ConflictHttpException('Supplier invoice was updated by another user. Refresh and try again.');
         }
+    }
+
+    public function activeHandoff(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ApPaymentHandoff::class,
+            'ap_payment_handoff_invoice',
+            'supplier_invoice_id',
+            'ap_payment_handoff_id',
+        )
+            ->whereIn('status', [ApPaymentHandoffStatus::Draft, ApPaymentHandoffStatus::Ready, ApPaymentHandoffStatus::Exported])
+            ->wherePivot('tenant_id', $this->tenant_id)
+            ->where('ap_payment_handoffs.tenant_id', $this->tenant_id)
+            ->orderBy('ap_payment_handoffs.created_at', 'desc');
     }
 }

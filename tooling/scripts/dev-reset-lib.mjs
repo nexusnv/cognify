@@ -1,10 +1,12 @@
 export const localPortDefaults = {
   api: 8890,
+  apiHost: "127.0.0.1",
   db: 5433,
   minioApi: 9002,
   minioConsole: 9003,
   redis: 6381,
   web: 8880,
+  webHost: "127.0.0.1",
 };
 
 export function buildDevResetPlan() {
