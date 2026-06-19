@@ -327,7 +327,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(5, Quotation::query()->count());
         $this->assertSame(15, ApprovalTask::query()->count());
         $this->assertSame(2, Award::query()->count());
-        $this->assertSame(9, Attachment::query()->count());
+        $this->assertSame(12, Attachment::query()->count());
         $this->assertSame(5, NotificationRecord::query()->count());
         $this->assertSame(6, RfqInvitation::query()->count());
         $this->assertSame(4, QuotationVersion::query()->count());
@@ -649,7 +649,7 @@ class DemoSeederTest extends TestCase
             'purchase_orders' => 11,
             'shipments' => 4,
             'fulfillment_tracking_events' => 5,
-            'supplier_invoices' => 7,
+            'supplier_invoices' => 10,
         ], $run->metadata);
         $this->assertSame(2, SupplierInvoiceException::query()->count());
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());

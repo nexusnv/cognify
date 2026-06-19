@@ -2401,47 +2401,50 @@ class DemoProcurementLifecycleSeeder
 
         // Create a handoff and attach the invoice so the payment-ready status is backed
         // by a real handoff record that the UI can navigate to.
-        $handoff = ApPaymentHandoff::query()->create([
-            'tenant_id' => $tenant->id,
-            'number' => 'HDOFF-DEMO-001',
-            'status' => ApPaymentHandoffStatus::Ready,
-            'currency' => $invoice->currency,
-            'total_amount' => (float) $invoice->total_amount,
-            'notes' => 'Demo seeded payment handoff.',
-            'effective_payment_date' => '2026-07-15',
-            'created_by_user_id' => $finance->id,
-            'ready_by_user_id' => $finance->id,
-            'ready_at' => '2026-06-22 10:00:00',
-            'snapshot' => [
-                'handoff' => [
-                    'currency' => $invoice->currency,
-                    'totalAmount' => $invoice->total_amount,
-                    'invoiceCount' => 1,
-                ],
-                'invoices' => [
-                    [
-                        'id' => (string) $invoice->id,
-                        'number' => $invoice->number,
-                        'invoiceNumber' => $invoice->invoice_number,
+        // Use updateOrCreate so the seeder is idempotent.
+        $handoff = ApPaymentHandoff::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'HDOFF-DEMO-001'],
+            [
+                'status' => ApPaymentHandoffStatus::Ready,
+                'currency' => $invoice->currency,
+                'total_amount' => (float) $invoice->total_amount,
+                'notes' => 'Demo seeded payment handoff.',
+                'effective_payment_date' => '2026-07-15',
+                'created_by_user_id' => $finance->id,
+                'ready_by_user_id' => $finance->id,
+                'ready_at' => '2026-06-22 10:00:00',
+                'snapshot' => [
+                    'handoff' => [
                         'currency' => $invoice->currency,
                         'totalAmount' => $invoice->total_amount,
-                        'dueDate' => $invoice->due_date?->toDateString(),
-                        'vendorId' => (string) $invoice->vendor_id,
-                        'purchaseOrderId' => (string) $invoice->purchase_order_id,
+                        'invoiceCount' => 1,
+                    ],
+                    'invoices' => [
+                        [
+                            'id' => (string) $invoice->id,
+                            'number' => $invoice->number,
+                            'invoiceNumber' => $invoice->invoice_number,
+                            'currency' => $invoice->currency,
+                            'totalAmount' => $invoice->total_amount,
+                            'dueDate' => $invoice->due_date?->toDateString(),
+                            'vendorId' => (string) $invoice->vendor_id,
+                            'purchaseOrderId' => (string) $invoice->purchase_order_id,
+                        ],
+                    ],
+                    'totalByCurrency' => [
+                        [
+                            'currency' => $invoice->currency,
+                            'amount' => number_format((float) $invoice->total_amount, 4, '.', ''),
+                        ],
                     ],
                 ],
-                'totalByCurrency' => [
-                    [
-                        'currency' => $invoice->currency,
-                        'amount' => number_format((float) $invoice->total_amount, 4, '.', ''),
-                    ],
-                ],
+                'readiness_warnings' => [],
+                'lock_version' => 1,
             ],
-            'readiness_warnings' => [],
-            'lock_version' => 1,
-        ]);
+        );
 
-        $handoff->invoices()->attach($invoice->id, ['tenant_id' => $tenant->id]);
+        // Sync the pivot to handle both first-seed and re-seed
+        $handoff->invoices()->syncWithoutDetaching([$invoice->id => ['tenant_id' => $tenant->id]]);
     }
 
     private function pickTwoLines(PurchaseOrder $po): Collection
