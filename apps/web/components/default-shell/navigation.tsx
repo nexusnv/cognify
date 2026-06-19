@@ -140,6 +140,12 @@ export const finalNavigationItems: DefaultNavItem[] = [
         implemented: true,
         permission: canUseAccountsPayable,
       },
+      {
+        title: "Payment queue",
+        url: "/accounts-payable/payment-queue",
+        implemented: true,
+        permission: canUseAccountsPayable,
+      },
     ],
   },
   {
@@ -279,6 +285,7 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   if (normalizedPathname === "/approvals") return [{ label: "Approvals" }];
   if (normalizedPathname === "/sourcing/intake") return [{ label: "Sourcing intake" }];
   if (normalizedPathname === "/accounts-payable/invoices") return [{ label: "Finance" }, { label: "Invoice review" }];
+  if (normalizedPathname === "/accounts-payable/payment-queue") return [{ label: "Finance" }, { label: "Payment queue" }];
   if (normalizedPathname === "/calendar") return [{ label: "Calendar" }];
   if (normalizedPathname === "/quotations/normalizations") return [{ label: "Quotations" }];
   if (normalizedPathname === "/quotations/scoring/templates") {

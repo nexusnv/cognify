@@ -21,7 +21,9 @@ import type {
 } from "@cognify/api-client/schemas";
 import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
-export type AccountsPayableInvoiceFilters = ListSupplierInvoiceQueueParams;
+export type AccountsPayableInvoiceFilters = ListSupplierInvoiceQueueParams & {
+  paymentStatus?: string;
+};
 
 export type MatchResult = SupplierInvoiceMatchResult;
 export type MatchSummary = SupplierInvoiceMatchSummary;

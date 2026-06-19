@@ -142,6 +142,16 @@ class SupplierInvoiceController
             $query->where('matching_status', 'mismatch');
         }
 
+        if ($paymentStatus = $request->query('paymentStatus')) {
+            if ($paymentStatus === 'none') {
+                $query->whereNull('payment_status');
+            } elseif ($paymentStatus === 'any') {
+                $query->whereNotNull('payment_status');
+            } else {
+                $query->where('payment_status', $paymentStatus);
+            }
+        }
+
         if ($reviewBlocker = $request->query('reviewBlocker')) {
             $query->whereJsonContains('review_blockers', [['key' => $reviewBlocker]]);
         }

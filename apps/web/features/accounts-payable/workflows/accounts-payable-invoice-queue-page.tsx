@@ -29,11 +29,10 @@ export function AccountsPayableInvoiceQueuePage() {
   const [matchingFilter, setMatchingFilter] = useState<ListSupplierInvoiceQueueMatchingStatus | undefined>();
   const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoiceQueueItem | null>(null);
   const activeTab = statusTabs.find((tab) => tab.value === status) ?? statusTabs[0];
-  const invoicesQuery = useAccountsPayableInvoices(
-    activeTab.status
-      ? { status: activeTab.status, ...(matchingFilter ? { matchingStatus: matchingFilter } : {}) }
-      : { ...(matchingFilter ? { matchingStatus: matchingFilter } : {}) },
-  );
+  const invoicesQuery = useAccountsPayableInvoices({
+    ...(activeTab.status ? { status: activeTab.status } : {}),
+    ...(matchingFilter ? { matchingStatus: matchingFilter } : {}),
+  });
   const invoices = invoicesQuery.data ?? [];
 
   return (

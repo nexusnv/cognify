@@ -26899,6 +26899,96 @@
           },
           "exceptionSummary": {
             "$ref": "#/components/schemas/SupplierInvoiceExceptionSummary"
+          },
+          "paymentStatus": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "payment_eligible",
+                  "on_hold",
+                  "payment_ready",
+                  "handoff_exported"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Current payment status of the supplier invoice"
+          },
+          "paymentStatusLabel": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Human-readable label for the payment status"
+          },
+          "paymentOnHoldReason": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paymentEligibleAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paymentOnHoldAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paymentOnHoldByUserId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activeHandoffId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activeHandoffNumber": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },

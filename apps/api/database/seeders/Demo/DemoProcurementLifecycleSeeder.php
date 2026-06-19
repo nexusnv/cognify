@@ -31,6 +31,9 @@ use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Invoice\Support\SupplierInvoiceNumber;
 use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
+use Domains\AccountsPayable\Models\ApPaymentHandoff;
+use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
+use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -1777,6 +1780,10 @@ class DemoProcurementLifecycleSeeder
         $this->seedMatchedInvoice($tenant, $issuedPO, $buyer);
         $this->seedMismatchInvoice($tenant, $issuedPO, $buyer);
         $this->seedPendingMatchingInvoice($tenant, $issuedPO, $buyer);
+
+        $this->seedPaymentEligibleInvoice($tenant, $acknowledgedPO ?? $issuedPO, $buyer, $finance);
+        $this->seedPaymentOnHoldInvoice($tenant, $acknowledgedPO ?? $issuedPO, $buyer, $finance);
+        $this->seedInductedAndReadyInvoice($tenant, $acknowledgedPO ?? $issuedPO, $buyer, $finance);
     }
 
     private function seedCapturedInvoice(Tenant $tenant, PurchaseOrder $purchaseOrder, User $buyer): void
@@ -2127,6 +2134,314 @@ class DemoProcurementLifecycleSeeder
 
         $this->seedInvoiceLines($invoice, $lineSource, $tenant);
         $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-007.pdf', 'INV-2026-DEMO-007');
+    }
+
+    private function seedPaymentEligibleInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer, User $finance): void
+    {
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-008'],
+            [
+                'purchase_order_id' => $po->id,
+                'vendor_id' => $po->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-008',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-008'),
+                'status' => SupplierInvoiceStatus::Approved,
+                'matching_status' => SupplierInvoiceStatus::Matched->value,
+                'payment_status' => SupplierInvoicePaymentStatus::PaymentEligible,
+                'payment_eligible_at' => '2026-06-21 09:00:00',
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-20',
+                'currency' => $po->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded payment-eligible invoice for demo.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $finance->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $finance->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice approved and payment eligible.',
+                'review_checklist' => [
+                    'completeness' => ['status' => 'pass', 'note' => null],
+                    'coding' => ['status' => 'pass', 'note' => null],
+                    'attachment' => ['status' => 'pass', 'note' => null],
+                    'vendorIdentity' => ['status' => 'pass', 'note' => null],
+                    'poLinkage' => ['status' => 'pass', 'note' => null],
+                ],
+                'review_blockers' => [],
+                'lock_version' => 4,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-008.pdf', 'INV-2026-DEMO-008');
+
+        // Seed clean match results
+        SupplierInvoiceMatchResult::query()
+            ->where('supplier_invoice_id', $invoice->id)
+            ->delete();
+
+        foreach ($invoice->lines as $line) {
+            $qty = (string) $line->quantity_invoiced;
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'quantity',
+                'expected_value' => $qty,
+                'actual_value' => $qty,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'unit_price',
+                'expected_value' => (string) $line->unit_price,
+                'actual_value' => (string) $line->unit_price,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+        }
+    }
+
+    private function seedPaymentOnHoldInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer, User $finance): void
+    {
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-009'],
+            [
+                'purchase_order_id' => $po->id,
+                'vendor_id' => $po->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-009',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-009'),
+                'status' => SupplierInvoiceStatus::Approved,
+                'matching_status' => SupplierInvoiceStatus::Matched->value,
+                'payment_status' => SupplierInvoicePaymentStatus::OnHold,
+                'payment_eligible_at' => '2026-06-21 09:00:00',
+                'payment_on_hold_by_user_id' => $finance->id,
+                'payment_on_hold_at' => '2026-06-22 14:00:00',
+                'payment_on_hold_reason' => 'Vendor bank details pending confirmation.',
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-20',
+                'currency' => $po->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded payment on-hold invoice for demo.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $finance->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $finance->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice approved but payment held pending vendor verification.',
+                'review_checklist' => [
+                    'completeness' => ['status' => 'pass', 'note' => null],
+                    'coding' => ['status' => 'pass', 'note' => null],
+                    'attachment' => ['status' => 'pass', 'note' => null],
+                    'vendorIdentity' => ['status' => 'pass', 'note' => null],
+                    'poLinkage' => ['status' => 'pass', 'note' => null],
+                ],
+                'review_blockers' => [],
+                'lock_version' => 4,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-009.pdf', 'INV-2026-DEMO-009');
+
+        // Seed clean match results
+        SupplierInvoiceMatchResult::query()
+            ->where('supplier_invoice_id', $invoice->id)
+            ->delete();
+
+        foreach ($invoice->lines as $line) {
+            $qty = (string) $line->quantity_invoiced;
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'quantity',
+                'expected_value' => $qty,
+                'actual_value' => $qty,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'unit_price',
+                'expected_value' => (string) $line->unit_price,
+                'actual_value' => (string) $line->unit_price,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+        }
+    }
+
+    private function seedInductedAndReadyInvoice(Tenant $tenant, PurchaseOrder $po, User $buyer, User $finance): void
+    {
+        $lineSource = $this->pickTwoLines($po);
+        $subtotalAmount = $this->computeSubtotal($lineSource);
+
+        $invoice = SupplierInvoice::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => 'INV-2026-DEMO-010'],
+            [
+                'purchase_order_id' => $po->id,
+                'vendor_id' => $po->vendor_id,
+                'invoice_number' => 'INV-2026-DEMO-010',
+                'invoice_number_normalized' => SupplierInvoiceNumber::normalize('INV-2026-DEMO-010'),
+                'status' => SupplierInvoiceStatus::Approved,
+                'matching_status' => SupplierInvoiceStatus::Matched->value,
+                'payment_status' => SupplierInvoicePaymentStatus::PaymentReady,
+                'payment_eligible_at' => '2026-06-21 09:00:00',
+                'invoice_date' => '2026-06-20',
+                'due_date' => '2026-07-15',
+                'currency' => $po->currency,
+                'subtotal_amount' => $subtotalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $subtotalAmount,
+                'notes' => 'Seeded payment-ready invoice (in handoff) for demo.',
+                'captured_by_user_id' => $buyer->id,
+                'captured_at' => '2026-06-20 09:15:00',
+                'review_started_by_user_id' => $finance->id,
+                'review_started_at' => '2026-06-20 10:00:00',
+                'reviewed_by_user_id' => $finance->id,
+                'reviewed_at' => '2026-06-20 11:30:00',
+                'review_notes' => 'Invoice approved and inducted into payment handoff.',
+                'review_checklist' => [
+                    'completeness' => ['status' => 'pass', 'note' => null],
+                    'coding' => ['status' => 'pass', 'note' => null],
+                    'attachment' => ['status' => 'pass', 'note' => null],
+                    'vendorIdentity' => ['status' => 'pass', 'note' => null],
+                    'poLinkage' => ['status' => 'pass', 'note' => null],
+                ],
+                'review_blockers' => [],
+                'lock_version' => 4,
+            ],
+        );
+
+        $this->seedInvoiceLines($invoice, $lineSource, $tenant);
+        $this->seedInvoiceAttachment($tenant, $invoice, $buyer, 'inv-2026-demo-010.pdf', 'INV-2026-DEMO-010');
+
+        // Seed clean match results
+        SupplierInvoiceMatchResult::query()
+            ->where('supplier_invoice_id', $invoice->id)
+            ->delete();
+
+        foreach ($invoice->lines as $line) {
+            $qty = (string) $line->quantity_invoiced;
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'quantity',
+                'expected_value' => $qty,
+                'actual_value' => $qty,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+
+            SupplierInvoiceMatchResult::create([
+                'tenant_id' => $tenant->id,
+                'supplier_invoice_id' => $invoice->id,
+                'supplier_invoice_line_id' => $line->id,
+                'purchase_order_line_id' => $line->purchase_order_line_id,
+                'match_type' => 'two_way',
+                'match_level' => 'line',
+                'dimension' => 'unit_price',
+                'expected_value' => (string) $line->unit_price,
+                'actual_value' => (string) $line->unit_price,
+                'tolerance_percent_applied' => 0.0,
+                'tolerance_floor_applied' => 0.0,
+                'tolerance_cap_applied' => 0.0,
+                'result' => 'pass',
+            ]);
+        }
+
+        // Create a handoff and attach the invoice so the payment-ready status is backed
+        // by a real handoff record that the UI can navigate to.
+        $handoff = ApPaymentHandoff::query()->create([
+            'tenant_id' => $tenant->id,
+            'number' => 'HDOFF-DEMO-001',
+            'status' => ApPaymentHandoffStatus::Ready,
+            'currency' => $invoice->currency,
+            'total_amount' => (float) $invoice->total_amount,
+            'notes' => 'Demo seeded payment handoff.',
+            'effective_payment_date' => '2026-07-15',
+            'created_by_user_id' => $finance->id,
+            'ready_by_user_id' => $finance->id,
+            'ready_at' => '2026-06-22 10:00:00',
+            'snapshot' => [
+                'handoff' => [
+                    'currency' => $invoice->currency,
+                    'totalAmount' => $invoice->total_amount,
+                    'invoiceCount' => 1,
+                ],
+                'invoices' => [
+                    [
+                        'id' => (string) $invoice->id,
+                        'number' => $invoice->number,
+                        'invoiceNumber' => $invoice->invoice_number,
+                        'currency' => $invoice->currency,
+                        'totalAmount' => $invoice->total_amount,
+                        'dueDate' => $invoice->due_date?->toDateString(),
+                        'vendorId' => (string) $invoice->vendor_id,
+                        'purchaseOrderId' => (string) $invoice->purchase_order_id,
+                    ],
+                ],
+                'totalByCurrency' => [
+                    [
+                        'currency' => $invoice->currency,
+                        'amount' => number_format((float) $invoice->total_amount, 4, '.', ''),
+                    ],
+                ],
+            ],
+            'readiness_warnings' => [],
+            'lock_version' => 1,
+        ]);
+
+        $handoff->invoices()->attach($invoice->id, ['tenant_id' => $tenant->id]);
     }
 
     private function pickTwoLines(PurchaseOrder $po): Collection

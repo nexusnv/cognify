@@ -6,6 +6,11 @@ import { buildDevResetPlan, localPortDefaults } from "./dev-reset-lib.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
+const webHost = process.env.COGNIFY_WEB_HOST ?? localPortDefaults.webHost;
+const apiHost = process.env.COGNIFY_API_HOST ?? localPortDefaults.apiHost;
+const webPort = Number(process.env.COGNIFY_WEB_PORT ?? localPortDefaults.web);
+const apiPort = Number(process.env.COGNIFY_API_PORT ?? localPortDefaults.api);
+
 function resolveCwd(cwd = ".") {
   return resolve(repoRoot, cwd);
 }
@@ -49,8 +54,8 @@ async function main() {
   const [servicesStep, migrateStep, apiStep, webStep] = plan.steps;
 
   console.log("Cognify local dev reset");
-  console.log(`  web:   http://127.0.0.1:${localPortDefaults.web}`);
-  console.log(`  api:   http://127.0.0.1:${localPortDefaults.api}`);
+  console.log(`  web:   http://${webHost}:${webPort}`);
+  console.log(`  api:   http://${apiHost}:${apiPort}`);
   console.log(`  db:    127.0.0.1:${localPortDefaults.db}`);
   console.log(`  redis: 127.0.0.1:${localPortDefaults.redis}`);
   console.log(`  minio: http://127.0.0.1:${localPortDefaults.minioApi}`);

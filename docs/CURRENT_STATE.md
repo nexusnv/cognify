@@ -2,6 +2,7 @@
 
 ## Changelog
 
+- 2026-06-19: Updated current state — payment readiness (P1-47) implemented: payment-eligible, on-hold, payment-ready, and handoff states seeded; ApPaymentHandoff with draft/ready/exported/cancelled lifecycle; hold/release workflow; JSON and CSV export.
 - 2026-06-08: Updated product direction to complete procure-to-pay SaaS and recorded that request-to-award is now the baseline before future P2P expansion.
 - 2026-05-15: Updated current state for the local demo data and system readiness slice.
 - 2026-05-09: Created greenfield scaffold baseline from approved design spec.
@@ -14,7 +15,8 @@ Cognify's product direction is now complete procure-to-pay SaaS. The implemented
 
 - `docs/superpowers/specs/2026-05-09-cognify-greenfield-saas-runbook-design.md`
 - `docs/superpowers/specs/2026-05-15-local-demo-system-readiness-design.md`
-- Prior P0 and P1 feature specs remain relevant context for requisitions, notifications, attachments, audit history, search behavior, sourcing, quotation evaluation, award approval, PO handoff, and procurement calendar behavior.
+- `docs/superpowers/specs/2026-06-18-payment-readiness-ap-handoff-design.md`
+- Prior P0 and P1 feature specs remain relevant context for requisitions, notifications, attachments, audit history, search behavior, sourcing, quotation evaluation, award approval, PO handoff, procurement calendar, and payment readiness behavior.
 
 ## Planning Baseline
 
@@ -25,7 +27,12 @@ Cognify's product direction is now complete procure-to-pay SaaS. The implemented
 - Local demo data is seeded through `apps/api/database/seeders/DatabaseSeeder.php` with deterministic tenants, users, requisitions, vendors, projects, RFQs, quotations, approvals, awards, audit events, notifications, and sample attachments.
 - System readiness is exposed through `GET /api/system/status`, consumed from generated `@cognify/api-client` contracts, and surfaced to admins at `/system`.
 - Local version metadata comes from `APP_VERSION`, defaulting to `0.1.0`.
-- Purchase order, receiving, invoice, matching, payment readiness, and payment status records are roadmap scope and are not yet implemented as durable product domains.
+- Purchase order, receiving, goods receipt, invoice capture, review, matching, exception, approval, and payment readiness are implemented as durable product domains with deterministic seed data. The demo supplier invoice lifecycle covers the full flow from capture through to payment handoff:
+  - INV-2026-DEMO-001 through INV-2026-DEMO-007: capture, review, matching, exception workflow
+  - INV-2026-DEMO-008: payment-eligible (approved, matched, ready for handoff)
+  - INV-2026-DEMO-009: on-hold (approved, payment held with reason)
+  - INV-2026-DEMO-010: payment-ready (approved, inducted into a Ready handoff with snapshot)
+  - HDOFF-DEMO-001: a Ready AP payment handoff with snapshot data
 
 ## Local Validation Focus
 

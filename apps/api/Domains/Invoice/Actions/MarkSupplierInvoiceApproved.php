@@ -5,7 +5,7 @@ namespace Domains\Invoice\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
-use Domains\AccountsPayable\Actions\EvaluatePaymentReadiness;
+use Domains\AccountsPayable\Actions\AutoAdvanceToPaymentEligible;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ class MarkSupplierInvoiceApproved
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-        private readonly EvaluatePaymentReadiness $evaluatePaymentReadiness,
+        private readonly AutoAdvanceToPaymentEligible $autoAdvanceToPaymentEligible,
     ) {}
 
     public function handle(
@@ -71,7 +71,7 @@ class MarkSupplierInvoiceApproved
             ));
 
             try {
-                $this->evaluatePaymentReadiness->handle($invoice, $actor);
+                $this->autoAdvanceToPaymentEligible->execute($invoice);
             } catch (\Throwable $e) {
                 Log::warning('Auto-advance to payment_eligible failed', [
                     'invoice_id' => (string) $invoice->id,

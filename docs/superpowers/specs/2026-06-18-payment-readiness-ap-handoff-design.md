@@ -185,12 +185,19 @@ State rules:
 2. `AutoAdvanceToPaymentEligible` fires in the same transaction:
    - Sets `payment_status = payment_eligible`, `payment_eligible_at = now`.
    - Records `supplier_invoice.payment_eligible` audit event.
-3. AP user opens the accounts-payable invoice queue.
-4. AP user selects the "Payment eligible" tab to see all eligible invoices.
+3. AP user opens the **payment queue** page at `/accounts-payable/payment-queue` (a dedicated page under the Finance group, separate from the invoice review queue).
+4. AP user selects a payment status tab to filter invoices:
+   - **All** — any invoice with a non-null `payment_status`
+   - **Payment eligible** — `payment_eligible` invoices ready for handoff creation
+   - **On hold** — `on_hold` invoices with hold reason visible
+   - **Payment ready** — `payment_ready` invoices already in a handoff
+   - **Exported** — `handoff_exported` invoices
+   - **Awaiting induction** — invoices with `payment_status = null` (ghost-approved edge case)
 5. AP user can:
    - **Place a hold**: click "Hold payment", provide reason. Invoice moves to `on_hold`.
    - **Release a hold**: click "Release hold", provide release note. Invoice returns to `payment_eligible`.
-   - **Select for handoff**: check one or more invoices and click "Create payment handoff".
+   - **Retry induction**: for awaiting-induction invoices, click "Retry induction" to re-attempt auto-advance.
+   - **Select for handoff**: check one or more `payment_eligible` invoices and click "Create handoff" button at the top of the page.
 6. AP user fills the handoff form: effective payment date, optional notes.
 7. System creates `ApPaymentHandoff` in `draft` status:
    - Creates pivot records for selected invoices.
@@ -201,6 +208,8 @@ State rules:
 9. If the user fixes underlying master data in another tab, they can click "Refresh snapshot" (`POST /handoffs/{id}/refresh`) to recalculate warnings and data without leaving draft.
 10. AP user clicks "Mark ready". Handoff moves to `ready`. The system recalculates the snapshot one final time before locking — capturing up-to-the-second master data and freezing it for audit.
 10. AP user clicks "Export JSON" or "Export CSV". System generates downloadable export, moves handoff to `exported`, sets each invoice `payment_status = handoff_exported`.
+
+The payment queue page also includes an **Active handoffs** section below the invoice table, showing all active handoffs (draft, ready, exported) with links to the handoff workspace.
 
 ### Failure Paths
 
@@ -662,17 +671,25 @@ notes
 
 ## Seed and Demo Data
 
-Demo data should include at least:
-- Approved invoice that auto-advanced to `payment_eligible`
-- `payment_eligible` invoice with no holds (eligible for handoff)
-- Invoice in `on_hold` status with hold reason visible
-- Invoice in "ghost approved" state (`status = approved`, `payment_status = null`, simulating an auto-advance failure) — used to verify the "Awaiting payment induction" UI
+Dem `DemoProcurementLifecycleSeeder` seeds the following invoices with payment state:
+
+| Invoice | Status | Payment Status | Description |
+|---|---|---|---|
+| INV-2026-DEMO-004 | Reviewed | `null` | Awaiting induction — no payment_status set, appears in "Awaiting induction" tab |
+| INV-2026-DEMO-005 | Reviewed | `null` | Matched, no payment_status (awaiting induction) |
+| INV-2026-DEMO-006 | Reviewed | `null` | Mismatched with exception, no payment_status |
+| INV-2026-DEMO-007 | Reviewed | `null` | Pending matching, no payment_status |
+| INV-2026-DEMO-008 | Approved | `payment_eligible` | Approved, matched, eligible for handoff creation |
+| INV-2026-DEMO-009 | Approved | `on_hold` | Placed on hold with reason "Vendor bank details pending confirmation." |
+| INV-2026-DEMO-010 | Approved | `payment_ready` | Included in a Ready handoff (HDOFF-DEMO-001) with snapshot |
+
+The seeded payment-eligible, on-hold, and payment-ready invoices (DEMO-008 through DEMO-010) reference real seeded purchase orders, vendors, invoice lines, and include match results from `pickTwoLines()` matching the existing pattern.
+
+Future slices should extend seed data to include:
+- Invoice in "ghost approved" state (`status = approved`, `payment_status = null`) — used to verify the "Awaiting payment induction" UI
 - A payment handoff in `draft` status with multiple invoices
-- A payment handoff in `ready` status
 - A payment handoff in `exported` status with export metadata
 - An invoice in `handoff_exported` status
-
-Seeded data should reference real seeded purchase orders, vendors, invoice lines, and approve metadata from P1-46 seeders.
 
 ## Testing and Verification
 
@@ -714,14 +731,17 @@ Add focused tests for:
 
 Add focused tests for:
 
-**Queue extensions:**
-- Payment eligible tab filters correctly
-- On hold tab filters correctly
-- Payment status badge renders for each state
+**Payment queue page (separate from invoice review queue):**
+- Payment status tabs (All, Payment eligible, On hold, Payment ready, Exported, Awaiting induction) filter correctly
+- Payment status badge renders for each state in the table
 - Header count includes payment-related invoice counts
-- "Approved" tab shows "Awaiting payment induction" badge for invoices where `payment_status = null`
-- "Retry induction" button in approved invoice row triggers retry-payment-induction
-- Retry induction moves invoice out of "Approved" tab into "Payment eligible" tab
+- "Awaiting induction" tab shows invoices with `payment_status = null`
+- "Retry induction" button in awaiting-induction invoice detail panel triggers retry-payment-induction
+- Retry induction moves invoice out of "Awaiting induction" into "Payment eligible"
+- Payment-eligible invoice shows hold button in detail panel
+- Hold form requires reason
+- On-hold invoice shows hold details and release button
+- Retry induction panel shows for invoices with `payment_status = null` when selected
 
 **Payment actions:**
 - Payment-eligible invoice shows hold button
@@ -781,8 +801,9 @@ This slice is complete when:
 - Handoff supports draft → ready → exported → cancelled states mirroring the PO handoff pattern.
 - Invoices in a cancelled handoff return to the payment-eligible pool.
 - Handoff JSON and CSV exports contain structured invoice-level, vendor-level, and line-item data following the established export pattern.
-- The payment readiness queue is integrated into the existing accounts-payable workspace and sidebar navigation.
+- The payment readiness queue is surfaced as a dedicated **Payment queue** page at `/accounts-payable/payment-queue` under the Finance sidebar group, separate from the invoice review queue.
+- An **Active handoffs** section on the payment queue page lists all active handoffs with links to the handoff workspace.
 - All states, transitions, and exports are tenant-scoped, authorized, audited, and protected by lock-version concurrency.
 - OpenAPI endpoints are generated and consumed by `@cognify/api-client`.
-- Seeded demo data covers payment-eligible, on-hold, draft handoff, ready handoff, exported handoff, and handoff-exported invoice states.
+- Seeded demo data covers payment-eligible (DEMO-008), on-hold (DEMO-009), and payment-ready with a Ready handoff (DEMO-010 + HDOFF-DEMO-001).
 - Downstream P1-48 (Payment Status Tracking) has a clear `handoff_exported` precondition to consume.

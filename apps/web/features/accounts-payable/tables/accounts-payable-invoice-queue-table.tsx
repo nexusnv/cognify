@@ -6,6 +6,7 @@ import { DataTable } from "@/components/ui/procurement-table/procurement-data-ta
 import type { DataTableColumn, DataTableState } from "@/components/ui/procurement-table/data-table-types";
 import { InvoiceReviewStatusBadge } from "../components/invoice-review-status-badge";
 import { InvoiceMatchingStatusBadge } from "../components/invoice-matching-status-badge";
+import { PaymentStatusBadge } from "../components/payment-status-badge";
 
 const columns: Array<DataTableColumn<SupplierInvoiceQueueItem>> = [
   {
@@ -45,6 +46,18 @@ const columns: Array<DataTableColumn<SupplierInvoiceQueueItem>> = [
     header: "Matching",
     cell: (invoice) => (
       <InvoiceMatchingStatusBadge matchingStatus={invoice.matchingStatus} />
+    ),
+  },
+  {
+    id: "paymentStatus",
+    header: "Payment",
+    cell: (invoice) => (
+      <PaymentStatusBadge
+        paymentStatus={invoice.paymentStatus}
+        paymentStatusLabel={invoice.paymentStatusLabel}
+        paymentOnHoldReason={invoice.paymentOnHoldReason}
+        activeHandoffNumber={invoice.activeHandoffNumber}
+      />
     ),
   },
   {
@@ -106,6 +119,21 @@ export function AccountsPayableInvoiceQueueTable({
           ) : (
             <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
               Review invoice
+            </Button>
+          )}
+          {invoice.paymentStatus === "payment_eligible" && (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
+              Hold payment
+            </Button>
+          )}
+          {invoice.paymentStatus === "on_hold" && (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
+              Release hold
+            </Button>
+          )}
+          {!invoice.paymentStatus && (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSelect(invoice)}>
+              Retry induction
             </Button>
           )}
         </div>

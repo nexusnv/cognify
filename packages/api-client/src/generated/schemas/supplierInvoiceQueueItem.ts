@@ -14,6 +14,14 @@ import type { SupplierInvoiceQueueItemReviewedAt } from "./supplierInvoiceQueueI
 import type { SupplierInvoicePermissions } from "./supplierInvoicePermissions";
 import type { SupplierInvoiceMatchingStatus } from "./supplierInvoiceMatchingStatus";
 import type { SupplierInvoiceExceptionSummary } from "./supplierInvoiceExceptionSummary";
+import type { SupplierInvoiceQueueItemPaymentStatus } from "./supplierInvoiceQueueItemPaymentStatus";
+import type { SupplierInvoiceQueueItemPaymentStatusLabel } from "./supplierInvoiceQueueItemPaymentStatusLabel";
+import type { SupplierInvoiceQueueItemPaymentOnHoldReason } from "./supplierInvoiceQueueItemPaymentOnHoldReason";
+import type { SupplierInvoiceQueueItemPaymentEligibleAt } from "./supplierInvoiceQueueItemPaymentEligibleAt";
+import type { SupplierInvoiceQueueItemPaymentOnHoldAt } from "./supplierInvoiceQueueItemPaymentOnHoldAt";
+import type { SupplierInvoiceQueueItemPaymentOnHoldByUserId } from "./supplierInvoiceQueueItemPaymentOnHoldByUserId";
+import type { SupplierInvoiceQueueItemActiveHandoffId } from "./supplierInvoiceQueueItemActiveHandoffId";
+import type { SupplierInvoiceQueueItemActiveHandoffNumber } from "./supplierInvoiceQueueItemActiveHandoffNumber";
 
 export interface SupplierInvoiceQueueItem {
   id: string;
@@ -40,4 +48,14 @@ export interface SupplierInvoiceQueueItem {
   permissions: SupplierInvoicePermissions;
   matchingStatus?: SupplierInvoiceMatchingStatus;
   exceptionSummary?: SupplierInvoiceExceptionSummary;
+  /** Current payment status of the supplier invoice */
+  paymentStatus?: SupplierInvoiceQueueItemPaymentStatus;
+  /** Human-readable label for the payment status */
+  paymentStatusLabel?: SupplierInvoiceQueueItemPaymentStatusLabel;
+  paymentOnHoldReason?: SupplierInvoiceQueueItemPaymentOnHoldReason;
+  paymentEligibleAt?: SupplierInvoiceQueueItemPaymentEligibleAt;
+  paymentOnHoldAt?: SupplierInvoiceQueueItemPaymentOnHoldAt;
+  paymentOnHoldByUserId?: SupplierInvoiceQueueItemPaymentOnHoldByUserId;
+  activeHandoffId?: SupplierInvoiceQueueItemActiveHandoffId;
+  activeHandoffNumber?: SupplierInvoiceQueueItemActiveHandoffNumber;
 }
