@@ -39,7 +39,10 @@ class RemoveApPaymentHandoffInvoice
             }
 
             $remainingInvoices = $handoff->invoices()->with(['vendor'])->lockForUpdate()->get();
-            $totalAmount = $remainingInvoices->sum(fn ($inv) => (float) ($inv->total_amount ?? 0));
+            $totalAmount = $remainingInvoices->reduce(
+                fn (string $carry, $inv): string => bcadd($carry, (string) ($inv->total_amount ?? '0'), 2),
+                '0.00',
+            );
 
             $snapshotData = $this->buildSnapshot->handle($remainingInvoices, [
                 'currency' => $handoff->currency,

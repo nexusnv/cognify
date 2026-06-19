@@ -18,8 +18,10 @@ import type {
   ApPaymentHandoffListResponse,
   CancelApPaymentHandoffRequest,
   CreateApPaymentHandoffRequest,
+  ExportApPaymentHandoffJson200,
   ListApPaymentHandoffsParams,
   MarkApPaymentHandoffReadyRequest,
+  RecordApPaymentHandoffJsonExport200,
   RefreshApPaymentHandoffSnapshotRequest,
   UpdateApPaymentHandoffRequest,
 } from "@cognify/api-client/schemas";
@@ -147,39 +149,16 @@ export async function cancelPaymentHandoff(
   return unwrapResource<ApPaymentHandoff>(response);
 }
 
-export type ApPaymentHandoffJsonExport = {
-  exportedAt?: string;
-  format?: string;
-  handoff?: {
-    id?: string;
-    number?: string;
-    status?: string;
-    currency?: string;
-    totalAmount?: string;
-    effectivePaymentDate?: string | null;
-    notes?: string | null;
-    remittanceReference?: string | null;
-    invoices?: Array<{
-      id?: string;
-      number?: string;
-      invoiceNumber?: string;
-      totalAmount?: string | null;
-      dueDate?: string | null;
-      currency?: string;
-    }>;
-  };
-};
-
 export async function exportPaymentHandoffJson(
   handoffId: string,
   tenantId: string | null = getStoredActiveTenantId(),
-): Promise<ApPaymentHandoffJsonExport> {
+): Promise<ExportApPaymentHandoffJson200> {
   const response = await exportApPaymentHandoffJson(
     handoffId,
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
 
-  return response.data as ApPaymentHandoffJsonExport;
+  return response.data as ExportApPaymentHandoffJson200;
 }
 
 export async function exportPaymentHandoffCsv(
@@ -202,13 +181,13 @@ export async function exportPaymentHandoffCsv(
 export async function recordPaymentHandoffJsonExport(
   handoffId: string,
   tenantId: string | null = getStoredActiveTenantId(),
-): Promise<ApPaymentHandoffJsonExport> {
+): Promise<RecordApPaymentHandoffJsonExport200> {
   const response = await recordApPaymentHandoffJsonExport(
     handoffId,
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
 
-  return response.data as ApPaymentHandoffJsonExport;
+  return response.data as RecordApPaymentHandoffJsonExport200;
 }
 
 export async function recordPaymentHandoffCsvExport(

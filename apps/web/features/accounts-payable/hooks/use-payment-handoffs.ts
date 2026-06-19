@@ -5,6 +5,7 @@ import type {
   ApPaymentHandoff,
   CancelApPaymentHandoffRequest,
   CreateApPaymentHandoffRequest,
+  ExportApPaymentHandoffJson200,
   ListApPaymentHandoffsParams,
   MarkApPaymentHandoffReadyRequest,
   RefreshApPaymentHandoffSnapshotRequest,
@@ -23,7 +24,6 @@ import {
   refreshPaymentHandoffSnapshot,
   showPaymentHandoff,
   updatePaymentHandoff,
-  type ApPaymentHandoffJsonExport,
 } from "../api/accounts-payable-handoff-api";
 import { accountsPayableInvoiceKeys } from "./use-accounts-payable-invoices";
 
@@ -145,7 +145,7 @@ export function useCancelApPaymentHandoff(handoffId: string) {
 export function useExportApPaymentHandoffJson(handoffId: string) {
   const invalidate = useInvalidatePaymentCaches();
 
-  return useMutation<ApPaymentHandoffJsonExport, unknown, void>({
+  return useMutation<ExportApPaymentHandoffJson200, unknown, void>({
     mutationFn: async () => {
       const tenantId = getStoredActiveTenantId();
       const payload = await exportPaymentHandoffJson(handoffId, tenantId);

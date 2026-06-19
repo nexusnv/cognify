@@ -2,7 +2,7 @@ import { getStoredActiveTenantId } from "@/features/identity/api/identity-api";
 
 export function withActiveTenantHeader(tenantId: string | null = getStoredActiveTenantId()): RequestInit {
   if (!tenantId) {
-    throw new Error("Missing active tenant context");
+    return {};
   }
 
   return {

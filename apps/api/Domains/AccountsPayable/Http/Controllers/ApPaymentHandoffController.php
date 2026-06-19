@@ -22,6 +22,7 @@ use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class ApPaymentHandoffController extends Controller
 {
@@ -70,7 +71,9 @@ class ApPaymentHandoffController extends Controller
             ->get();
 
         if ($invoices->count() !== count($invoiceIds)) {
-            abort(422, 'One or more invoices were not found or do not belong to the current tenant.');
+            throw ValidationException::withMessages([
+                'invoiceIds' => 'One or more invoices were not found or do not belong to the current tenant.',
+            ]);
         }
 
         $handoff = $action->handle(

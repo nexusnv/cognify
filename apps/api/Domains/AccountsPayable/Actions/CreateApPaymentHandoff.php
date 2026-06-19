@@ -81,7 +81,11 @@ class CreateApPaymentHandoff
             $tenant = $lockedInvoices[0]->tenant;
             $number = $this->handoffNumber->generate($tenantId);
 
-            $totalAmount = array_reduce($lockedInvoices, fn (float $carry, SupplierInvoice $invoice): float => $carry + (float) ($invoice->total_amount ?? 0), 0.0);
+            $totalAmount = array_reduce(
+                $lockedInvoices,
+                fn (string $carry, SupplierInvoice $invoice): string => bcadd($carry, (string) ($invoice->total_amount ?? '0'), 2),
+                '0.00',
+            );
 
             $snapshotData = $this->buildSnapshot->handle($lockedInvoices, [
                 'currency' => $currency,
