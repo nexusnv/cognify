@@ -28,6 +28,9 @@ if (typeof document !== "undefined") {
 }
 import { resetAccountsPayableInvoiceMockState } from "../features/accounts-payable/mocks/accounts-payable-invoice-handlers";
 import { resetAccountsPayablePaymentMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-handlers";
+import { resetAccountsPayablePaymentStatusMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-status-handlers";
+import { resetAccountsPayablePaymentAllocationMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-allocation-handlers";
+import { resetAccountsPayablePaymentImportMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-import-handlers";
 import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
 import { resetIdentityMockState } from "../features/identity/mocks/identity-handlers";
@@ -85,6 +88,9 @@ afterEach(() => {
   server.resetHandlers();
   resetAccountsPayableInvoiceMockState();
   resetAccountsPayablePaymentMockState();
+  resetAccountsPayablePaymentStatusMockState();
+  resetAccountsPayablePaymentAllocationMockState();
+  resetAccountsPayablePaymentImportMockState();
   resetApprovalMockState();
   resetAttachmentMockState();
   resetRequisitionMockState();

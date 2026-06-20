@@ -1,32 +1,38 @@
 import { Badge, Tooltip, TooltipContent, TooltipTrigger } from "@cognify/ui";
 import type { SupplierInvoiceQueueItemPaymentStatus } from "@cognify/api-client/schemas";
 
+type ExtendedPaymentStatus =
+  | NonNullable<SupplierInvoiceQueueItemPaymentStatus>
+  | "payment_scheduled"
+  | "partially_paid"
+  | "paid";
+
 interface PaymentStatusBadgeProps {
-  paymentStatus: SupplierInvoiceQueueItemPaymentStatus | null | undefined;
+  paymentStatus: ExtendedPaymentStatus | null | undefined;
   paymentStatusLabel?: string | null;
   paymentOnHoldReason?: string | null;
   activeHandoffNumber?: string | null | undefined;
   showLabel?: boolean;
 }
 
-const statusStyles: Record<
-  NonNullable<SupplierInvoiceQueueItemPaymentStatus>,
-  string
-> = {
+const statusStyles: Record<ExtendedPaymentStatus, string> = {
   payment_eligible: "bg-green-100 text-green-800 hover:bg-green-100",
   on_hold: "bg-amber-100 text-amber-800 hover:bg-amber-100",
   payment_ready: "bg-blue-100 text-blue-800 hover:bg-blue-100",
   handoff_exported: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+  payment_scheduled: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
+  partially_paid: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+  paid: "bg-green-100 text-green-800 hover:bg-green-100",
 };
 
-const defaultLabels: Record<
-  NonNullable<SupplierInvoiceQueueItemPaymentStatus>,
-  string
-> = {
+const defaultLabels: Record<ExtendedPaymentStatus, string> = {
   payment_eligible: "Payment eligible",
   on_hold: "On hold",
   payment_ready: "Payment ready",
   handoff_exported: "Exported",
+  payment_scheduled: "Scheduled",
+  partially_paid: "Partially paid",
+  paid: "Paid",
 };
 
 export function PaymentStatusBadge({
