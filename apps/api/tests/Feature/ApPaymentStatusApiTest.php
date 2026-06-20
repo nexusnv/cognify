@@ -582,4 +582,61 @@ class ApPaymentStatusApiTest extends TestCase
             voidReason: 'no', // Too short
         );
     }
+
+    public function test_failed_handoff_can_be_rescheduled(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+        $handoff->refresh();
+        $handoff = app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            failureCode: \Domains\Payments\States\ApPaymentFailureCode::BankRejected,
+            failureReason: 'Bank rejected wire',
+        );
+        $this->assertSame(ApPaymentHandoffStatus::Failed, $handoff->statusState());
+
+        // Now reschedule
+        $handoff->refresh();
+        $result = app(\Domains\Payments\Actions\RescheduleFailedApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            scheduledForDate: '2026-06-25',
+        );
+
+        $this->assertSame(ApPaymentHandoffStatus::Scheduled, $result->statusState());
+        $this->assertNull($result->failed_by_user_id);
+        $this->assertNull($result->failed_at);
+        $this->assertNull($result->failure_code);
+        $this->assertNull($result->failure_reason);
+        $this->assertSame('2026-06-25', $result->scheduled_for_date?->toDateString());
+
+        $invoice->refresh();
+        $this->assertSame(SupplierInvoicePaymentStatus::PaymentScheduled, $invoice->payment_status);
+    }
+
+    public function test_non_failed_handoff_cannot_be_rescheduled(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        // handoff is Exported, not Failed
+
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\ConflictHttpException::class);
+
+        app(\Domains\Payments\Actions\RescheduleFailedApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+    }
 }
