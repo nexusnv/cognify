@@ -95,7 +95,6 @@ export function PaymentImportPreviewPanel({
                       <ImportRowEditor
                         key={row.id}
                         row={row}
-                        batchId={batchId}
                       />
                     ))
                   )}
@@ -121,10 +120,8 @@ export function PaymentImportPreviewPanel({
 
 function ImportRowEditor({
   row,
-  batchId,
 }: {
   row: ApPaymentImportRow;
-  batchId: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [handoffNumber, setHandoffNumber] = useState(row.handoffNumber ?? "");

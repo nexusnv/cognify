@@ -8,10 +8,8 @@ import {
   discardPaymentImportRow,
 } from "@cognify/api-client/endpoints";
 import type {
-  ApPaymentImportBatchResponse,
   ApPaymentImportBatchResponseData,
   ApPaymentImportRowResponse,
-  ReconciliationResultResponse,
   ReconciliationResultResponseData,
   UploadPaymentImportRequest,
   UpdatePaymentImportRowRequest,

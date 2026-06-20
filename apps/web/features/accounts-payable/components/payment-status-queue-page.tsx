@@ -54,9 +54,9 @@ export function PaymentStatusQueuePage() {
   const [selectedHandoff, setSelectedHandoff] = useState<HandoffWithNumber | null>(null);
 
   const handoffsQuery = useApPaymentHandoffs();
-  const rawHandoffs = (handoffsQuery.data?.handoffs as HandoffWithNumber[] | undefined) ?? [];
 
   const filteredHandoffs = useMemo(() => {
+    const rawHandoffs = (handoffsQuery.data?.handoffs as HandoffWithNumber[] | undefined) ?? [];
     return rawHandoffs.filter((handoff) => {
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(handoff.status)) {
         return false;
@@ -82,7 +82,7 @@ export function PaymentStatusQueuePage() {
       }
       return true;
     });
-  }, [rawHandoffs, selectedStatuses, searchQuery, dateFrom, dateTo]);
+  }, [handoffsQuery.data, selectedStatuses, searchQuery, dateFrom, dateTo]);
 
   const state: DataTableState = handoffsQuery.isLoading
     ? "loading"
