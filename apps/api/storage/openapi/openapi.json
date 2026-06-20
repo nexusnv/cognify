@@ -10400,6 +10400,660 @@
         }
       }
     },
+    "/api/ap-payment-handoffs/{handoff}/schedule": {
+      "post": {
+        "operationId": "scheduleApPaymentHandoff",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleApPaymentHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale lock version or invalid state"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/mark-paid": {
+      "post": {
+        "operationId": "markApPaymentHandoffPaid",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkApPaymentHandoffPaidRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale lock version or under-allocated"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/close-with-variance": {
+      "post": {
+        "operationId": "closeApPaymentHandoffWithVariance",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseApPaymentHandoffWithVarianceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale lock version or no allocations"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/mark-failed": {
+      "post": {
+        "operationId": "markApPaymentHandoffFailed",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkApPaymentHandoffFailedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing failure_code or reason"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/void": {
+      "post": {
+        "operationId": "voidApPaymentHandoff",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidApPaymentHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing void reason"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/reschedule": {
+      "post": {
+        "operationId": "rescheduleApPaymentHandoff",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleApPaymentHandoffRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentHandoffResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Handoff not in failed state"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-handoffs/{handoff}/allocations": {
+      "get": {
+        "operationId": "listApPaymentAllocations",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ApPaymentAllocation"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApPaymentAllocation",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "handoff",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddApPaymentAllocationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentAllocationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Over-allocation or invalid amount"
+          }
+        }
+      }
+    },
+    "/api/ap-payment-allocations/{allocation}": {
+      "get": {
+        "operationId": "showApPaymentAllocation",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "allocation",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentAllocationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts-payable/payment-imports/upload": {
+      "post": {
+        "operationId": "uploadPaymentImport",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadPaymentImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentImportBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid file"
+          }
+        }
+      }
+    },
+    "/api/accounts-payable/payment-imports/{batchId}": {
+      "get": {
+        "operationId": "showPaymentImportBatch",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "batchId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentImportBatchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts-payable/payment-imports/{import}": {
+      "patch": {
+        "operationId": "updatePaymentImportRow",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "import",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentImportRowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentImportRowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts-payable/payment-imports/{batchId}/reconcile": {
+      "post": {
+        "operationId": "reconcilePaymentImportBatch",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "batchId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcilePaymentImportBatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationResultResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts-payable/payment-imports/{import}/discard": {
+      "post": {
+        "operationId": "discardPaymentImportRow",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "import",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApPaymentImportRowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/supplier-invoices/{supplierInvoice}/place-hold": {
       "post": {
         "operationId": "placeSupplierInvoiceOnPaymentHold",
@@ -27455,7 +28109,11 @@
           "draft",
           "ready",
           "exported",
-          "cancelled"
+          "cancelled",
+          "scheduled",
+          "paid",
+          "failed",
+          "voided"
         ]
       },
       "ApPaymentHandoffInvoiceItem": {
@@ -27939,6 +28597,524 @@
           }
         },
         "additionalProperties": false
+      },
+      "ApPaymentFailureCode": {
+        "type": "string",
+        "enum": [
+          "bank_rejected",
+          "insufficient_funds",
+          "vendor_blocked",
+          "system_error",
+          "other"
+        ]
+      },
+      "ApPaymentImportStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "reconciled",
+          "failed",
+          "discarded"
+        ]
+      },
+      "ApPaymentImportTargetStatus": {
+        "type": "string",
+        "enum": [
+          "paid",
+          "failed",
+          "voided"
+        ]
+      },
+      "ScheduleApPaymentHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scheduledForDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "paymentReference": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "MarkApPaymentHandoffPaidRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "remittanceReference": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "remittanceAdviceSentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CloseApPaymentHandoffWithVarianceRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "varianceReason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "varianceReason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000
+          },
+          "remittanceReference": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "remittanceAdviceSentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MarkApPaymentHandoffFailedRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "failureCode",
+          "failureReason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "failureCode": {
+            "$ref": "#/components/schemas/ApPaymentFailureCode"
+          },
+          "failureReason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000
+          }
+        }
+      },
+      "VoidApPaymentHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "voidReason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "voidReason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000
+          }
+        }
+      },
+      "RescheduleApPaymentHandoffRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scheduledForDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "paymentReference": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "AddApPaymentAllocationRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "supplierInvoiceId",
+          "allocatedAmount",
+          "allocationDate"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "supplierInvoiceId": {
+            "type": "string"
+          },
+          "allocatedAmount": {
+            "type": "string"
+          },
+          "allocationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "paymentReference": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "settlementAmount": {
+            "type": "string"
+          },
+          "settlementCurrency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          }
+        }
+      },
+      "ApPaymentAllocationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApPaymentAllocation"
+          }
+        }
+      },
+      "ApPaymentAllocation": {
+        "type": "object",
+        "required": [
+          "id",
+          "apPaymentHandoffId",
+          "supplierInvoiceId",
+          "allocatedAmount",
+          "allocationDate",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "apPaymentHandoffId": {
+            "type": "string"
+          },
+          "supplierInvoiceId": {
+            "type": "string"
+          },
+          "supplierInvoiceNumber": {
+            "type": "string"
+          },
+          "allocatedAmount": {
+            "type": "string"
+          },
+          "allocationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "paymentReference": {
+            "type": "string"
+          },
+          "settlementAmount": {
+            "type": "string"
+          },
+          "settlementCurrency": {
+            "type": "string"
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "UploadPaymentImportRequest": {
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "UpdatePaymentImportRowRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "handoffNumber": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "allocatedAmount": {
+            "type": "string"
+          },
+          "markFull": {
+            "type": "boolean"
+          },
+          "settlementAmount": {
+            "type": "string"
+          },
+          "settlementCurrency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "settlementMethod": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "failureCode": {
+            "$ref": "#/components/schemas/ApPaymentFailureCode"
+          },
+          "failureReason": {
+            "type": "string"
+          },
+          "voidReason": {
+            "type": "string"
+          }
+        }
+      },
+      "ReconcilePaymentImportBatchRequest": {
+        "type": "object",
+        "properties": {
+          "lockVersions": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      },
+      "ApPaymentImportRowResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApPaymentImportRow"
+          }
+        }
+      },
+      "ApPaymentImportRow": {
+        "type": "object",
+        "required": [
+          "id",
+          "batchId",
+          "rowIndex",
+          "targetStatus",
+          "status",
+          "importedByUserId",
+          "importedAt",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "rowIndex": {
+            "type": "integer"
+          },
+          "handoffNumber": {
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "paymentReference": {
+            "type": "string"
+          },
+          "allocatedAmount": {
+            "type": "string"
+          },
+          "markFull": {
+            "type": "boolean"
+          },
+          "settlementAmount": {
+            "type": "string"
+          },
+          "settlementCurrency": {
+            "type": "string"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "settlementMethod": {
+            "type": "string"
+          },
+          "targetStatus": {
+            "$ref": "#/components/schemas/ApPaymentImportTargetStatus"
+          },
+          "failureCode": {
+            "$ref": "#/components/schemas/ApPaymentFailureCode"
+          },
+          "failureReason": {
+            "type": "string"
+          },
+          "voidReason": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApPaymentImportStatus"
+          },
+          "matchError": {
+            "type": "string"
+          },
+          "matchedHandoffId": {
+            "type": "string"
+          },
+          "matchedInvoiceId": {
+            "type": "string"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reconciledByUserId": {
+            "type": "string"
+          },
+          "importedByUserId": {
+            "type": "string"
+          },
+          "importedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lockVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "ApPaymentImportBatchResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "batchId",
+              "rows",
+              "summary"
+            ],
+            "properties": {
+              "batchId": {
+                "type": "string"
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ApPaymentImportRow"
+                }
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer"
+                  },
+                  "pending": {
+                    "type": "integer"
+                  },
+                  "reconciled": {
+                    "type": "integer"
+                  },
+                  "failed": {
+                    "type": "integer"
+                  },
+                  "discarded": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ReconciliationResultResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "reconciledCount",
+              "failedCount",
+              "skippedCount"
+            ],
+            "properties": {
+              "reconciledCount": {
+                "type": "integer"
+              },
+              "failedCount": {
+                "type": "integer"
+              },
+              "skippedCount": {
+                "type": "integer"
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "rowIndex": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

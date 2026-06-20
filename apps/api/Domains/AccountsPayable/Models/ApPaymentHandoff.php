@@ -28,26 +28,16 @@ class ApPaymentHandoff extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'tenant_id',
-        'number',
-        'status',
-        'effective_payment_date',
-        'notes',
-        'currency',
-        'total_amount',
-        'remittance_reference',
-        'created_by_user_id',
-        'ready_by_user_id',
-        'ready_at',
-        'cancelled_by_user_id',
-        'cancelled_at',
-        'cancelled_reason',
-        'last_exported_by_user_id',
-        'last_exported_at',
-        'last_export_format',
-        'snapshot',
-        'readiness_warnings',
-        'lock_version',
+        'tenant_id', 'number', 'status', 'effective_payment_date', 'notes',
+        'currency', 'total_amount', 'remittance_reference', 'created_by_user_id',
+        'ready_by_user_id', 'ready_at', 'cancelled_by_user_id', 'cancelled_at',
+        'cancelled_reason', 'last_exported_by_user_id', 'last_exported_at',
+        'last_export_format', 'snapshot', 'readiness_warnings', 'lock_version',
+        'scheduled_by_user_id', 'scheduled_at', 'scheduled_for_date', 'payment_reference',
+        'paid_by_user_id', 'paid_at', 'remittance_advice_sent_at',
+        'failed_by_user_id', 'failed_at', 'failure_code', 'failure_reason',
+        'voided_by_user_id', 'voided_at', 'void_reason',
+        'variance_amount', 'variance_reason', 'variance_closed_by_user_id', 'variance_closed_at',
     ];
 
     protected function casts(): array
@@ -62,6 +52,14 @@ class ApPaymentHandoff extends Model
             'ready_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'last_exported_at' => 'datetime',
+            'scheduled_for_date' => 'date',
+            'scheduled_at' => 'datetime',
+            'paid_at' => 'datetime',
+            'remittance_advice_sent_at' => 'datetime',
+            'failed_at' => 'datetime',
+            'voided_at' => 'datetime',
+            'variance_amount' => 'decimal:4',
+            'variance_closed_at' => 'datetime',
         ];
     }
 
@@ -123,5 +121,78 @@ class ApPaymentHandoff extends Model
     public function lastExportedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'last_exported_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function scheduledByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'scheduled_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function paidByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function failedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'failed_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function voidedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function varianceClosedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'variance_closed_by_user_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Domains\Payments\Models\ApPaymentAllocation>
+     */
+    public function allocations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\Domains\Payments\Models\ApPaymentAllocation::class, 'ap_payment_handoff_id');
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $handoff): void {
+            $tenantId = (int) $handoff->tenant_id;
+            $userIds = array_filter([
+                $handoff->scheduled_by_user_id,
+                $handoff->paid_by_user_id,
+                $handoff->failed_by_user_id,
+                $handoff->voided_by_user_id,
+                $handoff->variance_closed_by_user_id,
+            ]);
+
+            foreach ($userIds as $userId) {
+                $exists = \App\Models\User::query()
+                    ->whereKey($userId)
+                    ->whereHas('tenants', fn ($q) => $q->where('tenants.id', $tenantId))
+                    ->exists();
+
+                if (! $exists) {
+                    throw new \InvalidArgumentException("User {$userId} does not belong to tenant {$tenantId}.");
+                }
+            }
+        });
     }
 }

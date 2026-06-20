@@ -17,6 +17,9 @@ use Domains\Approval\Http\Controllers\ApprovalTaskController;
 use Domains\Approval\Http\Controllers\RequisitionApprovalController;
 use Domains\AccountsPayable\Http\Controllers\ApPaymentHandoffController;
 use Domains\AccountsPayable\Http\Controllers\SupplierInvoicePaymentController;
+use Domains\Payments\Http\Controllers\ApPaymentAllocationController;
+use Domains\Payments\Http\Controllers\ApPaymentImportController;
+use Domains\Payments\Http\Controllers\ApPaymentStatusController;
 use Domains\Attachment\Http\Controllers\AttachmentFileController;
 use Domains\Attachment\Http\Controllers\RequisitionAttachmentController;
 use Domains\Attachment\Http\Controllers\SupplierInvoiceAttachmentController;
@@ -216,6 +219,27 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/ap-payment-handoffs/{handoff}/export.json', [ApPaymentHandoffController::class, 'recordExportJson']);
             Route::get('/ap-payment-handoffs/{handoff}/export.csv', [ApPaymentHandoffController::class, 'exportCsv']);
             Route::post('/ap-payment-handoffs/{handoff}/export.csv', [ApPaymentHandoffController::class, 'recordExportCsv']);
+
+            // P1-48: post-export handoff lifecycle
+            Route::post('/ap-payment-handoffs/{handoff}/schedule', [ApPaymentStatusController::class, 'schedule']);
+            Route::post('/ap-payment-handoffs/{handoff}/mark-paid', [ApPaymentStatusController::class, 'markPaid']);
+            Route::post('/ap-payment-handoffs/{handoff}/close-with-variance', [ApPaymentStatusController::class, 'closeWithVariance']);
+            Route::post('/ap-payment-handoffs/{handoff}/mark-failed', [ApPaymentStatusController::class, 'markFailed']);
+            Route::post('/ap-payment-handoffs/{handoff}/void', [ApPaymentStatusController::class, 'void']);
+            Route::post('/ap-payment-handoffs/{handoff}/reschedule', [ApPaymentStatusController::class, 'reschedule']);
+
+            // P1-48: payment allocations
+            Route::get('/ap-payment-handoffs/{handoff}/allocations', [ApPaymentAllocationController::class, 'index']);
+            Route::post('/ap-payment-handoffs/{handoff}/allocations', [ApPaymentAllocationController::class, 'store']);
+            Route::get('/ap-payment-allocations/{allocation}', [ApPaymentAllocationController::class, 'show']);
+
+            // P1-48: payment import (staging, preview, reconcile)
+            Route::post('/accounts-payable/payment-imports/upload', [ApPaymentImportController::class, 'upload']);
+            Route::get('/accounts-payable/payment-imports/{batchId}', [ApPaymentImportController::class, 'show']);
+            Route::patch('/accounts-payable/payment-imports/{import}', [ApPaymentImportController::class, 'update']);
+            Route::post('/accounts-payable/payment-imports/{batchId}/reconcile', [ApPaymentImportController::class, 'reconcile']);
+            Route::post('/accounts-payable/payment-imports/{import}/discard', [ApPaymentImportController::class, 'discard']);
+
             Route::post('/supplier-invoices/{supplierInvoice}/place-hold', [SupplierInvoicePaymentController::class, 'placeHold']);
             Route::post('/supplier-invoices/{supplierInvoice}/release-hold', [SupplierInvoicePaymentController::class, 'releaseHold']);
             Route::post('/supplier-invoices/{supplierInvoice}/retry-payment-induction', [SupplierInvoicePaymentController::class, 'retryInduction']);

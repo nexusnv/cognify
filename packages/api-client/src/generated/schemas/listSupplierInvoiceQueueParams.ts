@@ -28,5 +28,8 @@ export type ListSupplierInvoiceQueueParams = {
   sort?: ListSupplierInvoiceQueueSort;
   matchingStatus?: ListSupplierInvoiceQueueMatchingStatus;
   hasMismatch?: boolean;
+  /**
+   * Filter invoices by payment workflow status. Use 'none' for invoices not yet in the payment workflow, 'any' for all payment workflow invoices, or specify a status: 'payment_eligible', 'on_hold', 'payment_ready', 'handoff_exported'.
+   */
   paymentStatus?: ListSupplierInvoiceQueuePaymentStatus;
 };

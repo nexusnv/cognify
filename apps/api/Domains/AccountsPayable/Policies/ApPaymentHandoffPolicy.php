@@ -56,6 +56,41 @@ class ApPaymentHandoffPolicy
             && $this->buyerOrAdmin($user);
     }
 
+    public function schedule(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function addAllocation(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function markPaid(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function closeWithVariance(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function markFailed(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function void(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
+    public function reschedule(User $user, ApPaymentHandoff $apPaymentHandoff): bool
+    {
+        return $this->isTenantScoped($apPaymentHandoff->tenant_id) && $this->buyerOrAdmin($user);
+    }
+
     private function buyerOrAdmin(User $user): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);

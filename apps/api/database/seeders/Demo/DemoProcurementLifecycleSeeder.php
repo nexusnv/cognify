@@ -34,6 +34,7 @@ use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
 use Domains\AccountsPayable\Models\ApPaymentHandoff;
 use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
+use Domains\Payments\Models\ApPaymentAllocation;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -136,6 +137,7 @@ class DemoProcurementLifecycleSeeder
         $this->seedGoodsReceipts($context, $tenant, $buyer);
         $this->seedSupplierInvoices($tenant, $buyer, $finance);
         $this->seedFulfillment($context, $tenant, $buyer);
+        $this->seedPaymentStatuses($tenant, $finance);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -2766,6 +2768,213 @@ class DemoProcurementLifecycleSeeder
                 'lineCount' => count($linesData),
                 'totalQuantityReceived' => $totalQty,
             ],
+        ));
+    }
+
+    private function seedPaymentStatuses(
+        Tenant $tenant,
+        User $finance,
+    ): void {
+        $this->seedExportedHandoff($tenant, $finance, 'HDOFF-DEMO-002', 12000, 'USD', [
+            'INV-2026-DEMO-011' => 6000,
+            'INV-2026-DEMO-012' => 6000,
+        ]);
+        $this->seedScheduledHandoff($tenant, $finance, 'HDOFF-DEMO-003', 15000, 'USD', [
+            'INV-2026-DEMO-013' => 7500,
+            'INV-2026-DEMO-014' => 7500,
+        ], allocations: []);
+        $this->seedScheduledHandoff($tenant, $finance, 'HDOFF-DEMO-004', 20000, 'USD', [
+            'INV-2026-DEMO-015' => 10000,
+            'INV-2026-DEMO-016' => 10000,
+        ], allocations: [
+            'INV-2026-DEMO-015' => 10000,
+            'INV-2026-DEMO-016' => 5000,
+        ]);
+        $this->seedPaidHandoff($tenant, $finance, 'HDOFF-DEMO-005', 18000, 'USD', [
+            'INV-2026-DEMO-017' => 9000,
+            'INV-2026-DEMO-018' => 9000,
+        ], 'REM-2026-001');
+        $this->seedFailedHandoff($tenant, $finance, 'HDOFF-DEMO-006', 14000, 'USD', [
+            'INV-2026-DEMO-019' => 7000,
+            'INV-2026-DEMO-020' => 7000,
+        ], 'bank_rejected', 'Bank rejected wire — invalid account number');
+        $this->seedVoidedHandoff($tenant, $finance, 'HDOFF-DEMO-007', 9000, 'USD', [
+            'INV-2026-DEMO-021' => 4500,
+            'INV-2026-DEMO-022' => 4500,
+        ], 'Duplicate batch created by accident');
+        $this->seedPaidWithVarianceHandoff($tenant, $finance, 'HDOFF-DEMO-008', 22000, 'USD', [
+            'INV-2026-DEMO-023' => 12000,
+            'INV-2026-DEMO-024' => 10000,
+        ], 'Bank fee deducted from wire clearance');
+    }
+
+    private function seedExportedHandoff(Tenant $tenant, User $finance, string $number, int $total, string $currency, array $invoiceAmounts): void
+    {
+        $handoff = $this->upsertHandoff($tenant, $finance, $number, ApPaymentHandoffStatus::Exported, $total, $currency, $invoiceAmounts);
+        $this->recordHandoffAudit($tenant, $finance, $handoff, 'ap_payment_handoff.exported');
+    }
+
+    private function seedScheduledHandoff(Tenant $tenant, User $finance, string $number, int $total, string $currency, array $invoiceAmounts, array $allocations): void
+    {
+        $handoff = $this->upsertHandoff($tenant, $finance, $number, ApPaymentHandoffStatus::Scheduled, $total, $currency, $invoiceAmounts);
+        $handoff->forceFill([
+            'scheduled_by_user_id' => $finance->id,
+            'scheduled_at' => '2026-06-22 09:00:00',
+            'scheduled_for_date' => '2026-06-25',
+        ])->save();
+        $this->seedAllocations($handoff, $allocations);
+        $this->recordHandoffAudit($tenant, $finance, $handoff, 'ap_payment_handoff.scheduled');
+    }
+
+    private function seedPaidHandoff(Tenant $tenant, User $finance, string $number, int $total, string $currency, array $invoiceAmounts, string $remittanceReference): void
+    {
+        $handoff = $this->upsertHandoff($tenant, $finance, $number, ApPaymentHandoffStatus::Paid, $total, $currency, $invoiceAmounts);
+        $handoff->forceFill([
+            'scheduled_by_user_id' => $finance->id,
+            'scheduled_at' => '2026-06-20 09:00:00',
+            'paid_by_user_id' => $finance->id,
+            'paid_at' => '2026-06-21 14:00:00',
+            'remittance_reference' => $remittanceReference,
+            'remittance_advice_sent_at' => '2026-06-21 14:05:00',
+        ])->save();
+        $fullAllocations = collect($invoiceAmounts)->mapWithKeys(fn ($amount, $invoiceNumber) => [$invoiceNumber => (string) $amount])->all();
+        $this->seedAllocations($handoff, $fullAllocations);
+        $this->recordHandoffAudit($tenant, $finance, $handoff, 'ap_payment_handoff.paid');
+    }
+
+    private function seedFailedHandoff(Tenant $tenant, User $finance, string $number, int $total, string $currency, array $invoiceAmounts, string $failureCode, string $failureReason): void
+    {
+        $handoff = $this->upsertHandoff($tenant, $finance, $number, ApPaymentHandoffStatus::Failed, $total, $currency, $invoiceAmounts);
+        $handoff->forceFill([
+            'scheduled_by_user_id' => $finance->id,
+            'scheduled_at' => '2026-06-20 09:00:00',
+            'failed_by_user_id' => $finance->id,
+            'failed_at' => '2026-06-21 16:00:00',
+            'failure_code' => $failureCode,
+            'failure_reason' => $failureReason,
+        ])->save();
+        $this->recordHandoffAudit($tenant, $finance, $handoff, 'ap_payment_handoff.failed');
+    }
+
+    private function seedVoidedHandoff(Tenant $tenant, User $finance, string $number, int $total, string $currency, array $invoiceAmounts, string $voidReason): void
+    {
+        $handoff = $this->upsertHandoff($tenant, $finance, $number, ApPaymentHandoffStatus::Voided, $total, $currency, $invoiceAmounts);
+        $handoff->forceFill([
+            'scheduled_by_user_id' => $finance->id,
+            'scheduled_at' => '2026-06-20 09:00:00',
+            'voided_by_user_id' => $finance->id,
+            'voided_at' => '2026-06-21 18:00:00',
+            'void_reason' => $voidReason,
+        ])->save();
+        $this->recordHandoffAudit($tenant, $finance, $handoff, 'ap_payment_handoff.voided');
+    }
+
+    private function seedPaidWithVarianceHandoff(Tenant $tenant, User $finance, string $number, int $total, string $currency, array $invoiceAmounts, string $varianceReason): void
+    {
+        $handoff = $this->upsertHandoff($tenant, $finance, $number, ApPaymentHandoffStatus::Paid, $total, $currency, $invoiceAmounts);
+        $variances = ['INV-2026-DEMO-023' => '12000.0000', 'INV-2026-DEMO-024' => '9000.0000']; // 1000 short
+        $this->seedAllocations($handoff, $variances);
+        $handoff->forceFill([
+            'scheduled_by_user_id' => $finance->id,
+            'scheduled_at' => '2026-06-20 09:00:00',
+            'paid_by_user_id' => $finance->id,
+            'paid_at' => '2026-06-21 14:00:00',
+            'variance_amount' => '1000.0000',
+            'variance_reason' => $varianceReason,
+            'variance_closed_by_user_id' => $finance->id,
+            'variance_closed_at' => '2026-06-21 14:00:00',
+            'remittance_reference' => 'REM-2026-008',
+        ])->save();
+        $this->recordHandoffAudit($tenant, $finance, $handoff, 'ap_payment_handoff.paid_with_variance');
+    }
+
+    private function upsertHandoff(Tenant $tenant, User $finance, string $number, ApPaymentHandoffStatus $status, int $total, string $currency, array $invoiceAmounts): ApPaymentHandoff
+    {
+        $handoff = ApPaymentHandoff::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => $number],
+            [
+                'status' => $status,
+                'currency' => $currency,
+                'total_amount' => $total,
+                'created_by_user_id' => $finance->id,
+                'lock_version' => 5,
+            ]
+        );
+
+        $po = PurchaseOrder::query()
+            ->where('tenant_id', $tenant->id)
+            ->first();
+
+        $invoices = collect();
+        foreach ($invoiceAmounts as $invoiceNumber => $amount) {
+            $invoice = SupplierInvoice::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'invoice_number' => $invoiceNumber],
+                [
+                    'purchase_order_id' => $po?->id,
+                    'vendor_id' => $po?->vendor_id,
+                    'number' => $invoiceNumber,
+                    'invoice_number_normalized' => str_replace('-', '', $invoiceNumber),
+                    'status' => SupplierInvoiceStatus::Approved->value,
+                    'currency' => $currency,
+                    'subtotal_amount' => (string) $amount,
+                    'total_amount' => (string) $amount,
+                    'invoice_date' => '2026-06-20',
+                    'due_date' => '2026-07-20',
+                    'captured_by_user_id' => $finance->id,
+                    'captured_at' => '2026-06-20 09:00:00',
+                    'lock_version' => 1,
+                    'payment_status' => $status === ApPaymentHandoffStatus::Exported
+                        ? SupplierInvoicePaymentStatus::HandoffExported->value
+                        : ($status === ApPaymentHandoffStatus::Failed || $status === ApPaymentHandoffStatus::Voided
+                            ? SupplierInvoicePaymentStatus::HandoffExported->value
+                            : SupplierInvoicePaymentStatus::PaymentScheduled->value),
+                ]
+            );
+            $invoices->push($invoice);
+        }
+
+        $handoff->invoices()->sync($invoices->mapWithKeys(fn ($inv) => [$inv->id => ['tenant_id' => $tenant->id]])->all());
+
+        return $handoff;
+    }
+
+    private function seedAllocations(ApPaymentHandoff $handoff, array $allocations): void
+    {
+        ApPaymentAllocation::query()
+            ->where('ap_payment_handoff_id', $handoff->id)
+            ->delete();
+
+        foreach ($allocations as $invoiceNumber => $amount) {
+            $invoice = SupplierInvoice::query()
+                ->where('tenant_id', $handoff->tenant_id)
+                ->where('invoice_number', $invoiceNumber)
+                ->first();
+            if ($invoice === null) {
+                continue;
+            }
+            ApPaymentAllocation::query()->create([
+                'tenant_id' => $handoff->tenant_id,
+                'ap_payment_handoff_id' => $handoff->id,
+                'supplier_invoice_id' => $invoice->id,
+                'allocated_amount' => $amount,
+                'allocation_date' => '2026-06-21',
+                'payment_reference' => 'PRN-SEEDED',
+                'settlement_amount' => $amount,
+                'settlement_currency' => $handoff->currency,
+                'lock_version' => 1,
+            ]);
+        }
+    }
+
+    private function recordHandoffAudit(Tenant $tenant, User $actor, ApPaymentHandoff $handoff, string $action): void
+    {
+        $this->auditRecorder->record(new AuditEventData(
+            tenant: $tenant,
+            actor: $actor,
+            action: $action,
+            subject: $handoff,
+            metadata: ['demo' => true, 'handoffNumber' => $handoff->number],
+            after: $handoff->toArray(),
         ));
     }
 }

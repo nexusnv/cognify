@@ -8,6 +8,9 @@ enum SupplierInvoicePaymentStatus: string
     case OnHold = 'on_hold';
     case PaymentReady = 'payment_ready';
     case HandoffExported = 'handoff_exported';
+    case PaymentScheduled = 'payment_scheduled';
+    case PartiallyPaid = 'partially_paid';
+    case Paid = 'paid';
 
     public function label(): string
     {
@@ -16,6 +19,9 @@ enum SupplierInvoicePaymentStatus: string
             self::OnHold => 'On hold',
             self::PaymentReady => 'Payment ready',
             self::HandoffExported => 'Exported',
+            self::PaymentScheduled => 'Scheduled',
+            self::PartiallyPaid => 'Partially paid',
+            self::Paid => 'Paid',
         };
     }
 
@@ -26,6 +32,6 @@ enum SupplierInvoicePaymentStatus: string
 
     public function isTerminal(): bool
     {
-        return $this === self::HandoffExported;
+        return in_array($this, [self::HandoffExported, self::Paid], true);
     }
 }

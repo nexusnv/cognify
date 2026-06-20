@@ -2,6 +2,9 @@ import { http, HttpResponse } from "msw";
 import { approvalHandlers } from "@/features/approvals/mocks/approval-handlers";
 import { accountsPayableInvoiceHandlers } from "@/features/accounts-payable/mocks/accounts-payable-invoice-handlers";
 import { accountsPayablePaymentHandlers } from "@/features/accounts-payable/mocks/accounts-payable-payment-handlers";
+import { accountsPayablePaymentStatusHandlers } from "@/features/accounts-payable/mocks/accounts-payable-payment-status-handlers";
+import { accountsPayablePaymentAllocationHandlers } from "@/features/accounts-payable/mocks/accounts-payable-payment-allocation-handlers";
+import { accountsPayablePaymentImportHandlers } from "@/features/accounts-payable/mocks/accounts-payable-payment-import-handlers";
 import { invoiceExceptionHandlers } from "@/features/accounts-payable/mocks/invoice-exception-handlers";
 import { attachmentHandlers } from "../../features/attachments/mocks/attachments-handlers";
 import { auditHandlers } from "../../features/audit/mocks/audit-handlers";
@@ -32,6 +35,9 @@ export const handlers = [
   }),
   ...accountsPayableInvoiceHandlers,
   ...accountsPayablePaymentHandlers,
+  ...accountsPayablePaymentStatusHandlers,
+  ...accountsPayablePaymentAllocationHandlers,
+  ...accountsPayablePaymentImportHandlers,
   ...invoiceExceptionHandlers,
   ...approvalHandlers,
   ...requisitionsHandlers,

@@ -14,4 +14,8 @@ export const ApPaymentHandoffStatus = {
   ready: "ready",
   exported: "exported",
   cancelled: "cancelled",
+  scheduled: "scheduled",
+  paid: "paid",
+  failed: "failed",
+  voided: "voided",
 } as const;

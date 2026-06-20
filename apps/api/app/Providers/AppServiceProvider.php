@@ -19,6 +19,8 @@ use Domains\Fulfillment\Models\Shipment;
 use Domains\Fulfillment\Policies\ShipmentPolicy;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Policies\SupplierInvoicePolicy;
+use Domains\Payments\Models\ApPaymentAllocation;
+use Domains\Payments\Models\ApPaymentImport;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Project\Policies\ProcurementProjectPolicy;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
@@ -87,5 +89,7 @@ class AppServiceProvider extends ServiceProvider
 
         AuditSubject::registerType(ApprovalTask::class, 'approval_task');
         AuditSubject::registerType(SupplierInvoice::class, 'supplier_invoice');
+        AuditSubject::registerType(ApPaymentAllocation::class, 'ap_payment_allocation');
+        AuditSubject::registerType(ApPaymentImport::class, 'ap_payment_import');
     }
 }
