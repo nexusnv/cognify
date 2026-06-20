@@ -255,6 +255,11 @@ class SupplierInvoice extends Model
         return $this->hasMany(SupplierInvoiceException::class)->orderBy('created_at');
     }
 
+    public function creditApplications(): HasMany
+    {
+        return $this->hasMany(\Domains\CreditMemo\Models\CreditApplication::class, 'supplier_invoice_id');
+    }
+
     public function attachments(): MorphMany
     {
         $relation = $this->morphMany(Attachment::class, 'attachable');
