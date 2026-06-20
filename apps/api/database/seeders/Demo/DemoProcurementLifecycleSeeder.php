@@ -137,7 +137,7 @@ class DemoProcurementLifecycleSeeder
         $this->seedGoodsReceipts($context, $tenant, $buyer);
         $this->seedSupplierInvoices($tenant, $buyer, $finance);
         $this->seedFulfillment($context, $tenant, $buyer);
-        $this->seedPaymentStatuses($tenant, $buyer, $finance);
+        $this->seedPaymentStatuses($tenant, $finance);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -2773,7 +2773,6 @@ class DemoProcurementLifecycleSeeder
 
     private function seedPaymentStatuses(
         Tenant $tenant,
-        User $buyer,
         User $finance,
     ): void {
         $this->seedExportedHandoff($tenant, $finance, 'HDOFF-DEMO-002', 12000, 'USD', [

@@ -32,6 +32,6 @@ enum SupplierInvoicePaymentStatus: string
 
     public function isTerminal(): bool
     {
-        return $this === self::HandoffExported;
+        return in_array($this, [self::HandoffExported, self::Paid], true);
     }
 }

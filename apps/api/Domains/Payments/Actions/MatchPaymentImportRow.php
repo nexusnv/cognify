@@ -58,6 +58,8 @@ class MatchPaymentImportRow
             $import->forceFill([
                 'status' => ApPaymentImportStatus::Failed,
                 'match_error' => $error,
+                'matched_handoff_id' => null,
+                'matched_invoice_id' => null,
             ])->save();
         } else {
             $import->forceFill([

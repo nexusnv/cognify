@@ -28,7 +28,7 @@ class ReconcilePaymentImportBatch
         private readonly CurrentTenant $currentTenant,
     ) {}
 
-    public function handle(string $batchId, User $actor): ReconciliationResultData
+    public function handle(string $batchId, User $actor, ?array $lockVersions = null): ReconciliationResultData
     {
         $tenant = $this->currentTenant->get();
         if ($tenant === null) {
@@ -46,7 +46,7 @@ class ReconcilePaymentImportBatch
         $skipped = 0;
 
         foreach ($rows as $import) {
-            DB::transaction(function () use ($import, $actor, &$reconciled, &$failed, &$skipped): void {
+            DB::transaction(function () use ($import, $actor, $lockVersions, &$reconciled, &$failed, &$skipped): void {
                 $import = ApPaymentImport::query()
                     ->where('tenant_id', $import->tenant_id)
                     ->whereKey($import->id)
@@ -55,6 +55,15 @@ class ReconcilePaymentImportBatch
 
                 if ($import->status !== ApPaymentImportStatus::Pending && $import->status !== ApPaymentImportStatus::Failed) {
                     $skipped++;
+                    return;
+                }
+
+                if ($lockVersions !== null && ! in_array($import->lock_version, $lockVersions, true)) {
+                    $import->forceFill([
+                        'status' => ApPaymentImportStatus::Failed,
+                        'match_error' => 'Lock version mismatch.',
+                    ])->save();
+                    $failed++;
                     return;
                 }
 

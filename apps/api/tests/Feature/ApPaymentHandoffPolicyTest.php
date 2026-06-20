@@ -47,7 +47,7 @@ class ApPaymentHandoffPolicyTest extends TestCase
 
     public function test_post_export_abilities_reject_cross_tenant(): void
     {
-        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        [$tenant] = $this->tenantUserPair(TenantRole::Buyer->value);
         $handoff = $this->createHandoff($tenant);
         app(CurrentTenant::class)->set($tenant);
 

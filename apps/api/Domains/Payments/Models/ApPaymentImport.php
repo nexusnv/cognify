@@ -9,6 +9,7 @@ use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Payments\States\ApPaymentImportStatus;
 use Domains\Payments\States\ApPaymentImportTargetStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -69,5 +70,12 @@ class ApPaymentImport extends Model
     public function reconciledByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reconciled_by_user_id');
+    }
+
+    public function assertLockVersion(int $lockVersion): void
+    {
+        if ((int) $this->lock_version !== $lockVersion) {
+            throw new ConflictHttpException('The AP payment import row has changed. Reload and try again.');
+        }
     }
 }

@@ -10,6 +10,7 @@ use Domains\Payments\Actions\MatchPaymentImportRow;
 use Domains\Payments\Actions\ParsePaymentImportFile;
 use Domains\Payments\Actions\ReconcilePaymentImportBatch;
 use Domains\Payments\Http\Requests\ReconcilePaymentImportBatchRequest;
+use Domains\Payments\States\ApPaymentImportStatus;
 use Domains\Payments\Http\Requests\UpdatePaymentImportRowRequest;
 use Domains\Payments\Http\Requests\UploadPaymentImportRequest;
 use Domains\Payments\Http\Resources\ApPaymentImportResource;
@@ -41,10 +42,10 @@ class ApPaymentImportController extends Controller
                 'rows' => ApPaymentImportResource::collection($rows)->resolve(),
                 'summary' => [
                     'total' => $rows->count(),
-                    'pending' => $rows->where('status', 'pending')->count(),
-                    'reconciled' => $rows->where('status', 'reconciled')->count(),
-                    'failed' => $rows->where('status', 'failed')->count(),
-                    'discarded' => $rows->where('status', 'discarded')->count(),
+                    'pending' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Pending)->count(),
+                    'reconciled' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Reconciled)->count(),
+                    'failed' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Failed)->count(),
+                    'discarded' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Discarded)->count(),
                 ],
             ],
         ], 201);
@@ -71,10 +72,10 @@ class ApPaymentImportController extends Controller
                 'rows' => ApPaymentImportResource::collection($rows)->resolve(),
                 'summary' => [
                     'total' => $rows->count(),
-                    'pending' => $rows->where('status', 'pending')->count(),
-                    'reconciled' => $rows->where('status', 'reconciled')->count(),
-                    'failed' => $rows->where('status', 'failed')->count(),
-                    'discarded' => $rows->where('status', 'discarded')->count(),
+                    'pending' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Pending)->count(),
+                    'reconciled' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Reconciled)->count(),
+                    'failed' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Failed)->count(),
+                    'discarded' => $rows->filter(fn ($row) => $row->status === ApPaymentImportStatus::Discarded)->count(),
                 ],
             ],
         ]);
@@ -129,7 +130,11 @@ class ApPaymentImportController extends Controller
         $tenant = $this->tenantOrAbort($currentTenant);
         $this->authorize('reconcile', ApPaymentImport::class);
 
-        $result = $action->handle($batchId, $request->user());
+        $result = $action->handle(
+            $batchId,
+            $request->user(),
+            $request->validated('lockVersions'),
+        );
 
         return response()->json([
             'data' => [

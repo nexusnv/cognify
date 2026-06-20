@@ -27,13 +27,13 @@ class PaymentImportCsvParser
             foreach ($headerMap as $header => $idx) {
                 $row[$header] = $cols[$idx] ?? null;
             }
-            $rows[] = $this->mapToData($row, $index);
+            $rows[] = $this->mapToData($row);
         }
 
         return $rows;
     }
 
-    private function mapToData(array $row, int $index): PaymentImportRowData
+    private function mapToData(array $row): PaymentImportRowData
     {
         return new PaymentImportRowData(
             handoffNumber: $this->nullIfEmpty($row['handoff_number'] ?? null),

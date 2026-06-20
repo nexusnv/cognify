@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Alert,
   AlertDescription,
@@ -79,6 +79,7 @@ interface PaymentImportUploadPanelProps {
 export function PaymentImportUploadPanel({
   onUploadSuccess,
 }: PaymentImportUploadPanelProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const uploadMutation = useUploadPaymentImport();
@@ -168,9 +169,10 @@ export function PaymentImportUploadPanel({
           role="button"
           tabIndex={0}
           aria-label="Drop zone for file upload"
+          onClick={() => fileInputRef.current?.click()}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              document.getElementById("file-upload")?.click();
+              fileInputRef.current?.click();
             }
           }}
         >
@@ -192,6 +194,7 @@ export function PaymentImportUploadPanel({
           </div>
 
           <input
+            ref={fileInputRef}
             id="file-upload"
             type="file"
             accept=".csv,.json,text/csv,application/json"

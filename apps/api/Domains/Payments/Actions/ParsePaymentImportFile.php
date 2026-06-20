@@ -13,6 +13,7 @@ use Domains\Payments\Support\PaymentImportBatchIdGenerator;
 use Domains\Payments\Support\PaymentImportCsvParser;
 use Domains\Payments\Support\PaymentImportJsonParser;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 class ParsePaymentImportFile
 {
@@ -40,43 +41,46 @@ class ParsePaymentImportFile
             default => throw new \InvalidArgumentException('Import file must be CSV or JSON.'),
         };
 
-        $parsedRows = [];
-        foreach ($rows as $index => $rowData) {
-            $parseError = $this->validateRow($rowData);
+        $parsedRows = DB::transaction(function () use ($rows, $tenant, $batchId, $actor): array {
+            $parsedRows = [];
+            foreach ($rows as $index => $rowData) {
+                $parseError = $this->validateRow($rowData);
 
-            $import = ApPaymentImport::query()->create([
-                'tenant_id' => $tenant->id,
-                'batch_id' => $batchId,
-                'row_index' => $index,
-                'handoff_number' => $rowData->handoffNumber,
-                'invoice_number' => $rowData->invoiceNumber,
-                'payment_reference' => $rowData->paymentReference,
-                'allocated_amount' => $rowData->allocatedAmount,
-                'mark_full' => $rowData->markFull,
-                'settlement_amount' => $rowData->settlementAmount,
-                'settlement_currency' => $rowData->settlementCurrency,
-                'paid_at' => $rowData->paidAt,
-                'settlement_method' => $rowData->settlementMethod,
-                'target_status' => $rowData->status,
-                'failure_code' => $rowData->failureCode,
-                'failure_reason' => $rowData->failureReason,
-                'void_reason' => $rowData->voidReason,
-                'status' => $parseError !== null ? ApPaymentImportStatus::Failed->value : ApPaymentImportStatus::Pending->value,
-                'match_error' => $parseError,
-                'imported_by_user_id' => $actor->id,
-                'imported_at' => now(),
-            ]);
+                $import = ApPaymentImport::query()->create([
+                    'tenant_id' => $tenant->id,
+                    'batch_id' => $batchId,
+                    'row_index' => $index,
+                    'handoff_number' => $rowData->handoffNumber,
+                    'invoice_number' => $rowData->invoiceNumber,
+                    'payment_reference' => $rowData->paymentReference,
+                    'allocated_amount' => $rowData->allocatedAmount,
+                    'mark_full' => $rowData->markFull,
+                    'settlement_amount' => $rowData->settlementAmount,
+                    'settlement_currency' => $rowData->settlementCurrency,
+                    'paid_at' => $rowData->paidAt,
+                    'settlement_method' => $rowData->settlementMethod,
+                    'target_status' => $rowData->status,
+                    'failure_code' => $rowData->failureCode,
+                    'failure_reason' => $rowData->failureReason,
+                    'void_reason' => $rowData->voidReason,
+                    'status' => $parseError !== null ? ApPaymentImportStatus::Failed->value : ApPaymentImportStatus::Pending->value,
+                    'match_error' => $parseError,
+                    'imported_by_user_id' => $actor->id,
+                    'imported_at' => now(),
+                ]);
 
-            $parsedRows[] = [
-                'id' => $import->id,
-                'rowIndex' => $index,
-                'handoffNumber' => $rowData->handoffNumber,
-                'invoiceNumber' => $rowData->invoiceNumber,
-                'targetStatus' => $rowData->status,
-                'status' => $import->status,
-                'matchError' => $parseError,
-            ];
-        }
+                $parsedRows[] = [
+                    'id' => $import->id,
+                    'rowIndex' => $index,
+                    'handoffNumber' => $rowData->handoffNumber,
+                    'invoiceNumber' => $rowData->invoiceNumber,
+                    'targetStatus' => $rowData->status,
+                    'status' => $import->status,
+                    'matchError' => $parseError,
+                ];
+            }
+            return $parsedRows;
+        });
 
         return new PaymentImportPreviewData(
             batchId: $batchId,

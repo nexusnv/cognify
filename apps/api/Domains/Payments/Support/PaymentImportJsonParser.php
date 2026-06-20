@@ -15,7 +15,7 @@ class PaymentImportJsonParser
 
         $rows = [];
         foreach ($payload['rows'] as $index => $row) {
-            if (! is_array($row)) continue;
+            if (! is_array($row)) { $row = []; }
             $rows[] = new PaymentImportRowData(
                 handoffNumber: $this->nullIfEmpty($row['handoffNumber'] ?? null),
                 invoiceNumber: $this->nullIfEmpty($row['invoiceNumber'] ?? null),
