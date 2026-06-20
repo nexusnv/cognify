@@ -11,6 +11,8 @@ use Domains\AccountsPayable\Models\ApPaymentHandoffInvoice;
 use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Payments\Actions\AddApPaymentAllocation;
+use Domains\Payments\Actions\MarkApPaymentHandoffPaid;
 use Domains\Payments\Actions\ScheduleApPaymentHandoff;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
@@ -229,6 +231,95 @@ class ApPaymentStatusApiTest extends TestCase
         $this->expectException(ConflictHttpException::class);
 
         app(ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+    }
+
+    public function test_fully_allocated_scheduled_handoff_can_be_marked_paid(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $handoff->refresh();
+        $invoice->refresh();
+        app(AddApPaymentAllocation::class)->handle(
+            $handoff,
+            $invoice,
+            $buyer,
+            $handoff->lock_version,
+            allocatedAmount: '1000.0000',
+            allocationDate: '2026-06-20',
+        );
+
+        $handoff->refresh();
+        $result = app(MarkApPaymentHandoffPaid::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            remittanceReference: 'REM-2026-001',
+        );
+
+        $this->assertSame(ApPaymentHandoffStatus::Paid, $result->statusState());
+        $this->assertNotNull($result->paid_at);
+        $this->assertSame('REM-2026-001', $result->remittance_reference);
+
+        $invoice->refresh();
+        $this->assertSame(SupplierInvoicePaymentStatus::Paid, $invoice->payment_status);
+    }
+
+    public function test_under_allocated_handoff_cannot_be_marked_paid(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $handoff->refresh();
+        $invoice->refresh();
+        app(AddApPaymentAllocation::class)->handle(
+            $handoff,
+            $invoice,
+            $buyer,
+            $handoff->lock_version,
+            allocatedAmount: '600.0000',
+            allocationDate: '2026-06-20',
+        );
+
+        $handoff->refresh();
+        $this->expectException(ConflictHttpException::class);
+
+        app(MarkApPaymentHandoffPaid::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+    }
+
+    public function test_non_scheduled_handoff_cannot_be_marked_paid(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+
+        $this->expectException(ConflictHttpException::class);
+
+        app(MarkApPaymentHandoffPaid::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
