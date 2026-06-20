@@ -517,4 +517,69 @@ class ApPaymentStatusApiTest extends TestCase
             failureReason: 'Other reason',
         );
     }
+
+    public function test_scheduled_handoff_can_be_voided_releasing_invoices_to_handoff_exported(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+
+        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $handoff->refresh();
+        $result = app(\Domains\Payments\Actions\VoidApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            voidReason: 'Bank rejected the wire',
+        );
+
+        $this->assertSame(ApPaymentHandoffStatus::Voided, $result->statusState());
+        $this->assertSame('Bank rejected the wire', $result->void_reason);
+        $this->assertNotNull($result->voided_at);
+
+        // CRITICAL INVARIANT: invoice column goes DIRECTLY to handoff_exported,
+        // NEVER holds payment_voided. The payment_voided event is captured in
+        // the audit event payload only.
+        $invoice->refresh();
+        $this->assertSame(SupplierInvoicePaymentStatus::HandoffExported, $invoice->payment_status);
+
+        // Database-level assertion: column is handoff_exported, NOT payment_voided
+        $this->assertDatabaseHas('supplier_invoices', [
+            'id' => $invoice->id,
+            'payment_status' => 'handoff_exported',
+        ]);
+        $this->assertDatabaseMissing('supplier_invoices', [
+            'id' => $invoice->id,
+            'payment_status' => 'payment_voided',
+        ]);
+    }
+
+    public function test_void_without_reason_throws_validation(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+
+        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        $handoff->refresh();
+        app(\Domains\Payments\Actions\VoidApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            voidReason: 'no', // Too short
+        );
+    }
 }
