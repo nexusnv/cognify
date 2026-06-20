@@ -431,4 +431,90 @@ class ApPaymentStatusApiTest extends TestCase
             varianceReason: 'Bank deducted wire fee',
         );
     }
+
+    public function test_scheduled_handoff_can_be_marked_failed(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+
+        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $handoff->refresh();
+        $result = app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            failureCode: \Domains\Payments\States\ApPaymentFailureCode::BankRejected,
+            failureReason: 'Bank rejected wire',
+        );
+
+        $this->assertSame(ApPaymentHandoffStatus::Failed, $result->statusState());
+        $this->assertSame('bank_rejected', $result->failure_code);
+        $this->assertSame('Bank rejected wire', $result->failure_reason);
+        $this->assertNotNull($result->failed_at);
+
+        // CRITICAL INVARIANT: invoice column goes DIRECTLY to handoff_exported,
+        // NEVER holds payment_failed. The payment_failed event is captured in
+        // the audit event payload only.
+        $invoice->refresh();
+        $this->assertSame(SupplierInvoicePaymentStatus::HandoffExported, $invoice->payment_status);
+
+        // Database-level assertions: confirm the column value is handoff_exported and NOT payment_failed
+        $this->assertDatabaseHas('supplier_invoices', [
+            'id' => $invoice->id,
+            'payment_status' => 'handoff_exported',
+        ]);
+        $this->assertDatabaseMissing('supplier_invoices', [
+            'id' => $invoice->id,
+            'payment_status' => 'payment_failed',
+        ]);
+    }
+
+    public function test_fail_without_reason_throws_validation(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+
+        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        $handoff->refresh();
+        app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            failureCode: \Domains\Payments\States\ApPaymentFailureCode::Other,
+            failureReason: 'err', // Too short
+        );
+    }
+
+    public function test_fail_non_scheduled_handoff_throws_conflict(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        // handoff is Exported, not Scheduled
+
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\ConflictHttpException::class);
+
+        app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            failureCode: \Domains\Payments\States\ApPaymentFailureCode::Other,
+            failureReason: 'Other reason',
+        );
+    }
 }
