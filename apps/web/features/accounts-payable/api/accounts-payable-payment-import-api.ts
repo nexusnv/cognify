@@ -9,8 +9,10 @@ import {
 } from "@cognify/api-client/endpoints";
 import type {
   ApPaymentImportBatchResponse,
+  ApPaymentImportBatchResponseData,
   ApPaymentImportRowResponse,
   ReconciliationResultResponse,
+  ReconciliationResultResponseData,
   UploadPaymentImportRequest,
   UpdatePaymentImportRowRequest,
   ReconcilePaymentImportBatchRequest,
@@ -36,25 +38,25 @@ function unwrapResource<T>(
 export async function uploadPaymentImportFile(
   payload: UploadPaymentImportRequest,
   tenantId: string | null = getStoredActiveTenantId(),
-): Promise<ApPaymentImportBatchResponse> {
+): Promise<ApPaymentImportBatchResponseData> {
   const response = await uploadPaymentImport(
     payload,
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
 
-  return unwrapResource<ApPaymentImportBatchResponse>(response, 201);
+  return unwrapResource<ApPaymentImportBatchResponseData>(response, 201);
 }
 
 export async function showPaymentImportBatchDetail(
   batchId: string,
   tenantId: string | null = getStoredActiveTenantId(),
-): Promise<ApPaymentImportBatchResponse> {
+): Promise<ApPaymentImportBatchResponseData> {
   const response = await showPaymentImportBatch(
     batchId,
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
 
-  return unwrapResource<ApPaymentImportBatchResponse>(response);
+  return unwrapResource<ApPaymentImportBatchResponseData>(response);
 }
 
 export async function updatePaymentImportRowDetail(
@@ -75,14 +77,14 @@ export async function reconcilePaymentImportBatchDetail(
   batchId: string,
   payload?: ReconcilePaymentImportBatchRequest,
   tenantId: string | null = getStoredActiveTenantId(),
-): Promise<ReconciliationResultResponse> {
+): Promise<ReconciliationResultResponseData> {
   const response = await reconcilePaymentImportBatch(
     batchId,
     payload,
     withActiveTenantHeader(tenantId),
   ).catch(throwResponseData);
 
-  return unwrapResource<ReconciliationResultResponse>(response);
+  return unwrapResource<ReconciliationResultResponseData>(response);
 }
 
 export async function discardPaymentImportRowDetail(

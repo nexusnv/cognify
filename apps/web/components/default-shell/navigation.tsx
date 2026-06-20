@@ -146,6 +146,18 @@ export const finalNavigationItems: DefaultNavItem[] = [
         implemented: true,
         permission: canUseAccountsPayable,
       },
+      {
+        title: "Payment status",
+        url: "/accounts-payable/payment-status",
+        implemented: true,
+        permission: canUseAccountsPayable,
+      },
+      {
+        title: "Payment import",
+        url: "/accounts-payable/payment-import",
+        implemented: true,
+        permission: canUseAccountsPayable,
+      },
     ],
   },
   {
@@ -286,6 +298,8 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   if (normalizedPathname === "/sourcing/intake") return [{ label: "Sourcing intake" }];
   if (normalizedPathname === "/accounts-payable/invoices") return [{ label: "Finance" }, { label: "Invoice review" }];
   if (normalizedPathname === "/accounts-payable/payment-queue") return [{ label: "Finance" }, { label: "Payment queue" }];
+  if (normalizedPathname === "/accounts-payable/payment-status") return [{ label: "Finance" }, { label: "Payment status" }];
+  if (normalizedPathname === "/accounts-payable/payment-import") return [{ label: "Finance" }, { label: "Payment import" }];
   if (normalizedPathname === "/calendar") return [{ label: "Calendar" }];
   if (normalizedPathname === "/quotations/normalizations") return [{ label: "Quotations" }];
   if (normalizedPathname === "/quotations/scoring/templates") {
