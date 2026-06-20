@@ -10,6 +10,7 @@ class PaymentAllocationSumCalculator
     public function sumForInvoice(SupplierInvoice $invoice): string
     {
         $result = ApPaymentAllocation::query()
+            ->where('tenant_id', $invoice->tenant_id)
             ->where('supplier_invoice_id', $invoice->id)
             ->whereNull('voided_at')
             ->sum('allocated_amount');
@@ -17,10 +18,11 @@ class PaymentAllocationSumCalculator
         return $result !== null ? (string) $result : '0.0000';
     }
 
-    public function sumForHandoff(string $handoffId): string
+    public function sumForHandoff(\Domains\AccountsPayable\Models\ApPaymentHandoff $handoff): string
     {
         $result = ApPaymentAllocation::query()
-            ->where('ap_payment_handoff_id', $handoffId)
+            ->where('tenant_id', $handoff->tenant_id)
+            ->where('ap_payment_handoff_id', $handoff->id)
             ->whereNull('voided_at')
             ->sum('allocated_amount');
 

@@ -129,6 +129,7 @@ export const accountsPayablePaymentStatusHandlers = [
       status: "paid",
       remittanceReference: body.remittanceReference ?? handoff.remittanceReference,
       paidAt: now,
+      varianceReason: body.varianceReason,
       lockVersion: handoff.lockVersion + 1,
       updatedAt: now,
     })!;

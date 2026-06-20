@@ -44,6 +44,7 @@ class RescheduleFailedApPaymentHandoff
                 'scheduled_at' => now(),
                 'scheduled_for_date' => $scheduledForDate,
                 'payment_reference' => $paymentReference,
+                'notes' => $notes ?? $handoff->notes,
                 'lock_version' => $handoff->lock_version + 1,
             ])->save();
 

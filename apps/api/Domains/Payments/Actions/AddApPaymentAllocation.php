@@ -33,7 +33,11 @@ class AddApPaymentAllocation
         ?string $settlementCurrency = null,
     ): ApPaymentAllocation {
         return DB::transaction(function () use ($handoff, $invoice, $actor, $lockVersion, $allocatedAmount, $allocationDate, $paymentReference, $settlementAmount, $settlementCurrency): ApPaymentAllocation {
-            $handoff = ApPaymentHandoff::query()->whereKey($handoff->id)->lockForUpdate()->firstOrFail();
+            $handoff = ApPaymentHandoff::query()
+                ->where('tenant_id', $handoff->tenant_id)
+                ->whereKey($handoff->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
             if ($handoff->statusState() !== ApPaymentHandoffStatus::Scheduled) {
                 throw new ConflictHttpException('Allocations can only be added to scheduled handoffs.');
@@ -41,9 +45,16 @@ class AddApPaymentAllocation
 
             $handoff->assertLockVersion($lockVersion);
 
-            $invoice = SupplierInvoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            $invoice = SupplierInvoice::query()
+                ->where('tenant_id', $handoff->tenant_id)
+                ->whereKey($invoice->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            $isMember = $handoff->invoices()->where('supplier_invoices.id', $invoice->id)->exists();
+            $isMember = $handoff->invoices()
+                ->where('supplier_invoices.id', $invoice->id)
+                ->where('ap_payment_handoff_invoice.tenant_id', $handoff->tenant_id)
+                ->exists();
             if (! $isMember) {
                 throw new ConflictHttpException('Invoice is not a member of this handoff.');
             }

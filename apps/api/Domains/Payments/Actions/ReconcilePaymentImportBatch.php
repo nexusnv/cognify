@@ -47,7 +47,11 @@ class ReconcilePaymentImportBatch
 
         foreach ($rows as $import) {
             DB::transaction(function () use ($import, $actor, &$reconciled, &$failed, &$skipped): void {
-                $import = ApPaymentImport::query()->whereKey($import->id)->lockForUpdate()->firstOrFail();
+                $import = ApPaymentImport::query()
+                    ->where('tenant_id', $import->tenant_id)
+                    ->whereKey($import->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 if ($import->status !== ApPaymentImportStatus::Pending && $import->status !== ApPaymentImportStatus::Failed) {
                     $skipped++;
@@ -63,6 +67,7 @@ class ReconcilePaymentImportBatch
                 }
 
                 $handoff = ApPaymentHandoff::query()
+                    ->where('tenant_id', $import->tenant_id)
                     ->whereKey($import->matched_handoff_id)
                     ->first();
 
@@ -129,7 +134,10 @@ class ReconcilePaymentImportBatch
                 }
             }
         } elseif ($import->allocated_amount !== null && $import->matched_invoice_id !== null) {
-            $invoice = \Domains\Invoice\Models\SupplierInvoice::query()->whereKey($import->matched_invoice_id)->firstOrFail();
+            $invoice = \Domains\Invoice\Models\SupplierInvoice::query()
+                ->where('tenant_id', $handoff->tenant_id)
+                ->whereKey($import->matched_invoice_id)
+                ->firstOrFail();
             $this->addAllocation->handle(
                 handoff: $handoff,
                 invoice: $invoice,

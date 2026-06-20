@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Progress,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -81,14 +80,12 @@ export function PaymentImportUploadPanel({
   onUploadSuccess,
 }: PaymentImportUploadPanelProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const uploadMutation = useUploadPaymentImport();
 
   const handleFile = useCallback(
     (file: File) => {
       setError(null);
-      setUploadProgress(0);
 
       const validTypes = [
         "text/csv",
@@ -206,7 +203,6 @@ export function PaymentImportUploadPanel({
 
         {uploadMutation.isPending && (
           <div className="space-y-2" aria-live="polite">
-            <Progress value={uploadProgress} className="w-full" aria-label="Upload progress" />
             <p className="text-xs text-muted-foreground">Processing upload...</p>
           </div>
         )}

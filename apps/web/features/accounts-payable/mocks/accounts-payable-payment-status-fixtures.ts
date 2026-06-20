@@ -30,6 +30,8 @@ export interface ApPaymentHandoffStatusFixture {
   failureReason?: string | null;
   voidedAt?: string | null;
   voidReason?: string | null;
+  varianceReason?: string | null;
+  varianceAmount?: string | null;
 }
 
 export const apPaymentHandoffStatusFixtures: ApPaymentHandoffStatusFixture[] = [
