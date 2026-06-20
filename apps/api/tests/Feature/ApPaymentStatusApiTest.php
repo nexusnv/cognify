@@ -12,6 +12,7 @@ use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Payments\Actions\AddApPaymentAllocation;
+use Domains\Payments\Actions\CloseApPaymentHandoffWithVariance;
 use Domains\Payments\Actions\MarkApPaymentHandoffPaid;
 use Domains\Payments\Actions\ScheduleApPaymentHandoff;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
@@ -323,6 +324,111 @@ class ApPaymentStatusApiTest extends TestCase
             $handoff,
             $buyer,
             $handoff->lock_version,
+        );
+    }
+
+    public function test_short_pay_handoff_can_be_closed_with_variance(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+
+        // Schedule the handoff
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        // Allocate only 600 of 1000 (short-pay 400)
+        $handoff->refresh();
+        $invoice->refresh();
+        app(AddApPaymentAllocation::class)->handle(
+            $handoff,
+            $invoice,
+            $buyer,
+            $handoff->lock_version,
+            allocatedAmount: '600.0000',
+            allocationDate: '2026-06-20',
+        );
+
+        // Close with variance
+        $handoff->refresh();
+        $result = app(CloseApPaymentHandoffWithVariance::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            varianceReason: 'Bank deducted wire fee',
+        );
+
+        $this->assertSame(ApPaymentHandoffStatus::Paid, $result->statusState());
+        $this->assertSame('400.0000', (string) $result->variance_amount);
+        $this->assertSame('Bank deducted wire fee', $result->variance_reason);
+        $this->assertNotNull($result->variance_closed_at);
+        $this->assertNotNull($result->paid_at);
+
+        // Partially-allocated invoice stays PartiallyPaid (NOT Paid)
+        $invoice->refresh();
+        $this->assertSame(SupplierInvoicePaymentStatus::PartiallyPaid, $invoice->payment_status);
+    }
+
+    public function test_close_with_variance_without_reason_throws_validation(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+        $invoice = $handoff->invoices->first();
+
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+
+        $handoff->refresh();
+        $invoice->refresh();
+        app(AddApPaymentAllocation::class)->handle(
+            $handoff,
+            $invoice,
+            $buyer,
+            $handoff->lock_version,
+            allocatedAmount: '100.0000',
+            allocationDate: '2026-06-20',
+        );
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        $handoff->refresh();
+        app(CloseApPaymentHandoffWithVariance::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            varianceReason: 'ab', // Too short
+        );
+    }
+
+    public function test_close_with_variance_without_any_allocations_throws_conflict(): void
+    {
+        [, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $tenant = app(CurrentTenant::class)->get();
+        $handoff = $this->createExportedHandoff($tenant, $buyer);
+
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+        );
+        // No allocations added
+
+        $this->expectException(ConflictHttpException::class);
+
+        $handoff->refresh();
+        app(CloseApPaymentHandoffWithVariance::class)->handle(
+            $handoff,
+            $buyer,
+            $handoff->lock_version,
+            varianceReason: 'Bank deducted wire fee',
         );
     }
 }
