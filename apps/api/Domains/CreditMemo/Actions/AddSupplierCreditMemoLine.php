@@ -8,6 +8,8 @@ use App\Models\User;
 use Domains\CreditMemo\Models\SupplierCreditMemo;
 use Domains\CreditMemo\Models\SupplierCreditMemoLine;
 use Domains\CreditMemo\States\SupplierCreditMemoStatus;
+use Domains\Invoice\Models\SupplierInvoiceLine;
+use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -43,7 +45,7 @@ class AddSupplierCreditMemoLine
             $creditMemo->assertLockVersion($lockVersion);
 
             if ($purchaseOrderLineId !== null && $purchaseOrderLineId !== '') {
-                $exists = \Domains\PurchaseOrder\Models\PurchaseOrderLine::query()
+                $exists = PurchaseOrderLine::query()
                     ->where('tenant_id', $creditMemo->tenant_id)
                     ->whereKey($purchaseOrderLineId)
                     ->exists();
@@ -55,7 +57,7 @@ class AddSupplierCreditMemoLine
             }
 
             if ($originalInvoiceLineId !== null && $originalInvoiceLineId !== '') {
-                $exists = \Domains\Invoice\Models\SupplierInvoiceLine::query()
+                $exists = SupplierInvoiceLine::query()
                     ->where('tenant_id', $creditMemo->tenant_id)
                     ->whereKey($originalInvoiceLineId)
                     ->exists();
