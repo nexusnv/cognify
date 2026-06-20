@@ -37,6 +37,11 @@ Cognify is a multi-tenant enterprise procurement SaaS. It is a greenfield codeba
 - `pnpm dev:services:down`
 - `pnpm dev:reset`
 
+## Focus/Narrowed Testing
+
+- apps/web - from the `apps/web` folder, run command `npx vitest run --reporter verbose "<file-name/filter/keywords here>"`
+- apps/api - from the `apps/api` folder run `php artisan test --filter=<file-name/keywords here>`
+- 
 ## Common MCP, Skills & Assist Tool
 
 - `CodeGraph mcp`
