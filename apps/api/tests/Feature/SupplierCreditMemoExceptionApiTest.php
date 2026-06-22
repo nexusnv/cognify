@@ -254,16 +254,82 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
         $this->assertSame(1, $exceptionCount);
     }
 
-    /**
-     * SKIPPED: The supplier_invoice_lines table does not have a tax_code column.
-     * The SupplierCreditMemoTaxMirrorValidator queries it but the migration to add
-     * it doesn't exist yet. This test requires the column to be added first.
-     */
     public function test_tax_code_mismatch_creates_warning_exception(): void
     {
-        $this->markTestSkipped(
-            'Requires tax_code column on supplier_invoice_lines (migration not yet created).',
-        );
+        [$tenant, $buyer] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $vendor = $this->createVendor($tenant);
+        $originalInvoice = $this->createInvoice($tenant, $vendor);
+
+        $poLineId = Str::uuid()->toString();
+        $poId = (string) $originalInvoice->purchase_order_id;
+        DB::table('purchase_order_lines')->insert([
+            'id' => $poLineId,
+            'tenant_id' => $tenant->id,
+            'purchase_order_id' => $poId,
+            'line_number' => 1,
+            'description' => 'Widget A',
+            'unit' => 'each',
+            'quantity' => '10.0000',
+            'unit_price' => '100.0000',
+            'subtotal_amount' => '1000.00',
+            'tax_amount' => '0.00',
+            'total_amount' => '1000.00',
+            'currency' => 'USD',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $invoiceLineId = Str::uuid()->toString();
+        DB::table('supplier_invoice_lines')->insert([
+            'id' => $invoiceLineId,
+            'tenant_id' => $tenant->id,
+            'supplier_invoice_id' => $originalInvoice->id,
+            'purchase_order_line_id' => $poLineId,
+            'line_number' => 1,
+            'description_snapshot' => 'Widget A',
+            'quantity_ordered' => '10.0000',
+            'quantity_invoiced' => '10.0000',
+            'unit_price' => '100.0000',
+            'line_subtotal' => '1000.0000',
+            'tax_code' => 'TX_STD',
+            'tax_amount' => '80.0000',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAsTenant($tenant, $buyer)
+            ->postJson('/api/supplier-credit-memos', [
+                'vendorId' => (int) $vendor->id,
+                'originalInvoiceId' => (string) $originalInvoice->id,
+                'vendorCreditMemoNumber' => 'VCM-TAX-001',
+                'creditDate' => '2026-06-20',
+                'currency' => 'USD',
+                'subtotalAmount' => '1000.0000',
+                'taxAmount' => '80.0000',
+                'freightAmount' => '0.0000',
+                'totalAmount' => '1080.0000',
+                'lines' => [
+                    [
+                        'lineNumber' => 1,
+                        'description' => 'Widget A return',
+                        'quantity' => '10.0000',
+                        'unitPrice' => '100.0000',
+                        'taxCode' => 'TX_ZERO',
+                        'taxAmount' => '0.0000',
+                        'originalInvoiceLineId' => $invoiceLineId,
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated();
+        $newMemoId = (string) $response->json('data.id');
+
+        $exception = SupplierCreditMemoException::query()
+            ->where('supplier_credit_memo_id', $newMemoId)
+            ->where('exception_type', 'tax_code_mismatch')
+            ->first();
+        $this->assertNotNull($exception);
+        $this->assertSame('warning', $exception->severity);
     }
 
     public function test_blocking_exception_prevents_submit(): void
