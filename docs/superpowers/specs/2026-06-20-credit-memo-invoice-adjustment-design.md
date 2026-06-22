@@ -1482,6 +1482,8 @@ The following deviations from this design spec are intentional and have been app
 
 5. **Math validator is scalar, not model-typed.** The validator operates on the four header scalar values (`subtotal`, `tax`, `freight`, `total`) rather than the model. Header recomputation (`subtotal_amount = SUM(lines[].line_subtotal)` etc.) is performed by `AddSupplierCreditMemoLine` / `UpdateSupplierCreditMemoLine` / `RemoveSupplierCreditMemoLine` actions before calling the validator. This keeps the validator free of Eloquent coupling and makes it trivially testable.
 
+6. **`tax_code` and `tax_amount` added to `supplier_invoice_lines`.** The P1-12 `supplier_invoice_lines` migration (Task 2 of P1-12) did not include `tax_code` or `tax_amount` columns. The P1-49 design assumes the original invoice line carries `tax_code` and `tax_amount` so that credit memo lines can mirror them. P1-49 adds the columns via migration `2026_06_22_020647_add_tax_code_to_supplier_invoice_lines` (`tax_code VARCHAR(50) NULL`, `tax_amount DECIMAL(18,4) DEFAULT 0`). The `SupplierCreditMemoTaxMirrorValidator` queries `supplier_invoice_lines.tax_code` and now finds the column. Backfill is not needed for the seeded demo data because P1-49's demo seeder sets `tax_code` explicitly on the original invoice lines it creates.
+
 ## Non-Goals Reiteration
 
 This slice explicitly does NOT include:
