@@ -25979,7 +25979,11 @@
                   "payment_eligible",
                   "on_hold",
                   "payment_ready",
-                  "handoff_exported"
+                  "handoff_exported",
+                  "payment_scheduled",
+                  "partially_paid",
+                  "paid",
+                  "reversed"
                 ]
               },
               {
@@ -28441,7 +28445,11 @@
                   "payment_eligible",
                   "on_hold",
                   "payment_ready",
-                  "handoff_exported"
+                  "handoff_exported",
+                  "payment_scheduled",
+                  "partially_paid",
+                  "paid",
+                  "reversed"
                 ]
               },
               {
@@ -29433,7 +29441,11 @@
                   "payment_eligible",
                   "on_hold",
                   "payment_ready",
-                  "handoff_exported"
+                  "handoff_exported",
+                  "payment_scheduled",
+                  "partially_paid",
+                  "paid",
+                  "reversed"
                 ]
               },
               {
