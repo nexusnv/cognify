@@ -2,8 +2,11 @@
 
 namespace Domains\Invoice\Http\Resources;
 
+use Domains\CreditMemo\Http\Resources\CreditApplicationResource;
+use Domains\CreditMemo\Support\CreditApplicationSumCalculator;
 use Domains\Invoice\Data\SupplierInvoiceReviewChecklistData;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Payments\Models\ApPaymentAllocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +21,17 @@ class SupplierInvoiceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $paidSum = (string) ApPaymentAllocation::query()
+            ->where('supplier_invoice_id', $this->id)
+            ->whereNull('voided_at')
+            ->sum('allocated_amount');
+        $creditSum = app(CreditApplicationSumCalculator::class)->sumForInvoice($this->resource);
+        $outstanding = bcsub(
+            bcsub((string) $this->total_amount, $paidSum, 4),
+            $creditSum,
+            4
+        );
+
         return [
             'id' => (string) $this->id,
             'purchaseOrderId' => (string) $this->purchase_order_id,
@@ -25,6 +39,10 @@ class SupplierInvoiceResource extends JsonResource
             'number' => $this->number,
             'invoiceNumber' => $this->invoice_number,
             'status' => $this->statusState()->value,
+            'paymentStatus' => $this->payment_status?->value,
+            'paidAmount' => $paidSum,
+            'creditAppliedAmount' => $creditSum,
+            'outstandingAmount' => $outstanding,
             'invoiceDate' => $this->invoice_date?->toDateString(),
             'dueDate' => $this->due_date?->toDateString(),
             'currency' => $this->currency,
@@ -60,6 +78,9 @@ class SupplierInvoiceResource extends JsonResource
             'reviewBlockerCount' => count($this->review_blockers ?? []),
             'lines' => $this->relationLoaded('lines')
                 ? SupplierInvoiceLineResource::collection($this->lines)->resolve()
+                : [],
+            'creditApplications' => $this->relationLoaded('creditApplications')
+                ? CreditApplicationResource::collection($this->creditApplications)->resolve()
                 : [],
             'lockVersion' => $this->lock_version,
             'approvalInstanceId' => $this->approval_instance_id !== null ? (string) $this->approval_instance_id : null,

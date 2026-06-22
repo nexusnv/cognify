@@ -15,6 +15,14 @@ use Domains\Approval\SubjectHandlers\RfqAwardRecommendationApprovalSubjectHandle
 use Domains\Approval\SubjectHandlers\SupplierInvoiceApprovalSubjectHandler;
 use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Policies\AttachmentPolicy;
+use Domains\CreditMemo\Models\CreditApplication;
+use Domains\CreditMemo\Models\SupplierCreditMemo;
+use Domains\CreditMemo\Models\SupplierCreditMemoException;
+use Domains\CreditMemo\Models\SupplierCreditMemoLine;
+use Domains\CreditMemo\Policies\CreditApplicationPolicy;
+use Domains\CreditMemo\Policies\SupplierCreditMemoExceptionPolicy;
+use Domains\CreditMemo\Policies\SupplierCreditMemoPolicy;
+use Domains\CreditMemo\SubjectHandlers\SupplierCreditMemoApprovalSubjectHandler;
 use Domains\Fulfillment\Models\Shipment;
 use Domains\Fulfillment\Policies\ShipmentPolicy;
 use Domains\Invoice\Models\SupplierInvoice;
@@ -62,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(RfqAwardRecommendationApprovalSubjectHandler::class),
             $app->make(PurchaseOrderApprovalSubjectHandler::class),
             $app->make(SupplierInvoiceApprovalSubjectHandler::class),
+            $app->make(SupplierCreditMemoApprovalSubjectHandler::class),
         ]));
     }
 
@@ -86,10 +95,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(GoodsReceipt::class, GoodsReceiptPolicy::class);
         Gate::policy(SupplierInvoice::class, SupplierInvoicePolicy::class);
         Gate::policy(Shipment::class, ShipmentPolicy::class);
+        Gate::policy(SupplierCreditMemo::class, SupplierCreditMemoPolicy::class);
+        Gate::policy(CreditApplication::class, CreditApplicationPolicy::class);
+        Gate::policy(SupplierCreditMemoException::class, SupplierCreditMemoExceptionPolicy::class);
 
         AuditSubject::registerType(ApprovalTask::class, 'approval_task');
         AuditSubject::registerType(SupplierInvoice::class, 'supplier_invoice');
         AuditSubject::registerType(ApPaymentAllocation::class, 'ap_payment_allocation');
         AuditSubject::registerType(ApPaymentImport::class, 'ap_payment_import');
+        AuditSubject::registerType(SupplierCreditMemo::class, 'supplier_credit_memo');
+        AuditSubject::registerType(SupplierCreditMemoLine::class, 'supplier_credit_memo_line');
+        AuditSubject::registerType(CreditApplication::class, 'credit_application');
+        AuditSubject::registerType(SupplierCreditMemoException::class, 'supplier_credit_memo_exception');
     }
 }

@@ -2,8 +2,11 @@
 
 namespace Domains\Invoice\Http\Resources;
 
+use Domains\CreditMemo\Models\CreditApplication;
+use Domains\CreditMemo\Support\CreditApplicationSumCalculator;
 use Domains\Invoice\Data\SupplierInvoiceReviewChecklistData;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Payments\Models\ApPaymentAllocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +21,39 @@ class SupplierInvoiceQueueResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $paidSum = (string) ApPaymentAllocation::query()
+            ->where('supplier_invoice_id', $this->id)
+            ->whereNull('voided_at')
+            ->sum('allocated_amount');
+        $creditSum = app(CreditApplicationSumCalculator::class)->sumForInvoice($this->resource);
+        $outstanding = bcsub(
+            bcsub((string) $this->total_amount, $paidSum, 4),
+            $creditSum,
+            4
+        );
+
+        $applications = CreditApplication::query()
+            ->where('supplier_invoice_id', $this->id)
+            ->get();
+
+        $appliedCreditMemos = $applications
+            ->groupBy('supplier_credit_memo_id')
+            ->map(function ($group) {
+                $first = $group->first();
+                $nonVoided = $group->whereNull('voided_at');
+                return [
+                    'id' => (string) $first->supplier_credit_memo_id,
+                    'number' => $first->creditMemo?->number,
+                    'appliedAmount' => (string) $nonVoided->sum('applied_amount'),
+                    'applicationDate' => $first->application_date?->toDateString(),
+                    'voidedAt' => $nonVoided->isEmpty() && $group->isNotEmpty()
+                        ? $group->last()->voided_at?->toISOString()
+                        : null,
+                ];
+            })
+            ->values()
+            ->toArray();
+
         return [
             'id' => (string) $this->id,
             'number' => $this->number,
@@ -48,6 +84,10 @@ class SupplierInvoiceQueueResource extends JsonResource
             ],
             'paymentStatus' => $this->payment_status?->value,
             'paymentStatusLabel' => $this->payment_status?->label(),
+            'paidAmount' => $paidSum,
+            'creditAppliedAmount' => $creditSum,
+            'outstandingAmount' => $outstanding,
+            'appliedCreditMemos' => $appliedCreditMemos,
             'paymentOnHoldReason' => $this->payment_on_hold_reason,
             'paymentEligibleAt' => $this->payment_eligible_at?->toISOString(),
             'paymentOnHoldAt' => $this->payment_on_hold_at?->toISOString(),
