@@ -31,6 +31,11 @@ use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Invoice\Support\SupplierInvoiceNumber;
 use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
+use Domains\CreditMemo\Models\CreditApplication;
+use Domains\CreditMemo\Models\SupplierCreditMemo;
+use Domains\CreditMemo\Models\SupplierCreditMemoException;
+use Domains\CreditMemo\Models\SupplierCreditMemoLine;
+use Domains\CreditMemo\States\SupplierCreditMemoStatus;
 use Domains\AccountsPayable\Models\ApPaymentHandoff;
 use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
@@ -138,6 +143,8 @@ class DemoProcurementLifecycleSeeder
         $this->seedSupplierInvoices($tenant, $buyer, $finance);
         $this->seedFulfillment($context, $tenant, $buyer);
         $this->seedPaymentStatuses($tenant, $finance);
+        $this->seedCreditMemoInvoices($tenant, $buyer, $finance);
+        $this->seedCreditMemos($tenant, $finance);
     }
 
     private function seedProject(Tenant $tenant, User $owner): ProcurementProject
@@ -2975,6 +2982,248 @@ class DemoProcurementLifecycleSeeder
             subject: $handoff,
             metadata: ['demo' => true, 'handoffNumber' => $handoff->number],
             after: $handoff->toArray(),
+        ));
+    }
+
+    // ── Credit Memo Demo Scenarios ──────────────────────────────────────────
+
+    private function seedCreditMemoInvoices(Tenant $tenant, User $buyer, User $finance): void
+    {
+        $issuedPO = PurchaseOrder::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('number', 'PO-2026-SUSTAIN-ISSUED')
+            ->first();
+
+        if ($issuedPO === null) {
+            return;
+        }
+
+        $invoiceConfigs = [
+            ['INV-2026-DEMO-031', '1000.0000', SupplierInvoicePaymentStatus::Paid],
+            ['INV-2026-DEMO-032', '500.0000', SupplierInvoicePaymentStatus::PaymentEligible],
+            ['INV-2026-DEMO-033', '300.0000', SupplierInvoicePaymentStatus::PaymentReady],
+            ['INV-2026-DEMO-034', '1000.0000', SupplierInvoicePaymentStatus::PartiallyPaid],
+            ['INV-2026-DEMO-035', '200.0000', SupplierInvoicePaymentStatus::Paid],
+            ['INV-2026-DEMO-036', '400.0000', SupplierInvoicePaymentStatus::Paid],
+            ['INV-2026-DEMO-037', '500.0000', SupplierInvoicePaymentStatus::PartiallyPaid],
+            ['INV-2026-DEMO-038', '1000.0000', SupplierInvoicePaymentStatus::Paid],
+        ];
+
+        foreach ($invoiceConfigs as [$invoiceNumber, $totalAmount, $paymentStatus]) {
+            SupplierInvoice::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'number' => $invoiceNumber],
+                [
+                    'purchase_order_id' => $issuedPO->id,
+                    'vendor_id' => $issuedPO->vendor_id,
+                    'invoice_number' => $invoiceNumber,
+                    'invoice_number_normalized' => SupplierInvoiceNumber::normalize($invoiceNumber),
+                    'status' => SupplierInvoiceStatus::Approved,
+                    'matching_status' => SupplierInvoiceStatus::Matched->value,
+                    'payment_status' => $paymentStatus,
+                    'invoice_date' => '2026-06-20',
+                    'due_date' => '2026-07-20',
+                    'currency' => $issuedPO->currency,
+                    'subtotal_amount' => $totalAmount,
+                    'tax_amount' => '0.0000',
+                    'freight_amount' => '0.0000',
+                    'total_amount' => $totalAmount,
+                    'notes' => "Seeded invoice {$invoiceNumber} for credit memo demo.",
+                    'captured_by_user_id' => $buyer->id,
+                    'captured_at' => '2026-06-20 09:00:00',
+                    'review_started_by_user_id' => $finance->id,
+                    'review_started_at' => '2026-06-20 10:00:00',
+                    'reviewed_by_user_id' => $finance->id,
+                    'reviewed_at' => '2026-06-20 11:00:00',
+                    'lock_version' => 4,
+                ],
+            );
+        }
+    }
+
+    public function seedCreditMemos(Tenant $tenant, User $finance): void
+    {
+        $this->seedDraftCreditMemo($tenant, $finance, 'CM-DEMO-001', 'VCM-DEMO-001', 'INV-2026-DEMO-031', 'paid');
+        $this->seedPendingApprovalCreditMemo($tenant, $finance, 'CM-DEMO-002', 'VCM-DEMO-002', 'INV-2026-DEMO-032', 'payment_eligible');
+        $this->seedOpenCreditMemo($tenant, $finance, 'CM-DEMO-003', 'VCM-DEMO-003', 'INV-2026-DEMO-033', 'payment_ready');
+        $this->seedPartiallyAppliedCreditMemo($tenant, $finance, 'CM-DEMO-004', 'VCM-DEMO-004', 'INV-2026-DEMO-034', 'partially_paid', '600.0000');
+        $this->seedFullyAppliedCreditMemo($tenant, $finance, 'CM-DEMO-005', 'VCM-DEMO-005', 'INV-2026-DEMO-035', 'paid', '200.0000');
+        $this->seedVoidedCreditMemo($tenant, $finance, 'CM-DEMO-006', 'VCM-DEMO-006', 'INV-2026-DEMO-036', 'paid');
+        $this->seedPartiallyAppliedCreditMemo($tenant, $finance, 'CM-DEMO-007', 'VCM-DEMO-007', 'INV-2026-DEMO-037', 'partially_paid', '200.0000');
+        $this->seedReversedInvoiceCreditMemo($tenant, $finance, 'CM-DEMO-008', 'VCM-DEMO-008', 'INV-2026-DEMO-038', '1000.0000');
+    }
+
+    private function seedDraftCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus): void
+    {
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::Draft, '500.0000');
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Widget A return', '5.0000', '100.0000', '0.0000', 'TX_STD');
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.created');
+    }
+
+    private function seedPendingApprovalCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus): void
+    {
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::PendingApproval, '500.0000');
+        $creditMemo->forceFill([
+            'submitted_by_user_id' => $finance->id,
+            'submitted_at' => '2026-06-20 09:30:00',
+        ])->save();
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Pricing dispute line', '5.0000', '100.0000', '0.0000', 'TX_ZERO');
+        $this->seedCreditMemoException($tenant, $creditMemo, 'tax_code_mismatch', 'warning', 'Tax code TX_ZERO does not match original invoice tax code TX_STD.');
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.submitted_for_approval');
+    }
+
+    private function seedOpenCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus): void
+    {
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::Open, '300.0000');
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Return line A', '3.0000', '50.0000', '0.0000', 'TX_STD');
+        $this->addCreditMemoLine($tenant, $creditMemo, 2, 'Return line B', '3.0000', '50.0000', '0.0000', 'TX_STD');
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.posted');
+    }
+
+    private function seedPartiallyAppliedCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus, string $appliedAmount): void
+    {
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::PartiallyApplied, $appliedAmount);
+        $total = '1000.0000';
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Bulk return', '10.0000', '100.0000', '0.0000', 'TX_STD');
+        $invoice = SupplierInvoice::query()->where('tenant_id', $tenant->id)->where('invoice_number', $invoiceNumber)->first();
+        if ($invoice !== null) {
+            CreditApplication::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'supplier_invoice_id' => $invoice->id, 'application_date' => '2026-06-21'],
+                ['applied_amount' => $appliedAmount, 'applied_by_user_id' => $finance->id, 'lock_version' => 1]
+            );
+        }
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.applied');
+    }
+
+    private function seedFullyAppliedCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus, string $appliedAmount): void
+    {
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::Closed, $appliedAmount);
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Freight credit', '2.0000', '100.0000', '0.0000', 'TX_STD');
+        $invoice = SupplierInvoice::query()->where('tenant_id', $tenant->id)->where('invoice_number', $invoiceNumber)->first();
+        if ($invoice !== null) {
+            CreditApplication::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'supplier_invoice_id' => $invoice->id, 'application_date' => '2026-06-22'],
+                ['applied_amount' => $appliedAmount, 'applied_by_user_id' => $finance->id, 'lock_version' => 1]
+            );
+        }
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.closed');
+    }
+
+    private function seedVoidedCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus): void
+    {
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::Voided, '400.0000');
+        $creditMemo->forceFill([
+            'voided_by_user_id' => $finance->id,
+            'voided_at' => '2026-06-23 10:00:00',
+            'void_reason' => 'Duplicate credit memo; vendor sent a corrected version',
+        ])->save();
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Voided return', '4.0000', '100.0000', '0.0000', 'TX_STD');
+        $this->seedCreditMemoException($tenant, $creditMemo, 'math_error', 'error', 'Arithmetic error in original credit memo amount; vendor corrected total.');
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.voided');
+    }
+
+    private function seedReversedInvoiceCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $appliedAmount): void
+    {
+        $invoice = SupplierInvoice::query()->where('tenant_id', $tenant->id)->where('invoice_number', $invoiceNumber)->first();
+        $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, 'paid', SupplierCreditMemoStatus::Closed, $appliedAmount);
+        $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Full invoice offset', '10.0000', '100.0000', '0.0000', 'TX_STD');
+        if ($invoice !== null) {
+            CreditApplication::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'supplier_invoice_id' => $invoice->id, 'application_date' => '2026-06-24'],
+                ['applied_amount' => $appliedAmount, 'applied_by_user_id' => $finance->id, 'lock_version' => 1]
+            );
+            $invoice->forceFill(['payment_status' => SupplierInvoicePaymentStatus::Reversed, 'lock_version' => $invoice->lock_version + 1])->save();
+        }
+        $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.closed');
+    }
+
+    private function upsertCreditMemo(
+        Tenant $tenant,
+        User $finance,
+        string $number,
+        string $vendorNumber,
+        string $invoiceNumber,
+        string $paymentStatus,
+        SupplierCreditMemoStatus $status,
+        string $totalAmount,
+    ): SupplierCreditMemo {
+        $invoice = SupplierInvoice::query()->where('tenant_id', $tenant->id)->where('invoice_number', $invoiceNumber)->first();
+
+        if ($invoice === null) {
+            throw new \RuntimeException("Seed invoice {$invoiceNumber} not found; ensure seedCreditMemoInvoices runs before seedCreditMemos.");
+        }
+
+        $vendorId = $invoice->vendor_id;
+
+        $creditMemo = SupplierCreditMemo::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'number' => $number],
+            [
+                'vendor_credit_memo_number' => $vendorNumber,
+                'vendor_id' => $vendorId,
+                'original_invoice_id' => $invoice->id,
+                'status' => $status,
+                'currency' => $invoice->currency,
+                'subtotal_amount' => $totalAmount,
+                'tax_amount' => '0.0000',
+                'freight_amount' => '0.0000',
+                'total_amount' => $totalAmount,
+                'credit_date' => '2026-06-20',
+                'captured_by_user_id' => $finance->id,
+                'captured_at' => '2026-06-20 09:00:00',
+                'lock_version' => 5,
+            ]
+        );
+
+        if ($status === SupplierCreditMemoStatus::Open
+            || $status === SupplierCreditMemoStatus::PartiallyApplied
+            || $status === SupplierCreditMemoStatus::Closed) {
+            $creditMemo->forceFill([
+                'approved_by_user_id' => $finance->id,
+                'approved_at' => '2026-06-20 10:00:00',
+                'posted_by_user_id' => $finance->id,
+                'posted_at' => '2026-06-20 10:30:00',
+            ])->save();
+        }
+
+        return $creditMemo->fresh();
+    }
+
+    private function addCreditMemoLine(Tenant $tenant, SupplierCreditMemo $creditMemo, int $lineNumber, string $description, string $quantity, string $unitPrice, string $taxAmount, string $taxCode): void
+    {
+        $lineSubtotal = bcmul($quantity, $unitPrice, 4);
+        SupplierCreditMemoLine::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'line_number' => $lineNumber],
+            [
+                'description_snapshot' => $description,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'line_subtotal' => $lineSubtotal,
+                'tax_code' => $taxCode,
+                'tax_amount' => $taxAmount,
+            ]
+        );
+    }
+
+    private function seedCreditMemoException(Tenant $tenant, SupplierCreditMemo $creditMemo, string $exceptionType, string $severity, string $description): void
+    {
+        SupplierCreditMemoException::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'exception_type' => $exceptionType],
+            [
+                'severity' => $severity,
+                'description' => $description,
+                'lock_version' => 1,
+            ]
+        );
+    }
+
+    private function recordCreditMemoAudit(Tenant $tenant, User $actor, SupplierCreditMemo $creditMemo, string $action): void
+    {
+        $this->auditRecorder->record(new AuditEventData(
+            tenant: $tenant,
+            actor: $actor,
+            action: $action,
+            subject: $creditMemo,
+            metadata: ['demo' => true, 'creditMemoNumber' => $creditMemo->number],
+            after: $creditMemo->toArray(),
         ));
     }
 }
