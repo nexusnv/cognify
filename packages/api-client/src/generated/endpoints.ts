@@ -6,8 +6,10 @@
  */
 import type {
   AcknowledgePurchaseOrderRequest,
+  AcknowledgeSupplierCreditMemoExceptionRequest,
   AddApPaymentAllocationRequest,
   AddFulfillmentTrackingEventRequest,
+  AddSupplierCreditMemoLineRequest,
   AmbiguousTenantResponse,
   ApPaymentAllocationResponse,
   ApPaymentHandoffListResponse,
@@ -50,6 +52,7 @@ import type {
   ConflictResponse,
   CreateApPaymentHandoffRequest,
   CreateCollaborationCommentRequest,
+  CreateCreditApplicationRequest,
   CreatePurchaseOrderShipment201,
   CreateQuotationRevisionRequest,
   CreateRequisitionRequest,
@@ -57,6 +60,8 @@ import type {
   CreateRfqScorecardRequest,
   CreateShipmentRequest,
   CreateShipmentTrackingEvent201,
+  CreateSupplierCreditMemoRequest,
+  CreditApplicationResponse,
   CurrentUserResponse,
   DelegateApprovalTaskRequest,
   EscalateInvoiceExceptionRequest,
@@ -72,6 +77,7 @@ import type {
   ListApPaymentHandoffsParams,
   ListApprovalTasksParams,
   ListAuditEventsParams,
+  ListCreditApplications200,
   ListGlobalSearchParams,
   ListGoodsReceipts200,
   ListNotificationsParams,
@@ -85,6 +91,8 @@ import type {
   ListRequisitionsParams,
   ListShipmentTrackingEvents200,
   ListSourcingIntakeReviewsParams,
+  ListSupplierCreditMemoExceptions200,
+  ListSupplierCreditMemosParams,
   ListSupplierInvoiceQueueParams,
   ListVendorsParams,
   LoginRequest,
@@ -103,6 +111,7 @@ import type {
   PlaceSupplierInvoiceOnPaymentHold404,
   PlaceSupplierInvoiceOnPaymentHold409,
   PlaceSupplierInvoiceOnPaymentHold422,
+  PostSupplierCreditMemoRequest,
   PreviewApprovalPolicyRequest,
   ProcurementCalendarEventCollectionResponse,
   ProcurementProjectListResponse,
@@ -151,6 +160,7 @@ import type {
   RequisitionTemplateListResponse,
   RescheduleApPaymentHandoffRequest,
   ResolveInvoiceExceptionRequest,
+  ResolveSupplierCreditMemoExceptionRequest,
   RetryPaymentInductionRequest,
   RetrySupplierInvoicePaymentInduction400,
   RetrySupplierInvoicePaymentInduction403,
@@ -198,7 +208,12 @@ import type {
   SubmitPurchaseOrderChangeOrderRequest,
   SubmitRequisitionResponse,
   SubmitRfqAwardRecommendationRequest,
+  SubmitSupplierCreditMemoForApprovalRequest,
   SubmitSupplierInvoiceApprovalRequest,
+  SupplierCreditMemoExceptionResponse,
+  SupplierCreditMemoLineResponse,
+  SupplierCreditMemoListResponse,
+  SupplierCreditMemoResponse,
   SupplierInvoiceCompleteReviewRequest,
   SupplierInvoiceExceptionListResponse,
   SupplierInvoiceExceptionResponse,
@@ -228,6 +243,8 @@ import type {
   UpdateShipmentBackorderRequest,
   UpdateShipmentLineBackorder200,
   UpdateShipmentRequest,
+  UpdateSupplierCreditMemoLineRequest,
+  UpdateSupplierCreditMemoRequest,
   UploadPaymentImportRequest,
   ValidationErrorResponse,
   ValidationFailedResponse,
@@ -237,6 +254,8 @@ import type {
   VendorQuotationVersionListResponse,
   VendorQuotationVersionResponse,
   VoidApPaymentHandoffRequest,
+  VoidCreditApplicationRequest,
+  VoidSupplierCreditMemoRequest,
   WithdrawRfqAwardRecommendationRequest,
 } from "./schemas";
 
@@ -13570,6 +13589,587 @@ export const retrySupplierInvoicePaymentInduction = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(retryPaymentInductionRequest),
+    },
+  );
+};
+
+export type listSupplierCreditMemosResponse200 = {
+  data: SupplierCreditMemoListResponse;
+  status: 200;
+};
+
+export type listSupplierCreditMemosResponseSuccess = listSupplierCreditMemosResponse200 & {
+  headers: Headers;
+};
+export type listSupplierCreditMemosResponse = listSupplierCreditMemosResponseSuccess;
+
+export const getListSupplierCreditMemosUrl = (params?: ListSupplierCreditMemosParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/supplier-credit-memos?${stringifiedParams}`
+    : `/api/supplier-credit-memos`;
+};
+
+export const listSupplierCreditMemos = async (
+  params?: ListSupplierCreditMemosParams,
+  options?: RequestInit,
+): Promise<listSupplierCreditMemosResponse> => {
+  return cognifyFetch<listSupplierCreditMemosResponse>(getListSupplierCreditMemosUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type createSupplierCreditMemoResponse201 = {
+  data: SupplierCreditMemoResponse;
+  status: 201;
+};
+
+export type createSupplierCreditMemoResponse422 = {
+  data: void;
+  status: 422;
+};
+
+export type createSupplierCreditMemoResponseSuccess = createSupplierCreditMemoResponse201 & {
+  headers: Headers;
+};
+export type createSupplierCreditMemoResponseError = createSupplierCreditMemoResponse422 & {
+  headers: Headers;
+};
+
+export type createSupplierCreditMemoResponse =
+  | createSupplierCreditMemoResponseSuccess
+  | createSupplierCreditMemoResponseError;
+
+export const getCreateSupplierCreditMemoUrl = () => {
+  return `/api/supplier-credit-memos`;
+};
+
+export const createSupplierCreditMemo = async (
+  createSupplierCreditMemoRequest: CreateSupplierCreditMemoRequest,
+  options?: RequestInit,
+): Promise<createSupplierCreditMemoResponse> => {
+  return cognifyFetch<createSupplierCreditMemoResponse>(getCreateSupplierCreditMemoUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSupplierCreditMemoRequest),
+  });
+};
+
+export type showSupplierCreditMemoResponse200 = {
+  data: SupplierCreditMemoResponse;
+  status: 200;
+};
+
+export type showSupplierCreditMemoResponseSuccess = showSupplierCreditMemoResponse200 & {
+  headers: Headers;
+};
+export type showSupplierCreditMemoResponse = showSupplierCreditMemoResponseSuccess;
+
+export const getShowSupplierCreditMemoUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}`;
+};
+
+export const showSupplierCreditMemo = async (
+  creditMemo: string,
+  options?: RequestInit,
+): Promise<showSupplierCreditMemoResponse> => {
+  return cognifyFetch<showSupplierCreditMemoResponse>(getShowSupplierCreditMemoUrl(creditMemo), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type updateSupplierCreditMemoResponse200 = {
+  data: SupplierCreditMemoResponse;
+  status: 200;
+};
+
+export type updateSupplierCreditMemoResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type updateSupplierCreditMemoResponseSuccess = updateSupplierCreditMemoResponse200 & {
+  headers: Headers;
+};
+export type updateSupplierCreditMemoResponseError = updateSupplierCreditMemoResponse409 & {
+  headers: Headers;
+};
+
+export type updateSupplierCreditMemoResponse =
+  | updateSupplierCreditMemoResponseSuccess
+  | updateSupplierCreditMemoResponseError;
+
+export const getUpdateSupplierCreditMemoUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}`;
+};
+
+export const updateSupplierCreditMemo = async (
+  creditMemo: string,
+  updateSupplierCreditMemoRequest: UpdateSupplierCreditMemoRequest,
+  options?: RequestInit,
+): Promise<updateSupplierCreditMemoResponse> => {
+  return cognifyFetch<updateSupplierCreditMemoResponse>(
+    getUpdateSupplierCreditMemoUrl(creditMemo),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateSupplierCreditMemoRequest),
+    },
+  );
+};
+
+export type submitSupplierCreditMemoForApprovalResponse200 = {
+  data: SupplierCreditMemoResponse;
+  status: 200;
+};
+
+export type submitSupplierCreditMemoForApprovalResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type submitSupplierCreditMemoForApprovalResponseSuccess =
+  submitSupplierCreditMemoForApprovalResponse200 & {
+    headers: Headers;
+  };
+export type submitSupplierCreditMemoForApprovalResponseError =
+  submitSupplierCreditMemoForApprovalResponse409 & {
+    headers: Headers;
+  };
+
+export type submitSupplierCreditMemoForApprovalResponse =
+  | submitSupplierCreditMemoForApprovalResponseSuccess
+  | submitSupplierCreditMemoForApprovalResponseError;
+
+export const getSubmitSupplierCreditMemoForApprovalUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/submit`;
+};
+
+export const submitSupplierCreditMemoForApproval = async (
+  creditMemo: string,
+  submitSupplierCreditMemoForApprovalRequest: SubmitSupplierCreditMemoForApprovalRequest,
+  options?: RequestInit,
+): Promise<submitSupplierCreditMemoForApprovalResponse> => {
+  return cognifyFetch<submitSupplierCreditMemoForApprovalResponse>(
+    getSubmitSupplierCreditMemoForApprovalUrl(creditMemo),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitSupplierCreditMemoForApprovalRequest),
+    },
+  );
+};
+
+export type postSupplierCreditMemoResponse200 = {
+  data: SupplierCreditMemoResponse;
+  status: 200;
+};
+
+export type postSupplierCreditMemoResponseSuccess = postSupplierCreditMemoResponse200 & {
+  headers: Headers;
+};
+export type postSupplierCreditMemoResponse = postSupplierCreditMemoResponseSuccess;
+
+export const getPostSupplierCreditMemoUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/post`;
+};
+
+export const postSupplierCreditMemo = async (
+  creditMemo: string,
+  postSupplierCreditMemoRequest: PostSupplierCreditMemoRequest,
+  options?: RequestInit,
+): Promise<postSupplierCreditMemoResponse> => {
+  return cognifyFetch<postSupplierCreditMemoResponse>(getPostSupplierCreditMemoUrl(creditMemo), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(postSupplierCreditMemoRequest),
+  });
+};
+
+export type voidSupplierCreditMemoResponse200 = {
+  data: SupplierCreditMemoResponse;
+  status: 200;
+};
+
+export type voidSupplierCreditMemoResponseSuccess = voidSupplierCreditMemoResponse200 & {
+  headers: Headers;
+};
+export type voidSupplierCreditMemoResponse = voidSupplierCreditMemoResponseSuccess;
+
+export const getVoidSupplierCreditMemoUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/void`;
+};
+
+export const voidSupplierCreditMemo = async (
+  creditMemo: string,
+  voidSupplierCreditMemoRequest: VoidSupplierCreditMemoRequest,
+  options?: RequestInit,
+): Promise<voidSupplierCreditMemoResponse> => {
+  return cognifyFetch<voidSupplierCreditMemoResponse>(getVoidSupplierCreditMemoUrl(creditMemo), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(voidSupplierCreditMemoRequest),
+  });
+};
+
+export type addSupplierCreditMemoLineResponse201 = {
+  data: SupplierCreditMemoLineResponse;
+  status: 201;
+};
+
+export type addSupplierCreditMemoLineResponseSuccess = addSupplierCreditMemoLineResponse201 & {
+  headers: Headers;
+};
+export type addSupplierCreditMemoLineResponse = addSupplierCreditMemoLineResponseSuccess;
+
+export const getAddSupplierCreditMemoLineUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/lines`;
+};
+
+export const addSupplierCreditMemoLine = async (
+  creditMemo: string,
+  addSupplierCreditMemoLineRequest: AddSupplierCreditMemoLineRequest,
+  options?: RequestInit,
+): Promise<addSupplierCreditMemoLineResponse> => {
+  return cognifyFetch<addSupplierCreditMemoLineResponse>(
+    getAddSupplierCreditMemoLineUrl(creditMemo),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(addSupplierCreditMemoLineRequest),
+    },
+  );
+};
+
+export type updateSupplierCreditMemoLineResponse200 = {
+  data: SupplierCreditMemoLineResponse;
+  status: 200;
+};
+
+export type updateSupplierCreditMemoLineResponseSuccess =
+  updateSupplierCreditMemoLineResponse200 & {
+    headers: Headers;
+  };
+export type updateSupplierCreditMemoLineResponse = updateSupplierCreditMemoLineResponseSuccess;
+
+export const getUpdateSupplierCreditMemoLineUrl = (creditMemo: string, line: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/lines/${line}`;
+};
+
+export const updateSupplierCreditMemoLine = async (
+  creditMemo: string,
+  line: string,
+  updateSupplierCreditMemoLineRequest: UpdateSupplierCreditMemoLineRequest,
+  options?: RequestInit,
+): Promise<updateSupplierCreditMemoLineResponse> => {
+  return cognifyFetch<updateSupplierCreditMemoLineResponse>(
+    getUpdateSupplierCreditMemoLineUrl(creditMemo, line),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateSupplierCreditMemoLineRequest),
+    },
+  );
+};
+
+export type removeSupplierCreditMemoLineResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type removeSupplierCreditMemoLineResponseSuccess =
+  removeSupplierCreditMemoLineResponse204 & {
+    headers: Headers;
+  };
+export type removeSupplierCreditMemoLineResponse = removeSupplierCreditMemoLineResponseSuccess;
+
+export const getRemoveSupplierCreditMemoLineUrl = (creditMemo: string, line: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/lines/${line}`;
+};
+
+export const removeSupplierCreditMemoLine = async (
+  creditMemo: string,
+  line: string,
+  options?: RequestInit,
+): Promise<removeSupplierCreditMemoLineResponse> => {
+  return cognifyFetch<removeSupplierCreditMemoLineResponse>(
+    getRemoveSupplierCreditMemoLineUrl(creditMemo, line),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export type listCreditApplicationsResponse200 = {
+  data: ListCreditApplications200;
+  status: 200;
+};
+
+export type listCreditApplicationsResponseSuccess = listCreditApplicationsResponse200 & {
+  headers: Headers;
+};
+export type listCreditApplicationsResponse = listCreditApplicationsResponseSuccess;
+
+export const getListCreditApplicationsUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/applications`;
+};
+
+export const listCreditApplications = async (
+  creditMemo: string,
+  options?: RequestInit,
+): Promise<listCreditApplicationsResponse> => {
+  return cognifyFetch<listCreditApplicationsResponse>(getListCreditApplicationsUrl(creditMemo), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type createCreditApplicationResponse201 = {
+  data: CreditApplicationResponse;
+  status: 201;
+};
+
+export type createCreditApplicationResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type createCreditApplicationResponse422 = {
+  data: void;
+  status: 422;
+};
+
+export type createCreditApplicationResponseSuccess = createCreditApplicationResponse201 & {
+  headers: Headers;
+};
+export type createCreditApplicationResponseError = (
+  | createCreditApplicationResponse409
+  | createCreditApplicationResponse422
+) & {
+  headers: Headers;
+};
+
+export type createCreditApplicationResponse =
+  | createCreditApplicationResponseSuccess
+  | createCreditApplicationResponseError;
+
+export const getCreateCreditApplicationUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/applications`;
+};
+
+export const createCreditApplication = async (
+  creditMemo: string,
+  createCreditApplicationRequest: CreateCreditApplicationRequest,
+  options?: RequestInit,
+): Promise<createCreditApplicationResponse> => {
+  return cognifyFetch<createCreditApplicationResponse>(getCreateCreditApplicationUrl(creditMemo), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCreditApplicationRequest),
+  });
+};
+
+export type showCreditApplicationResponse200 = {
+  data: CreditApplicationResponse;
+  status: 200;
+};
+
+export type showCreditApplicationResponseSuccess = showCreditApplicationResponse200 & {
+  headers: Headers;
+};
+export type showCreditApplicationResponse = showCreditApplicationResponseSuccess;
+
+export const getShowCreditApplicationUrl = (application: string) => {
+  return `/api/credit-applications/${application}`;
+};
+
+export const showCreditApplication = async (
+  application: string,
+  options?: RequestInit,
+): Promise<showCreditApplicationResponse> => {
+  return cognifyFetch<showCreditApplicationResponse>(getShowCreditApplicationUrl(application), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type voidCreditApplicationResponse200 = {
+  data: CreditApplicationResponse;
+  status: 200;
+};
+
+export type voidCreditApplicationResponseSuccess = voidCreditApplicationResponse200 & {
+  headers: Headers;
+};
+export type voidCreditApplicationResponse = voidCreditApplicationResponseSuccess;
+
+export const getVoidCreditApplicationUrl = (application: string) => {
+  return `/api/credit-applications/${application}`;
+};
+
+export const voidCreditApplication = async (
+  application: string,
+  voidCreditApplicationRequest: VoidCreditApplicationRequest,
+  options?: RequestInit,
+): Promise<voidCreditApplicationResponse> => {
+  return cognifyFetch<voidCreditApplicationResponse>(getVoidCreditApplicationUrl(application), {
+    ...options,
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(voidCreditApplicationRequest),
+  });
+};
+
+export type listSupplierCreditMemoExceptionsResponse200 = {
+  data: ListSupplierCreditMemoExceptions200;
+  status: 200;
+};
+
+export type listSupplierCreditMemoExceptionsResponseSuccess =
+  listSupplierCreditMemoExceptionsResponse200 & {
+    headers: Headers;
+  };
+export type listSupplierCreditMemoExceptionsResponse =
+  listSupplierCreditMemoExceptionsResponseSuccess;
+
+export const getListSupplierCreditMemoExceptionsUrl = (creditMemo: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/exceptions`;
+};
+
+export const listSupplierCreditMemoExceptions = async (
+  creditMemo: string,
+  options?: RequestInit,
+): Promise<listSupplierCreditMemoExceptionsResponse> => {
+  return cognifyFetch<listSupplierCreditMemoExceptionsResponse>(
+    getListSupplierCreditMemoExceptionsUrl(creditMemo),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type acknowledgeSupplierCreditMemoExceptionResponse200 = {
+  data: SupplierCreditMemoExceptionResponse;
+  status: 200;
+};
+
+export type acknowledgeSupplierCreditMemoExceptionResponseSuccess =
+  acknowledgeSupplierCreditMemoExceptionResponse200 & {
+    headers: Headers;
+  };
+export type acknowledgeSupplierCreditMemoExceptionResponse =
+  acknowledgeSupplierCreditMemoExceptionResponseSuccess;
+
+export const getAcknowledgeSupplierCreditMemoExceptionUrl = (
+  creditMemo: string,
+  exception: string,
+) => {
+  return `/api/supplier-credit-memos/${creditMemo}/exceptions/${exception}/acknowledge`;
+};
+
+export const acknowledgeSupplierCreditMemoException = async (
+  creditMemo: string,
+  exception: string,
+  acknowledgeSupplierCreditMemoExceptionRequest: AcknowledgeSupplierCreditMemoExceptionRequest,
+  options?: RequestInit,
+): Promise<acknowledgeSupplierCreditMemoExceptionResponse> => {
+  return cognifyFetch<acknowledgeSupplierCreditMemoExceptionResponse>(
+    getAcknowledgeSupplierCreditMemoExceptionUrl(creditMemo, exception),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(acknowledgeSupplierCreditMemoExceptionRequest),
+    },
+  );
+};
+
+export type resolveSupplierCreditMemoExceptionResponse200 = {
+  data: SupplierCreditMemoExceptionResponse;
+  status: 200;
+};
+
+export type resolveSupplierCreditMemoExceptionResponseSuccess =
+  resolveSupplierCreditMemoExceptionResponse200 & {
+    headers: Headers;
+  };
+export type resolveSupplierCreditMemoExceptionResponse =
+  resolveSupplierCreditMemoExceptionResponseSuccess;
+
+export const getResolveSupplierCreditMemoExceptionUrl = (creditMemo: string, exception: string) => {
+  return `/api/supplier-credit-memos/${creditMemo}/exceptions/${exception}/resolve`;
+};
+
+export const resolveSupplierCreditMemoException = async (
+  creditMemo: string,
+  exception: string,
+  resolveSupplierCreditMemoExceptionRequest: ResolveSupplierCreditMemoExceptionRequest,
+  options?: RequestInit,
+): Promise<resolveSupplierCreditMemoExceptionResponse> => {
+  return cognifyFetch<resolveSupplierCreditMemoExceptionResponse>(
+    getResolveSupplierCreditMemoExceptionUrl(creditMemo, exception),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(resolveSupplierCreditMemoExceptionRequest),
+    },
+  );
+};
+
+export type escalateSupplierCreditMemoExceptionResponse200 = {
+  data: SupplierCreditMemoExceptionResponse;
+  status: 200;
+};
+
+export type escalateSupplierCreditMemoExceptionResponseSuccess =
+  escalateSupplierCreditMemoExceptionResponse200 & {
+    headers: Headers;
+  };
+export type escalateSupplierCreditMemoExceptionResponse =
+  escalateSupplierCreditMemoExceptionResponseSuccess;
+
+export const getEscalateSupplierCreditMemoExceptionUrl = (
+  creditMemo: string,
+  exception: string,
+) => {
+  return `/api/supplier-credit-memos/${creditMemo}/exceptions/${exception}/escalate`;
+};
+
+export const escalateSupplierCreditMemoException = async (
+  creditMemo: string,
+  exception: string,
+  acknowledgeSupplierCreditMemoExceptionRequest: AcknowledgeSupplierCreditMemoExceptionRequest,
+  options?: RequestInit,
+): Promise<escalateSupplierCreditMemoExceptionResponse> => {
+  return cognifyFetch<escalateSupplierCreditMemoExceptionResponse>(
+    getEscalateSupplierCreditMemoExceptionUrl(creditMemo, exception),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(acknowledgeSupplierCreditMemoExceptionRequest),
     },
   );
 };
