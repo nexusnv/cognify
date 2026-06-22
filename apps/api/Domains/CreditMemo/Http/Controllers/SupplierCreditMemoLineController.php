@@ -48,7 +48,7 @@ class SupplierCreditMemoLineController
             $validated['notes'] ?? null,
         );
 
-        $creditMemo->fresh(['lines', 'exceptions']);
+        $creditMemo = $creditMemo->fresh(['lines', 'exceptions']);
 
         return response()->json([
             'data' => (new SupplierCreditMemoLineResource($line))->resolve($request),
@@ -85,7 +85,7 @@ class SupplierCreditMemoLineController
             $validated['notes'] ?? null,
         );
 
-        $creditMemo->fresh(['lines', 'exceptions']);
+        $creditMemo = $creditMemo->fresh(['lines', 'exceptions']);
 
         return response()->json([
             'data' => (new SupplierCreditMemoLineResource($line))->resolve($request),
@@ -112,7 +112,7 @@ class SupplierCreditMemoLineController
 
         $action->handle($line, $request->user(), $lockVersion);
 
-        $creditMemo->fresh(['lines', 'exceptions']);
+        $creditMemo = $creditMemo->fresh(['lines', 'exceptions']);
 
         return response()->json([
             'creditMemo' => (new SupplierCreditMemoResource($creditMemo))->resolve($request),

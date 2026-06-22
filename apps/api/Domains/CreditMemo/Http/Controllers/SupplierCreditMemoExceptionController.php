@@ -28,6 +28,7 @@ class SupplierCreditMemoExceptionController
         $this->authorize('view', $creditMemo);
 
         $exceptions = SupplierCreditMemoException::query()
+            ->where('tenant_id', $tenant->id)
             ->where('supplier_credit_memo_id', $creditMemo->id)
             ->orderBy('created_at')
             ->get();
@@ -81,7 +82,7 @@ class SupplierCreditMemoExceptionController
             $request->user(),
             (int) $validated['lockVersion'],
             $validated['resolutionType'],
-            $validated['resolutionNotes'] ?? null,
+            (string) $validated['resolutionNotes'],
         );
 
         return response()->json([

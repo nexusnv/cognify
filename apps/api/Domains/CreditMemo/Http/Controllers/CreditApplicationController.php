@@ -28,6 +28,7 @@ class CreditApplicationController
         $this->authorize('view', $creditMemo);
 
         $applications = CreditApplication::query()
+            ->where('tenant_id', $tenant->id)
             ->where('supplier_credit_memo_id', $creditMemo->id)
             ->with(['invoice', 'creditMemo'])
             ->orderBy('created_at')

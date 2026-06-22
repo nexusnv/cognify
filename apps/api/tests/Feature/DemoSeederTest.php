@@ -338,6 +338,10 @@ class DemoSeederTest extends TestCase
         $this->assertSame(1, QuotationComparisonNote::query()->count());
         $this->assertSame(1, ApprovalDelegation::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
+        $this->assertSame(32, SupplierInvoice::query()->count());
+        $this->assertSame(8, \Domains\CreditMemo\Models\SupplierCreditMemo::query()->count());
+        $this->assertSame(4, \Domains\CreditMemo\Models\CreditApplication::query()->count());
+        $this->assertSame(2, \Domains\CreditMemo\Models\SupplierCreditMemoException::query()->count());
 
         $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
         $northwind = Tenant::query()->where('name', 'Northwind Sourcing')->firstOrFail();
