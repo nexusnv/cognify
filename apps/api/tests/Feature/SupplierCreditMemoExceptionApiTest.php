@@ -493,4 +493,51 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
             ->getJson("/api/supplier-credit-memos/{$memo->id}/exceptions")
             ->assertStatus(404);
     }
+
+    public function test_cross_tenant_acknowledge_returns_404(): void
+    {
+        [$tenantA, $buyerA] = $this->tenantUserPair(TenantRole::Buyer->value);
+        [$tenantB, $buyerB] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $vendorA = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendorA, 'CM-XT-002');
+        $exception = $this->createException($tenantA, $memo);
+
+        $this->actingAsTenant($tenantB, $buyerB)
+            ->postJson("/api/supplier-credit-memos/{$memo->id}/exceptions/{$exception->id}/acknowledge", [
+                'lockVersion' => 1,
+            ])
+            ->assertStatus(404);
+    }
+
+    public function test_cross_tenant_resolve_returns_404(): void
+    {
+        [$tenantA, $buyerA] = $this->tenantUserPair(TenantRole::Buyer->value);
+        [$tenantB, $buyerB] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $vendorA = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendorA, 'CM-XT-003');
+        $exception = $this->createException($tenantA, $memo);
+
+        $this->actingAsTenant($tenantB, $buyerB)
+            ->postJson("/api/supplier-credit-memos/{$memo->id}/exceptions/{$exception->id}/resolve", [
+                'lockVersion' => 1,
+                'resolutionType' => 'accepted',
+                'resolutionNotes' => 'Cross-tenant attempt to resolve.',
+            ])
+            ->assertStatus(404);
+    }
+
+    public function test_cross_tenant_escalate_returns_404(): void
+    {
+        [$tenantA, $buyerA] = $this->tenantUserPair(TenantRole::Buyer->value);
+        [$tenantB, $buyerB] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $vendorA = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendorA, 'CM-XT-004');
+        $exception = $this->createException($tenantA, $memo);
+
+        $this->actingAsTenant($tenantB, $buyerB)
+            ->postJson("/api/supplier-credit-memos/{$memo->id}/exceptions/{$exception->id}/escalate", [
+                'lockVersion' => 1,
+            ])
+            ->assertStatus(404);
+    }
 }

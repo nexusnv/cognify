@@ -393,4 +393,45 @@ class CreditApplicationApiTest extends TestCase
             ->getJson("/api/credit-applications/{$applicationId}")
             ->assertStatus(404);
     }
+
+    public function test_cross_tenant_application_create_returns_404(): void
+    {
+        [$tenantA, $buyerA] = $this->tenantUserPair(TenantRole::Buyer->value);
+        [$tenantB, $buyerB] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $vendorA = $this->createVendor($tenantA);
+        $invoice = $this->createInvoice($tenantA, $vendorA);
+        $memo = $this->createCreditMemo($tenantA, $buyerA, $vendorA, '1000.0000', (string) $invoice->id);
+
+        $this->actingAsTenant($tenantB, $buyerB)
+            ->postJson(
+                "/api/supplier-credit-memos/{$memo->id}/applications",
+                $this->applicationPayload((string) $invoice->id, '500.0000'),
+            )
+            ->assertStatus(404);
+    }
+
+    public function test_cross_tenant_application_delete_returns_404(): void
+    {
+        [$tenantA, $buyerA] = $this->tenantUserPair(TenantRole::Buyer->value);
+        [$tenantB, $buyerB] = $this->tenantUserPair(TenantRole::Buyer->value);
+        $vendorA = $this->createVendor($tenantA);
+        $invoice = $this->createInvoice($tenantA, $vendorA);
+        $memo = $this->createCreditMemo($tenantA, $buyerA, $vendorA, '1000.0000', (string) $invoice->id);
+
+        $appResponse = $this->actingAsTenant($tenantA, $buyerA)
+            ->postJson(
+                "/api/supplier-credit-memos/{$memo->id}/applications",
+                $this->applicationPayload((string) $invoice->id, '500.0000'),
+            )
+            ->assertCreated();
+
+        $applicationId = $appResponse->json('data.id');
+
+        $this->actingAsTenant($tenantB, $buyerB)
+            ->deleteJson("/api/credit-applications/{$applicationId}", [
+                'lockVersion' => 1,
+                'voidReason' => 'Cross-tenant attempt to void.',
+            ])
+            ->assertStatus(404);
+    }
 }

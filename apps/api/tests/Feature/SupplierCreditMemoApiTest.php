@@ -331,6 +331,69 @@ class SupplierCreditMemoApiTest extends TestCase
             ->assertStatus(404);
     }
 
+    public function test_cross_tenant_credit_memo_update_returns_404(): void
+    {
+        [$tenantA, $userA] = $this->tenantUserPair('buyer');
+        [$tenantB, $userB] = $this->tenantUserPair('buyer');
+        $vendor = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendor);
+
+        $this->actingAsTenant($tenantB, $userB)
+            ->patchJson("/api/supplier-credit-memos/{$memo->id}", [
+                'lockVersion' => 1,
+                'notes' => 'Cross-tenant attempt',
+            ])
+            ->assertStatus(404);
+    }
+
+    public function test_cross_tenant_credit_memo_submit_returns_404(): void
+    {
+        [$tenantA, $userA] = $this->tenantUserPair('buyer');
+        [$tenantB, $userB] = $this->tenantUserPair('buyer');
+        $vendor = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendor);
+
+        // userB is in tenantB, not in tenantA. The tenant-scoped model binding
+        // returns 404 (not 403) because the memo is not visible to tenantB at all.
+        $this->actingAsTenant($tenantB, $userB)
+            ->postJson("/api/supplier-credit-memos/{$memo->id}/submit", ['lockVersion' => 1])
+            ->assertStatus(404);
+    }
+
+    public function test_cross_tenant_credit_memo_void_returns_404(): void
+    {
+        [$tenantA, $userA] = $this->tenantUserPair('buyer');
+        [$tenantB, $userB] = $this->tenantUserPair('buyer');
+        $vendor = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendor);
+
+        $this->actingAsTenant($tenantB, $userB)
+            ->postJson("/api/supplier-credit-memos/{$memo->id}/void", [
+                'lockVersion' => 1,
+                'voidReason' => 'Cross-tenant attempt to void.',
+            ])
+            ->assertStatus(404);
+    }
+
+    public function test_cross_tenant_credit_memo_add_line_returns_404(): void
+    {
+        [$tenantA, $userA] = $this->tenantUserPair('buyer');
+        [$tenantB, $userB] = $this->tenantUserPair('buyer');
+        $vendor = $this->createVendor($tenantA);
+        $memo = $this->createMemoDirectly($tenantA, $vendor);
+
+        $this->actingAsTenant($tenantB, $userB)
+            ->postJson("/api/supplier-credit-memos/{$memo->id}/lines", [
+                'lockVersion' => 1,
+                'lineNumber' => 1,
+                'description' => 'Cross-tenant line',
+                'quantity' => '1.0000',
+                'unitPrice' => '100.0000',
+                'taxAmount' => '0.0000',
+            ])
+            ->assertStatus(404);
+    }
+
     public function test_stale_lock_version_returns_409(): void
     {
         [$tenant, $user] = $this->tenantUserPair('buyer');
