@@ -2,7 +2,6 @@
 
 namespace Domains\Invoice\Http\Resources;
 
-use Domains\Invoice\Models\SupplierInvoiceLine;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

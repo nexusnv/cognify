@@ -21,7 +21,7 @@ class CreditMemoSupportTest extends TestCase
     /** @return array{Tenant, SupplierCreditMemo} */
     private function createMemo(string $totalAmount = '1000.0000', string $status = 'open'): array
     {
-        $tenant = Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant = Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $vendor = Vendor::query()->create([
             'tenant_id' => $tenant->id,
             'name' => 'V',
@@ -30,7 +30,7 @@ class CreditMemoSupportTest extends TestCase
 
         $memo = SupplierCreditMemo::query()->create([
             'tenant_id' => $tenant->id,
-            'number' => 'CM-SUP-' . Str::random(4),
+            'number' => 'CM-SUP-'.Str::random(4),
             'vendor_id' => $vendor->id,
             'status' => $status,
             'currency' => 'USD',
@@ -50,14 +50,14 @@ class CreditMemoSupportTest extends TestCase
         $userId = User::factory()->create()->id;
 
         DB::table('rfqs')->insert([
-            'tenant_id' => $memo->tenant_id, 'number' => 'RFQ-S' . Str::random(4),
+            'tenant_id' => $memo->tenant_id, 'number' => 'RFQ-S'.Str::random(4),
             'title' => 'T', 'status' => 'draft', 'created_at' => now(), 'updated_at' => now(),
         ]);
         $rfqId = (int) DB::getPdo()->lastInsertId();
 
         DB::table('quotations')->insert([
             'tenant_id' => $memo->tenant_id, 'rfq_id' => $rfqId, 'vendor_id' => $memo->vendor_id,
-            'number' => 'Q-S' . Str::random(4), 'status' => 'submitted', 'total_amount' => '1000.00',
+            'number' => 'Q-S'.Str::random(4), 'status' => 'submitted', 'total_amount' => '1000.00',
             'currency' => 'USD', 'created_at' => now(), 'updated_at' => now(),
         ]);
         $quotationId = (int) DB::getPdo()->lastInsertId();
@@ -83,7 +83,7 @@ class CreditMemoSupportTest extends TestCase
             'rfq_award_recommendation_id' => $recId, 'rfq_id' => $rfqId,
             'vendor_id' => $memo->vendor_id, 'quotation_id' => $quotationId,
             'quotation_version_id' => $quotationVersionId, 'requested_by_user_id' => $userId,
-            'number' => 'H-' . Str::random(4), 'status' => 'draft', 'currency' => 'USD',
+            'number' => 'H-'.Str::random(4), 'status' => 'draft', 'currency' => 'USD',
             'total_amount' => '1000.00', 'source_snapshot' => '{}', 'line_snapshot' => '{}',
             'approval_snapshot' => '{}', 'evidence_snapshot' => '{}',
             'readiness_warnings' => '{}', 'lock_version' => 1, 'created_at' => now(), 'updated_at' => now(),
@@ -95,12 +95,12 @@ class CreditMemoSupportTest extends TestCase
             'purchase_order_request_handoff_id' => $handoffId,
             'rfq_award_recommendation_id' => $recId, 'rfq_id' => $rfqId,
             'vendor_id' => $memo->vendor_id, 'created_by_user_id' => $userId,
-            'number' => 'PO-S' . Str::random(4), 'status' => 'issued', 'currency' => 'USD',
+            'number' => 'PO-S'.Str::random(4), 'status' => 'issued', 'currency' => 'USD',
             'total_amount' => '1000.0000', 'source_snapshot' => '{}', 'approval_snapshot' => '{}',
             'evidence_snapshot' => '{}', 'lock_version' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $number = 'INV-S' . Str::random(4);
+        $number = 'INV-S'.Str::random(4);
         $invoiceId = Str::uuid()->toString();
         DB::table('supplier_invoices')->insert([
             'id' => $invoiceId, 'tenant_id' => $memo->tenant_id, 'purchase_order_id' => $poId,
@@ -132,7 +132,7 @@ class CreditMemoSupportTest extends TestCase
     public function test_derive_status_when_no_applications(): void
     {
         [, $memo] = $this->createMemo('1000.0000', 'open');
-        $calculator = new CreditApplicationSumCalculator();
+        $calculator = new CreditApplicationSumCalculator;
 
         $this->assertSame(
             SupplierCreditMemoStatus::Open,
@@ -145,7 +145,7 @@ class CreditMemoSupportTest extends TestCase
         [, $memo] = $this->createMemo('1000.0000', 'open');
         $this->insertApplication($memo, '500.0000');
 
-        $calculator = new CreditApplicationSumCalculator();
+        $calculator = new CreditApplicationSumCalculator;
         $this->assertSame(
             SupplierCreditMemoStatus::PartiallyApplied,
             $calculator->deriveCreditMemoStatus($memo),
@@ -157,7 +157,7 @@ class CreditMemoSupportTest extends TestCase
         [, $memo] = $this->createMemo('1000.0000', 'open');
         $this->insertApplication($memo, '1000.0000');
 
-        $calculator = new CreditApplicationSumCalculator();
+        $calculator = new CreditApplicationSumCalculator;
         $this->assertSame(
             SupplierCreditMemoStatus::FullyApplied,
             $calculator->deriveCreditMemoStatus($memo),
@@ -183,7 +183,7 @@ class CreditMemoSupportTest extends TestCase
         [, $memo] = $this->createMemo('1000.0000', 'partially_applied');
         $this->insertApplication($memo, '500.0000', now()->toDateTimeString());
 
-        $calculator = new CreditApplicationSumCalculator();
+        $calculator = new CreditApplicationSumCalculator;
         $this->assertSame(
             SupplierCreditMemoStatus::Open,
             $calculator->deriveCreditMemoStatus($memo),

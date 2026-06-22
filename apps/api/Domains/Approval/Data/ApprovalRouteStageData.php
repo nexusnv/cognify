@@ -5,9 +5,9 @@ namespace Domains\Approval\Data;
 final class ApprovalRouteStageData
 {
     /**
-     * @param array<int, array<string, mixed>> $approvers
-     * @param array<int, array<string, mixed>> $fallbackApprovers
-     * @param array<int, array<string, string>> $warnings
+     * @param  array<int, array<string, mixed>>  $approvers
+     * @param  array<int, array<string, mixed>>  $fallbackApprovers
+     * @param  array<int, array<string, string>>  $warnings
      */
     public function __construct(
         public readonly string $name,
@@ -16,8 +16,7 @@ final class ApprovalRouteStageData
         public readonly array $fallbackApprovers,
         public readonly ?string $dueAt,
         public readonly array $warnings = [],
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

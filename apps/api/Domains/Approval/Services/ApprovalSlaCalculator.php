@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 class ApprovalSlaCalculator
 {
     /**
-     * @param array<int, array<string, mixed>> $slaRules
+     * @param  array<int, array<string, mixed>>  $slaRules
      */
     public function calculateDueAtForStage(array $slaRules, string $stageName, ?CarbonInterface $baseline = null): ?Carbon
     {
@@ -24,7 +24,7 @@ class ApprovalSlaCalculator
     }
 
     /**
-     * @param array<string, mixed> $slaRule
+     * @param  array<string, mixed>  $slaRule
      */
     public function calculateDueAt(array $slaRule, ?CarbonInterface $baseline = null): ?Carbon
     {

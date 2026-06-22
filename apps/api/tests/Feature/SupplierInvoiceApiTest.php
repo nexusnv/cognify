@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Audit\AuditRecorder;
 use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\Tenant;
@@ -486,7 +487,7 @@ class SupplierInvoiceApiTest extends TestCase
         $this->actingAsTenant($tenant, $requester);
         $this->expectException(AuthorizationException::class);
 
-        (new MarkSupplierInvoiceNeedsInformation(app(\App\Audit\AuditRecorder::class)))->handle(
+        (new MarkSupplierInvoiceNeedsInformation(app(AuditRecorder::class)))->handle(
             SupplierInvoice::query()->findOrFail($invoice['id']),
             $requester,
             (int) $started['lockVersion'],
@@ -516,7 +517,7 @@ class SupplierInvoiceApiTest extends TestCase
         $this->actingAsTenant($tenant, $requester);
         $this->expectException(AuthorizationException::class);
 
-        (new CompleteSupplierInvoiceReview(app(\App\Audit\AuditRecorder::class)))->handle(
+        (new CompleteSupplierInvoiceReview(app(AuditRecorder::class)))->handle(
             SupplierInvoice::query()->findOrFail($invoice['id']),
             $requester,
             (int) $started['lockVersion'],
@@ -744,8 +745,7 @@ class SupplierInvoiceApiTest extends TestCase
         int $lockVersion = 1,
         string $vendorName = 'Northwind Traders',
         string $referenceSuffix = 'POC',
-    ): PurchaseOrder
-    {
+    ): PurchaseOrder {
         $po = $this->purchaseOrder($tenant, $buyer, 'issued', $lockVersion, $vendorName, $referenceSuffix);
 
         $po->forceFill([
@@ -768,8 +768,7 @@ class SupplierInvoiceApiTest extends TestCase
         int $lockVersion = 1,
         string $vendorName = 'Northwind Traders',
         string $referenceSuffix = 'POC',
-    ): PurchaseOrder
-    {
+    ): PurchaseOrder {
         $vendor = Vendor::query()->create([
             'tenant_id' => $tenant->id,
             'name' => $vendorName,

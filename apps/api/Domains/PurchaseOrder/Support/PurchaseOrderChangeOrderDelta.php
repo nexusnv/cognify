@@ -3,7 +3,6 @@
 namespace Domains\PurchaseOrder\Support;
 
 use Domains\PurchaseOrder\Models\PurchaseOrder;
-use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrderLine;
 use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Illuminate\Support\Arr;
@@ -74,6 +73,7 @@ class PurchaseOrderChangeOrderDelta
                 ];
 
                 $afterLines->push($afterLine);
+
                 continue;
             }
 

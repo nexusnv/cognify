@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Tenancy\Tenant;
 use App\Audit\AuditRecorder;
 use App\Notifications\NotificationRecorder;
+use App\Tenancy\Tenant;
 use Domains\Quotation\Actions\CreateQuotationVersionSnapshot;
 use Domains\Quotation\Actions\RunDeterministicQuotationNormalizer;
 use Domains\Quotation\Actions\StartQuotationNormalization;
@@ -15,9 +15,9 @@ use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\QuotationVersionLineItem;
 use Domains\Quotation\Models\Rfq;
-use Domains\Quotation\States\QuotationSubmissionSource;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
 use Domains\Quotation\States\QuotationNormalizationStatus;
+use Domains\Quotation\States\QuotationSubmissionSource;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Quotation\Support\QuotationNormalizationIssueCatalog;
 use Domains\Vendor\Models\Vendor;
@@ -351,7 +351,8 @@ class QuotationDeterministicNormalizerTest extends TestCase
     {
         [$tenant, $quotation] = $this->quotationSnapshotFixture();
 
-        $service = new class(app(AuditRecorder::class)) extends CreateQuotationVersionSnapshot {
+        $service = new class(app(AuditRecorder::class)) extends CreateQuotationVersionSnapshot
+        {
             public bool $fallbackCalled = false;
 
             protected function queueNormalizationJob(Tenant $tenant, QuotationVersion $version): void
@@ -381,7 +382,7 @@ class QuotationDeterministicNormalizerTest extends TestCase
      */
     private function quotableVersionFixture(): array
     {
-        [$tenant, $version, ] = $this->normalizationFixture([
+        [$tenant, $version] = $this->normalizationFixture([
             'currency' => 'usd',
             'subtotal_amount' => '12000.00',
             'tax_amount' => '720.00',

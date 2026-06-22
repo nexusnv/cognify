@@ -16,7 +16,7 @@ class CacheCheck implements SystemStatusCheck
 
     public function run(Tenant $tenant): SystemStatusCheckResult
     {
-        $probeKey = 'system-status:cache-probe:' . bin2hex(random_bytes(6));
+        $probeKey = 'system-status:cache-probe:'.bin2hex(random_bytes(6));
         $value = now()->toISOString();
 
         Cache::put($probeKey, $value, now()->addMinute());

@@ -41,8 +41,7 @@ class AddTrackingEvent
                 FulfillmentTrackingEventStatus::OutForDelivery,
                 FulfillmentTrackingEventStatus::Shipped,
                 FulfillmentTrackingEventStatus::Arrived,
-                FulfillmentTrackingEventStatus::Customs
-                    => ShipmentStatus::InTransit,
+                FulfillmentTrackingEventStatus::Customs => ShipmentStatus::InTransit,
                 default => $shipment->statusState(),
             };
 

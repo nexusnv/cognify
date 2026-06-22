@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 class AuditEventData
 {
     /**
-     * @param array<string, mixed> $metadata
-     * @param array<string, mixed>|null $before
-     * @param array<string, mixed>|null $after
+     * @param  array<string, mixed>  $metadata
+     * @param  array<string, mixed>|null  $before
+     * @param  array<string, mixed>|null  $after
      */
     public function __construct(
         public readonly Tenant $tenant,
@@ -22,6 +22,5 @@ class AuditEventData
         public readonly ?array $before = null,
         public readonly ?array $after = null,
         public readonly ?string $subjectDisplay = null,
-    ) {
-    }
+    ) {}
 }

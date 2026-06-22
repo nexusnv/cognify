@@ -12,6 +12,5 @@ class SearchResultData
         public readonly ?string $status,
         public readonly string $href,
         public readonly ?string $updatedAt,
-    ) {
-    }
+    ) {}
 }

@@ -11,9 +11,9 @@ use Domains\Approval\Models\ApprovalPolicyVersion;
 use Domains\Approval\States\ApprovalPolicyStatus;
 use Domains\Approval\States\ApprovalPolicyVersionStatus;
 use Domains\CreditMemo\Models\SupplierCreditMemo;
+use Domains\CreditMemo\Models\SupplierCreditMemoLine;
 use Domains\CreditMemo\States\SupplierCreditMemoStatus;
 use Domains\Invoice\Models\SupplierInvoice;
-use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -29,10 +29,11 @@ class SupplierCreditMemoApiTest extends TestCase
     /** @return array{Tenant, User} */
     private function tenantUserPair(string $role, ?Tenant $existingTenant = null): array
     {
-        $tenant = $existingTenant ?? Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant = $existingTenant ?? Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => TenantRole::from($role)->value]);
         app(CurrentTenant::class)->set($tenant);
+
         return [$tenant, $user];
     }
 
@@ -40,7 +41,7 @@ class SupplierCreditMemoApiTest extends TestCase
     {
         return Vendor::query()->create([
             'tenant_id' => $tenant->id,
-            'name' => 'Vendor ' . Str::random(6),
+            'name' => 'Vendor '.Str::random(6),
             'status' => 'active',
         ]);
     }
@@ -50,14 +51,14 @@ class SupplierCreditMemoApiTest extends TestCase
         $userId = User::factory()->create()->id;
 
         DB::table('rfqs')->insert([
-            'tenant_id' => $tenant->id, 'number' => 'RFQ-' . Str::random(4),
+            'tenant_id' => $tenant->id, 'number' => 'RFQ-'.Str::random(4),
             'title' => 'T', 'status' => 'draft', 'created_at' => now(), 'updated_at' => now(),
         ]);
         $rfqId = (int) DB::getPdo()->lastInsertId();
 
         DB::table('quotations')->insert([
             'tenant_id' => $tenant->id, 'rfq_id' => $rfqId, 'vendor_id' => $vendor->id,
-            'number' => 'Q-' . Str::random(4), 'status' => 'submitted', 'total_amount' => '1000.00',
+            'number' => 'Q-'.Str::random(4), 'status' => 'submitted', 'total_amount' => '1000.00',
             'currency' => $currency, 'created_at' => now(), 'updated_at' => now(),
         ]);
         $quotationId = (int) DB::getPdo()->lastInsertId();
@@ -83,7 +84,7 @@ class SupplierCreditMemoApiTest extends TestCase
             'rfq_award_recommendation_id' => $recId, 'rfq_id' => $rfqId,
             'vendor_id' => $vendor->id, 'quotation_id' => $quotationId,
             'quotation_version_id' => $quotationVersionId, 'requested_by_user_id' => $userId,
-            'number' => 'HO-' . Str::random(4), 'status' => 'draft', 'currency' => $currency,
+            'number' => 'HO-'.Str::random(4), 'status' => 'draft', 'currency' => $currency,
             'total_amount' => '1000.00', 'source_snapshot' => '{}', 'line_snapshot' => '{}',
             'approval_snapshot' => '{}', 'evidence_snapshot' => '{}',
             'readiness_warnings' => '{}', 'lock_version' => 1, 'created_at' => now(), 'updated_at' => now(),
@@ -95,12 +96,12 @@ class SupplierCreditMemoApiTest extends TestCase
             'purchase_order_request_handoff_id' => $handoffId,
             'rfq_award_recommendation_id' => $recId, 'rfq_id' => $rfqId,
             'vendor_id' => $vendor->id, 'created_by_user_id' => $userId,
-            'number' => 'PO-' . Str::random(4), 'status' => 'issued', 'currency' => $currency,
+            'number' => 'PO-'.Str::random(4), 'status' => 'issued', 'currency' => $currency,
             'total_amount' => '1000.0000', 'source_snapshot' => '{}', 'approval_snapshot' => '{}',
             'evidence_snapshot' => '{}', 'lock_version' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $number = 'INV-TEST-' . Str::random(6);
+        $number = 'INV-TEST-'.Str::random(6);
         $invoiceId = Str::uuid()->toString();
         DB::table('supplier_invoices')->insert([
             'id' => $invoiceId, 'tenant_id' => $tenant->id, 'purchase_order_id' => $poId,
@@ -120,6 +121,7 @@ class SupplierCreditMemoApiTest extends TestCase
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
+
         return $this->withHeader('X-Tenant-Id', (string) $tenant->id);
     }
 
@@ -128,7 +130,7 @@ class SupplierCreditMemoApiTest extends TestCase
         return [
             'vendorId' => $vendor->id,
             'originalInvoiceId' => $originalInvoiceId,
-            'vendorCreditMemoNumber' => 'VCM-' . Str::random(6),
+            'vendorCreditMemoNumber' => 'VCM-'.Str::random(6),
             'creditDate' => now()->format('Y-m-d'),
             'currency' => 'USD',
             'subtotalAmount' => '100.0000',
@@ -248,8 +250,8 @@ class SupplierCreditMemoApiTest extends TestCase
             ->json('data.number');
 
         $year = now()->format('Y');
-        $this->assertMatchesRegularExpression('/^CM-' . $year . '-\d{6}$/', $first);
-        $this->assertMatchesRegularExpression('/^CM-' . $year . '-\d{6}$/', $second);
+        $this->assertMatchesRegularExpression('/^CM-'.$year.'-\d{6}$/', $first);
+        $this->assertMatchesRegularExpression('/^CM-'.$year.'-\d{6}$/', $second);
 
         $firstSeq = (int) explode('-', $first)[2];
         $secondSeq = (int) explode('-', $second)[2];
@@ -387,7 +389,7 @@ class SupplierCreditMemoApiTest extends TestCase
         $memo = $this->createMemoDirectly($tenant, $vendor, 'draft', 'CM-SUB-001');
 
         // A line is required for submission
-        \Domains\CreditMemo\Models\SupplierCreditMemoLine::query()->create([
+        SupplierCreditMemoLine::query()->create([
             'tenant_id' => $tenant->id,
             'supplier_credit_memo_id' => $memo->id,
             'line_number' => 1,

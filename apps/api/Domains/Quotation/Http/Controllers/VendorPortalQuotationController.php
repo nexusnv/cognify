@@ -34,7 +34,7 @@ class VendorPortalQuotationController extends Controller
         StoreAttachmentRequest $request,
         ResolveRfqInvitationPortalAccess $resolve,
         StoreQuotationAttachment $storeQuotationAttachment,
-        ): JsonResponse {
+    ): JsonResponse {
         $request->attributes->set('vendor_portal', true);
         request()->attributes->set('vendor_portal', true);
         $invitation = $resolve->handle($token);

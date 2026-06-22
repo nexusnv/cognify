@@ -10,8 +10,8 @@ use Domains\Attachment\Models\Attachment;
 use Domains\Attachment\Support\AttachmentStorage;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\RfqInvitation;
-use Domains\Quotation\States\QuotationSubmissionSource;
 use Domains\Quotation\States\QuotationStatus;
+use Domains\Quotation\States\QuotationSubmissionSource;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -24,8 +24,7 @@ class StoreQuotationAttachment
         private readonly AttachmentStorage $storage,
         private readonly CreateOrRevealQuotationForInvitation $createOrRevealQuotationForInvitation,
         private readonly CreateQuotationVersionSnapshot $createQuotationVersionSnapshot,
-    ) {
-    }
+    ) {}
 
     public function handle(
         Tenant $tenant,

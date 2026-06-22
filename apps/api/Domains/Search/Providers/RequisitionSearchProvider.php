@@ -55,12 +55,12 @@ class RequisitionSearchProvider implements SearchProvider
     {
         $builder->where(function (Builder $builder) use ($query): void {
             $builder->whereRaw('lower(number) = ?', [$query])
-                ->orWhereRaw('lower(number) like ?', [$query . '%'])
-                ->orWhereRaw('lower(number) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(title) like ?', [$query . '%'])
-                ->orWhereRaw('lower(title) like ?', ['%' . $query . '%'])
+                ->orWhereRaw('lower(number) like ?', [$query.'%'])
+                ->orWhereRaw('lower(number) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(title) like ?', [$query.'%'])
+                ->orWhereRaw('lower(title) like ?', ['%'.$query.'%'])
                 ->orWhereHas('requester', function (Builder $builder) use ($query): void {
-                    $builder->whereRaw('lower(name) like ?', ['%' . $query . '%']);
+                    $builder->whereRaw('lower(name) like ?', ['%'.$query.'%']);
                 });
         });
     }
@@ -77,9 +77,9 @@ class RequisitionSearchProvider implements SearchProvider
             END',
             [
                 $query,
-                $query . '%',
-                $query . '%',
-                '%' . $query . '%',
+                $query.'%',
+                $query.'%',
+                '%'.$query.'%',
             ],
         )->orderByDesc('updated_at');
     }

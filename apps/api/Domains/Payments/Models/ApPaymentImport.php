@@ -9,9 +9,9 @@ use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Payments\States\ApPaymentImportStatus;
 use Domains\Payments\States\ApPaymentImportTargetStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApPaymentImport extends Model
 {

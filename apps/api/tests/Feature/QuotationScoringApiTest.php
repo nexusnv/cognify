@@ -10,6 +10,7 @@ use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationNormalization;
+use Domains\Quotation\Models\QuotationScoringTemplate;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqInvitation;
@@ -141,7 +142,7 @@ class QuotationScoringApiTest extends TestCase
             ->postJson("/api/quotation-scoring/templates/{$secondTemplateId}/deactivate")
             ->assertOk();
 
-        $this->assertSame(2, \Domains\Quotation\Models\QuotationScoringTemplate::query()
+        $this->assertSame(2, QuotationScoringTemplate::query()
             ->where('tenant_id', $tenant->id)
             ->where('name', 'Balanced RFQ Evaluation - Updated')
             ->where('is_active', false)

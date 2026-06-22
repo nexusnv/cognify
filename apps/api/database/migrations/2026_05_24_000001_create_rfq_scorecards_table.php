@@ -2,11 +2,11 @@
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Quotation\Models\Quotation;
+use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\States\RfqScorecardStatus;
 use Domains\Vendor\Models\Vendor;
-use Domains\Quotation\Models\Quotation;
-use Domains\Quotation\Models\QuotationVersion;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

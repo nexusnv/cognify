@@ -10,7 +10,6 @@ use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrderLine;
 use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderStatus;
-use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -59,6 +58,7 @@ class ApplyPurchaseOrderChangeOrder
                         'cancelled_reason' => $changeOrder->reason,
                         'current_version_number' => ((int) ($line->current_version_number ?? 1)) + 1,
                     ])->save();
+
                     continue;
                 }
 

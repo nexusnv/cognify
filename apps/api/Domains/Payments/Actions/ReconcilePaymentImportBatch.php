@@ -7,6 +7,7 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\AccountsPayable\Models\ApPaymentHandoff;
+use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Payments\Data\ReconciliationResultData;
 use Domains\Payments\Models\ApPaymentImport;
 use Domains\Payments\States\ApPaymentFailureCode;
@@ -55,6 +56,7 @@ class ReconcilePaymentImportBatch
 
                 if ($import->status !== ApPaymentImportStatus::Pending && $import->status !== ApPaymentImportStatus::Failed) {
                     $skipped++;
+
                     return;
                 }
 
@@ -64,6 +66,7 @@ class ReconcilePaymentImportBatch
                         'match_error' => 'Lock version mismatch.',
                     ])->save();
                     $failed++;
+
                     return;
                 }
 
@@ -72,6 +75,7 @@ class ReconcilePaymentImportBatch
 
                 if ($import->match_error !== null || $import->matched_handoff_id === null) {
                     $failed++;
+
                     return;
                 }
 
@@ -82,6 +86,7 @@ class ReconcilePaymentImportBatch
 
                 if ($handoff === null) {
                     $failed++;
+
                     return;
                 }
 
@@ -143,7 +148,7 @@ class ReconcilePaymentImportBatch
                 }
             }
         } elseif ($import->allocated_amount !== null && $import->matched_invoice_id !== null) {
-            $invoice = \Domains\Invoice\Models\SupplierInvoice::query()
+            $invoice = SupplierInvoice::query()
                 ->where('tenant_id', $handoff->tenant_id)
                 ->whereKey($import->matched_invoice_id)
                 ->firstOrFail();

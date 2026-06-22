@@ -2,7 +2,6 @@
 
 namespace Domains\CreditMemo\Http\Controllers;
 
-use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
 use Domains\CreditMemo\Actions\CreateSupplierCreditMemo;

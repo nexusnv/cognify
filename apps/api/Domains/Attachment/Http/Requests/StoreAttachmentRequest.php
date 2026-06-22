@@ -40,6 +40,7 @@ class StoreAttachmentRequest extends FormRequest
 
             if ((int) $file->getSize() <= 0) {
                 $validator->errors()->add('file', 'The file must not be empty.');
+
                 return;
             }
 
@@ -49,6 +50,7 @@ class StoreAttachmentRequest extends FormRequest
 
             if (! $storage->isAllowedExtension($extension)) {
                 $validator->errors()->add('file', 'The selected file extension is not allowed.');
+
                 return;
             }
 

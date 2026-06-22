@@ -15,7 +15,9 @@ class PaymentImportJsonParser
 
         $rows = [];
         foreach ($payload['rows'] as $index => $row) {
-            if (! is_array($row)) { $row = []; }
+            if (! is_array($row)) {
+                $row = [];
+            }
             $rows[] = new PaymentImportRowData(
                 handoffNumber: $this->nullIfEmpty($row['handoffNumber'] ?? null),
                 invoiceNumber: $this->nullIfEmpty($row['invoiceNumber'] ?? null),
@@ -38,8 +40,11 @@ class PaymentImportJsonParser
 
     private function nullIfEmpty(?string $value): ?string
     {
-        if ($value === null) return null;
+        if ($value === null) {
+            return null;
+        }
         $trimmed = trim($value);
+
         return $trimmed === '' ? null : $trimmed;
     }
 }

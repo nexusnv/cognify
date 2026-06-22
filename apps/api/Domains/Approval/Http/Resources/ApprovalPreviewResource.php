@@ -2,11 +2,12 @@
 
 namespace Domains\Approval\Http\Resources;
 
+use Domains\Approval\Data\ApprovalPreviewData;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \Domains\Approval\Data\ApprovalPreviewData
+ * @mixin ApprovalPreviewData
  */
 class ApprovalPreviewResource extends JsonResource
 {

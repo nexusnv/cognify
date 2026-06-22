@@ -2,7 +2,6 @@
 
 namespace Domains\Payments\Models;
 
-use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\AccountsPayable\Models\ApPaymentHandoff;
 use Domains\Invoice\Models\SupplierInvoice;

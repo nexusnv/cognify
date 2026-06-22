@@ -15,7 +15,6 @@ use Domains\Receiving\States\GoodsReceiptStatus;
 use Domains\Receiving\Support\ReceivingNumber;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RecordGoodsReceipt
 {

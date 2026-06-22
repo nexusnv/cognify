@@ -7,15 +7,15 @@ use App\Tenancy\Tenant;
 use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
+use Domains\Quotation\States\QuotationNormalizationStatus;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use Domains\Quotation\States\QuotationNormalizationStatus;
 
 class RetryQuotationNormalization
 {
     public function handle(Tenant $tenant, ?User $actor, QuotationVersion $version): QuotationNormalization
     {
-        return DB::transaction(function () use ($tenant, $actor, $version): QuotationNormalization {
+        return DB::transaction(function () use ($tenant, $version): QuotationNormalization {
             $lockedVersion = QuotationVersion::query()
                 ->where('tenant_id', $tenant->id)
                 ->whereKey($version->id)

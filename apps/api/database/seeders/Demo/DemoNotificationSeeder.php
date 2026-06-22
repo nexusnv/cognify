@@ -17,7 +17,7 @@ class DemoNotificationSeeder
     }
 
     /**
-     * @param list<string> $recipientKeys
+     * @param  list<string>  $recipientKeys
      */
     private function seedAnnouncement(DemoSeedContext $context, string $tenantKey, array $recipientKeys): void
     {

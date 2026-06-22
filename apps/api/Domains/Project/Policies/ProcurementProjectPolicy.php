@@ -3,8 +3,8 @@
 namespace Domains\Project\Policies;
 
 use App\Auth\TenantRole;
-use App\Tenancy\CurrentTenant;
 use App\Models\User;
+use App\Tenancy\CurrentTenant;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;

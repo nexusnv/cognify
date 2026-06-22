@@ -5,16 +5,27 @@ namespace App\Notifications;
 class NotificationPreferenceDefaults
 {
     public const EVENT_REQUISITION_SUBMITTED = 'requisition.submitted';
+
     public const EVENT_REQUISITION_CHANGES_REQUESTED = 'requisition.changes_requested';
+
     public const EVENT_REQUISITION_RESUBMITTED = 'requisition.resubmitted';
+
     public const EVENT_REQUISITION_WITHDRAWN = 'requisition.withdrawn';
+
     public const EVENT_REQUISITION_CANCELLED = 'requisition.cancelled';
+
     public const EVENT_APPROVAL_TASK_ASSIGNED = 'approval.task_assigned';
+
     public const EVENT_ATTACHMENT_UPLOADED = 'attachment.uploaded';
+
     public const EVENT_COLLABORATION_MENTIONED = 'collaboration.mentioned';
+
     public const EVENT_QUOTATION_NORMALIZATION_FAILED = 'quotation_normalization.failed';
+
     public const EVENT_QUOTATION_NORMALIZATION_NEEDS_REVIEW = 'quotation_normalization.needs_review';
+
     public const EVENT_QUOTATION_NORMALIZATION_APPROVED = 'quotation_normalization.approved';
+
     public const EVENT_SYSTEM_ANNOUNCEMENT = 'system.announcement';
 
     public const EVENTS = [
@@ -54,7 +65,7 @@ class NotificationPreferenceDefaults
     }
 
     /**
-     * @param array<string, mixed>|null $preferences
+     * @param  array<string, mixed>|null  $preferences
      * @return array<string, array{inApp: bool}>
      */
     public static function merge(?array $preferences): array

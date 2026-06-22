@@ -5,7 +5,7 @@ namespace App\Observability\SystemStatus;
 class SystemStatusCheckResult
 {
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     public function __construct(
         public readonly string $id,
@@ -14,8 +14,7 @@ class SystemStatusCheckResult
         public readonly string $message,
         public readonly ?string $remediation = null,
         public readonly array $metadata = [],
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{id: string, label: string, status: string, message: string, remediation: ?string, metadata: object}

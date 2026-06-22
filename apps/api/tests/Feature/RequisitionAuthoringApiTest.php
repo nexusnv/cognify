@@ -292,7 +292,7 @@ class RequisitionAuthoringApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createDraft(Tenant $tenant, User $user, array $attributes = []): Requisition
     {

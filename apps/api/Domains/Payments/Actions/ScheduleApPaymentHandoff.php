@@ -23,7 +23,7 @@ class ScheduleApPaymentHandoff
         ?string $paymentReference = null,
         ?string $notes = null,
     ): ApPaymentHandoff {
-        return DB::transaction(function () use ($handoff, $actor, $lockVersion, $scheduledForDate, $paymentReference, $notes): ApPaymentHandoff {
+        return DB::transaction(function () use ($handoff, $actor, $lockVersion, $scheduledForDate, $paymentReference): ApPaymentHandoff {
             $handoff = ApPaymentHandoff::query()->whereKey($handoff->id)->lockForUpdate()->firstOrFail();
 
             if ($handoff->statusState() !== ApPaymentHandoffStatus::Exported) {

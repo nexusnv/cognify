@@ -9,7 +9,6 @@ use Domains\Invoice\Data\SupplierInvoiceExceptionResolutionData;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceException;
 use Domains\Invoice\Models\SupplierInvoiceLine;
-use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;

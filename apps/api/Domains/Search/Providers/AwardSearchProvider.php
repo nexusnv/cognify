@@ -52,22 +52,22 @@ class AwardSearchProvider implements SearchProvider
     {
         $builder->where(function (Builder $builder) use ($query): void {
             $builder->whereRaw('lower(number) = ?', [$query])
-                ->orWhereRaw('lower(number) like ?', [$query . '%'])
-                ->orWhereRaw('lower(number) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(status) like ?', ['%' . $query . '%'])
+                ->orWhereRaw('lower(number) like ?', [$query.'%'])
+                ->orWhereRaw('lower(number) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(status) like ?', ['%'.$query.'%'])
                 ->orWhereHas('project', function (Builder $builder) use ($query): void {
-                    $builder->whereRaw('lower(number) like ?', ['%' . $query . '%'])
-                        ->orWhereRaw('lower(name) like ?', ['%' . $query . '%']);
+                    $builder->whereRaw('lower(number) like ?', ['%'.$query.'%'])
+                        ->orWhereRaw('lower(name) like ?', ['%'.$query.'%']);
                 })
                 ->orWhereHas('rfq', function (Builder $builder) use ($query): void {
-                    $builder->whereRaw('lower(number) like ?', ['%' . $query . '%'])
-                        ->orWhereRaw('lower(title) like ?', ['%' . $query . '%']);
+                    $builder->whereRaw('lower(number) like ?', ['%'.$query.'%'])
+                        ->orWhereRaw('lower(title) like ?', ['%'.$query.'%']);
                 })
                 ->orWhereHas('quotation', function (Builder $builder) use ($query): void {
-                    $builder->whereRaw('lower(number) like ?', ['%' . $query . '%']);
+                    $builder->whereRaw('lower(number) like ?', ['%'.$query.'%']);
                 })
                 ->orWhereHas('vendor', function (Builder $builder) use ($query): void {
-                    $builder->whereRaw('lower(name) like ?', ['%' . $query . '%']);
+                    $builder->whereRaw('lower(name) like ?', ['%'.$query.'%']);
                 });
         });
     }
@@ -83,8 +83,8 @@ class AwardSearchProvider implements SearchProvider
             END',
             [
                 $query,
-                $query . '%',
-                '%' . $query . '%',
+                $query.'%',
+                '%'.$query.'%',
             ],
         )->orderByDesc('updated_at');
     }

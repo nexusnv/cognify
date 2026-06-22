@@ -8,7 +8,6 @@ use App\Models\User;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceLine;
 use Domains\Invoice\Models\SupplierInvoiceMatchResult;
-use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
 use Domains\Invoice\Services\InvoiceMatchingService;
 use Domains\Invoice\Services\ToleranceService;
 use Domains\Invoice\States\SupplierInvoiceStatus;
@@ -65,7 +64,7 @@ class RunInvoiceMatching
                 }
             }
 
-            $toleranceService = new ToleranceService();
+            $toleranceService = new ToleranceService;
             $matchingService = new InvoiceMatchingService($toleranceService);
 
             $matchResult = $matchingService->match($invoice, $poLines);

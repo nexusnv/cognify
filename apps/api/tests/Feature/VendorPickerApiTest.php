@@ -134,7 +134,7 @@ class VendorPickerApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create();
         $tenant->users()->attach($user->id, ['role' => $role]);
 

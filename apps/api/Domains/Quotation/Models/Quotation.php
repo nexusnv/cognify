@@ -2,14 +2,11 @@
 
 namespace Domains\Quotation\Models;
 
-use App\Tenancy\Tenant;
 use App\Models\User;
+use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
 use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\QuotationSubmissionSource;
-use Domains\Quotation\Models\Rfq;
-use Domains\Quotation\Models\QuotationLineItem;
-use Domains\Quotation\Models\RfqInvitation;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

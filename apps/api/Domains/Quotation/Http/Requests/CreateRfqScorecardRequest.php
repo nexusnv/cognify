@@ -3,8 +3,8 @@
 namespace Domains\Quotation\Http\Requests;
 
 use App\Tenancy\CurrentTenant;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class CreateRfqScorecardRequest extends FormRequest

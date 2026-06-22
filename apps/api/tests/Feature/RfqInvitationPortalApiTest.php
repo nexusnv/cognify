@@ -122,8 +122,8 @@ class RfqInvitationPortalApiTest extends TestCase
         $this->assertSame(1, $invitation->refresh()->portal_view_count);
 
         $this->post("/api/vendor-portal/rfq-invitations/{$token}/quotation/attachments", [
-                'file' => UploadedFile::fake()->create('buyer-quote.pdf', 128, 'application/pdf'),
-            ])
+            'file' => UploadedFile::fake()->create('buyer-quote.pdf', 128, 'application/pdf'),
+        ])
             ->assertCreated();
         $this->assertSame(1, $invitation->refresh()->portal_view_count);
 
@@ -215,7 +215,7 @@ class RfqInvitationPortalApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => $role]);
 
@@ -226,7 +226,7 @@ class RfqInvitationPortalApiTest extends TestCase
     {
         return Vendor::query()->create(array_merge([
             'tenant_id' => $tenant->id,
-            'name' => 'Vendor ' . Str::uuid(),
+            'name' => 'Vendor '.Str::uuid(),
             'status' => 'active',
             'category' => 'IT Hardware',
             'risk_rating' => 'low',
@@ -242,7 +242,7 @@ class RfqInvitationPortalApiTest extends TestCase
         $requisition = Requisition::query()->create([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-' . Str::random(8),
+            'number' => 'REQ-'.Str::random(8),
             'title' => 'Laptop refresh',
             'status' => RequisitionStatus::Approved,
             'currency' => 'USD',
@@ -261,7 +261,7 @@ class RfqInvitationPortalApiTest extends TestCase
             'tenant_id' => $tenant->id,
             'sourcing_intake_review_id' => $review->id,
             'requisition_id' => $requisition->id,
-            'number' => 'RFQ-' . Str::random(8),
+            'number' => 'RFQ-'.Str::random(8),
             'title' => 'Laptop refresh RFQ',
             'status' => RfqStatus::Draft,
             'required_documents' => [],

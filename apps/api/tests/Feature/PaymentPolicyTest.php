@@ -217,6 +217,7 @@ class PaymentPolicyTest extends TestCase
         $tenant = Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => $role]);
+
         return [$tenant, $user];
     }
 }

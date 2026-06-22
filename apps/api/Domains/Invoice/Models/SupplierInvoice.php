@@ -4,17 +4,18 @@ namespace Domains\Invoice\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\AccountsPayable\Models\ApPaymentHandoff;
+use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
+use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Attachment\Models\Attachment;
+use Domains\CreditMemo\Models\CreditApplication;
 use Domains\Invoice\Models\Relations\UuidMorphMany;
-use Domains\Invoice\Models\SupplierInvoiceMatchResult;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Domains\AccountsPayable\Models\ApPaymentHandoff;
-use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -108,7 +109,7 @@ class SupplierInvoice extends Model
             'changes_requested_fields' => 'array',
             'stp_eligible' => 'boolean',
             'stp_processed_at' => 'datetime',
-            'payment_status' => \Domains\AccountsPayable\States\SupplierInvoicePaymentStatus::class,
+            'payment_status' => SupplierInvoicePaymentStatus::class,
             'payment_eligible_at' => 'datetime',
             'payment_on_hold_at' => 'datetime',
             'payment_hold_released_at' => 'datetime',
@@ -257,7 +258,7 @@ class SupplierInvoice extends Model
 
     public function creditApplications(): HasMany
     {
-        return $this->hasMany(\Domains\CreditMemo\Models\CreditApplication::class, 'supplier_invoice_id');
+        return $this->hasMany(CreditApplication::class, 'supplier_invoice_id');
     }
 
     public function attachments(): MorphMany

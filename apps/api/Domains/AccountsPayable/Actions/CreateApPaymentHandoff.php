@@ -23,7 +23,7 @@ class CreateApPaymentHandoff
     ) {}
 
     /**
-     * @param array<int, SupplierInvoice> $invoices
+     * @param  array<int, SupplierInvoice>  $invoices
      */
     public function handle(array $invoices, User $actor, ?string $notes = null, ?string $effectivePaymentDate = null): ApPaymentHandoff
     {

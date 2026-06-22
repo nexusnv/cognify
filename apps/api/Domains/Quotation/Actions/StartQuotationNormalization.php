@@ -17,8 +17,7 @@ class StartQuotationNormalization
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, QuotationVersion $version, ?User $actor = null): QuotationNormalization
     {

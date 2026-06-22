@@ -23,7 +23,7 @@ class AuditPayloadSanitizer
     ];
 
     /**
-     * @param array<string, mixed>|null $payload
+     * @param  array<string, mixed>|null  $payload
      * @return array<string, mixed>|null
      */
     public static function sanitize(?array $payload): ?array
@@ -36,7 +36,7 @@ class AuditPayloadSanitizer
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private static function sanitizeArray(array $payload): array
@@ -46,6 +46,7 @@ class AuditPayloadSanitizer
         foreach ($payload as $key => $value) {
             if (self::isSensitiveKey((string) $key)) {
                 $sanitized[$key] = '[redacted]';
+
                 continue;
             }
 

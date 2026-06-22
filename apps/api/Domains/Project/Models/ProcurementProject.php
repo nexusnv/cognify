@@ -113,7 +113,7 @@ class ProcurementProject extends Model
     }
 
     /**
-     * @param Builder<ProcurementProject> $query
+     * @param  Builder<ProcurementProject>  $query
      * @return Builder<ProcurementProject>
      */
     public function scopeVisibleTo(Builder $query, User $user, ?string $role, int $tenantId): Builder

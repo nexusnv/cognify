@@ -5,11 +5,11 @@ namespace Domains\Approval\Data;
 final class ApprovalPreviewData
 {
     /**
-     * @param array<string, mixed> $matchedPolicy
-     * @param array<string, mixed> $matchedVersion
-     * @param array<int, array<string, mixed>> $matchedConditions
-     * @param array<int, array<string, mixed>> $stages
-     * @param array<int, array<string, string>> $warnings
+     * @param  array<string, mixed>  $matchedPolicy
+     * @param  array<string, mixed>  $matchedVersion
+     * @param  array<int, array<string, mixed>>  $matchedConditions
+     * @param  array<int, array<string, mixed>>  $stages
+     * @param  array<int, array<string, string>>  $warnings
      */
     public function __construct(
         public readonly array $matchedPolicy,
@@ -20,8 +20,7 @@ final class ApprovalPreviewData
         public readonly ?string $estimatedDueAt,
         public readonly bool $createsTasks = false,
         public readonly array $context = [],
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

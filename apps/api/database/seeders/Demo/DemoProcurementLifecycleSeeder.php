@@ -2,8 +2,13 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Audit\AuditEventData;
+use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\AccountsPayable\Models\ApPaymentHandoff;
+use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
+use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Approval\Models\ApprovalDelegation;
 use Domains\Approval\Models\ApprovalInstance;
 use Domains\Approval\Models\ApprovalPolicy;
@@ -16,29 +21,24 @@ use Domains\Approval\States\ApprovalPolicyStatus;
 use Domains\Approval\States\ApprovalPolicyVersionStatus;
 use Domains\Approval\States\ApprovalStageStatus;
 use Domains\Approval\States\ApprovalTaskStatus;
-use App\Audit\AuditEventData;
-use App\Audit\AuditRecorder;
 use Domains\Attachment\Models\Attachment;
 use Domains\Collaboration\Models\CollaborationComment;
-use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
-use Domains\Fulfillment\Models\Shipment;
-use Domains\Fulfillment\Models\ShipmentLine;
-use Domains\Fulfillment\States\FulfillmentTrackingEventStatus;
-use Domains\Fulfillment\States\ShipmentStatus;
-use Domains\Invoice\Models\SupplierInvoice;
-use Domains\Invoice\Models\SupplierInvoiceLine;
-use Domains\Invoice\Models\SupplierInvoiceMatchResult;
-use Domains\Invoice\States\SupplierInvoiceStatus;
-use Domains\Invoice\Support\SupplierInvoiceNumber;
-use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
 use Domains\CreditMemo\Models\CreditApplication;
 use Domains\CreditMemo\Models\SupplierCreditMemo;
 use Domains\CreditMemo\Models\SupplierCreditMemoException;
 use Domains\CreditMemo\Models\SupplierCreditMemoLine;
 use Domains\CreditMemo\States\SupplierCreditMemoStatus;
-use Domains\AccountsPayable\Models\ApPaymentHandoff;
-use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
-use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
+use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
+use Domains\Fulfillment\Models\Shipment;
+use Domains\Fulfillment\Models\ShipmentLine;
+use Domains\Fulfillment\States\FulfillmentTrackingEventStatus;
+use Domains\Fulfillment\States\ShipmentStatus;
+use Domains\Invoice\Actions\CreateExceptionsFromMatchResults;
+use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Models\SupplierInvoiceLine;
+use Domains\Invoice\Models\SupplierInvoiceMatchResult;
+use Domains\Invoice\States\SupplierInvoiceStatus;
+use Domains\Invoice\Support\SupplierInvoiceNumber;
 use Domains\Payments\Models\ApPaymentAllocation;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
@@ -52,10 +52,6 @@ use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\PurchaseOrder\Support\PurchaseOrderAuditMetadata;
 use Domains\PurchaseOrder\Support\PurchaseOrderChangeOrderDelta;
-use Domains\Receiving\Models\GoodsReceipt;
-use Domains\Receiving\Models\GoodsReceiptLine;
-use Domains\Receiving\States\GoodsReceiptStatus;
-use Domains\Receiving\Support\ReceivingNumber;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -86,6 +82,10 @@ use Domains\Quotation\States\RfqScorecardStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Quotation\States\SourcingIntakeStatus;
 use Domains\Quotation\States\SourcingPath;
+use Domains\Receiving\Models\GoodsReceipt;
+use Domains\Receiving\Models\GoodsReceiptLine;
+use Domains\Receiving\States\GoodsReceiptStatus;
+use Domains\Receiving\Support\ReceivingNumber;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Collection;
@@ -850,8 +850,7 @@ class DemoProcurementLifecycleSeeder
         User $buyer,
         User $finance,
         ApprovalPolicyVersion $policyVersion,
-    ): void
-    {
+    ): void {
         $records = [
             'draft' => [
                 'handoffKey' => 'ready',
@@ -2460,6 +2459,7 @@ class DemoProcurementLifecycleSeeder
     {
         $lines = $po->lines->take(2)->values();
         assert($lines->count() >= 2, 'Purchase order must have at least 2 lines for invoice demo seeding.');
+
         return $lines;
     }
 
@@ -2732,7 +2732,7 @@ class DemoProcurementLifecycleSeeder
     }
 
     /**
-     * @param array<int, array<string, mixed>> $linesData
+     * @param  array<int, array<string, mixed>>  $linesData
      */
     private function createDemoReceiptLines(array $linesData): void
     {
@@ -2754,7 +2754,7 @@ class DemoProcurementLifecycleSeeder
     }
 
     /**
-     * @param array<int, array<string, mixed>> $linesData
+     * @param  array<int, array<string, mixed>>  $linesData
      */
     private function recordDemoReceiptAudit(Tenant $tenant, User $buyer, GoodsReceipt $receipt, PurchaseOrder $po, array $linesData, string $date): void
     {

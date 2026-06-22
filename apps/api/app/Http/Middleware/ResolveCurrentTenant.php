@@ -12,12 +12,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ResolveCurrentTenant
 {
-    public function __construct(private readonly CurrentTenant $currentTenant)
-    {
-    }
+    public function __construct(private readonly CurrentTenant $currentTenant) {}
 
     /**
-     * @param Closure(Request): Response $next
+     * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

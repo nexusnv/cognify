@@ -7,8 +7,8 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\AccountsPayable\Models\ApPaymentHandoff;
 use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class UpdateApPaymentHandoff
@@ -16,7 +16,7 @@ class UpdateApPaymentHandoff
     public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(ApPaymentHandoff $handoff, User $actor, array $data): ApPaymentHandoff
     {

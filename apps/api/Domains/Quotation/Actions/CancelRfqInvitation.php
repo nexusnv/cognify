@@ -17,7 +17,7 @@ class CancelRfqInvitation
     public function __construct(private readonly AuditRecorder $audit) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, RfqInvitation $invitation, array $data): RfqInvitation
     {

@@ -14,12 +14,8 @@ use Domains\CreditMemo\Models\SupplierCreditMemo;
 use Domains\CreditMemo\Models\SupplierCreditMemoException;
 use Domains\CreditMemo\Models\SupplierCreditMemoLine;
 use Domains\CreditMemo\States\SupplierCreditMemoExceptionResolutionType;
-use Domains\CreditMemo\States\SupplierCreditMemoExceptionSeverity;
-use Domains\CreditMemo\States\SupplierCreditMemoExceptionType;
 use Domains\CreditMemo\States\SupplierCreditMemoStatus;
 use Domains\Invoice\Models\SupplierInvoice;
-use Domains\Invoice\Models\SupplierInvoiceLine;
-use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -35,10 +31,11 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
     /** @return array{Tenant, User} */
     private function tenantUserPair(string $role): array
     {
-        $tenant = Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant = Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => TenantRole::from($role)->value]);
         app(CurrentTenant::class)->set($tenant);
+
         return [$tenant, $user];
     }
 
@@ -46,7 +43,7 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
     {
         return Vendor::query()->create([
             'tenant_id' => $tenant->id,
-            'name' => 'Vendor ' . Str::random(6),
+            'name' => 'Vendor '.Str::random(6),
             'status' => 'active',
         ]);
     }
@@ -56,14 +53,14 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
         $userId = User::factory()->create()->id;
 
         DB::table('rfqs')->insert([
-            'tenant_id' => $tenant->id, 'number' => 'RFQ-' . Str::random(4),
+            'tenant_id' => $tenant->id, 'number' => 'RFQ-'.Str::random(4),
             'title' => 'T', 'status' => 'draft', 'created_at' => now(), 'updated_at' => now(),
         ]);
         $rfqId = (int) DB::getPdo()->lastInsertId();
 
         DB::table('quotations')->insert([
             'tenant_id' => $tenant->id, 'rfq_id' => $rfqId, 'vendor_id' => $vendor->id,
-            'number' => 'Q-' . Str::random(4), 'status' => 'submitted', 'total_amount' => '1000.00',
+            'number' => 'Q-'.Str::random(4), 'status' => 'submitted', 'total_amount' => '1000.00',
             'currency' => 'USD', 'created_at' => now(), 'updated_at' => now(),
         ]);
         $quotationId = (int) DB::getPdo()->lastInsertId();
@@ -89,7 +86,7 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
             'rfq_award_recommendation_id' => $recId, 'rfq_id' => $rfqId,
             'vendor_id' => $vendor->id, 'quotation_id' => $quotationId,
             'quotation_version_id' => $quotationVersionId, 'requested_by_user_id' => $userId,
-            'number' => 'HO-' . Str::random(4), 'status' => 'draft', 'currency' => 'USD',
+            'number' => 'HO-'.Str::random(4), 'status' => 'draft', 'currency' => 'USD',
             'total_amount' => '1000.00', 'source_snapshot' => '{}', 'line_snapshot' => '{}',
             'approval_snapshot' => '{}', 'evidence_snapshot' => '{}',
             'readiness_warnings' => '{}', 'lock_version' => 1, 'created_at' => now(), 'updated_at' => now(),
@@ -101,12 +98,12 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
             'purchase_order_request_handoff_id' => $handoffId,
             'rfq_award_recommendation_id' => $recId, 'rfq_id' => $rfqId,
             'vendor_id' => $vendor->id, 'created_by_user_id' => $userId,
-            'number' => 'PO-' . Str::random(4), 'status' => 'issued', 'currency' => 'USD',
+            'number' => 'PO-'.Str::random(4), 'status' => 'issued', 'currency' => 'USD',
             'total_amount' => '1000.0000', 'source_snapshot' => '{}', 'approval_snapshot' => '{}',
             'evidence_snapshot' => '{}', 'lock_version' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $number = 'INV-TEST-' . Str::random(6);
+        $number = 'INV-TEST-'.Str::random(6);
         $invoiceId = Str::uuid()->toString();
         DB::table('supplier_invoices')->insert([
             'id' => $invoiceId, 'tenant_id' => $tenant->id, 'purchase_order_id' => $poId,
@@ -158,7 +155,7 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
             'supplier_credit_memo_id' => $memo->id,
             'exception_type' => $exceptionType,
             'severity' => $severity,
-            'description' => 'Test exception for ' . $exceptionType,
+            'description' => 'Test exception for '.$exceptionType,
             'lock_version' => 1,
         ]);
     }
@@ -204,6 +201,7 @@ class SupplierCreditMemoExceptionApiTest extends TestCase
     private function actingAsTenant(Tenant $tenant, User $user): self
     {
         Sanctum::actingAs($user);
+
         return $this->withHeader('X-Tenant-Id', (string) $tenant->id);
     }
 

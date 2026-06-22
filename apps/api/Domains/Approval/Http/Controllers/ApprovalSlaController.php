@@ -16,8 +16,7 @@ class ApprovalSlaController extends Controller
 {
     public function __construct(
         private readonly ApprovalSlaSummaryQuery $summaryQuery,
-    ) {
-    }
+    ) {}
 
     public function summary(Request $request, CurrentTenant $currentTenant): JsonResponse
     {

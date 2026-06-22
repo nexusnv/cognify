@@ -15,9 +15,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class DeleteAttachment
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     public function handle(Tenant $tenant, User $actor, Attachment $attachment): void
     {

@@ -29,9 +29,9 @@ return new class extends Migration
         Schema::table('supplier_invoices', function (Blueprint $table): void {
             $table->dropIndex('si_tenant_payment_status_due_idx');
             $table->dropIndex('si_tenant_payment_status_idx');
-            $table->dropColumn(['payment_status','payment_eligible_at','payment_on_hold_by_user_id',
-                'payment_on_hold_at','payment_on_hold_reason','payment_hold_released_by_user_id',
-                'payment_hold_released_at','payment_hold_released_note']);
+            $table->dropColumn(['payment_status', 'payment_eligible_at', 'payment_on_hold_by_user_id',
+                'payment_on_hold_at', 'payment_on_hold_reason', 'payment_hold_released_by_user_id',
+                'payment_hold_released_at', 'payment_hold_released_note']);
         });
     }
 };

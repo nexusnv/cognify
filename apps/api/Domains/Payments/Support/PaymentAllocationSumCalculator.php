@@ -2,6 +2,8 @@
 
 namespace Domains\Payments\Support;
 
+use Domains\AccountsPayable\Models\ApPaymentHandoff;
+use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Payments\Models\ApPaymentAllocation;
 
@@ -18,7 +20,7 @@ class PaymentAllocationSumCalculator
         return $result !== null ? (string) $result : '0.0000';
     }
 
-    public function sumForHandoff(\Domains\AccountsPayable\Models\ApPaymentHandoff $handoff): string
+    public function sumForHandoff(ApPaymentHandoff $handoff): string
     {
         $result = ApPaymentAllocation::query()
             ->where('tenant_id', $handoff->tenant_id)
@@ -29,19 +31,19 @@ class PaymentAllocationSumCalculator
         return $result !== null ? (string) $result : '0.0000';
     }
 
-    public function derivePaymentStatus(SupplierInvoice $invoice): \Domains\AccountsPayable\States\SupplierInvoicePaymentStatus
+    public function derivePaymentStatus(SupplierInvoice $invoice): SupplierInvoicePaymentStatus
     {
         $allocated = $this->sumForInvoice($invoice);
         $total = (string) $invoice->total_amount;
 
         if (bccomp($allocated, $total, 4) === 0) {
-            return \Domains\AccountsPayable\States\SupplierInvoicePaymentStatus::Paid;
+            return SupplierInvoicePaymentStatus::Paid;
         }
 
         if (bccomp($allocated, '0.0000', 4) === 1) {
-            return \Domains\AccountsPayable\States\SupplierInvoicePaymentStatus::PartiallyPaid;
+            return SupplierInvoicePaymentStatus::PartiallyPaid;
         }
 
-        return \Domains\AccountsPayable\States\SupplierInvoicePaymentStatus::PaymentScheduled;
+        return SupplierInvoicePaymentStatus::PaymentScheduled;
     }
 }

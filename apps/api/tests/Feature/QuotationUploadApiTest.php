@@ -186,7 +186,7 @@ class QuotationUploadApiTest extends TestCase
 
         $this->withHeader('Origin', 'http://localhost:8880')
             ->withHeader('X-Tenant-Id', (string) $tenant->id)
-            ->getJson('/api/quotations/' . Str::uuid() . '/attachments')
+            ->getJson('/api/quotations/'.Str::uuid().'/attachments')
             ->assertUnauthorized();
     }
 
@@ -455,7 +455,7 @@ class QuotationUploadApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => $role]);
 
@@ -466,7 +466,7 @@ class QuotationUploadApiTest extends TestCase
     {
         return Vendor::query()->create(array_merge([
             'tenant_id' => $tenant->id,
-            'name' => 'Vendor ' . Str::uuid(),
+            'name' => 'Vendor '.Str::uuid(),
             'status' => 'active',
             'category' => 'IT Hardware',
             'risk_rating' => 'low',
@@ -482,7 +482,7 @@ class QuotationUploadApiTest extends TestCase
         $requisition = Requisition::query()->create([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-' . Str::random(8),
+            'number' => 'REQ-'.Str::random(8),
             'title' => 'Laptop refresh',
             'status' => RequisitionStatus::Approved,
             'currency' => 'USD',
@@ -501,7 +501,7 @@ class QuotationUploadApiTest extends TestCase
             'tenant_id' => $tenant->id,
             'sourcing_intake_review_id' => $review->id,
             'requisition_id' => $requisition->id,
-            'number' => 'RFQ-' . Str::random(8),
+            'number' => 'RFQ-'.Str::random(8),
             'title' => 'Laptop refresh RFQ',
             'status' => RfqStatus::Draft,
             'required_documents' => [],

@@ -112,6 +112,7 @@ class SupplierInvoiceExceptionController
     {
         $tenant = $currentTenant->get();
         abort_if($tenant === null, 403, 'Tenant context missing.');
+
         return $tenant;
     }
 }

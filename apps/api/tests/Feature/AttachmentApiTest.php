@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Audit\AuditEvent;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
@@ -282,7 +281,7 @@ class AttachmentApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createDraft(Tenant $tenant, User $user, array $attributes = []): Requisition
     {

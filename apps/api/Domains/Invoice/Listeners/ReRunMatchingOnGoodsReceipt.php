@@ -3,6 +3,7 @@
 namespace Domains\Invoice\Listeners;
 
 use App\Models\User;
+use Domains\Invoice\Actions\RunInvoiceMatching;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Receiving\Events\GoodsReceiptLinePosted;
@@ -34,8 +35,8 @@ class ReRunMatchingOnGoodsReceipt implements ShouldQueue
         foreach ($pendingInvoices as $invoice) {
             try {
                 $invoice->refresh();
-                
-                $action = app(\Domains\Invoice\Actions\RunInvoiceMatching::class);
+
+                $action = app(RunInvoiceMatching::class);
                 $action->handle($invoice, $systemUser, $invoice->lock_version, 'automatic');
             } catch (\Throwable $e) {
                 report($e);

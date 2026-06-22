@@ -2,21 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use App\Tenancy\Tenant;
-use Domains\AccountsPayable\Models\ApPaymentHandoff;
-use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
-use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
-use Domains\Invoice\Models\SupplierInvoice;
-use Domains\Payments\Data\PaymentImportRowData;
-use Domains\Payments\States\ApPaymentImportStatus;
-use Domains\Payments\States\ApPaymentImportTargetStatus;
 use Domains\Payments\Support\PaymentImportCsvParser;
 use Domains\Payments\Support\PaymentImportJsonParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class ApPaymentImportApiTest extends TestCase
@@ -30,6 +21,7 @@ class ApPaymentImportApiTest extends TestCase
         $user = User::factory()->create();
         $tenant->users()->attach($user->id, ['role' => $role]);
         app(CurrentTenant::class)->set($tenant);
+
         return [$tenant, $user];
     }
 

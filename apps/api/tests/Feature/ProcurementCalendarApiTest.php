@@ -4,20 +4,20 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Carbon\CarbonImmutable;
 use Domains\Approval\Models\ApprovalTask;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
-use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\Rfq;
+use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\RfqInvitation;
-use Domains\Quotation\States\RfqAwardRecommendationStatus;
 use Domains\Quotation\States\QuotationStatus;
+use Domains\Quotation\States\RfqAwardRecommendationStatus;
 use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
-use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -375,7 +375,7 @@ class ProcurementCalendarApiTest extends TestCase
         return Requisition::query()->create(array_merge([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-2026-' . Str::padLeft((string) (Requisition::query()->where('tenant_id', $tenant->id)->count() + 1), 6, '0'),
+            'number' => 'REQ-2026-'.Str::padLeft((string) (Requisition::query()->where('tenant_id', $tenant->id)->count() + 1), 6, '0'),
             'title' => 'Warehouse replenishment',
             'business_justification' => 'Maintain stock and replacement cadence.',
             'needed_by_date' => '2026-07-15',
@@ -396,7 +396,7 @@ class ProcurementCalendarApiTest extends TestCase
             'requisition_id' => $requisition->id,
             'project_id' => null,
             'sourcing_intake_review_id' => null,
-            'number' => 'RFQ-2026-' . Str::padLeft((string) (Rfq::query()->where('tenant_id', $tenant->id)->count() + 1), 6, '0'),
+            'number' => 'RFQ-2026-'.Str::padLeft((string) (Rfq::query()->where('tenant_id', $tenant->id)->count() + 1), 6, '0'),
             'title' => 'Warehouse replenishment RFQ',
             'status' => 'draft',
             'owner_id' => $buyer->id,
@@ -419,7 +419,7 @@ class ProcurementCalendarApiTest extends TestCase
             'rfq_id' => $rfq->id,
             'vendor_id' => $vendor->id,
             'status' => RfqInvitationStatus::Sent->value,
-            'contact_email' => Str::slug($vendor->name) . '@example.com',
+            'contact_email' => Str::slug($vendor->name).'@example.com',
         ], $attributes));
     }
 
@@ -436,7 +436,7 @@ class ProcurementCalendarApiTest extends TestCase
             'rfq_id' => $rfq->id,
             'rfq_invitation_id' => $invitation->id,
             'vendor_id' => $vendor->id,
-            'number' => 'Q-' . Str::upper(Str::random(6)),
+            'number' => 'Q-'.Str::upper(Str::random(6)),
             'status' => QuotationStatus::submitted->value,
             'currency' => 'MYR',
             'total_amount' => '131100.00',

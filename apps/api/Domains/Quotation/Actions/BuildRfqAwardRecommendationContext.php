@@ -11,8 +11,9 @@ use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\States\RfqAwardRecommendationStatus;
-use Domains\Quotation\Support\RfqScorecardCalculator;
 use Domains\Quotation\States\RfqScorecardStatus;
+use Domains\Quotation\Support\RfqScorecardCalculator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 
 class BuildRfqAwardRecommendationContext
@@ -136,7 +137,7 @@ class BuildRfqAwardRecommendationContext
     }
 
     /**
-     * @param array<string, mixed> $comparison
+     * @param  array<string, mixed>  $comparison
      * @return array{comparisonStatus: string, scoringStatus: string, blockingMessages: array<int, string>}
      */
     private function readiness(array $comparison, ?RfqScorecard $scorecard): array
@@ -172,7 +173,7 @@ class BuildRfqAwardRecommendationContext
     }
 
     /**
-     * @param \Illuminate\Support\Collection<int, Quotation> $quotations
+     * @param  Collection<int, Quotation>  $quotations
      * @return array<int, array<string, mixed>>
      */
     private function evidenceReferences(

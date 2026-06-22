@@ -22,8 +22,7 @@ class SubmitRequisition
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition): Requisition
     {

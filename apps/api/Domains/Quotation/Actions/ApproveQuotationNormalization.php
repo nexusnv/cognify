@@ -20,11 +20,10 @@ class ApproveQuotationNormalization
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function handle(Tenant $tenant, ?User $actor, QuotationNormalization $normalization, array $payload, bool $withWarnings = false): QuotationNormalization
     {

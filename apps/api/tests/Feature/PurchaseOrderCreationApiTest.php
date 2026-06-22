@@ -641,8 +641,7 @@ class PurchaseOrderCreationApiTest extends TestCase
         ?PurchaseOrderRequestHandoff $handoff = null,
         int $lockVersion = 1,
         array $attributes = [],
-    ): PurchaseOrderReference
-    {
+    ): PurchaseOrderReference {
         return $this->seedPurchaseOrderReference('draft', $handoff, $lockVersion, $attributes);
     }
 
@@ -650,8 +649,7 @@ class PurchaseOrderCreationApiTest extends TestCase
         ?PurchaseOrderRequestHandoff $handoff = null,
         int $lockVersion = 1,
         array $attributes = [],
-    ): PurchaseOrderReference
-    {
+    ): PurchaseOrderReference {
         return $this->seedPurchaseOrderReference('cancelled', $handoff, $lockVersion, $attributes);
     }
 
@@ -660,8 +658,7 @@ class PurchaseOrderCreationApiTest extends TestCase
         ?PurchaseOrderRequestHandoff $handoff = null,
         int $lockVersion = 1,
         array $attributes = [],
-    ): PurchaseOrderReference
-    {
+    ): PurchaseOrderReference {
         $handoff ??= $this->readyPurchaseOrderHandoff();
         $reference = new PurchaseOrderReference((string) Str::uuid(), $handoff->tenant, $lockVersion);
 

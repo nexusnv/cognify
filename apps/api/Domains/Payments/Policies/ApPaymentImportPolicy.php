@@ -37,12 +37,14 @@ class ApPaymentImportPolicy
     private function buyerOrAdmin(User $user): bool
     {
         $role = app(CurrentTenant::class)->roleFor($user);
+
         return in_array($role, [TenantRole::Buyer->value, TenantRole::Admin->value], true);
     }
 
     private function isTenantScoped(int|string $tenantId): bool
     {
         $tenant = app(CurrentTenant::class)->nullable();
+
         return $tenant !== null && (int) $tenant->id === (int) $tenantId;
     }
 }

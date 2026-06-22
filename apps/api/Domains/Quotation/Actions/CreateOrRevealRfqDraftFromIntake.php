@@ -67,7 +67,7 @@ class CreateOrRevealRfqDraftFromIntake
                         'project_id' => $lockedReview->project_id,
                         'requisition_id' => $lockedReview->requisition_id,
                         'number' => $this->nextNumber($tenant),
-                        'title' => $requisition->title . ' RFQ',
+                        'title' => $requisition->title.' RFQ',
                         'status' => RfqStatus::Draft->value,
                         'scope_summary' => $lockedReview->decision_reason,
                         'required_documents' => [],
@@ -105,11 +105,11 @@ class CreateOrRevealRfqDraftFromIntake
     private function nextNumber(Tenant $tenant): string
     {
         $year = now()->format('Y');
-        $prefix = 'RFQ-' . $year . '-';
+        $prefix = 'RFQ-'.$year.'-';
 
         $existingNumbers = Rfq::query()
             ->where('tenant_id', $tenant->id)
-            ->where('number', 'like', $prefix . '%')
+            ->where('number', 'like', $prefix.'%')
             ->lockForUpdate()
             ->pluck('number');
 
@@ -127,7 +127,7 @@ class CreateOrRevealRfqDraftFromIntake
             return max($carry, (int) $suffix);
         }, 0);
 
-        return $prefix . str_pad((string) ($maxSuffix + 1), 4, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) ($maxSuffix + 1), 4, '0', STR_PAD_LEFT);
     }
 
     private function isUniqueNumberViolation(QueryException $exception): bool

@@ -4,7 +4,6 @@ namespace Domains\Quotation\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
-use Domains\Quotation\States\QuotationScoringCriterionCategory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

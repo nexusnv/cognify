@@ -27,7 +27,7 @@ class RegenerateRfqInvitationPortalToken
                 ->first();
 
             if ($invitation === null) {
-                throw new NotFoundHttpException();
+                throw new NotFoundHttpException;
             }
 
             Gate::forUser($actor)->authorize('regeneratePortalLink', $invitation);

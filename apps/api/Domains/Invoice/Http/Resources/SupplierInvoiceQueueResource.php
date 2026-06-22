@@ -41,6 +41,7 @@ class SupplierInvoiceQueueResource extends JsonResource
             ->map(function ($group) {
                 $first = $group->first();
                 $nonVoided = $group->whereNull('voided_at');
+
                 return [
                     'id' => (string) $first->supplier_credit_memo_id,
                     'number' => $first->creditMemo?->number,

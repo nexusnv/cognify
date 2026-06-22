@@ -3,8 +3,8 @@
 namespace Domains\Approval\Http\Requests;
 
 use App\Tenancy\CurrentTenant;
-use Domains\Approval\Models\ApprovalPolicy;
 use Domains\Approval\Http\Requests\Concerns\ValidatesApprovalPolicyRules;
+use Domains\Approval\Models\ApprovalPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

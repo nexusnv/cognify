@@ -9,8 +9,11 @@ use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalPolicy;
 use Domains\Approval\Models\ApprovalPolicyVersion;
 use Domains\Approval\Models\ApprovalTask;
+use Domains\Approval\Services\ApprovalSubjectRegistry;
 use Domains\Approval\States\ApprovalPolicyStatus;
 use Domains\Approval\States\ApprovalPolicyVersionStatus;
+use Domains\Approval\SubjectHandlers\SupplierInvoiceApprovalSubjectHandler;
+use Domains\Invoice\Actions\EvaluateStraightThroughProcessing;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceException;
 use Domains\Invoice\Models\SupplierInvoiceLine;
@@ -25,6 +28,7 @@ use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqAwardRecommendation;
 use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\QuotationStatus;
+use Domains\Quotation\States\RfqAwardRecommendationStatus;
 use Domains\Quotation\States\RfqInvitationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Vendor\Models\Vendor;
@@ -43,7 +47,7 @@ class SupplierInvoiceApprovalApiTest extends TestCase
         $invoice = $this->readyForApprovalInvoice(matchingStatus: 'matched');
         $buyer = $this->tenantUser($invoice->tenant, TenantRole::Buyer->value);
 
-        $evaluator = app(\Domains\Invoice\Actions\EvaluateStraightThroughProcessing::class);
+        $evaluator = app(EvaluateStraightThroughProcessing::class);
         $result = $evaluator->handle($invoice->fresh(), $buyer);
 
         $this->assertTrue($result);
@@ -63,7 +67,7 @@ class SupplierInvoiceApprovalApiTest extends TestCase
         );
         $buyer = $this->tenantUser($invoice->tenant, TenantRole::Buyer->value);
 
-        $evaluator = app(\Domains\Invoice\Actions\EvaluateStraightThroughProcessing::class);
+        $evaluator = app(EvaluateStraightThroughProcessing::class);
         $result = $evaluator->handle($invoice->fresh(), $buyer);
 
         $this->assertTrue($result);
@@ -83,7 +87,7 @@ class SupplierInvoiceApprovalApiTest extends TestCase
         );
         $buyer = $this->tenantUser($invoice->tenant, TenantRole::Buyer->value);
 
-        $evaluator = app(\Domains\Invoice\Actions\EvaluateStraightThroughProcessing::class);
+        $evaluator = app(EvaluateStraightThroughProcessing::class);
         $result = $evaluator->handle($invoice->fresh(), $buyer);
 
         $this->assertFalse($result);
@@ -223,11 +227,11 @@ class SupplierInvoiceApprovalApiTest extends TestCase
 
     public function test_supplier_invoice_approval_handler_is_registered(): void
     {
-        $registry = app(\Domains\Approval\Services\ApprovalSubjectRegistry::class);
+        $registry = app(ApprovalSubjectRegistry::class);
         $handler = $registry->forStoredSubject('supplier_invoice');
 
         $this->assertInstanceOf(
-            \Domains\Approval\SubjectHandlers\SupplierInvoiceApprovalSubjectHandler::class,
+            SupplierInvoiceApprovalSubjectHandler::class,
             $handler,
         );
     }
@@ -316,7 +320,7 @@ class SupplierInvoiceApprovalApiTest extends TestCase
             'recommended_vendor_id' => $vendor->id,
             'recommended_quotation_id' => $quotation->id,
             'recommended_quotation_version_id' => $version->id,
-            'status' => \Domains\Quotation\States\RfqAwardRecommendationStatus::Approved,
+            'status' => RfqAwardRecommendationStatus::Approved,
             'rationale' => 'Best price.',
             'created_by_user_id' => $buyer->id,
             'updated_by_user_id' => $buyer->id,

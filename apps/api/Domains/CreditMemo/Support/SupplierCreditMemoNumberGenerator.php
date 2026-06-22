@@ -26,6 +26,6 @@ class SupplierCreditMemoNumberGenerator
         $parts = explode('-', $lastNumber);
         $counter = (int) end($parts);
 
-        return "CM-{$year}-" . str_pad((string) ($counter + 1), 6, '0', STR_PAD_LEFT);
+        return "CM-{$year}-".str_pad((string) ($counter + 1), 6, '0', STR_PAD_LEFT);
     }
 }

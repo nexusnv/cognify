@@ -19,11 +19,10 @@ class CreateRequisitionDraft
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly RequisitionNumberGenerator $numberGenerator,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, array $data): Requisition
     {
@@ -70,7 +69,7 @@ class CreateRequisitionDraft
     }
 
     /**
-     * @param array<int, array<string, mixed>> $lineItems
+     * @param  array<int, array<string, mixed>>  $lineItems
      */
     private function replaceLineItems(Requisition $requisition, array $lineItems): void
     {

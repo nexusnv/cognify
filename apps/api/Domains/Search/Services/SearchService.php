@@ -7,18 +7,18 @@ use App\Tenancy\Tenant;
 use Domains\Search\Contracts\SearchProvider;
 use Domains\Search\Data\SearchResultData;
 use Domains\Search\Providers\AwardSearchProvider;
-use Domains\Search\Providers\PurchaseOrderRequestHandoffSearchProvider;
 use Domains\Search\Providers\ProcurementProjectSearchProvider;
+use Domains\Search\Providers\PurchaseOrderRequestHandoffSearchProvider;
 use Domains\Search\Providers\QuotationSearchProvider;
-use Domains\Search\Providers\RfqSearchProvider;
 use Domains\Search\Providers\RequisitionSearchProvider;
+use Domains\Search\Providers\RfqSearchProvider;
 use Domains\Search\Providers\VendorSearchProvider;
 use Illuminate\Support\Collection;
 
 class SearchService
 {
     /**
-     * @param array<int, string> $types
+     * @param  array<int, string>  $types
      * @return Collection<int, SearchResultData>
      */
     public function search(Tenant $tenant, User $user, string $query, array $types, int $limit): Collection

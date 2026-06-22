@@ -6,6 +6,7 @@ use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\Models\RfqScorecardCriterion;
 use Domains\Quotation\Models\RfqScorecardEntry;
+use Illuminate\Support\Collection;
 
 class RfqScorecardCalculator
 {
@@ -105,7 +106,7 @@ class RfqScorecardCalculator
     }
 
     /**
-     * @param array<int, array{missingRequiredCount: int}> $vendorTotals
+     * @param  array<int, array{missingRequiredCount: int}>  $vendorTotals
      * @return array{
      *     status: string,
      *     scoreableVendorCount: int,
@@ -135,7 +136,7 @@ class RfqScorecardCalculator
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Quotation>
+     * @return Collection<int, Quotation>
      */
     private function scoreableQuotations(RfqScorecard $scorecard)
     {

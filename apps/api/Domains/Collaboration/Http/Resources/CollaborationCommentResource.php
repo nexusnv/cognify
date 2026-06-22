@@ -39,7 +39,6 @@ class CollaborationCommentResource extends JsonResource
     }
 
     /**
-     * @param User|MissingValue|null $user
      * @return array{id: string, name: string, email: string|null}|null
      */
     private function userSummary(User|MissingValue|null $user): ?array

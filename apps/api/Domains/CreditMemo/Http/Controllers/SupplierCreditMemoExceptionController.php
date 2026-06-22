@@ -14,7 +14,6 @@ use Domains\CreditMemo\Models\SupplierCreditMemo;
 use Domains\CreditMemo\Models\SupplierCreditMemoException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SupplierCreditMemoExceptionController
 {

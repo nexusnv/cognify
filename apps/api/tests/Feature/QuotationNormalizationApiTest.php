@@ -23,10 +23,11 @@ use Domains\Requisition\States\RequisitionStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use InvalidArgumentException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
+use InvalidArgumentException;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -883,7 +884,7 @@ class QuotationNormalizationApiTest extends TestCase
         ], $overrides);
     }
 
-    private function assertVendorPortalNormalizationFieldsAreMissing(\Illuminate\Testing\TestResponse $response, string $basePath = 'data'): void
+    private function assertVendorPortalNormalizationFieldsAreMissing(TestResponse $response, string $basePath = 'data'): void
     {
         foreach ([
             'normalization',

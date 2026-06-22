@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class UpdateProcurementProject
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, ProcurementProject $project, array $data): ProcurementProject
     {

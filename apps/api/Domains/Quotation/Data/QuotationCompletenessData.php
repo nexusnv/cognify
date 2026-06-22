@@ -11,8 +11,7 @@ class QuotationCompletenessData
         public readonly bool $isComplete,
         public readonly array $missingFields,
         public readonly int $lineItemCount,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{isComplete: bool, missingFields: array<int, string>, lineItemCount: int}

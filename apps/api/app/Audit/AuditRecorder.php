@@ -10,7 +10,7 @@ use InvalidArgumentException;
 class AuditRecorder
 {
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     public function record(
         AuditEventData|Tenant $data,

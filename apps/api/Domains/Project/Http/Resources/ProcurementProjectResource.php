@@ -5,6 +5,7 @@ namespace Domains\Project\Http\Resources;
 use App\Auth\TenantRole;
 use App\Models\User;
 use App\Tenancy\CurrentTenant;
+use Domains\Project\Models\ProcurementProject;
 use Domains\Project\States\ProjectStatus;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
@@ -14,7 +15,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
 
 /**
- * @mixin \Domains\Project\Models\ProcurementProject
+ * @mixin ProcurementProject
  */
 class ProcurementProjectResource extends JsonResource
 {
@@ -84,7 +85,7 @@ class ProcurementProjectResource extends JsonResource
     }
 
     /**
-     * @param EloquentCollection<int, Requisition> $requisitions
+     * @param  EloquentCollection<int, Requisition>  $requisitions
      * @return EloquentCollection<int, Requisition>
      */
     private function filterVisibleRequisitions(EloquentCollection $requisitions, ?User $user): EloquentCollection
@@ -112,9 +113,6 @@ class ProcurementProjectResource extends JsonResource
         });
     }
 
-    /**
-     * @param User|MissingValue|null $user
-     */
     private function userSummary(User|MissingValue|null $user): ?array
     {
         if (! $user instanceof User) {

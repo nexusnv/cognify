@@ -7,7 +7,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 class DuplicateSupplierInvoiceException extends ConflictHttpException
 {
     /**
-     * @param array{id: string, number: string, invoiceNumber: string} $matchingInvoice
+     * @param  array{id: string, number: string, invoiceNumber: string}  $matchingInvoice
      */
     public function __construct(
         public readonly array $matchingInvoice,

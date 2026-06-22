@@ -14,11 +14,10 @@ class PreviewApprovalPolicy
     public function __construct(
         private readonly ApprovalPolicyMatcher $matcher,
         private readonly ApprovalRouteBuilder $routeBuilder,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int, array<string, mixed>> $candidates
+     * @param  array<int, array<string, mixed>>  $candidates
      */
     public function handle(Tenant $tenant, User $actor, ApprovalContextData $context, array $candidates): ApprovalPreviewData
     {

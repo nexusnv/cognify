@@ -4,8 +4,8 @@ namespace Domains\Quotation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
-use Domains\Quotation\Actions\RegenerateRfqInvitationPortalToken;
 use Domains\Quotation\Actions\RecordRfqInvitationPortalView;
+use Domains\Quotation\Actions\RegenerateRfqInvitationPortalToken;
 use Domains\Quotation\Actions\ResolveRfqInvitationPortalAccess;
 use Domains\Quotation\Http\Requests\ResolveRfqInvitationPortalRequest;
 use Domains\Quotation\Http\Resources\RfqInvitationPortalLinkResource;
@@ -18,8 +18,7 @@ class RfqInvitationPortalController extends Controller
         ResolveRfqInvitationPortalRequest $request,
         ResolveRfqInvitationPortalAccess $resolve,
         RecordRfqInvitationPortalView $record,
-    ): VendorPortalRfqInvitationResource
-    {
+    ): VendorPortalRfqInvitationResource {
         $invitation = $resolve->handle((string) $request->validated('token'));
         $invitation = $record->handle($invitation, $request);
 

@@ -11,10 +11,15 @@ use Domains\AccountsPayable\Models\ApPaymentHandoffInvoice;
 use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
 use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Payments\Actions\AddApPaymentAllocation;
 use Domains\Payments\Actions\CloseApPaymentHandoffWithVariance;
+use Domains\Payments\Actions\MarkApPaymentHandoffFailed;
 use Domains\Payments\Actions\MarkApPaymentHandoffPaid;
+use Domains\Payments\Actions\RescheduleFailedApPaymentHandoff;
 use Domains\Payments\Actions\ScheduleApPaymentHandoff;
+use Domains\Payments\Actions\VoidApPaymentHandoff;
+use Domains\Payments\States\ApPaymentFailureCode;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
@@ -27,6 +32,7 @@ use Domains\Quotation\States\RfqStatus;
 use Domains\Vendor\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
@@ -145,7 +151,7 @@ class ApPaymentStatusApiTest extends TestCase
             'number' => $invNumber,
             'invoice_number' => $invNumber,
             'invoice_number_normalized' => str_replace('-', '', $invNumber),
-            'status' => \Domains\Invoice\States\SupplierInvoiceStatus::Approved->value,
+            'status' => SupplierInvoiceStatus::Approved->value,
             'invoice_date' => now()->toDateString(),
             'currency' => 'USD',
             'subtotal_amount' => '1000.0000',
@@ -397,7 +403,7 @@ class ApPaymentStatusApiTest extends TestCase
             allocationDate: '2026-06-20',
         );
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         $handoff->refresh();
         app(CloseApPaymentHandoffWithVariance::class)->handle(
@@ -439,18 +445,18 @@ class ApPaymentStatusApiTest extends TestCase
         $handoff = $this->createExportedHandoff($tenant, $buyer);
         $invoice = $handoff->invoices->first();
 
-        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
         );
 
         $handoff->refresh();
-        $result = app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+        $result = app(MarkApPaymentHandoffFailed::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
-            failureCode: \Domains\Payments\States\ApPaymentFailureCode::BankRejected,
+            failureCode: ApPaymentFailureCode::BankRejected,
             failureReason: 'Bank rejected wire',
         );
 
@@ -482,20 +488,20 @@ class ApPaymentStatusApiTest extends TestCase
         $tenant = app(CurrentTenant::class)->get();
         $handoff = $this->createExportedHandoff($tenant, $buyer);
 
-        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
         );
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         $handoff->refresh();
-        app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+        app(MarkApPaymentHandoffFailed::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
-            failureCode: \Domains\Payments\States\ApPaymentFailureCode::Other,
+            failureCode: ApPaymentFailureCode::Other,
             failureReason: 'err', // Too short
         );
     }
@@ -507,13 +513,13 @@ class ApPaymentStatusApiTest extends TestCase
         $handoff = $this->createExportedHandoff($tenant, $buyer);
         // handoff is Exported, not Scheduled
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\ConflictHttpException::class);
+        $this->expectException(ConflictHttpException::class);
 
-        app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+        app(MarkApPaymentHandoffFailed::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
-            failureCode: \Domains\Payments\States\ApPaymentFailureCode::Other,
+            failureCode: ApPaymentFailureCode::Other,
             failureReason: 'Other reason',
         );
     }
@@ -525,14 +531,14 @@ class ApPaymentStatusApiTest extends TestCase
         $handoff = $this->createExportedHandoff($tenant, $buyer);
         $invoice = $handoff->invoices->first();
 
-        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
         );
 
         $handoff->refresh();
-        $result = app(\Domains\Payments\Actions\VoidApPaymentHandoff::class)->handle(
+        $result = app(VoidApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
@@ -566,16 +572,16 @@ class ApPaymentStatusApiTest extends TestCase
         $tenant = app(CurrentTenant::class)->get();
         $handoff = $this->createExportedHandoff($tenant, $buyer);
 
-        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
         );
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         $handoff->refresh();
-        app(\Domains\Payments\Actions\VoidApPaymentHandoff::class)->handle(
+        app(VoidApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
@@ -589,24 +595,24 @@ class ApPaymentStatusApiTest extends TestCase
         $tenant = app(CurrentTenant::class)->get();
         $handoff = $this->createExportedHandoff($tenant, $buyer);
         $invoice = $handoff->invoices->first();
-        $handoff = app(\Domains\Payments\Actions\ScheduleApPaymentHandoff::class)->handle(
+        $handoff = app(ScheduleApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
         );
         $handoff->refresh();
-        $handoff = app(\Domains\Payments\Actions\MarkApPaymentHandoffFailed::class)->handle(
+        $handoff = app(MarkApPaymentHandoffFailed::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
-            failureCode: \Domains\Payments\States\ApPaymentFailureCode::BankRejected,
+            failureCode: ApPaymentFailureCode::BankRejected,
             failureReason: 'Bank rejected wire',
         );
         $this->assertSame(ApPaymentHandoffStatus::Failed, $handoff->statusState());
 
         // Now reschedule
         $handoff->refresh();
-        $result = app(\Domains\Payments\Actions\RescheduleFailedApPaymentHandoff::class)->handle(
+        $result = app(RescheduleFailedApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
@@ -631,9 +637,9 @@ class ApPaymentStatusApiTest extends TestCase
         $handoff = $this->createExportedHandoff($tenant, $buyer);
         // handoff is Exported, not Failed
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\ConflictHttpException::class);
+        $this->expectException(ConflictHttpException::class);
 
-        app(\Domains\Payments\Actions\RescheduleFailedApPaymentHandoff::class)->handle(
+        app(RescheduleFailedApPaymentHandoff::class)->handle(
             $handoff,
             $buyer,
             $handoff->lock_version,
