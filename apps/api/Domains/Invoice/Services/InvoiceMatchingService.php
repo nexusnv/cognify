@@ -15,8 +15,7 @@ class InvoiceMatchingService
     ) {}
 
     /**
-     * @param SupplierInvoice $invoice
-     * @param Collection<int, PurchaseOrderLine> $poLines keyed by id
+     * @param  Collection<int, PurchaseOrderLine>  $poLines  keyed by id
      * @return array{results: InvoiceMatchResultData[], cumulativeInvoicedUpdates: array<string, string>}
      */
     public function match(
@@ -52,6 +51,7 @@ class InvoiceMatchingService
                     result: 'not_applicable',
                     notes: 'PO line not found',
                 );
+
                 continue;
             }
 
@@ -63,7 +63,7 @@ class InvoiceMatchingService
 
             // Two-way quantity with cumulative over-billing protection
             // Use running cumulative from previous lines for same PO line, not just the initial DB read
-            if (!isset($runningCumulative[$line->purchase_order_line_id])) {
+            if (! isset($runningCumulative[$line->purchase_order_line_id])) {
                 $runningCumulative[$line->purchase_order_line_id] = $pol->cumulative_quantity_invoiced ?? '0.0000';
             }
             $cumulativeInvoiced = $runningCumulative[$line->purchase_order_line_id];
@@ -85,7 +85,7 @@ class InvoiceMatchingService
             // Three-way quantity (only if policy is three_way)
             // Use separate variable to avoid affecting two-way result
             $passesQtyThreeWay = true;
-            
+
             if ($matchingPolicy === 'three_way') {
                 $acceptedQty = $pol->cumulative_quantity_accepted ?? '0.0000';
                 $receiptResult = $this->toleranceService->compareQuantity(
@@ -95,9 +95,9 @@ class InvoiceMatchingService
                 );
 
                 $passesQtyThreeWay = $receiptResult['result'] === 'pass';
-                if (!$passesQtyThreeWay) {
+                if (! $passesQtyThreeWay) {
                     $qtyNote = $qtyNote
-                        ? $qtyNote . '; ' . $receiptResult['notes']
+                        ? $qtyNote.'; '.$receiptResult['notes']
                         : $receiptResult['notes'];
                 }
 
@@ -139,7 +139,7 @@ class InvoiceMatchingService
                 $line->quantity_invoiced,
                 4,
             );
-            
+
             // Track final cumulative update for persistence
             $cumulativeInvoicedUpdates[$line->purchase_order_line_id] = $runningCumulative[$line->purchase_order_line_id];
         }

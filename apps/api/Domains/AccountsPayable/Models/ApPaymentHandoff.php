@@ -4,12 +4,13 @@ namespace Domains\AccountsPayable\Models;
 
 use App\Models\User;
 use App\Tenancy\Tenant;
-use Domains\AccountsPayable\Models\ApPaymentHandoffInvoice;
 use Domains\AccountsPayable\States\ApPaymentHandoffStatus;
+use Domains\Payments\Models\ApPaymentAllocation;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ApPaymentHandoff extends Model
@@ -164,11 +165,11 @@ class ApPaymentHandoff extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Domains\Payments\Models\ApPaymentAllocation>
+     * @return HasMany<ApPaymentAllocation>
      */
-    public function allocations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function allocations(): HasMany
     {
-        return $this->hasMany(\Domains\Payments\Models\ApPaymentAllocation::class, 'ap_payment_handoff_id');
+        return $this->hasMany(ApPaymentAllocation::class, 'ap_payment_handoff_id');
     }
 
     protected static function booted(): void
@@ -184,7 +185,7 @@ class ApPaymentHandoff extends Model
             ]);
 
             foreach ($userIds as $userId) {
-                $exists = \App\Models\User::query()
+                $exists = User::query()
                     ->whereKey($userId)
                     ->whereHas('tenants', fn ($q) => $q->where('tenants.id', $tenantId))
                     ->exists();

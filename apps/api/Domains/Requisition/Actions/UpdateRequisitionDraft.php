@@ -16,12 +16,10 @@ class UpdateRequisitionDraft
 {
     use AuthorizesRequisitionProjectLinking;
 
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, array $data): Requisition
     {

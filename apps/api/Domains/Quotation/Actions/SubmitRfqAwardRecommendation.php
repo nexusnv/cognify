@@ -26,7 +26,7 @@ class SubmitRfqAwardRecommendation
     ) {}
 
     /**
-     * @param array<string, mixed>|null $data
+     * @param  array<string, mixed>|null  $data
      */
     public function handle(Tenant $tenant, User $actor, Rfq $rfq, ?array $data = null): RfqAwardRecommendation
     {

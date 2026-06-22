@@ -11,6 +11,7 @@ enum SupplierInvoicePaymentStatus: string
     case PaymentScheduled = 'payment_scheduled';
     case PartiallyPaid = 'partially_paid';
     case Paid = 'paid';
+    case Reversed = 'reversed';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum SupplierInvoicePaymentStatus: string
             self::PaymentScheduled => 'Scheduled',
             self::PartiallyPaid => 'Partially paid',
             self::Paid => 'Paid',
+            self::Reversed => 'Reversed',
         };
     }
 
@@ -32,6 +34,16 @@ enum SupplierInvoicePaymentStatus: string
 
     public function isTerminal(): bool
     {
-        return in_array($this, [self::HandoffExported, self::Paid], true);
+        return in_array($this, [self::HandoffExported, self::Paid, self::Reversed], true);
+    }
+
+    public function canApplyCreditFrom(): bool
+    {
+        return in_array($this, [
+            self::PaymentEligible,
+            self::PaymentReady,
+            self::PartiallyPaid,
+            self::Paid,
+        ], true);
     }
 }

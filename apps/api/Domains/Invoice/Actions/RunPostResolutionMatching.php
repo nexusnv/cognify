@@ -10,6 +10,7 @@ use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\Models\SupplierInvoiceException;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RunPostResolutionMatching
 {
@@ -85,7 +86,7 @@ class RunPostResolutionMatching
             if ($tenant !== null) {
                 try {
                     $this->submitForApproval->handle($invoice, $tenant, $actor, (int) $invoice->lock_version);
-                } catch (\Symfony\Component\HttpKernel\Exception\ConflictHttpException $e) {
+                } catch (ConflictHttpException $e) {
                     report($e);
                 }
             }

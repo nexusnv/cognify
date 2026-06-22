@@ -12,7 +12,6 @@ use Domains\Invoice\Actions\MarkSupplierInvoiceApproved;
 use Domains\Invoice\Actions\MarkSupplierInvoiceChangesRequested;
 use Domains\Invoice\Actions\MarkSupplierInvoiceRejected;
 use Domains\Invoice\Models\SupplierInvoice;
-use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

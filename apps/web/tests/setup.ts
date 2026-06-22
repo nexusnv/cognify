@@ -31,6 +31,9 @@ import { resetAccountsPayablePaymentMockState } from "../features/accounts-payab
 import { resetAccountsPayablePaymentStatusMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-status-handlers";
 import { resetAccountsPayablePaymentAllocationMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-allocation-handlers";
 import { resetAccountsPayablePaymentImportMockState } from "../features/accounts-payable/mocks/accounts-payable-payment-import-handlers";
+import { resetCreditMemoMockState } from "../features/accounts-payable/mocks/accounts-payable-credit-memo-handlers";
+import { resetCreditApplicationMockState } from "../features/accounts-payable/mocks/accounts-payable-credit-application-handlers";
+import { resetCreditMemoExceptionMockState } from "../features/accounts-payable/mocks/accounts-payable-credit-memo-exception-handlers";
 import { resetApprovalMockState } from "../features/approvals/mocks/approval-handlers";
 import { resetAttachmentMockState } from "../features/attachments/mocks/attachments-handlers";
 import { resetIdentityMockState } from "../features/identity/mocks/identity-handlers";
@@ -91,6 +94,9 @@ afterEach(() => {
   resetAccountsPayablePaymentStatusMockState();
   resetAccountsPayablePaymentAllocationMockState();
   resetAccountsPayablePaymentImportMockState();
+  resetCreditMemoMockState();
+  resetCreditApplicationMockState();
+  resetCreditMemoExceptionMockState();
   resetApprovalMockState();
   resetAttachmentMockState();
   resetRequisitionMockState();

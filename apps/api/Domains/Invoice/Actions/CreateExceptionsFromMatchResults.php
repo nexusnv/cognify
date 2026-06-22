@@ -41,7 +41,7 @@ class CreateExceptionsFromMatchResults
             ];
         }
 
-        DB::transaction(function () use ($exceptions, $invoice, $now): void {
+        DB::transaction(function () use ($exceptions, $invoice): void {
             foreach ($exceptions as $exception) {
                 $existing = SupplierInvoiceException::query()
                     ->where('tenant_id', $exception['tenant_id'])
@@ -80,7 +80,7 @@ class CreateExceptionsFromMatchResults
         $summary = SupplierInvoiceException::query()
             ->where('supplier_invoice_id', $invoice->id)
             ->where('tenant_id', $invoice->tenant_id)
-            ->selectRaw("count(*) as total")
+            ->selectRaw('count(*) as total')
             ->selectRaw("count(case when status = 'open' then 1 end) as open")
             ->selectRaw("count(case when status = 'resolved' then 1 end) as resolved")
             ->selectRaw("count(case when status = 'escalated' then 1 end) as escalated")

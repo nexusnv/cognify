@@ -25,7 +25,7 @@ class ApprovalSlaSummaryQuery
                 && $task->due_at->greaterThanOrEqualTo($now)
                 && $task->due_at->lessThanOrEqualTo($dueSoonWindow);
         })->count();
-        $overdue = $tasks->filter(function (ApprovalTask $task) use ($now): bool {
+        $overdue = $tasks->filter(function (ApprovalTask $task): bool {
             return $task->due_at !== null && $task->due_at->isPast();
         })->count();
         $escalated = $tasks->filter(function (ApprovalTask $task): bool {

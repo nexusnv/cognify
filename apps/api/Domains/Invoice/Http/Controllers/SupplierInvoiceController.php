@@ -16,7 +16,6 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -143,7 +142,7 @@ class SupplierInvoiceController
         }
 
         if ($paymentStatus = $request->query('paymentStatus')) {
-            $validPaymentStatuses = ['none', 'any', 'payment_eligible', 'on_hold', 'payment_ready', 'handoff_exported'];
+            $validPaymentStatuses = ['none', 'any', 'payment_eligible', 'on_hold', 'payment_ready', 'handoff_exported', 'payment_scheduled', 'partially_paid', 'paid', 'reversed'];
 
             if (! in_array($paymentStatus, $validPaymentStatuses, true)) {
                 throw ValidationException::withMessages([

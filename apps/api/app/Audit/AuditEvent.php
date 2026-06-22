@@ -6,8 +6,8 @@ use App\Models\User;
 use App\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use InvalidArgumentException;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use RuntimeException;
 
 class AuditEvent extends Model

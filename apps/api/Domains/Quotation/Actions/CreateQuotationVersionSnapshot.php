@@ -5,10 +5,11 @@ namespace Domains\Quotation\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
+use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Attachment\Models\Attachment;
-use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Data\QuotationVersionAttachmentSnapshotData;
+use Domains\Quotation\Jobs\NormalizeQuotationVersion;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\QuotationVersionLineItem;
@@ -20,8 +21,7 @@ class CreateQuotationVersionSnapshot
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, int|string>|null  $attachmentIds
@@ -154,10 +154,10 @@ class CreateQuotationVersionSnapshot
     protected function runNormalizationSynchronously(Tenant $tenant, QuotationVersion $version): void
     {
         app()->call(function (
-            \Domains\Quotation\Actions\StartQuotationNormalization $starter,
-            \Domains\Quotation\Actions\RunDeterministicQuotationNormalizer $normalizer,
-            \App\Audit\AuditRecorder $auditRecorder,
-            \App\Notifications\NotificationRecorder $notificationRecorder,
+            StartQuotationNormalization $starter,
+            RunDeterministicQuotationNormalizer $normalizer,
+            AuditRecorder $auditRecorder,
+            NotificationRecorder $notificationRecorder,
         ) use ($tenant, $version): void {
             (new NormalizeQuotationVersion($tenant->id, $version->id))->handle(
                 $starter,

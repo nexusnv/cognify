@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Notifications\NotificationRecord;
 use App\Notifications\NotificationData;
 use App\Notifications\NotificationPreferenceDefaults;
+use App\Notifications\NotificationRecord;
 use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;

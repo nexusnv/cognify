@@ -5,7 +5,8 @@ type ExtendedPaymentStatus =
   | NonNullable<SupplierInvoiceQueueItemPaymentStatus>
   | "payment_scheduled"
   | "partially_paid"
-  | "paid";
+  | "paid"
+  | "reversed";
 
 interface PaymentStatusBadgeProps {
   paymentStatus: ExtendedPaymentStatus | null | undefined;
@@ -23,6 +24,7 @@ const statusStyles: Record<ExtendedPaymentStatus, string> = {
   payment_scheduled: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
   partially_paid: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
   paid: "bg-green-100 text-green-800 hover:bg-green-100",
+  reversed: "bg-rose-200 text-rose-800 hover:bg-rose-200",
 };
 
 const defaultLabels: Record<ExtendedPaymentStatus, string> = {
@@ -33,6 +35,7 @@ const defaultLabels: Record<ExtendedPaymentStatus, string> = {
   payment_scheduled: "Scheduled",
   partially_paid: "Partially paid",
   paid: "Paid",
+  reversed: "Reversed",
 };
 
 export function PaymentStatusBadge({

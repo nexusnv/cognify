@@ -18,7 +18,7 @@ class ResolveRfqInvitationPortalAccess
             ->first();
 
         if ($invitation === null) {
-            throw (new ModelNotFoundException())->setModel(RfqInvitation::class);
+            throw (new ModelNotFoundException)->setModel(RfqInvitation::class);
         }
 
         if ($invitation->portalTokenExpired() || ! $invitation->canBeViewedInPortal()) {

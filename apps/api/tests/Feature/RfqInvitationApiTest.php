@@ -369,7 +369,7 @@ class RfqInvitationApiTest extends TestCase
             $this->assertDatabaseHas('audit_events', [
                 'tenant_id' => $tenant->id,
                 'actor_id' => $buyer->id,
-                'event_type' => 'rfq_invitation.' . $targetStatus->value,
+                'event_type' => 'rfq_invitation.'.$targetStatus->value,
             ]);
         }
     }
@@ -546,7 +546,7 @@ class RfqInvitationApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create();
         $tenant->users()->attach($user->id, ['role' => $role]);
 
@@ -568,10 +568,10 @@ class RfqInvitationApiTest extends TestCase
         ], $overrides));
 
         $vendor->forceFill([
-            'name' => $overrides['name'] ?? 'Vendor ' . $vendor->id,
+            'name' => $overrides['name'] ?? 'Vendor '.$vendor->id,
             'metadata' => array_merge([
-                'contactName' => 'Vendor Contact ' . $vendor->id,
-                'contactEmail' => 'vendor-' . $vendor->id . '@example.test',
+                'contactName' => 'Vendor Contact '.$vendor->id,
+                'contactEmail' => 'vendor-'.$vendor->id.'@example.test',
             ], $overrides['metadata'] ?? []),
         ])->save();
 
@@ -590,7 +590,7 @@ class RfqInvitationApiTest extends TestCase
         ]);
 
         $requisition->forceFill([
-            'number' => 'REQ-' . $requisition->id,
+            'number' => 'REQ-'.$requisition->id,
         ])->save();
 
         $review = SourcingIntakeReview::query()->create([
@@ -614,7 +614,7 @@ class RfqInvitationApiTest extends TestCase
         ]);
 
         $rfq->forceFill([
-            'number' => 'RFQ-' . $rfq->id,
+            'number' => 'RFQ-'.$rfq->id,
         ])->save();
 
         return $rfq->refresh();

@@ -4,8 +4,6 @@ namespace Domains\Quotation\Models;
 
 use App\Tenancy\Tenant;
 use Domains\Project\Models\ProcurementProject;
-use Domains\Quotation\Models\RfqInvitation;
-use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\States\RfqAwardRecommendationStatus;
 use Domains\Quotation\States\RfqStatus;
 use Domains\Requisition\Models\Requisition;

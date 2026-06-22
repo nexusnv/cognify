@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class CurrentTenantController
 {
-    public function __construct(private readonly CurrentTenant $currentTenant)
-    {
-    }
+    public function __construct(private readonly CurrentTenant $currentTenant) {}
 
     public function store(Request $request): JsonResponse
     {

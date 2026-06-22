@@ -29,6 +29,7 @@ class SearchRequest extends FormRequest
             foreach ($this->typeFilters() as $type) {
                 if (! in_array($type, $this->allowedTypes(), true)) {
                     $validator->errors()->add('types', 'The selected types field is invalid.');
+
                     return;
                 }
             }

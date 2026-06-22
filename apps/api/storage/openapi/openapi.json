@@ -11623,6 +11623,869 @@
           }
         }
       }
+    },
+    "/api/supplier-credit-memos": {
+      "get": {
+        "operationId": "listSupplierCreditMemos",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "$ref": "#/components/schemas/SupplierCreditMemoStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vendorId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSupplierCreditMemo",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierCreditMemoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}": {
+      "get": {
+        "operationId": "showSupplierCreditMemo",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateSupplierCreditMemo",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSupplierCreditMemoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale lock version or non-draft state"
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/submit": {
+      "post": {
+        "operationId": "submitSupplierCreditMemoForApproval",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitSupplierCreditMemoForApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Not in draft state"
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/post": {
+      "post": {
+        "operationId": "postSupplierCreditMemo",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostSupplierCreditMemoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/void": {
+      "post": {
+        "operationId": "voidSupplierCreditMemo",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidSupplierCreditMemoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/lines": {
+      "post": {
+        "operationId": "addSupplierCreditMemoLine",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSupplierCreditMemoLineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoLineResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/lines/{line}": {
+      "patch": {
+        "operationId": "updateSupplierCreditMemoLine",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "line",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSupplierCreditMemoLineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoLineResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeSupplierCreditMemoLine",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "line",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/applications": {
+      "get": {
+        "operationId": "listCreditApplications",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CreditApplication"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCreditApplication",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditApplicationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditApplicationResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invalid invoice state"
+          },
+          "422": {
+            "description": "Over-application"
+          }
+        }
+      }
+    },
+    "/api/credit-applications/{application}": {
+      "get": {
+        "operationId": "showCreditApplication",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "application",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditApplicationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "voidCreditApplication",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "application",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidCreditApplicationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditApplicationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/exceptions": {
+      "get": {
+        "operationId": "listSupplierCreditMemoExceptions",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SupplierCreditMemoException"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/exceptions/{exception}/acknowledge": {
+      "post": {
+        "operationId": "acknowledgeSupplierCreditMemoException",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exception",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeSupplierCreditMemoExceptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/exceptions/{exception}/resolve": {
+      "post": {
+        "operationId": "resolveSupplierCreditMemoException",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exception",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveSupplierCreditMemoExceptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier-credit-memos/{creditMemo}/exceptions/{exception}/escalate": {
+      "post": {
+        "operationId": "escalateSupplierCreditMemoException",
+        "tags": [
+          "accounts-payable"
+        ],
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "in": "path",
+            "name": "creditMemo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exception",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeSupplierCreditMemoExceptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierCreditMemoExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -25116,7 +25979,11 @@
                   "payment_eligible",
                   "on_hold",
                   "payment_ready",
-                  "handoff_exported"
+                  "handoff_exported",
+                  "payment_scheduled",
+                  "partially_paid",
+                  "paid",
+                  "reversed"
                 ]
               },
               {
@@ -27578,7 +28445,11 @@
                   "payment_eligible",
                   "on_hold",
                   "payment_ready",
-                  "handoff_exported"
+                  "handoff_exported",
+                  "payment_scheduled",
+                  "partially_paid",
+                  "paid",
+                  "reversed"
                 ]
               },
               {
@@ -28570,7 +29441,11 @@
                   "payment_eligible",
                   "on_hold",
                   "payment_ready",
-                  "handoff_exported"
+                  "handoff_exported",
+                  "payment_scheduled",
+                  "partially_paid",
+                  "paid",
+                  "reversed"
                 ]
               },
               {
@@ -29111,6 +29986,822 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+      },
+      "SupplierCreditMemoStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "pending_approval",
+          "approved",
+          "open",
+          "partially_applied",
+          "fully_applied",
+          "closed",
+          "voided"
+        ]
+      },
+      "SupplierCreditMemoExceptionType": {
+        "type": "string",
+        "enum": [
+          "missing_invoice_reference",
+          "over_credit",
+          "vendor_mismatch",
+          "tax_code_mismatch",
+          "math_error",
+          "duplicate_credit",
+          "missing_tax_code",
+          "currency_mismatch"
+        ]
+      },
+      "SupplierCreditMemoExceptionSeverity": {
+        "type": "string",
+        "enum": [
+          "blocking",
+          "warning",
+          "info"
+        ]
+      },
+      "SupplierCreditMemoExceptionResolutionType": {
+        "type": "string",
+        "enum": [
+          "accepted",
+          "value_adjustment",
+          "vendor_reassignment",
+          "voided",
+          "info_only"
+        ]
+      },
+      "CreateSupplierCreditMemoRequest": {
+        "type": "object",
+        "required": [
+          "vendorId",
+          "vendorCreditMemoNumber",
+          "creditDate",
+          "subtotalAmount",
+          "taxAmount",
+          "freightAmount",
+          "totalAmount",
+          "lines"
+        ],
+        "properties": {
+          "vendorId": {
+            "type": "integer"
+          },
+          "originalInvoiceId": {
+            "type": "string"
+          },
+          "vendorCreditMemoNumber": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "subtotalAmount": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "freightAmount": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierCreditMemoLineInput"
+            }
+          }
+        }
+      },
+      "SupplierCreditMemoLineInput": {
+        "type": "object",
+        "required": [
+          "lineNumber",
+          "description",
+          "quantity",
+          "unitPrice"
+        ],
+        "properties": {
+          "lineNumber": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "purchaseOrderLineId": {
+            "type": "string"
+          },
+          "originalInvoiceLineId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateSupplierCreditMemoRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "vendorCreditMemoNumber": {
+            "type": "string"
+          },
+          "freightAmount": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmitSupplierCreditMemoForApprovalRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          }
+        }
+      },
+      "PostSupplierCreditMemoRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          }
+        }
+      },
+      "VoidSupplierCreditMemoRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "voidReason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "voidReason": {
+            "type": "string",
+            "minLength": 5
+          }
+        }
+      },
+      "AddSupplierCreditMemoLineRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "lineNumber",
+          "description",
+          "quantity",
+          "unitPrice"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "purchaseOrderLineId": {
+            "type": "string"
+          },
+          "originalInvoiceLineId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateSupplierCreditMemoLineRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateCreditApplicationRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "supplierInvoiceId",
+          "appliedAmount",
+          "applicationDate"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "supplierInvoiceId": {
+            "type": "string"
+          },
+          "appliedAmount": {
+            "type": "string"
+          },
+          "applicationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "VoidCreditApplicationRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "voidReason"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "voidReason": {
+            "type": "string",
+            "minLength": 5
+          }
+        }
+      },
+      "AcknowledgeSupplierCreditMemoExceptionRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          }
+        }
+      },
+      "ResolveSupplierCreditMemoExceptionRequest": {
+        "type": "object",
+        "required": [
+          "lockVersion",
+          "resolutionType",
+          "resolutionNotes"
+        ],
+        "properties": {
+          "lockVersion": {
+            "type": "integer"
+          },
+          "resolutionType": {
+            "$ref": "#/components/schemas/SupplierCreditMemoExceptionResolutionType"
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "minLength": 5
+          }
+        }
+      },
+      "SupplierCreditMemoResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SupplierCreditMemo"
+          }
+        }
+      },
+      "SupplierCreditMemo": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "number",
+          "vendorId",
+          "status",
+          "currency",
+          "totalAmount",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "vendorCreditMemoNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "vendorId": {
+            "type": "string"
+          },
+          "vendorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "originalInvoiceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "originalInvoiceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/SupplierCreditMemoStatus"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "subtotalAmount": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "freightAmount": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "string"
+          },
+          "appliedAmount": {
+            "type": "string"
+          },
+          "remainingAmount": {
+            "type": "string"
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "capturedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "submittedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "approvedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "postedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "voidedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "voidReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvalInstanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "stpEligible": {
+            "type": "boolean"
+          },
+          "stpProcessedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lockVersion": {
+            "type": "integer"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierCreditMemoLine"
+            }
+          },
+          "applications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditApplication"
+            }
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierCreditMemoException"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/SupplierCreditMemoPermissions"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SupplierCreditMemoLine": {
+        "type": "object",
+        "required": [
+          "id",
+          "supplierCreditMemoId",
+          "lineNumber",
+          "description",
+          "quantity",
+          "unitPrice",
+          "lineSubtotal"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "supplierCreditMemoId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "lineSubtotal": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "purchaseOrderLineId": {
+            "type": "string",
+            "nullable": true
+          },
+          "originalInvoiceLineId": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SupplierCreditMemoLineResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SupplierCreditMemoLine"
+          }
+        }
+      },
+      "CreditApplication": {
+        "type": "object",
+        "required": [
+          "id",
+          "supplierCreditMemoId",
+          "supplierInvoiceId",
+          "appliedAmount",
+          "applicationDate",
+          "appliedByUserId",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "supplierCreditMemoId": {
+            "type": "string"
+          },
+          "supplierCreditMemoNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "supplierInvoiceId": {
+            "type": "string"
+          },
+          "supplierInvoiceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "appliedAmount": {
+            "type": "string"
+          },
+          "applicationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "appliedByUserId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "voidedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "voidReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "lockVersion": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "CreditApplicationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CreditApplication"
+          }
+        }
+      },
+      "SupplierCreditMemoException": {
+        "type": "object",
+        "required": [
+          "id",
+          "supplierCreditMemoId",
+          "exceptionType",
+          "severity",
+          "description",
+          "lockVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "supplierCreditMemoId": {
+            "type": "string"
+          },
+          "exceptionType": {
+            "$ref": "#/components/schemas/SupplierCreditMemoExceptionType"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/SupplierCreditMemoExceptionSeverity"
+          },
+          "description": {
+            "type": "string"
+          },
+          "resolutionType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupplierCreditMemoExceptionResolutionType"
+              }
+            ],
+            "nullable": true
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acknowledgedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "acknowledgedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "escalatedByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "escalatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expectedValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "adjustedValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "lockVersion": {
+            "type": "integer"
+          }
+        }
+      },
+      "SupplierCreditMemoExceptionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SupplierCreditMemoException"
+          }
+        }
+      },
+      "SupplierCreditMemoPermissions": {
+        "type": "object",
+        "properties": {
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canPost": {
+            "type": "boolean"
+          },
+          "canApply": {
+            "type": "boolean"
+          },
+          "canVoidApplication": {
+            "type": "boolean"
+          },
+          "canVoidCreditMemo": {
+            "type": "boolean"
+          },
+          "canResolveException": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SupplierCreditMemoListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierCreditMemo"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "perPage": {
+                "type": "integer"
+              },
+              "currentPage": {
+                "type": "integer"
               }
             }
           }

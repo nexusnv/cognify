@@ -55,13 +55,13 @@ class ProcurementProjectSearchProvider implements SearchProvider
     {
         $builder->where(function (Builder $builder) use ($query): void {
             $builder->whereRaw('lower(number) = ?', [$query])
-                ->orWhereRaw('lower(number) like ?', [$query . '%'])
-                ->orWhereRaw('lower(number) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(name) like ?', [$query . '%'])
-                ->orWhereRaw('lower(name) like ?', ['%' . $query . '%'])
-                ->orWhereRaw('lower(status) like ?', ['%' . $query . '%'])
+                ->orWhereRaw('lower(number) like ?', [$query.'%'])
+                ->orWhereRaw('lower(number) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(name) like ?', [$query.'%'])
+                ->orWhereRaw('lower(name) like ?', ['%'.$query.'%'])
+                ->orWhereRaw('lower(status) like ?', ['%'.$query.'%'])
                 ->orWhereHas('owner', function (Builder $builder) use ($query): void {
-                    $builder->whereRaw('lower(name) like ?', ['%' . $query . '%']);
+                    $builder->whereRaw('lower(name) like ?', ['%'.$query.'%']);
                 });
         });
     }
@@ -78,9 +78,9 @@ class ProcurementProjectSearchProvider implements SearchProvider
             END',
             [
                 $query,
-                $query . '%',
-                $query . '%',
-                '%' . $query . '%',
+                $query.'%',
+                $query.'%',
+                '%'.$query.'%',
             ],
         )->orderByDesc('updated_at');
     }

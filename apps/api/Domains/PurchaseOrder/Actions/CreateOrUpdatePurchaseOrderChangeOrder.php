@@ -8,6 +8,7 @@ use App\Models\User;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrderLine;
+use Domains\PurchaseOrder\Models\PurchaseOrderLine;
 use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
@@ -121,7 +122,7 @@ class CreateOrUpdatePurchaseOrderChangeOrder
 
             foreach ($calculated['lineChanges'] as $lineChange) {
                 $line = $purchaseOrder->lines->firstWhere('id', $lineChange['lineId']);
-                if (! $line instanceof \Domains\PurchaseOrder\Models\PurchaseOrderLine) {
+                if (! $line instanceof PurchaseOrderLine) {
                     continue;
                 }
 

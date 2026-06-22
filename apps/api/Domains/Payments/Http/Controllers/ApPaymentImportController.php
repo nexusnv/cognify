@@ -10,11 +10,11 @@ use Domains\Payments\Actions\MatchPaymentImportRow;
 use Domains\Payments\Actions\ParsePaymentImportFile;
 use Domains\Payments\Actions\ReconcilePaymentImportBatch;
 use Domains\Payments\Http\Requests\ReconcilePaymentImportBatchRequest;
-use Domains\Payments\States\ApPaymentImportStatus;
 use Domains\Payments\Http\Requests\UpdatePaymentImportRowRequest;
 use Domains\Payments\Http\Requests\UploadPaymentImportRequest;
 use Domains\Payments\Http\Resources\ApPaymentImportResource;
 use Domains\Payments\Models\ApPaymentImport;
+use Domains\Payments\States\ApPaymentImportStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -172,6 +172,7 @@ class ApPaymentImportController extends Controller
     {
         $tenant = $currentTenant->get();
         abort_if($tenant === null, 403, 'Tenant context missing.');
+
         return $tenant;
     }
 }

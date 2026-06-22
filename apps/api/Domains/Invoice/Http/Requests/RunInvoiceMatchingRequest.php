@@ -2,7 +2,6 @@
 
 namespace Domains\Invoice\Http\Requests;
 
-use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RunInvoiceMatchingRequest extends FormRequest

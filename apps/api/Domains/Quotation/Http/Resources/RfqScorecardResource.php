@@ -2,19 +2,20 @@
 
 namespace Domains\Quotation\Http\Resources;
 
-use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\QuotationScoringTemplate;
+use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqScorecard;
 use Domains\Quotation\Models\RfqScorecardCriterion;
 use Domains\Quotation\Models\RfqScorecardEntry;
 use Domains\Quotation\Support\RfqScorecardCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 class RfqScorecardResource extends JsonResource
 {
     /**
-     * @param array<string, mixed>|null $comparisonContext
+     * @param  array<string, mixed>|null  $comparisonContext
      */
     public function __construct($resource, private readonly ?array $comparisonContext = null)
     {
@@ -154,7 +155,7 @@ class RfqScorecardResource extends JsonResource
     }
 
     /**
-     * @param \Illuminate\Support\Collection<int, RfqScorecardCriterion> $criteria
+     * @param  Collection<int, RfqScorecardCriterion>  $criteria
      * @return array<string, mixed>
      */
     private function entry(RfqScorecardEntry $entry, $criteria, RfqScorecardCalculator $calculator): array

@@ -364,7 +364,7 @@ class QuotationManualEntryApiTest extends TestCase
      */
     private function tenantUser(string $role, ?Tenant $tenant = null): array
     {
-        $tenant ??= Tenant::query()->create(['name' => 'Tenant ' . Str::uuid()]);
+        $tenant ??= Tenant::query()->create(['name' => 'Tenant '.Str::uuid()]);
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => $role]);
 
@@ -375,7 +375,7 @@ class QuotationManualEntryApiTest extends TestCase
     {
         return Vendor::query()->create(array_merge([
             'tenant_id' => $tenant->id,
-            'name' => 'Vendor ' . Str::uuid(),
+            'name' => 'Vendor '.Str::uuid(),
             'status' => 'active',
             'category' => 'IT Hardware',
             'risk_rating' => 'low',
@@ -391,7 +391,7 @@ class QuotationManualEntryApiTest extends TestCase
         $requisition = Requisition::query()->create([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-' . Str::random(8),
+            'number' => 'REQ-'.Str::random(8),
             'title' => 'Laptop refresh',
             'status' => RequisitionStatus::Approved,
             'currency' => 'USD',
@@ -410,7 +410,7 @@ class QuotationManualEntryApiTest extends TestCase
             'tenant_id' => $tenant->id,
             'sourcing_intake_review_id' => $review->id,
             'requisition_id' => $requisition->id,
-            'number' => 'RFQ-' . Str::random(8),
+            'number' => 'RFQ-'.Str::random(8),
             'title' => 'Laptop refresh RFQ',
             'status' => RfqStatus::Draft,
             'required_documents' => [],
@@ -442,7 +442,7 @@ class QuotationManualEntryApiTest extends TestCase
             'rfq_id' => $rfq->id,
             'vendor_id' => $vendor->id,
             'rfq_invitation_id' => $invitation->id,
-            'number' => 'QUO-' . Str::random(8),
+            'number' => 'QUO-'.Str::random(8),
             'status' => 'received',
             'submission_source' => 'buyer_upload',
             'file_count' => 0,

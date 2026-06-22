@@ -11,10 +11,8 @@ use Domains\AccountsPayable\Actions\RetrySupplierInvoicePayment;
 use Domains\AccountsPayable\Http\Requests\PlaceInvoiceOnPaymentHoldRequest;
 use Domains\AccountsPayable\Http\Requests\ReleaseInvoiceHoldRequest;
 use Domains\AccountsPayable\Http\Requests\RetryPaymentInductionRequest;
-use Domains\AccountsPayable\States\SupplierInvoicePaymentStatus;
 use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SupplierInvoicePaymentController extends Controller
 {

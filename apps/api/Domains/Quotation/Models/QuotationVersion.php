@@ -8,8 +8,8 @@ use Domains\Quotation\States\QuotationStatus;
 use Domains\Quotation\States\QuotationSubmissionSource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -141,7 +141,7 @@ class QuotationVersion extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<QuotationNormalization, $this>
+     * @return HasOne<QuotationNormalization, $this>
      */
     public function currentNormalization(): HasOne
     {

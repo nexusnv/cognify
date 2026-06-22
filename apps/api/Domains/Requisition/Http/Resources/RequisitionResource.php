@@ -4,13 +4,14 @@ namespace Domains\Requisition\Http\Resources;
 
 use App\Models\User;
 use Domains\Project\Models\ProcurementProject;
+use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
 
 /**
- * @mixin \Domains\Requisition\Models\Requisition
+ * @mixin Requisition
  */
 class RequisitionResource extends JsonResource
 {
@@ -115,7 +116,6 @@ class RequisitionResource extends JsonResource
     }
 
     /**
-     * @param User|MissingValue|null $user
      * @return array{id: string, name: string, email: string|null}|null
      */
     private function userSummary(User|MissingValue|null $user): ?array

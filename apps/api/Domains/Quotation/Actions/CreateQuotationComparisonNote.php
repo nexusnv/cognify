@@ -11,9 +11,7 @@ use Domains\Quotation\Models\Rfq;
 
 class CreateQuotationComparisonNote
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     public function handle(Tenant $tenant, User $actor, Rfq $rfq, array $data): QuotationComparisonNote
     {

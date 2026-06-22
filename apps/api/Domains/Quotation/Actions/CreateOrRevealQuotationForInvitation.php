@@ -14,9 +14,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CreateOrRevealQuotationForInvitation
 {
-    public function __construct(private readonly AuditRecorder $audit)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $audit) {}
 
     /**
      * @return array{quotation: Quotation, created: bool}

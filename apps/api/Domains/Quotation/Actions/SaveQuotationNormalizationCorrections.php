@@ -5,9 +5,6 @@ namespace Domains\Quotation\Actions;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
 use App\Models\User;
-use App\Notifications\NotificationData;
-use App\Notifications\NotificationPreferenceDefaults;
-use App\Notifications\NotificationRecorder;
 use App\Tenancy\Tenant;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationNormalizationCorrection;
@@ -21,11 +18,10 @@ class SaveQuotationNormalizationCorrections
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int, array<string, mixed>> $corrections
+     * @param  array<int, array<string, mixed>>  $corrections
      */
     public function handle(Tenant $tenant, ?User $actor, QuotationNormalization $normalization, array $corrections): QuotationNormalization
     {

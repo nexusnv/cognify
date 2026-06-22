@@ -14,7 +14,7 @@ class RecordRfqInvitationPortalView
 
     public function handle(RfqInvitation $invitation, Request $request): RfqInvitation
     {
-        return DB::transaction(function () use ($invitation, $request): RfqInvitation {
+        return DB::transaction(function () use ($invitation): RfqInvitation {
             $locked = RfqInvitation::query()
                 ->with(['tenant', 'vendor', 'rfq'])
                 ->whereKey($invitation->id)

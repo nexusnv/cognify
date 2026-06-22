@@ -677,14 +677,14 @@ class ProcurementProjectApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createProject(Tenant $tenant, User $owner, array $overrides = []): ProcurementProject
     {
         return ProcurementProject::query()->create(array_merge([
             'tenant_id' => $tenant->id,
             'owner_id' => $owner->id,
-            'number' => 'PRJ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'PRJ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
             'name' => 'Office refresh',
             'charter' => 'Refresh workstations.',
             'status' => 'draft',
@@ -698,14 +698,14 @@ class ProcurementProjectApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createRequisition(Tenant $tenant, User $requester, array $overrides = []): Requisition
     {
         return Requisition::query()->create(array_merge([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'REQ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
             'title' => 'Linked requisition',
             'business_justification' => 'Needed for the project.',
             'needed_by_date' => '2026-07-01',

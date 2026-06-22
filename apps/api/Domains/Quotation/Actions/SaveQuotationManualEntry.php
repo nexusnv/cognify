@@ -10,8 +10,8 @@ use Domains\Quotation\Data\QuotationCompletenessData;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationLineItem;
 use Domains\Quotation\Models\RfqInvitation;
-use Domains\Quotation\States\QuotationSubmissionSource;
 use Domains\Quotation\States\QuotationStatus;
+use Domains\Quotation\States\QuotationSubmissionSource;
 use Illuminate\Support\Facades\DB;
 
 class SaveQuotationManualEntry
@@ -20,8 +20,7 @@ class SaveQuotationManualEntry
         private readonly AuditRecorder $auditRecorder,
         private readonly CreateOrRevealQuotationForInvitation $createOrRevealQuotationForInvitation,
         private readonly CreateQuotationVersionSnapshot $createQuotationVersionSnapshot,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $payload

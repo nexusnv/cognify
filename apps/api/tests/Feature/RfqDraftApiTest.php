@@ -281,7 +281,7 @@ class RfqDraftApiTest extends TestCase
         $requisition = Requisition::query()->create([
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
-            'number' => 'REQ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'REQ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
             'title' => 'Field laptop refresh',
             'business_justification' => 'Replace aging laptops.',
             'needed_by_date' => '2026-07-15',
@@ -301,7 +301,7 @@ class RfqDraftApiTest extends TestCase
         $project = ProcurementProject::query()->create([
             'tenant_id' => $tenant->id,
             'owner_id' => $buyer->id,
-            'number' => 'PRJ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'PRJ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
             'name' => 'Field enablement',
             'status' => 'active',
         ]);
@@ -324,7 +324,7 @@ class RfqDraftApiTest extends TestCase
             'sourcing_intake_review_id' => $review->id,
             'project_id' => $review->project_id,
             'requisition_id' => $review->requisition_id,
-            'number' => 'RFQ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'RFQ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
             'title' => 'Field laptop refresh RFQ',
             'status' => 'draft',
         ]);

@@ -9,8 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Tenancy\CurrentTenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AuditEventController extends Controller
 {

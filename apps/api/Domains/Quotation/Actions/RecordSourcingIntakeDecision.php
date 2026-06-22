@@ -21,7 +21,7 @@ class RecordSourcingIntakeDecision
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, SourcingIntakeReview $review, array $data): SourcingIntakeReview
     {

@@ -113,7 +113,7 @@ class CaptureSupplierInvoice
                     $subtotalAmount = bcadd($subtotalAmount, $lineSubtotalAmount, 4);
 
                     if (bccomp($subtotalAmount, self::MAX_DECIMAL_18_4, 4) > 0) {
-                        throw new InvalidArgumentException("Invoice subtotal exceeds supported precision.");
+                        throw new InvalidArgumentException('Invoice subtotal exceeds supported precision.');
                     }
 
                     $invoiceLines[] = [

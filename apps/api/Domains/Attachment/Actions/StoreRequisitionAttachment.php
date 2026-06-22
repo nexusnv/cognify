@@ -15,8 +15,8 @@ use Domains\Requisition\Models\Requisition;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Throwable;
 
 class StoreRequisitionAttachment
 {
@@ -24,8 +24,7 @@ class StoreRequisitionAttachment
         private readonly AuditRecorder $auditRecorder,
         private readonly AttachmentStorage $storage,
         private readonly NotificationRecorder $notificationRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, UploadedFile $file): Attachment
     {

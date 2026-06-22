@@ -24,7 +24,7 @@ class CreateRfqInvitations
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<int, RfqInvitation>
      */
     public function handle(Tenant $tenant, User $actor, Rfq $rfq, array $data): array

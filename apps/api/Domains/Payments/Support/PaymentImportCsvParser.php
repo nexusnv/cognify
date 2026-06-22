@@ -54,8 +54,11 @@ class PaymentImportCsvParser
 
     private function nullIfEmpty(?string $value): ?string
     {
-        if ($value === null) return null;
+        if ($value === null) {
+            return null;
+        }
         $trimmed = trim($value);
+
         return $trimmed === '' ? null : $trimmed;
     }
 }

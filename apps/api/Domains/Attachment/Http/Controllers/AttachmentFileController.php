@@ -18,9 +18,7 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class AttachmentFileController extends Controller
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     public function preview(Request $request, CurrentTenant $currentTenant, AttachmentStorage $storage, int $attachment)
     {

@@ -21,8 +21,7 @@ class ResubmitRequisition
         private readonly AuditRecorder $auditRecorder,
         private readonly NotificationRecorder $notificationRecorder,
         private readonly SubmitRequisition $submitRequisition,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition): Requisition
     {

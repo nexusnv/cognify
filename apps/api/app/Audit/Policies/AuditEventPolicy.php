@@ -8,9 +8,7 @@ use App\Tenancy\CurrentTenant;
 
 class AuditEventPolicy
 {
-    public function __construct(private readonly CurrentTenant $currentTenant)
-    {
-    }
+    public function __construct(private readonly CurrentTenant $currentTenant) {}
 
     public function viewAny(User $user): bool
     {

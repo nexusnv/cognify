@@ -7,7 +7,6 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Actions\RouteSubjectForApproval;
-use Domains\Approval\Models\ApprovalInstance;
 use Domains\Invoice\Models\SupplierInvoice;
 use Domains\Invoice\States\SupplierInvoiceStatus;
 use Illuminate\Support\Facades\DB;

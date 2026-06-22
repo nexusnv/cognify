@@ -12,9 +12,16 @@ use Domains\Approval\Models\ApprovalTask;
 use Domains\Attachment\Models\Attachment;
 use Domains\Award\Models\Award;
 use Domains\Collaboration\Models\CollaborationComment;
+use Domains\CreditMemo\Models\CreditApplication;
+use Domains\CreditMemo\Models\SupplierCreditMemo;
+use Domains\CreditMemo\Models\SupplierCreditMemoException;
 use Domains\Demo\Models\DemoSeedRun;
 use Domains\Fulfillment\Models\FulfillmentTrackingEvent;
 use Domains\Fulfillment\Models\Shipment;
+use Domains\Invoice\Models\SupplierInvoice;
+use Domains\Invoice\Models\SupplierInvoiceException;
+use Domains\Invoice\Models\SupplierInvoiceLine;
+use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
@@ -23,10 +30,6 @@ use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderChangeOrderType;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
-use Domains\Invoice\Models\SupplierInvoice;
-use Domains\Invoice\Models\SupplierInvoiceException;
-use Domains\Invoice\Models\SupplierInvoiceLine;
-use Domains\Invoice\States\SupplierInvoiceStatus;
 use Domains\Quotation\Models\Quotation;
 use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
@@ -338,6 +341,10 @@ class DemoSeederTest extends TestCase
         $this->assertSame(1, QuotationComparisonNote::query()->count());
         $this->assertSame(1, ApprovalDelegation::query()->count());
         $this->assertSame(1, DemoSeedRun::query()->count());
+        $this->assertSame(32, SupplierInvoice::query()->count());
+        $this->assertSame(8, SupplierCreditMemo::query()->count());
+        $this->assertSame(4, CreditApplication::query()->count());
+        $this->assertSame(2, SupplierCreditMemoException::query()->count());
 
         $acme = Tenant::query()->where('name', 'Acme Procurement')->firstOrFail();
         $northwind = Tenant::query()->where('name', 'Northwind Sourcing')->firstOrFail();
@@ -649,7 +656,7 @@ class DemoSeederTest extends TestCase
             'purchase_orders' => 11,
             'shipments' => 4,
             'fulfillment_tracking_events' => 5,
-            'supplier_invoices' => 24,
+            'supplier_invoices' => 32,
         ], $run->metadata);
         $this->assertSame(2, SupplierInvoiceException::query()->count());
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());

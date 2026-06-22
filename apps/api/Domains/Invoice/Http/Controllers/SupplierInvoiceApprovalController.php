@@ -2,9 +2,7 @@
 
 namespace Domains\Invoice\Http\Controllers;
 
-use App\Auth\TenantRole;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Tenancy\CurrentTenant;
 use Domains\Invoice\Actions\SubmitSupplierInvoiceForApproval;
 use Domains\Invoice\Http\Resources\SupplierInvoiceResource;

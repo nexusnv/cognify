@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 readonly class NotificationData
 {
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     public function __construct(
         public string $type,
@@ -20,6 +20,5 @@ readonly class NotificationData
         public array $metadata = [],
         public string $priority = 'normal',
         public ?User $actor = null,
-    ) {
-    }
+    ) {}
 }

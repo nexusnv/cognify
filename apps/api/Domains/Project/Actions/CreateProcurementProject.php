@@ -12,12 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 class CreateProcurementProject
 {
-    public function __construct(private readonly ProcurementProjectNumberGenerator $numberGenerator)
-    {
-    }
+    public function __construct(private readonly ProcurementProjectNumberGenerator $numberGenerator) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, array $data): ProcurementProject
     {

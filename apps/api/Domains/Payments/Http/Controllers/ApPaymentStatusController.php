@@ -153,6 +153,7 @@ class ApPaymentStatusController extends Controller
         if ($tenantHandoff === null) {
             abort(403, 'You are not allowed to access this AP payment handoff.');
         }
+
         return $tenantHandoff;
     }
 
@@ -167,6 +168,7 @@ class ApPaymentStatusController extends Controller
     {
         $tenant = $currentTenant->get();
         abort_if($tenant === null, 403, 'Tenant context missing.');
+
         return $tenant;
     }
 }

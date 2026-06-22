@@ -31,8 +31,7 @@ class NormalizeQuotationVersion implements ShouldQueue
     public function __construct(
         public readonly int $tenantId,
         public readonly int $quotationVersionId,
-    ) {
-    }
+    ) {}
 
     public function handle(
         StartQuotationNormalization $starter,

@@ -3,7 +3,6 @@
 namespace Domains\PurchaseOrder\Models;
 
 use App\Tenancy\Tenant;
-use Domains\PurchaseOrder\Models\PurchaseOrderChangeOrder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

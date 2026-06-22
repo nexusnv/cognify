@@ -13,4 +13,8 @@ export type SupplierInvoiceQueueItemPaymentStatus =
   | "on_hold"
   | "payment_ready"
   | "handoff_exported"
+  | "payment_scheduled"
+  | "partially_paid"
+  | "paid"
+  | "reversed"
   | null;

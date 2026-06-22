@@ -64,5 +64,4 @@ class QuotationNormalizationPolicy
 
         return $tenant !== null && (int) $normalization->tenant_id === (int) $tenant->id;
     }
-
 }

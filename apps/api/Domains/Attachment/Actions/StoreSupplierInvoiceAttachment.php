@@ -20,8 +20,7 @@ class StoreSupplierInvoiceAttachment
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
         private readonly AttachmentStorage $storage,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, User $actor, SupplierInvoice $supplierInvoice, UploadedFile $file): Attachment
     {

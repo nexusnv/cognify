@@ -4,6 +4,7 @@ namespace App\Http\Requests\Requisition;
 
 use App\Tenancy\CurrentTenant;
 use Domains\Project\States\ProjectStatus;
+use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\Models\RequisitionCostCenter;
 use Domains\Requisition\Models\RequisitionDepartment;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,7 +14,7 @@ class CreateRequisitionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create', \Domains\Requisition\Models\Requisition::class) ?? false;
+        return $this->user()?->can('create', Requisition::class) ?? false;
     }
 
     /**

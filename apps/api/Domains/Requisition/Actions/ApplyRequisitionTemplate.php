@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 class ApplyRequisitionTemplate
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     public function handle(Tenant $tenant, User $actor, Requisition $requisition, RequisitionTemplate $template, string $mode, int $lockVersion): Requisition
     {
@@ -132,7 +130,7 @@ class ApplyRequisitionTemplate
     }
 
     /**
-     * @param array<int, array<string, mixed>> $templateLineItems
+     * @param  array<int, array<string, mixed>>  $templateLineItems
      */
     private function createTemplateLineItems(Requisition $requisition, array $templateLineItems): void
     {

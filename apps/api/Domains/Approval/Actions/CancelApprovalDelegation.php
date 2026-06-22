@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class CancelApprovalDelegation
 {
-    public function __construct(private readonly AuditRecorder $auditRecorder)
-    {
-    }
+    public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     public function handle(Tenant $tenant, User $actor, ApprovalDelegation $delegation): ApprovalDelegation
     {

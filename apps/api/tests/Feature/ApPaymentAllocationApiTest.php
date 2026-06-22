@@ -40,6 +40,7 @@ class ApPaymentAllocationApiTest extends TestCase
         $user = User::factory()->create(['password' => Hash::make('secret123')]);
         $tenant->users()->attach($user->id, ['role' => TenantRole::from($role)->value]);
         app(CurrentTenant::class)->set($tenant);
+
         return [$tenant, $user];
     }
 

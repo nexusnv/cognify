@@ -2,11 +2,12 @@
 
 namespace Domains\Requisition\Http\Resources;
 
+use Domains\Requisition\Models\RequisitionLineItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \Domains\Requisition\Models\RequisitionLineItem
+ * @mixin RequisitionLineItem
  */
 class RequisitionLineItemResource extends JsonResource
 {

@@ -95,7 +95,7 @@ class BuildQuotationComparison
     }
 
     /**
-     * @param Collection<int, mixed> $notes
+     * @param  Collection<int, mixed>  $notes
      * @return array<string, mixed>
      */
     private function vendorColumn(Quotation $quotation, Collection $notes): array
@@ -142,7 +142,7 @@ class BuildQuotationComparison
     }
 
     /**
-     * @param Collection<int, Quotation> $quotations
+     * @param  Collection<int, Quotation>  $quotations
      * @return array<int, array<string, mixed>>
      */
     private function lineRows(Rfq $rfq, Collection $quotations): array
@@ -197,7 +197,7 @@ class BuildQuotationComparison
     }
 
     /**
-     * @param Collection<int, Quotation> $quotations
+     * @param  Collection<int, Quotation>  $quotations
      * @return array<int, array<string, mixed>>
      */
     private function commercialTerms(Collection $quotations): array
@@ -234,7 +234,7 @@ class BuildQuotationComparison
     }
 
     /**
-     * @param Collection<int, mixed> $notes
+     * @param  Collection<int, mixed>  $notes
      * @return array<int, array<string, mixed>>
      */
     private function noteGroups(Collection $notes): array
@@ -290,7 +290,7 @@ class BuildQuotationComparison
     }
 
     /**
-     * @param Collection<string, mixed> $fields
+     * @param  Collection<string, mixed>  $fields
      */
     private function field(Collection $fields, string $path): ?string
     {

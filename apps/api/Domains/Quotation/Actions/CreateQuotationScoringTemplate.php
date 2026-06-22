@@ -16,7 +16,7 @@ class CreateQuotationScoringTemplate
     public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, array $data): QuotationScoringTemplate
     {
@@ -53,7 +53,7 @@ class CreateQuotationScoringTemplate
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<int, array<string, mixed>>
      */
     private function criteriaPayload(array $data): array
@@ -77,7 +77,7 @@ class CreateQuotationScoringTemplate
     }
 
     /**
-     * @param array<int, array<string, mixed>> $criteria
+     * @param  array<int, array<string, mixed>>  $criteria
      * @return array<int, array<string, mixed>>
      */
     private function criteriaRecords(Tenant $tenant, array $criteria): array

@@ -79,6 +79,7 @@ class ParsePaymentImportFile
                     'matchError' => $parseError,
                 ];
             }
+
             return $parsedRows;
         });
 

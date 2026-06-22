@@ -1468,6 +1468,22 @@ pnpm --filter @cognify/web typecheck
 pnpm lint
 ```
 
+## Drift Notes
+
+The following deviations from this design spec are intentional and have been applied during implementation to stay consistent with the established P1-48 (`ApPaymentAllocation` / `PaymentAllocationSumCalculator`) patterns and to reduce parameter passing.
+
+1. **Support class signatures use scalar arguments instead of model aggregates.** The `SupplierCreditMemoNumberGenerator::generate(int $tenantId)`, `SupplierCreditMemoMathValidator::validate(string $subtotal, string $tax, string $freight, string $total)`, `SupplierCreditMemoDuplicateDetector::isDuplicate(int $tenantId, int $vendorId, string $originalInvoiceId, string $vendorCreditMemoNumber, ?string $excludeId = null)`, `SupplierCreditMemoTaxMirrorValidator::validate(string $tenantId, string $originalInvoiceId, array $lines)`, and `SupplierCreditMemoStateMachine::transition(SupplierCreditMemo $memo, SupplierCreditMemoStatus $target)` signatures use scalar/individual arguments rather than the `SupplierCreditMemo` model aggregate described in the original plan. The behavior is identical; the data is sourced by the action from the locked models before calling the validator. This mirrors the P1-48 `PaymentAllocationSumCalculator::sumForInvoice(SupplierInvoice $invoice)` style and keeps helpers free of Eloquent coupling for tests.
+
+2. **State derivation is split between `SupplierCreditMemoStateMachine` and `CreditApplicationSumCalculator`.** The `StateMachine::transition()` method handles direct state changes (e.g. submit → pending_approval, post → open, void → voided) and uses the `canTransitionTo` guard from the enum. The derivation from application sums (`Open` / `PartiallyApplied` / `FullyApplied`) is handled by `CreditApplicationSumCalculator::deriveCreditMemoStatus(SupplierCreditMemo $memo)` and `deriveInvoicePaymentStatus(SupplierInvoice $invoice, SupplierInvoicePaymentStatus $priorStatus)`. This avoids duplication with the P1-48 `PaymentAllocationSumCalculator::derivePaymentStatus(SupplierInvoice $invoice)` method and keeps the state machine focused on explicit transitions while the calculator owns derived states.
+
+3. **Duplicate detector queries `whereNull('voided_at')`.** The original plan only filtered by `id != $creditMemo->id` for self-exclusion. The implementation also excludes voided credit memos so that re-issuing a voided credit memo with the same vendor-issued number does not trip the duplicate warning.
+
+4. **`SupplierCreditMemoTaxMirrorValidator::validate` returns mismatches, does not throw.** The original plan threw `InvalidArgumentException` on mismatch. The implementation returns the list of mismatches (line number, credit tax code, original tax code) so the action can decide whether to raise a `SupplierCreditMemoException` (warning/blocking per the policy) or to surface the mismatch in the response. This keeps the validator single-purpose and lets the action map severity consistently with the other exception types.
+
+5. **Math validator is scalar, not model-typed.** The validator operates on the four header scalar values (`subtotal`, `tax`, `freight`, `total`) rather than the model. Header recomputation (`subtotal_amount = SUM(lines[].line_subtotal)` etc.) is performed by `AddSupplierCreditMemoLine` / `UpdateSupplierCreditMemoLine` / `RemoveSupplierCreditMemoLine` actions before calling the validator. This keeps the validator free of Eloquent coupling and makes it trivially testable.
+
+6. **`tax_code` and `tax_amount` added to `supplier_invoice_lines`.** The P1-12 `supplier_invoice_lines` migration (Task 2 of P1-12) did not include `tax_code` or `tax_amount` columns. The P1-49 design assumes the original invoice line carries `tax_code` and `tax_amount` so that credit memo lines can mirror them. P1-49 adds the columns via migration `2026_06_22_020647_add_tax_code_to_supplier_invoice_lines` (`tax_code VARCHAR(50) NULL`, `tax_amount DECIMAL(18,4) DEFAULT 0`). The `SupplierCreditMemoTaxMirrorValidator` queries `supplier_invoice_lines.tax_code` and now finds the column. Backfill is not needed for the seeded demo data because P1-49's demo seeder sets `tax_code` explicitly on the original invoice lines it creates.
+
 ## Non-Goals Reiteration
 
 This slice explicitly does NOT include:

@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Audit\AuditEvent;
 use App\Audit\AuditEventData;
 use App\Audit\AuditRecorder;
-use App\Audit\AuditSubject;
 use App\Models\User;
 use App\Tenancy\Tenant;
+use Domains\Approval\Models\ApprovalTask;
 use Domains\Attachment\Models\Attachment;
 use Domains\Project\Models\ProcurementProject;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
@@ -294,7 +294,7 @@ class AuditApiTest extends TestCase
             ['quotation_normalization', QuotationNormalization::class],
             ['scorecard', RfqScorecard::class],
             ['award', RfqAwardRecommendation::class],
-            ['approval_task', \Domains\Approval\Models\ApprovalTask::class],
+            ['approval_task', ApprovalTask::class],
             ['po_handoff', PurchaseOrderRequestHandoff::class],
         ];
     }

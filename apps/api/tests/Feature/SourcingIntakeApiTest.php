@@ -245,7 +245,7 @@ class SourcingIntakeApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createRequisition(Tenant $tenant, User $requester, array $overrides = []): Requisition
     {
@@ -255,7 +255,7 @@ class SourcingIntakeApiTest extends TestCase
             $project = ProcurementProject::query()->create([
                 'tenant_id' => $tenant->id,
                 'owner_id' => $requester->id,
-                'number' => 'PRJ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+                'number' => 'PRJ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
                 'name' => 'Office refresh',
                 'status' => 'active',
                 'budget_amount' => '25000.00',
@@ -268,7 +268,7 @@ class SourcingIntakeApiTest extends TestCase
             'tenant_id' => $tenant->id,
             'requester_id' => $requester->id,
             'project_id' => $projectId,
-            'number' => 'REQ-2026-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+            'number' => 'REQ-2026-'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
             'title' => 'Laptop refresh',
             'business_justification' => 'Replace aging laptops.',
             'needed_by_date' => '2026-07-15',
@@ -289,7 +289,7 @@ class SourcingIntakeApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createReview(Tenant $tenant, ?User $buyer, Requisition $requisition, array $overrides = []): SourcingIntakeReview
     {

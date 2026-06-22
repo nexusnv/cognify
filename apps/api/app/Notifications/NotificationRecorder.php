@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 class NotificationRecorder
 {
     /**
-     * @param iterable<User> $recipients
+     * @param  iterable<User>  $recipients
      */
     public function record(Tenant $tenant, iterable $recipients, NotificationData $data): void
     {

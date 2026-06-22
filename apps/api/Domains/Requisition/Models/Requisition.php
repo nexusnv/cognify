@@ -3,10 +3,10 @@
 namespace Domains\Requisition\Models;
 
 use App\Auth\TenantRole;
-use Domains\Attachment\Models\Attachment;
 use App\Models\User;
 use App\Tenancy\Tenant;
 use Domains\Approval\Models\ApprovalInstance;
+use Domains\Attachment\Models\Attachment;
 use Domains\Project\Models\ProcurementProject;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -155,7 +155,7 @@ class Requisition extends Model
     }
 
     /**
-     * @param Builder<Requisition> $query
+     * @param  Builder<Requisition>  $query
      * @return Builder<Requisition>
      */
     public function scopeVisibleTo(Builder $query, User $user, ?string $role, int $tenantId): Builder

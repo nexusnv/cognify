@@ -5,7 +5,6 @@ namespace Domains\Quotation\Http\Resources;
 use App\Audit\AuditEvent;
 use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqInvitation;
-use Domains\Quotation\States\RfqStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;

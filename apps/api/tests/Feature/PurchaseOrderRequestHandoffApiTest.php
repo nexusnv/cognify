@@ -15,7 +15,6 @@ use Domains\PurchaseOrder\Models\PurchaseOrder;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\PurchaseOrder\States\PurchaseOrderStatus;
 use Domains\Quotation\Models\Quotation;
-use Domains\Quotation\Models\QuotationComparisonNote;
 use Domains\Quotation\Models\QuotationNormalization;
 use Domains\Quotation\Models\QuotationVersion;
 use Domains\Quotation\Models\Rfq;

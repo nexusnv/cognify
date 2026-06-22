@@ -3,11 +3,12 @@
 namespace Domains\Approval\Http\Resources;
 
 use App\Models\User;
+use Domains\Approval\Models\ApprovalDelegation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \Domains\Approval\Models\ApprovalDelegation
+ * @mixin ApprovalDelegation
  */
 class ApprovalDelegationResource extends JsonResource
 {

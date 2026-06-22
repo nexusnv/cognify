@@ -17,7 +17,7 @@ class UpdateRfqInvitationStatus
     public function __construct(private readonly AuditRecorder $audit) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Tenant $tenant, User $actor, RfqInvitation $invitation, array $data): RfqInvitation
     {
@@ -53,7 +53,7 @@ class UpdateRfqInvitationStatus
             $this->audit->record(new AuditEventData(
                 tenant: $tenant,
                 actor: $actor,
-                action: 'rfq_invitation.' . $status->value,
+                action: 'rfq_invitation.'.$status->value,
                 subject: $lockedInvitation,
                 metadata: [
                     'rfqId' => (string) $lockedInvitation->rfq_id,

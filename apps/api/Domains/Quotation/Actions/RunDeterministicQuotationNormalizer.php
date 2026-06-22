@@ -20,6 +20,7 @@ use Domains\Quotation\States\QuotationNormalizationPricingMode;
 use Domains\Quotation\States\QuotationNormalizationStatus;
 use Domains\Quotation\Support\QuotationNormalizationIssueCatalog;
 use Domains\Quotation\Support\QuotationNormalizationProvenance;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -27,8 +28,7 @@ class RunDeterministicQuotationNormalizer
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, QuotationVersion $version, QuotationNormalization $normalization): QuotationNormalization
     {
@@ -151,7 +151,7 @@ class RunDeterministicQuotationNormalizer
             );
 
             $attachmentSnapshots = collect($lockedVersion->attachment_snapshots ?? []);
-            $attachmentSnapshots->each(function (array $snapshot, int $index) use ($lockedNormalization, $lockedVersion, $currency): void {
+            $attachmentSnapshots->each(function (array $snapshot, int $index) use ($lockedNormalization): void {
                 QuotationNormalizationAttachment::query()->create([
                     'tenant_id' => $lockedNormalization->tenant_id,
                     'normalization_id' => $lockedNormalization->id,
@@ -437,10 +437,10 @@ class RunDeterministicQuotationNormalizer
         return $currency === '' ? null : $currency;
     }
 
-    private function parseTimestamp(string $value): ?\Illuminate\Support\Carbon
+    private function parseTimestamp(string $value): ?Carbon
     {
         try {
-            return \Illuminate\Support\Carbon::parse($value);
+            return Carbon::parse($value);
         } catch (\Throwable) {
             return null;
         }

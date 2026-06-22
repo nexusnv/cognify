@@ -20,8 +20,7 @@ class CreateQuotationNormalizationRevision
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     public function handle(Tenant $tenant, ?User $actor, QuotationNormalization $normalization): QuotationNormalization
     {
@@ -105,7 +104,7 @@ class CreateQuotationNormalizationRevision
                 $groupIdMap[(string) $group->id] = $newGroup->id;
             });
 
-            $current->lineGroups->each(function (QuotationNormalizationLineGroup $group) use ($tenant, $revision, $groupIdMap): void {
+            $current->lineGroups->each(function (QuotationNormalizationLineGroup $group) use ($tenant, $groupIdMap): void {
                 $newGroupId = $groupIdMap[(string) $group->id];
                 $newGroup = QuotationNormalizationLineGroup::query()->whereKey($newGroupId)->firstOrFail();
 

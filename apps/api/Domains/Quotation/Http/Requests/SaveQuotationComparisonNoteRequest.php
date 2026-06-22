@@ -8,8 +8,8 @@ use Domains\Quotation\Models\Rfq;
 use Domains\Quotation\Models\RfqInvitation;
 use Domains\Quotation\States\QuotationComparisonNoteSection;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class SaveQuotationComparisonNoteRequest extends FormRequest
 {

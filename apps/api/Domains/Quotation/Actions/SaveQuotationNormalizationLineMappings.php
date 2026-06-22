@@ -12,8 +12,6 @@ use Domains\Quotation\Models\QuotationNormalizationLineGroup;
 use Domains\Quotation\Models\QuotationNormalizationLineMapping;
 use Domains\Quotation\States\QuotationNormalizationIssueSeverity;
 use Domains\Quotation\States\QuotationNormalizationIssueStatus;
-use Domains\Quotation\States\QuotationNormalizationMappingType;
-use Domains\Quotation\States\QuotationNormalizationPricingMode;
 use Domains\Quotation\States\QuotationNormalizationStatus;
 use Domains\Quotation\Support\QuotationNormalizationIssueCatalog;
 use Illuminate\Support\Facades\DB;
@@ -24,11 +22,10 @@ class SaveQuotationNormalizationLineMappings
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int, array<string, mixed>> $lineGroups
+     * @param  array<int, array<string, mixed>>  $lineGroups
      */
     public function handle(Tenant $tenant, ?User $actor, QuotationNormalization $normalization, array $lineGroups): QuotationNormalization
     {

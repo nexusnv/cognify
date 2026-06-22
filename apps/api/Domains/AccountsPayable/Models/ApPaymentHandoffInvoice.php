@@ -2,7 +2,6 @@
 
 namespace Domains\AccountsPayable\Models;
 
-use Domains\AccountsPayable\Models\ApPaymentHandoff;
 use Domains\Invoice\Models\SupplierInvoice;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;

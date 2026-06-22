@@ -7,8 +7,8 @@ use App\Audit\AuditRecorder;
 use App\Models\User;
 use Domains\PurchaseOrder\Models\PurchaseOrderRequestHandoff;
 use Domains\PurchaseOrder\States\PurchaseOrderRequestHandoffStatus;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class UpdatePurchaseOrderRequestHandoff
@@ -16,7 +16,7 @@ class UpdatePurchaseOrderRequestHandoff
     public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(PurchaseOrderRequestHandoff $handoff, User $actor, array $data): PurchaseOrderRequestHandoff
     {
