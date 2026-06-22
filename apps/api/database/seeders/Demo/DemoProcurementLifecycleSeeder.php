@@ -89,7 +89,9 @@ use Domains\Receiving\Support\ReceivingNumber;
 use Domains\Requisition\Models\Requisition;
 use Domains\Requisition\States\RequisitionStatus;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DemoProcurementLifecycleSeeder
 {
@@ -3159,7 +3161,7 @@ class DemoProcurementLifecycleSeeder
         string $appliedAmount,
         string $financeUserId,
     ): void {
-        $existing = \Illuminate\Support\Facades\DB::table('credit_applications')
+        $existing = DB::table('credit_applications')
             ->where('tenant_id', $tenantId)
             ->where('supplier_credit_memo_id', $creditMemoId)
             ->where('supplier_invoice_id', $invoiceId)
@@ -3174,7 +3176,7 @@ class DemoProcurementLifecycleSeeder
 
         if ($existing === null) {
             CreditApplication::query()->create([
-                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'tenant_id' => $tenantId,
                 'supplier_credit_memo_id' => $creditMemoId,
                 'supplier_invoice_id' => $invoiceId,
@@ -3182,7 +3184,7 @@ class DemoProcurementLifecycleSeeder
                 ...$attributes,
             ]);
         } else {
-            \Illuminate\Support\Facades\DB::table('credit_applications')
+            DB::table('credit_applications')
                 ->where('id', $existing->id)
                 ->update($attributes + ['updated_at' => now()]);
         }
