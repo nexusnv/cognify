@@ -26,6 +26,10 @@ use Domains\Attachment\Http\Controllers\SupplierInvoiceAttachmentController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceApprovalController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceExceptionController;
+use Domains\CreditMemo\Http\Controllers\SupplierCreditMemoController;
+use Domains\CreditMemo\Http\Controllers\SupplierCreditMemoLineController;
+use Domains\CreditMemo\Http\Controllers\CreditApplicationController;
+use Domains\CreditMemo\Http\Controllers\SupplierCreditMemoExceptionController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceMatchingController;
 use Domains\Invoice\Http\Controllers\SupplierInvoiceReviewController;
 use Domains\Collaboration\Http\Controllers\ApprovalTaskCommentController;
@@ -239,6 +243,32 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::patch('/accounts-payable/payment-imports/{import}', [ApPaymentImportController::class, 'update']);
             Route::post('/accounts-payable/payment-imports/{batchId}/reconcile', [ApPaymentImportController::class, 'reconcile']);
             Route::post('/accounts-payable/payment-imports/{import}/discard', [ApPaymentImportController::class, 'discard']);
+
+            // P1-49: credit memo CRUD
+            Route::get('/supplier-credit-memos', [SupplierCreditMemoController::class, 'index']);
+            Route::post('/supplier-credit-memos', [SupplierCreditMemoController::class, 'store']);
+            Route::get('/supplier-credit-memos/{creditMemo}', [SupplierCreditMemoController::class, 'show']);
+            Route::patch('/supplier-credit-memos/{creditMemo}', [SupplierCreditMemoController::class, 'update']);
+            Route::post('/supplier-credit-memos/{creditMemo}/submit', [SupplierCreditMemoController::class, 'submit']);
+            Route::post('/supplier-credit-memos/{creditMemo}/post', [SupplierCreditMemoController::class, 'post']);
+            Route::post('/supplier-credit-memos/{creditMemo}/void', [SupplierCreditMemoController::class, 'void']);
+
+            // P1-49: credit memo lines
+            Route::post('/supplier-credit-memos/{creditMemo}/lines', [SupplierCreditMemoLineController::class, 'store']);
+            Route::patch('/supplier-credit-memos/{creditMemo}/lines/{line}', [SupplierCreditMemoLineController::class, 'update']);
+            Route::delete('/supplier-credit-memos/{creditMemo}/lines/{line}', [SupplierCreditMemoLineController::class, 'destroy']);
+
+            // P1-49: credit applications
+            Route::get('/supplier-credit-memos/{creditMemo}/applications', [CreditApplicationController::class, 'index']);
+            Route::post('/supplier-credit-memos/{creditMemo}/applications', [CreditApplicationController::class, 'store']);
+            Route::get('/credit-applications/{application}', [CreditApplicationController::class, 'show']);
+            Route::delete('/credit-applications/{application}', [CreditApplicationController::class, 'destroy']);
+
+            // P1-49: credit memo exceptions
+            Route::get('/supplier-credit-memos/{creditMemo}/exceptions', [SupplierCreditMemoExceptionController::class, 'index']);
+            Route::post('/supplier-credit-memos/{creditMemo}/exceptions/{exception}/acknowledge', [SupplierCreditMemoExceptionController::class, 'acknowledge']);
+            Route::post('/supplier-credit-memos/{creditMemo}/exceptions/{exception}/resolve', [SupplierCreditMemoExceptionController::class, 'resolve']);
+            Route::post('/supplier-credit-memos/{creditMemo}/exceptions/{exception}/escalate', [SupplierCreditMemoExceptionController::class, 'escalate']);
 
             Route::post('/supplier-invoices/{supplierInvoice}/place-hold', [SupplierInvoicePaymentController::class, 'placeHold']);
             Route::post('/supplier-invoices/{supplierInvoice}/release-hold', [SupplierInvoicePaymentController::class, 'releaseHold']);
