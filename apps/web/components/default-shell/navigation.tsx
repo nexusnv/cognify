@@ -158,6 +158,12 @@ export const finalNavigationItems: DefaultNavItem[] = [
         implemented: true,
         permission: canUseAccountsPayable,
       },
+      {
+        title: "Credit memos",
+        url: "/accounts-payable/credit-memos",
+        implemented: true,
+        permission: canUseAccountsPayable,
+      },
     ],
   },
   {
@@ -300,6 +306,7 @@ export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   if (normalizedPathname === "/accounts-payable/payment-queue") return [{ label: "Finance" }, { label: "Payment queue" }];
   if (normalizedPathname === "/accounts-payable/payment-status") return [{ label: "Finance" }, { label: "Payment status" }];
   if (normalizedPathname === "/accounts-payable/payment-import") return [{ label: "Finance" }, { label: "Payment import" }];
+  if (normalizedPathname === "/accounts-payable/credit-memos") return [{ label: "Finance" }, { label: "Credit memos" }];
   if (normalizedPathname === "/calendar") return [{ label: "Calendar" }];
   if (normalizedPathname === "/quotations/normalizations") return [{ label: "Quotations" }];
   if (normalizedPathname === "/quotations/scoring/templates") {
