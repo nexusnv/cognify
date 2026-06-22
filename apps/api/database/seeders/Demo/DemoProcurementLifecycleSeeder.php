@@ -3079,16 +3079,19 @@ class DemoProcurementLifecycleSeeder
         $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.posted');
     }
 
-    private function seedPartiallyAppliedCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus, string $appliedAmount): void
+    private function seedPartiallyAppliedCreditMemo(Tenant $tenant, User $finance, string $number, string $vendorNumber, string $invoiceNumber, string $paymentStatus, string $appliedAmount, string $applicationDate = '2026-06-21'): void
     {
         $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, $paymentStatus, SupplierCreditMemoStatus::PartiallyApplied, $appliedAmount);
-        $total = '1000.0000';
         $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Bulk return', '10.0000', '100.0000', '0.0000', 'TX_STD');
         $invoice = SupplierInvoice::query()->where('tenant_id', $tenant->id)->where('invoice_number', $invoiceNumber)->first();
         if ($invoice !== null) {
-            CreditApplication::query()->updateOrCreate(
-                ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'supplier_invoice_id' => $invoice->id, 'application_date' => '2026-06-21'],
-                ['applied_amount' => $appliedAmount, 'applied_by_user_id' => $finance->id, 'lock_version' => 1]
+            $this->upsertCreditApplication(
+                $tenant->id,
+                $creditMemo->id,
+                $invoice->id,
+                $applicationDate,
+                $appliedAmount,
+                $finance->id
             );
         }
         $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.applied');
@@ -3100,9 +3103,13 @@ class DemoProcurementLifecycleSeeder
         $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Freight credit', '2.0000', '100.0000', '0.0000', 'TX_STD');
         $invoice = SupplierInvoice::query()->where('tenant_id', $tenant->id)->where('invoice_number', $invoiceNumber)->first();
         if ($invoice !== null) {
-            CreditApplication::query()->updateOrCreate(
-                ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'supplier_invoice_id' => $invoice->id, 'application_date' => '2026-06-22'],
-                ['applied_amount' => $appliedAmount, 'applied_by_user_id' => $finance->id, 'lock_version' => 1]
+            $this->upsertCreditApplication(
+                $tenant->id,
+                $creditMemo->id,
+                $invoice->id,
+                '2026-06-22',
+                $appliedAmount,
+                $finance->id
             );
         }
         $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.closed');
@@ -3117,7 +3124,7 @@ class DemoProcurementLifecycleSeeder
             'void_reason' => 'Duplicate credit memo; vendor sent a corrected version',
         ])->save();
         $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Voided return', '4.0000', '100.0000', '0.0000', 'TX_STD');
-        $this->seedCreditMemoException($tenant, $creditMemo, 'math_error', 'error', 'Arithmetic error in original credit memo amount; vendor corrected total.');
+        $this->seedCreditMemoException($tenant, $creditMemo, 'math_error', 'warning', 'Arithmetic error in original credit memo amount; vendor corrected total.');
         $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.voided');
     }
 
@@ -3127,13 +3134,58 @@ class DemoProcurementLifecycleSeeder
         $creditMemo = $this->upsertCreditMemo($tenant, $finance, $number, $vendorNumber, $invoiceNumber, 'paid', SupplierCreditMemoStatus::Closed, $appliedAmount);
         $this->addCreditMemoLine($tenant, $creditMemo, 1, 'Full invoice offset', '10.0000', '100.0000', '0.0000', 'TX_STD');
         if ($invoice !== null) {
-            CreditApplication::query()->updateOrCreate(
-                ['tenant_id' => $tenant->id, 'supplier_credit_memo_id' => $creditMemo->id, 'supplier_invoice_id' => $invoice->id, 'application_date' => '2026-06-24'],
-                ['applied_amount' => $appliedAmount, 'applied_by_user_id' => $finance->id, 'lock_version' => 1]
+            $this->upsertCreditApplication(
+                $tenant->id,
+                $creditMemo->id,
+                $invoice->id,
+                '2026-06-24',
+                $appliedAmount,
+                $finance->id
             );
             $invoice->forceFill(['payment_status' => SupplierInvoicePaymentStatus::Reversed, 'lock_version' => $invoice->lock_version + 1])->save();
         }
         $this->recordCreditMemoAudit($tenant, $finance, $creditMemo, 'supplier_credit_memo.closed');
+    }
+
+    /**
+     * Idempotently upsert a credit application using a raw date match to avoid
+     * SQLite timestamp serialization issues with Eloquent's date cast.
+     */
+    private function upsertCreditApplication(
+        int $tenantId,
+        string $creditMemoId,
+        string $invoiceId,
+        string $applicationDate,
+        string $appliedAmount,
+        string $financeUserId,
+    ): void {
+        $existing = \Illuminate\Support\Facades\DB::table('credit_applications')
+            ->where('tenant_id', $tenantId)
+            ->where('supplier_credit_memo_id', $creditMemoId)
+            ->where('supplier_invoice_id', $invoiceId)
+            ->whereDate('application_date', $applicationDate)
+            ->first();
+
+        $attributes = [
+            'applied_amount' => $appliedAmount,
+            'applied_by_user_id' => $financeUserId,
+            'lock_version' => 1,
+        ];
+
+        if ($existing === null) {
+            CreditApplication::query()->create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'tenant_id' => $tenantId,
+                'supplier_credit_memo_id' => $creditMemoId,
+                'supplier_invoice_id' => $invoiceId,
+                'application_date' => $applicationDate,
+                ...$attributes,
+            ]);
+        } else {
+            \Illuminate\Support\Facades\DB::table('credit_applications')
+                ->where('id', $existing->id)
+                ->update($attributes + ['updated_at' => now()]);
+        }
     }
 
     private function upsertCreditMemo(

@@ -649,7 +649,7 @@ class DemoSeederTest extends TestCase
             'purchase_orders' => 11,
             'shipments' => 4,
             'fulfillment_tracking_events' => 5,
-            'supplier_invoices' => 24,
+            'supplier_invoices' => 32,
         ], $run->metadata);
         $this->assertSame(2, SupplierInvoiceException::query()->count());
         $this->assertSame('2026-05-15T09:00:00.000000Z', $run->seeded_at?->toJSON());
