@@ -25,6 +25,9 @@ import { vendorHandlers } from "@/features/sourcing/mocks/vendor-handlers";
 import { rfqInvitationHandlers } from "@/features/sourcing/mocks/rfq-invitation-handlers";
 import { quotationNormalizationHandlers } from "@/features/quotations/mocks/quotation-normalization-handlers";
 import { procurementCalendarHandlers } from "@/features/procurement-calendar/mocks/procurement-calendar-handlers";
+import { accountsPayableCreditMemoHandlers } from "@/features/accounts-payable/mocks/accounts-payable-credit-memo-handlers";
+import { accountsPayableCreditApplicationHandlers } from "@/features/accounts-payable/mocks/accounts-payable-credit-application-handlers";
+import { accountsPayableCreditMemoExceptionHandlers } from "@/features/accounts-payable/mocks/accounts-payable-credit-memo-exception-handlers";
 
 export const handlers = [
   http.get("/api/health", () => {
@@ -38,6 +41,9 @@ export const handlers = [
   ...accountsPayablePaymentStatusHandlers,
   ...accountsPayablePaymentAllocationHandlers,
   ...accountsPayablePaymentImportHandlers,
+  ...accountsPayableCreditMemoHandlers,
+  ...accountsPayableCreditApplicationHandlers,
+  ...accountsPayableCreditMemoExceptionHandlers,
   ...invoiceExceptionHandlers,
   ...approvalHandlers,
   ...requisitionsHandlers,
